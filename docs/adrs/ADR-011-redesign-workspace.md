@@ -1,0 +1,104 @@
+---
+tags: [moneylog, adr, frontend, design, tokens, graficos]
+status: aceito (decisões D1, D4 e D8 já respondidas pelo dono; as demais seguem o padrão conservador do plano); seção 8 (backend aditivo, contrato 2.6.0) acrescentada pelo dev-backend na fase 0 (T181 a T190)
+data: 2026-10-10
+task: T183 (plano docs/planos/2026-10-10-redesign-workspace.md, fatias A e B)
+relacionado: DS 00, DS 01 e DS 02 (vault), ADR-001, ADR-007, ADR-008, docs/revisoes/2026-10-10-revisao-plano-redesign.md
+---
+
+# ADR-011: refino visual "workspace" (janela flutuante, azul Apple, gráficos em SVG próprio)
+
+## Contexto
+
+O DS 02 (brief "workspace premium", nome de trabalho FinVault) pede uma casca de app nativo de Mac dentro do navegador: janela flutuante arredondada, azul de acento estilo Apple, KPIs, gráficos suaves e mais densidade de informação. O DS 00 fixa paleta neutra com "azul-acinzentado discreto", cantos de 12 a 18 px e movimento de 150 a 200 ms. **O DS 02 refina o DS 00**: continua calmo, premium e sem visual bancário; muda a saturação do acento, os raios, a sombra da janela e o ritmo do movimento. As duas imagens de referência do brief **não foram anexadas**: a decisão segue só o texto, e o dono compara com as capturas de evidência (`docs/qa/evidencias/redesign/`).
+
+Regras que **não mudam**: o front não calcula nada financeiro (ADR-002, PR 01); nenhum controle nativo (ADR-007); nenhuma cor literal fora de `tokens.css` e nenhum gradiente (`check-styles`); contraste AA nos dois temas (`check-contrast`); i18n pt/en/es; `data-cy` e rotas existentes preservados.
+
+## Decisões
+
+### 1. Nome e marca (D1)
+
+O produto se chama **moneylog** (ADR-001). "FinVault" é só nome de trabalho do brief. O texto do wordmark vem de **uma constante** (`BRAND_NAME` em `src/app/config/brand.ts`); trocar o nome é uma linha. **Não há logo**: o dono removeu os logos e deixou espaços reservados vazios (`.sidebar__logo-slot`, `.login__logo-slot`); nada de marca nesses espaços nem nos ícones do PWA, que continuam ladrilhos lisos (apenas na cor nova da superfície). Consequência: nenhuma imagem de marca para manter, e a marca entra depois sem mexer em layout.
+
+### 2. Paleta e acento (D2, FE-S-210)
+
+Azul Apple `#0066cc` (claro) e `#2997ff` (escuro) no lugar do azul-acinzentado; verde, laranja e vermelho dessaturados, **só** para variação, risco e saldo negativo (vermelho continua só para risco ou saldo negativo, DS 00). Fundo (`canvas`) cinza muito claro `#f2f2f5` / `#0e0e10`; superfície (`surface`) branca quente `#fdfcfa` / `#1c1c1e`, mais clara que o canvas também no escuro (degrau de superfície, nada de inversão). Tokens `*-soft` (fundo de item ativo e de chips de variação) são **hex sólido**, calculados como a mistura de 10% (claro) ou 14% (escuro) do tom sobre a `surface`: `check-contrast` só lê `#rrggbb` e a sobreposição translúcida mudava de contraste conforme o fundo. A revisão apontou duas falhas numéricas (acento sobre `accent-soft` em `surface-muted` a 4,40:1 no claro e a 18% no escuro a 4,35:1); a primeira deixa de existir porque o `soft` é sólido e independente do pai, a segunda saiu por usar 14% no escuro. Conferido: texto sobre `*-soft` ≥ 4,5:1 e série do gráfico sobre `surface` ≥ 3:1 (WCAG 1.4.11), nos dois temas. O contraste manda sobre a estética: token que falhar escurece.
+
+Gráficos: **entradas = azul, saídas = neutro quente tracejado**; a distinção nunca é só de cor (traço, forma do ponto e rótulo direto). Verde e vermelho ficam para variação.
+
+### 3. Tipografia (FE-S-213)
+
+`--font-sans` começa em `-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display'` e mantém `'Geist Variable'` e `Inter` como fallback coerente em Windows e Android. O Geist **continua empacotado e em `prefetch`** no `ngsw-config.json` (o offline em aparelho sem SF depende dele); a ideia "Geist não é baixado em Apple" do plano foi **descartada** porque exigiria `lazy` e quebraria o fallback offline. Em aparelho Apple o navegador só baixa a fonte se algum texto cair nela. Escala nova: `--text-kpi: 1.75rem` e `--text-display: 2rem`; números sempre tabulares com `letter-spacing: -0.01em`; títulos 500/600. Geist Mono segue para código e caminhos de vault.
+
+### 4. Forma, sombra e movimento (D2)
+
+Raios: `--radius-window: 28px` (faixa 24 a 32), `--radius-card: 20px` (16 a 24), `--radius-panel: 24px`, `--radius-control: 12px`. Sombras quase invisíveis (`--shadow-1`, `--shadow-2`, `--shadow-window`, sempre por `--color-shadow*` com opacidade ≤ 12%); a borda de 1 px é o separador principal. Movimento: `--duration-fast: 180ms`, `--duration-base: 240ms`, `--duration-slow: 300ms`, `--ease-emphasized: cubic-bezier(0.32, 0.72, 0, 1)` para gavetas e expansão. Microinterações só com `transform`, `opacity`, `box-shadow` e a expansão por `grid-template-rows` (nunca `width/height/top/left`); sempre por token de duração. `prefers-reduced-motion` zera as três durações e **também** desliga `transform` de hover e pressão e a animação de entrada dos gráficos (regra explícita, não só duração zero). `backdrop-filter` só na barra inferior (já existente), nunca na janela nem no mobile novo.
+
+### 5. Janela flutuante (FE-S-209)
+
+A partir de **1024 px** o app vira uma janela (`--radius-window`, `--shadow-window`, largura máxima `--window-max-width: 90rem`, margem `--space-6`) centralizada sobre o canvas. **A página rola normalmente**: a janela cresce com o conteúdo e a sidebar fica `position: sticky` dentro dela. Rolagem interna foi descartada: quebra a restauração de rolagem do roteador, a trava de rolagem dos overlays (`lockModal` usa `position: fixed` no `body`), o `skip-link` e o comportamento do WebKit. Abaixo de 1024 px **não há janela**: de 768 a 1023 px tela cheia com sidebar recolhida; em 375 px tela cheia, sem raio de moldura nem sombra, barra inferior e `safe-area` intactas. Entre 1024 e 1199 px a janela leva a sidebar recolhida (os breakpoints da sidebar não mudam). Overlays continuam em portal no `body` (por cima da janela). Consequência: o `overflow` da janela não pode ser `hidden` (cortaria popover ancorado e a sticky); o raio é pintado no próprio fundo e nas bordas internas.
+
+### 6. Gráficos em SVG próprio, sem biblioteca (FE-S-212)
+
+Descartadas Chart.js, ECharts, uPlot e ngx-charts: peso no bundle inicial (orçamento 500 kB de aviso e 1 MB de erro), canvas é opaco para leitor de tela e várias injetam estilo inline e cor literal que `check-styles` rejeita. O gráfico é SVG montado pelo template Angular (nada de `innerHTML`), como o `Sparkline` existente. **Regra "o front não calcula" mantida**: `Number()` serve só para posicionar pontos; o eixo Y mostra o **máximo da própria série e o zero**, como texto vindo do backend (nenhum "tick bonito" calculado, nenhuma soma, nenhum percentual); curva por interpolação monotônica (Fritsch-Carlson), que não inventa picos nem vales; área com `fill` sólido de baixa opacidade (sem gradiente). Acessibilidade: `role="img"` com resumo, tabela equivalente sempre no DOM (visível por botão "Ver como tabela"), tooltip próprio por mouse, teclado e toque, região viva `polite`. Entrada na viewport por `IntersectionObserver` (≤ 300 ms), com o estado final já no DOM. Barras de categoria (`app-bar-list`) em vez de donut: donut exige ângulos e legenda e lê pior por teclado.
+
+### 7. Navegação e casca
+
+Sidebar em três grupos (OVERVIEW, WORKSPACE, SYSTEM); itens novos (`vault`, `ai`, `mcp`, `budgets`) só entram junto com a página de cada um (revisão R8). Rótulo **"Planejamento" mantido** (decisão do dono; nada de "Relatórios"). Sem seletor de workspace, sem nome de usuário (D4) e sem sino de notificações (Etapa 7). A barra inferior do mobile não muda.
+
+## Decisões do dono (D1 a D8)
+
+| #   | Status                                                                                     |
+| --- | ------------------------------------------------------------------------------------------ |
+| D1  | **Respondida**: o produto é **moneylog**; `BRAND_NAME` é a fonte única; sem logo.          |
+| D2  | Aberta (imagens ausentes): segue só pelo texto; capturas de evidência para comparação.     |
+| D3  | **Respondida em parte**: orçamento mensal fica **"em breve"** (fatia G fora desta rodada). |
+| D4  | **Respondida**: a saudação **não tem nome**.                                               |
+| D5  | Padrão adotado: KPI 1 = `balances.inAccounts` (fatia C).                                   |
+| D6  | Padrão adotado: tom da conta derivado do tipo (fatia C).                                   |
+| D7  | Aberta (pós Etapa 8): nada de interpretação por IA agora.                                  |
+| D8  | Padrão adotado: `/mcp` "Em breve" (fatia F).                                               |
+
+## Alternativas consideradas
+
+1. **Rolagem interna da janela (altura fixa)**: aparência de app nativo, mas quebra roteador, overlays, skip-link e WebKit (ver 5). Rejeitada; reavaliar só se o spike de overflow passar nos mesmos testes.
+2. **Biblioteca de gráficos**: ver 6. Rejeitada.
+3. **Manter o azul-acinzentado do DS 00**: o brief pede explicitamente azul estilo Apple. Rejeitada; saturação controlada.
+4. **Tokens `*-soft` translúcidos**: contraste muda conforme o fundo e `check-contrast` não os lê. Rejeitada.
+5. **Trocar `--font-sans` para só SF**: sem SF em Windows e Android cairia em fonte genérica. Rejeitada.
+
+## Consequências
+
+- **Positivas**: casca coerente com o brief sem nova dependência; a guarda de contraste cobre os pares novos e os gráficos; tudo parametrizado por tokens (tema escuro é o mesmo conjunto com degrau de superfície).
+- **Custo**: `--radius-card` de 14 para 20 px e as durações globais se propagam a todo o app (varredura visual T215, adiada); a janela com página rolando mantém a sidebar `sticky` e exige cuidado com `overflow` dos ancestrais; testes que dependiam de Geist em primeiro lugar, das cores antigas do canvas e da ordem plana da sidebar mudaram **de propósito** (ver o relatório da fatia A).
+- **Honestidade**: nada de funcionalidade fictícia (IA, MCP, notificações e orçamento aparecem só como "em breve" ou ausentes); os gráficos desta rodada usam dados de demonstração rotulados, atrás de uma porta, para trocar pela API quando os endpoints existirem.
+
+## 8. Backend aditivo: contrato 2.6.0 (T181 a T190)
+
+Os gráficos e os KPIs do Início só mostram o que a API calcula (o front não soma, não divide, não compara). A fase 0 do plano entregou, **sem tirar nem endurecer nada do contrato 2.5.1** (diff dos tipos gerados: zero linha removida; os campos novos de schemas existentes ficam fora de `required`):
+
+| Acréscimo | Regra que importa ao front | Suposições (D1 §8.6) |
+| --- | --- | --- |
+| `GET /v1/reports/income-expenses?period=D7\|D30\|M3\|M12` | Leitura dos livros `INCOME` e `EXPENSE` pela **data efetiva do lançamento** (a compra de 1.200 em 6x são 200 por mês, nunca 1.200 num dia): é **resultado, não caixa**. Fatura paga, transferência, aplicação, ajuste, empréstimo, quitação e estornadas ficam fora; reembolso abate e um dia só com reembolso tem `expenses` **negativo** (o gráfico precisa desenhar abaixo de zero). Série densa; `D7` 7 pontos, `D30` 30, `M3` 13 a 15 semanas recortadas, `M12` 12 meses; o ponto do mês corrente é a competência inteira (igual ao dashboard) e leva `partial`. `net` é "resultado do período", nunca "saldo" | S-283 a S-285, S-297, S-298 |
+| `GET /v1/reports/spending-by-category?month=&limit=` | `total` = consumo do mês (= dashboard = `entries.totals.total`); `base` = soma das categorias positivas e é o divisor de `share` (4 casas, arredondado no backend; a soma pode dar 0,9999 e **não** se normaliza); `other` agrega o resto sem somar de novo | S-286, S-301 |
+| `GET /v1/search?q=&limit=` | Sem acento nem caixa; `%`, `_` e `\` literais; 2 a 100 caracteres; notas só por título e caminho; `snippet` é texto puro (exibir como texto, nunca Markdown); `truncated` lista o grupo que estourou 3 s; 120 pedidos por minuto; `no-store`; `q` nunca em log | S-287, S-299, S-300 |
+| `balances.inAccountsChange` | Variação do **saldo em contas** desde o fim do mês anterior (exata por data); ausente em projeção e sem contas. O "disponível" não tem variação (não tem histórico) | S-290 |
+| `SummaryTotals.savingsRate`, `SummaryComparison.savingsRateDelta` | Taxa de poupança do mês anterior e o delta **em pontos percentuais** sobre as taxas já arredondadas; `null` sem receita. No mês corrente o front não os apresenta como tendência (R5) | S-289 |
+| `Account.appearance` | **Não implementado** (D6 = derivar do tipo): fora do contrato | S-291 |
+
+**Integridade (PR 01, regra 10).** A série é um calculador novo (`IncomeExpenseSeries`) sem classificação própria: cada posting dos dois livros entra uma vez, como no `ConsumptionReport`, no `EntryReport` e no `MonthlySummary`. Provado por propriedade (`RedesignPropriedadesTest`: 30 sementes de operações aleatórias, 4 datas de avaliação, cada ponto contra dashboard, `entries` e resumo; Σ dos 30 dias de novembro = ponto mensal = `month.consumption`; `share` na tolerância `(itens + 1) × 0,00005`; `previous` do saldo = `inAccounts` de um dashboard em `since`) e pelos ITs com os endpoints reais (`ReportsIT`, `InAccountsChangeIT`).
+
+**Concorrência.** Os três casos de uso de leitura rodam em `REPEATABLE_READ` somente leitura (`snapshotReadOnly`, ADR-008) e não tomam trava (verificado por IT: isolamento e **uma** carga do razão). A busca dá a cada grupo um `statement_timeout` dentro de um *savepoint*: no Postgres uma consulta cancelada aborta a transação inteira, e sem o savepoint os outros quatro grupos e o instantâneo morreriam junto (`SearchTimeoutIT`).
+
+**Desempenho (R13).** Medido em `RedesignVolumeQaIT` (Postgres 17 em Testcontainers, heap de 2 GB, 12 categorias de despesa, 10 % de receitas, datas de 2018 a 2026), com a máquina calma (load ~5 em 8 núcleos). Tempo de parede em segundos (CPU da thread da requisição entre parênteses; a primeira leitura de cada tamanho inclui o aquecimento da JVM). O relógio de parede só vale com a máquina calma: numa execução anterior, com load 25 a 90 (testes do front em paralelo), a mesma leitura do dashboard levou de 4 a 61 s.
+
+| Leitura | 10.000 movimentações | 50.000 movimentações |
+| --- | --- | --- |
+| dashboard (já existia) | 0,37 (0,28) | 3,8 (2,9) |
+| resumo mensal (já existia) | 0,26 (0,20) | 2,4 (1,5) |
+| `income-expenses` `D7` / `D30` / `M3` / `M12` | 0,21 / 0,20 / 0,21 / 0,22 | 1,8 / 2,2 / 2,1 / 2,0 (CPU 1,1 a 1,4) |
+| `spending-by-category` | 0,23 (0,17) | 1,7 (1,1) |
+| busca, 5 grupos (casa 90 %; casa 14 %; não casa; `100%` literal) | 0,07; 0,04; 0,03; 0,03 | 0,30; 0,13; 0,11; 0,10 |
+| Início: dashboard + resumo + série + categorias, em sequência | 0,9 | 10,2 |
+
+Conclusões: (1) cada relatório novo custa o mesmo que um dashboard, uma carga do razão: 1,7 a 2,4 s com 50.000 movimentações (o ADR-008 mediu 1,7 a 2,0 s), então **a abertura do Início com 4 cargas custa ~10 s em série com 50.000** e ~0,9 s com 10.000 (vários anos de uso realista). Isso está **no limite do gatilho do ADR-008** ("passou de ~2 s por chamada, abrir o cache por usuário invalidado na escrita"): para o usuário-limite de 50.000 movimentações o gatilho está acionado, para o uso realista não. Recomendação: o front mantém no máximo 2 leituras do razão em voo (T201) e a Arquitetura decide, **antes da fatia C**, se o item (3) do ADR-008 vira task própria. (2) A busca não carrega o razão: SQL com `user_id`, `unaccent` sem índice (varredura do usuário), 0,1 a 0,3 s com 50.000 (a subconsulta que desacentua o padrão uma vez só ganha pouco: 178 contra 185 ms), e um `statement_timeout` de 1 ms trunca só o grupo de movimentações. (3) A medição de heap não serve: a JVM de teste carrega o que as suítes anteriores deixaram retido; o +122 MB por leitura do ADR-008 segue valendo para o carregamento inteiro.

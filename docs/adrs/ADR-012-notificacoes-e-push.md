@@ -1,0 +1,30 @@
+---
+tags: [moneylog, adr, backend, notificacoes, push]
+status: aceito
+data: 2026-10-07
+task: T127 a T130 (Etapa 7)
+relacionado: docs/planos/2026-10-05-etapa-7-importacao-notificacoes.md (S-173 a S-179), ADR-001
+---
+
+# ADR-012: central de notificações garantida, geração idempotente e push atrás de `PushSender`
+
+(O plano da Etapa 7 cita "ADR-008" para este tema; o número 008 já é da leitura do razão. Este é o registro.)
+
+## Decisão
+
+1. **A central dentro do app é o canal garantido.** Notificações, lembretes e a mensagem diária funcionam sem push, sem HTTPS real e sem chaves.
+2. **Texto = chave de i18n + parâmetros** (`titleKey`, `bodyKey`, `params`). O backend não grava frase pronta; o front traduz e formata (S-34). A mensagem diária (`GET /v1/daily-message`) segue a mesma regra e usa as **mesmas fontes** do dashboard (`FinancialRecords`, `CommitmentSchedule`, `DashboardSummary`): nenhum segundo caminho de cálculo (PR 01, regra 10).
+3. **Geração idempotente por job** (`@Scheduled`, a cada 15 min, `America/Sao_Paulo`, uma instância). A chave única é `(user_id, kind, ref_id, on_date)` (índice único `V7.02`); `ref_id` nunca é nulo (nos tipos sem entidade usa o `user_id`), porque no Postgres NULLs não colidem em índice único. Rodar duas vezes, reiniciar o app ou ter duas instâncias não duplica (`INSERT ... ON CONFLICT DO NOTHING`). Falha de um usuário não derruba os outros e o log não leva dados.
+4. **Sem spam (S-175):** no máximo uma por `(tipo, referência, dia)` e **5 por dia**; as excedentes viram uma notificação agrupada `GROUPED` ("N lembretes"). Atrasadas aparecem no 1º dia e depois a cada 7 dias. Tipos configuráveis, resumo diário com `DAILY | ONLY_DUE | OFF` e horário, janela de silêncio (22:00 a 07:00) que tira só o push, nunca a central.
+5. **Retenção (S-179):** lidas há mais de 90 dias viram `archived` e saem da central; **nada é apagado**.
+6. **Push preparado e desligado.** Porta `PushSender`; `NoopPushSender` por padrão; `WebPushSender` (JDK puro: ECDH P-256, HKDF e AES-128-GCM da RFC 8291 mais JWT VAPID ES256 da RFC 8292, validado contra o vetor da RFC) só com `moneylog.push.enabled=true`. Com `enabled=true` e sem `MONEYLOG_PUSH_VAPID_PUBLIC/PRIVATE/SUBJECT` o **app não sobe**. Payload com `id`, `kind`, `titleKey` e parâmetros sem valores financeiros (`push.include-amounts=false`). `404/410` remove a assinatura; `429/5xx` recuam. Máximo de 10 assinaturas por usuário; `endpoint` repetido é a mesma assinatura. Push desligado: `422 PUSH_NOT_ENABLED` na assinatura e `GET /v1/push/config` com `enabled: false`.
+
+## Alternativas recusadas
+
+- E-mail e SMS (fora do MVP; dependem de provedor e expõem dado financeiro fora do app).
+- Biblioteca Web Push de terceiros: o fluxo cabe em ~150 linhas de JDK, evita dependência nova (e BouncyCastle) e tem teste com o vetor oficial.
+- Gerar notificação na leitura (sem job): o contador de não lidas ficaria dependente de abrir a tela e a geração seria concorrente.
+
+## Não exercitado (precisa de terceiros)
+
+Envio real a um iPhone/Android, domínio HTTPS, chaves VAPID e PWA instalada (iOS 16.4+). Roteiro: gerar o par VAPID, definir as três variáveis, ligar `moneylog.push.enabled`, instalar a PWA, conceder a permissão por gesto e assinar em `POST /v1/push/subscriptions`.
