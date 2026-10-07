@@ -66,8 +66,8 @@ test.describe('shell em 375 × 812 (mobile)', () => {
     expect(addBg).not.toBe(homeBg);
 
     await add.click();
-    await expect(page).toHaveURL(/\/quick-add$/);
-    await expect(page.locator('[data-cy="page-title"]')).toHaveText(NAV_LABELS.pt['quickAdd']!);
+    await expect(page).toHaveURL(/\(modal:quick-add\)$/);
+    await expect(page.getByRole('dialog')).toBeVisible();
     await expectNoHorizontalScroll(page);
   });
 
@@ -81,6 +81,13 @@ test.describe('shell em 375 × 812 (mobile)', () => {
     for (const key of BOTTOM_NAV_ORDER) {
       const link = page.locator(`[data-cy="bottom-nav-${key}"]`);
       await link.click();
+      if (key === 'quickAdd') {
+        // Novo registro é um modal sobre a tela de origem: sem página própria nem aria-current.
+        await expect(page.getByRole('dialog')).toBeVisible();
+        await page.keyboard.press('Escape');
+        await expect(page.getByRole('dialog')).toBeHidden();
+        continue;
+      }
       await expect(link).toHaveAttribute('aria-current', 'page');
       // A sidebar fica no DOM com display:none no mobile; conta só o que está visível, na barra inferior
       // (as abas de uma página, como "Ativas" em Metas, também usam aria-current).

@@ -23,3 +23,12 @@ export const DEFAULT_MODE: QuickAddMode = 'expense';
 export function parseMode(value: string | null): QuickAddMode {
   return QUICK_ADD_MODES.find((mode) => mode === value) ?? DEFAULT_MODE;
 }
+
+/** Grupos do seletor "Tipo de registro" (um único `app-select` agrupado). */
+export const MODE_GROUPS = [
+  { key: 'spending', modes: ['expense', 'pix', 'debit', 'credit'] },
+  { key: 'inflow', modes: ['income'] },
+  { key: 'between', modes: ['transfer', 'investment'] },
+  { key: 'people', modes: ['loan', 'received', 'debt'] },
+  { key: 'other', modes: ['refund', 'adjustment'] },
+] as const satisfies readonly { key: string; modes: readonly QuickAddMode[] }[];

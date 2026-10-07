@@ -216,3 +216,40 @@ describe('SelectComponent', () => {
     expect(violations, describeViolations(violations)).toEqual([]);
   });
 });
+
+describe('SelectComponent: opções agrupadas', () => {
+  @Component({
+    selector: 'app-select-grouped-host',
+    imports: [ReactiveFormsModule, SelectComponent],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    template: `<app-select
+      [formControl]="control"
+      fieldId="kind"
+      label="Tipo"
+      [searchable]="false"
+      [options]="options"
+    />`,
+  })
+  class GroupedHostComponent {
+    readonly options: readonly ChoiceOption[] = [
+      { value: 'expense', label: 'Despesa', group: 'Gastos' },
+      { value: 'pix', label: 'Pix', group: 'Gastos' },
+      { value: 'income', label: 'Receita', group: 'Entradas' },
+    ];
+    readonly control = new FormControl<string | null>(null);
+  }
+
+  it('Dado opções com grupo, então cada grupo é um role=group nomeado pelo cabeçalho e escolher funciona', async () => {
+    const { fixture } = await render(GroupedHostComponent, {
+      providers: [provideI18nTesting('pt')],
+    });
+
+    await userEvent.click(screen.getByRole('combobox', { name: 'Tipo' }));
+
+    expect(screen.getByRole('group', { name: 'Gastos' })).toBeVisible();
+    expect(screen.getByRole('group', { name: 'Entradas' })).toBeVisible();
+    expect(screen.getAllByRole('option')).toHaveLength(3);
+    await userEvent.click(screen.getByTestId('kind-option-income'));
+    expect(fixture.componentInstance.control.value).toBe('income');
+  });
+});

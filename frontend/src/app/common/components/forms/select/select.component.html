@@ -77,26 +77,39 @@
         [attr.data-cy]="fieldId() + '-listbox'"
         (keydown)="onKeydown($event)"
       >
-        @for (option of visible(); track option.value; let i = $index) {
-          <li
-            role="option"
-            class="select__option"
-            [id]="optionId(i)"
-            [class.is-active]="i === active()"
-            [attr.aria-selected]="option.value === selectedValue()"
-            [attr.aria-disabled]="option.disabled || null"
-            [attr.lang]="option.lang ?? null"
-            [attr.data-cy]="optionCy(option)"
-            tabindex="-1"
-            (mousedown)="$event.preventDefault()"
-            (click)="choose(i)"
-            (keydown.enter)="choose(i)"
-          >
-            <span class="select__label">{{ option.label }}</span>
-            @if (option.hint) {
-              <span class="select__hint">{{ option.hint }}</span>
+        @for (section of sections(); track $index; let s = $index) {
+          <li role="presentation" class="select__section">
+            @if (section.label) {
+              <span class="select__group" [id]="groupId(s)">{{ section.label }}</span>
             }
-            <app-icon class="select__check" name="check" [size]="16" />
+            <ul
+              class="select__section-list"
+              [attr.role]="section.label ? 'group' : 'presentation'"
+              [attr.aria-labelledby]="section.label ? groupId(s) : null"
+            >
+              @for (entry of section.entries; track entry.option.value) {
+                <li
+                  role="option"
+                  class="select__option"
+                  [id]="optionId(entry.index)"
+                  [class.is-active]="entry.index === active()"
+                  [attr.aria-selected]="entry.option.value === selectedValue()"
+                  [attr.aria-disabled]="entry.option.disabled || null"
+                  [attr.lang]="entry.option.lang ?? null"
+                  [attr.data-cy]="optionCy(entry.option)"
+                  tabindex="-1"
+                  (mousedown)="$event.preventDefault()"
+                  (click)="choose(entry.index)"
+                  (keydown.enter)="choose(entry.index)"
+                >
+                  <span class="select__label">{{ entry.option.label }}</span>
+                  @if (entry.option.hint) {
+                    <span class="select__hint">{{ entry.option.hint }}</span>
+                  }
+                  <app-icon class="select__check" name="check" [size]="16" />
+                </li>
+              }
+            </ul>
           </li>
         }
       </ul>

@@ -92,7 +92,7 @@ export const NOT_FOUND_TITLE: Record<Lang, string> = {
 export const ROUTES = [
   { path: '/', key: 'home' },
   { path: '/transactions', key: 'transactions' },
-  { path: '/quick-add', key: 'quickAdd' },
+  // `/quick-add` não tem página: abre o modal Novo registro sobre a tela de origem (cobertura nos specs dele).
   { path: '/goals', key: 'goals' },
   { path: '/more', key: 'more' },
   { path: '/cards', key: 'cards' },

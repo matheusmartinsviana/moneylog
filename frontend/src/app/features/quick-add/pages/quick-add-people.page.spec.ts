@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { render, screen, waitFor } from '@testing-library/angular';
+import { render, screen, waitFor, within } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { NEVER, of } from 'rxjs';
 
@@ -98,6 +98,8 @@ const pick = async (id: string, value: string) => {
   await userEvent.click(screen.getByTestId(`${id}-option-${value}`));
 };
 
+const pickMode = (mode: string) => pick('quick-add-mode', mode);
+
 const loanTransaction = () =>
   aTransaction({
     type: 'LOAN_GIVEN',
@@ -124,20 +126,14 @@ describe('QuickAddPage: pessoas e dívidas (Etapa 4)', () => {
   beforeEach(() => localStorage.clear());
 
   describe('seletor de modos', () => {
-    it('Dado o seletor, então "Emprestei" é um modo principal', async () => {
+    it('Dado o grupo "Pessoas", então oferece Emprestei, Recebi e Nova dívida', async () => {
       await setup({ url: '/quick-add' });
 
-      expect(screen.getByTestId('quick-add-mode-loan')).toHaveTextContent('Emprestei');
-    });
+      await userEvent.click(screen.getByTestId('quick-add-mode'));
 
-    it('Dado o grupo "Pessoas e dívidas", então oferece Dinheiro recebido e Nova dívida', async () => {
-      await setup({ url: '/quick-add' });
-
-      await userEvent.click(screen.getByTestId('quick-add-people'));
-
-      expect(screen.getByTestId('quick-add-people')).toHaveAttribute('aria-expanded', 'true');
-      for (const mode of ['received', 'debt']) {
-        expect(screen.getByTestId(`quick-add-people-mode-${mode}`)).toBeInTheDocument();
+      const group = screen.getByRole('group', { name: pt.quickAdd.modes.groups.people });
+      for (const mode of ['loan', 'received', 'debt']) {
+        expect(within(group).getByTestId(`quick-add-mode-option-${mode}`)).toBeInTheDocument();
       }
     });
 
@@ -147,7 +143,7 @@ describe('QuickAddPage: pessoas e dívidas (Etapa 4)', () => {
       });
 
       expect(await screen.findByTestId('loan-form')).toBeInTheDocument();
-      expect(screen.getByTestId('quick-add-mode-loan')).toHaveAttribute('aria-checked', 'true');
+      expect(screen.getByTestId('quick-add-mode')).toHaveTextContent(pt.quickAdd.modes.loan);
       await waitFor(() => expect(field('loan-description')).toHaveValue('Pix-irma'));
       expect(field('loan-date')).toHaveValue('01/10/2026');
     });
@@ -198,13 +194,12 @@ describe('QuickAddPage: pessoas e dívidas (Etapa 4)', () => {
     it.each([
       ['received', 'received-form'],
       ['debt', 'debt-form'],
-    ])('Dado ?mode=%s, então abre o formulário certo e o grupo fica aberto', async (mode, form) => {
+    ])('Dado ?mode=%s, então abre o formulário certo com o tipo escolhido', async (mode, form) => {
       await setup({ url: `/quick-add?mode=${mode}` });
 
       expect(await screen.findByTestId(form)).toBeInTheDocument();
-      expect(screen.getByTestId(`quick-add-people-mode-${mode}`)).toHaveAttribute(
-        'aria-checked',
-        'true',
+      expect(screen.getByTestId('quick-add-mode')).toHaveTextContent(
+        pt.quickAdd.modes[mode as 'received' | 'debt'],
       );
     });
   });
@@ -495,7 +490,7 @@ describe('QuickAddPage: pessoas e dívidas (Etapa 4)', () => {
         transactions,
       });
       const before = stub.queries.length;
-      await userEvent.click(screen.getByTestId('quick-add-mode-loan'));
+      await pickMode('loan');
       await screen.findByTestId('loan-form');
       await userEvent.type(field('loan-amount'), '300,00');
       await pick('loan-person', 'person-1');
@@ -508,8 +503,7 @@ describe('QuickAddPage: pessoas e dívidas (Etapa 4)', () => {
       await fixture.whenStable();
 
       expect(stub.queries.length).toBeGreaterThan(before);
-      await userEvent.click(screen.getByTestId('quick-add-people'));
-      await userEvent.click(screen.getByTestId('quick-add-people-mode-received'));
+      await pickMode('received');
       await userEvent.click(await screen.findByTestId('received-debt'));
       expect(screen.getByTestId('received-debt-option-debt-9')).toHaveTextContent(
         'falta R$ 300,00',
@@ -688,7 +682,7 @@ describe('QuickAddPage: pessoas e dívidas (Etapa 4)', () => {
       });
     });
 
-    it('Dado descrição vazia, então o erro é do campo e nada é enviado', async () => {
+    it('Dado descrição vazia, então a dívida é enviada normalmente (a descrição é opcional)', async () => {
       const debts = new DebtsGatewayStub();
       await setup({ url: '/quick-add?mode=debt', debts });
       await userEvent.type(field('debt-principal'), '80,00');
@@ -696,8 +690,8 @@ describe('QuickAddPage: pessoas e dívidas (Etapa 4)', () => {
 
       await userEvent.click(screen.getByTestId('form-save'));
 
-      expect(debts.creates).toHaveLength(0);
-      expect(field('debt-description')).toHaveAttribute('aria-invalid', 'true');
+      expect(debts.creates).toHaveLength(1);
+      expect(field('debt-description')).not.toHaveAttribute('aria-invalid', 'true');
     });
 
     it('Dado DEBT_CATEGORY_NOT_ALLOWED do backend, então o erro vai ao campo da categoria', async () => {
@@ -772,8 +766,7 @@ describe('QuickAddPage: pessoas e dívidas (Etapa 4)', () => {
       const debts = new DebtsGatewayStub();
       const { fixture } = await setup({ url: '/quick-add?mode=received', debts });
       // "Receber" já carregou (lista vazia); agora crio uma dívida "Me devem" no outro modo.
-      await userEvent.click(screen.getByTestId('quick-add-people'));
-      await userEvent.click(screen.getByTestId('quick-add-people-mode-debt'));
+      await pickMode('debt');
       await screen.findByTestId('debt-form');
       await userEvent.type(field('debt-principal'), '80,00');
       await pick('debt-person', 'person-1');
@@ -782,8 +775,7 @@ describe('QuickAddPage: pessoas e dívidas (Etapa 4)', () => {
       await userEvent.click(screen.getByTestId('form-save'));
       await fixture.whenStable();
 
-      await userEvent.click(screen.getByTestId('quick-add-people'));
-      await userEvent.click(screen.getByTestId('quick-add-people-mode-received'));
+      await pickMode('received');
       await userEvent.click(await screen.findByTestId('received-debt'));
 
       expect(screen.getByTestId('received-debt-option-debt-new')).toHaveTextContent(
@@ -819,7 +811,7 @@ describe('QuickAddPage: pessoas e dívidas (Etapa 4)', () => {
       await setup({ url: '/quick-add' });
       expect(screen.getByTestId('entry-split')).toHaveTextContent(pt.lending.shares.toggle);
 
-      await userEvent.click(screen.getByTestId('quick-add-mode-income'));
+      await pickMode('income');
       await waitFor(() => expect(screen.queryByTestId('entry-split')).not.toBeInTheDocument());
     });
 

@@ -252,11 +252,11 @@ test.describe('cabeçalho do workspace', () => {
     await waitForApp(page);
 
     await page.locator('[data-cy="header-action-income"]').click();
-    await expect(page).toHaveURL(/\/quick-add\?mode=income$/);
+    await expect(page).toHaveURL(/\(modal:quick-add\)\?mode=income$/);
     await page.locator('[data-cy="header-action-transfer"]').click();
-    await expect(page).toHaveURL(/\/quick-add\?mode=transfer$/);
+    await expect(page).toHaveURL(/\(modal:quick-add\)\?mode=transfer$/);
     await page.locator('[data-cy="header-action-expense"]').click();
-    await expect(page).toHaveURL(/\/quick-add\?mode=expense$/);
+    await expect(page).toHaveURL(/\(modal:quick-add\)\?mode=expense$/);
 
     const ask = page.locator('[data-cy="header-action-askAi"]');
     await expect(ask).toHaveAttribute('aria-disabled', 'true');

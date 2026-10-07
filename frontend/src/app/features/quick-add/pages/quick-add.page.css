@@ -1,9 +1,8 @@
 :host {
-  display: block;
+  display: contents;
 }
 
 .quick-add {
   display: grid;
-  gap: var(--space-4);
-  max-width: 32rem;
+  gap: var(--space-3);
 }

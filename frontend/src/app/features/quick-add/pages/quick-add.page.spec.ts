@@ -109,6 +109,10 @@ const pick = async (id: string, value: string) => {
   await userEvent.click(screen.getByTestId(id));
   await userEvent.click(screen.getByTestId(`${id}-option-${value}`));
 };
+/** O "Tipo de registro" é um seletor só: abre a lista e escolhe o tipo. */
+const pickMode = (mode: string) => pick('quick-add-mode', mode);
+const expectMode = (mode: keyof typeof pt.quickAdd.modes.titles) =>
+  expect(screen.getByTestId('quick-add-mode')).toHaveTextContent(pt.quickAdd.modes[mode]);
 const fillAmountAndDescription = async (amount: string, description: string) => {
   await userEvent.type(field('entry-amount'), amount);
   await userEvent.type(field('entry-description'), description);
@@ -122,7 +126,7 @@ describe('QuickAddPage', () => {
       await setup();
 
       expect(document.activeElement).toBe(field('entry-amount'));
-      expect(screen.getByTestId('quick-add-mode-expense')).toHaveAttribute('aria-checked', 'true');
+      expectMode('expense');
       expect(screen.getByTestId('expense-form')).toBeInTheDocument();
     });
 
@@ -146,28 +150,26 @@ describe('QuickAddPage', () => {
       ]);
     });
 
-    it.each([
-      ['pix', 'quick-add-mode-pix'],
-      ['debit', 'quick-add-mode-debit'],
-      ['income', 'quick-add-mode-income'],
-      ['transfer', 'quick-add-mode-transfer'],
-      ['expense', 'quick-add-mode-expense'],
-    ])('Dado ?mode=%s, então abre o modo indicado', async (mode, id) => {
-      await setup({ accounts: [NUBANK, WALLET], url: `/quick-add?mode=${mode}` });
+    it.each(['pix', 'debit', 'income', 'transfer', 'expense'] as const)(
+      'Dado ?mode=%s, então abre o modo indicado',
+      async (mode) => {
+        await setup({ accounts: [NUBANK, WALLET], url: `/quick-add?mode=${mode}` });
 
-      expect(screen.getByTestId(id)).toHaveAttribute('aria-checked', 'true');
-    });
+        expectMode(mode);
+      },
+    );
 
     it('Dado um modo desconhecido na URL, então cai em Despesa', async () => {
       await setup({ url: '/quick-add?mode=lixo' });
 
-      expect(screen.getByTestId('quick-add-mode-expense')).toHaveAttribute('aria-checked', 'true');
+      expectMode('expense');
     });
 
     it('Dado "Crédito", então aparece habilitado, sem "em breve", e abre a compra no cartão', async () => {
       await setup({ cards: [aCard()] });
 
-      const credit = screen.getByTestId('quick-add-mode-credit');
+      await userEvent.click(screen.getByTestId('quick-add-mode'));
+      const credit = screen.getByTestId('quick-add-mode-option-credit');
       expect(credit).not.toHaveAttribute('aria-disabled');
       expect(credit).not.toHaveAccessibleDescription(/breve/i);
       await userEvent.click(credit);
@@ -178,7 +180,7 @@ describe('QuickAddPage', () => {
     it('Dado a troca de modo, então a URL passa a levar ?mode e o formulário muda', async () => {
       const { router } = await setup({ accounts: [NUBANK, WALLET] });
 
-      await userEvent.click(screen.getByTestId('quick-add-mode-transfer'));
+      await pickMode('transfer');
 
       expect(router.url).toBe('/quick-add?mode=transfer');
       expect(await screen.findByTestId('transfer-form')).toBeInTheDocument();
@@ -226,7 +228,7 @@ describe('QuickAddPage', () => {
       expect(field('entry-amount').value).toBe('');
       expect(field('entry-description').value).toBe('');
       expect(screen.getByTestId('entry-account')).toHaveTextContent('Nubank');
-      expect(screen.getByTestId('quick-add-mode-pix')).toHaveAttribute('aria-checked', 'true');
+      expectMode('pix');
       expect(document.activeElement).toBe(field('entry-amount'));
     });
 
@@ -258,28 +260,31 @@ describe('QuickAddPage', () => {
   });
 
   describe('Despesa e Receita', () => {
-    it('Dado Despesa, então o método é obrigatório, tem os 6 métodos e nenhuma opção de crédito', async () => {
+    it('Dado Despesa, então o método é opcional (omitido), tem os 6 métodos e nenhuma opção de crédito', async () => {
       const { transactions } = await setup();
 
       await fillAmountAndDescription('10,00', 'mercado');
       await pick('entry-category', 'cat-food');
       await userEvent.click(screen.getByTestId('form-save'));
-      expect(transactions.creates).toHaveLength(0);
-      expect(screen.getByTestId('entry-method')).toHaveAttribute('aria-invalid', 'true');
+      expect(transactions.creates).toHaveLength(1);
+      expect(transactions.creates[0]?.input).not.toHaveProperty('method');
+      expect(screen.getByTestId('entry-method')).not.toHaveAttribute('aria-invalid', 'true');
 
       await userEvent.click(screen.getByTestId('entry-method'));
       const labels = screen
         .getAllByRole('option', { hidden: true })
         .filter((o) => o.getAttribute('data-cy')?.startsWith('entry-method-option-'))
         .map((o) => o.textContent?.trim());
+      // A primeira é a opção vazia (omite o método; o servidor usa OTHER), rotulada como "Outro".
       expect(labels).toEqual(
-        ['CASH', 'DEBIT', 'PIX', 'TRANSFER', 'BOLETO', 'OTHER'].map(
+        ['OTHER', 'CASH', 'DEBIT', 'PIX', 'TRANSFER', 'BOLETO', 'OTHER'].map(
           (m) => pt.transactions.methods[m as keyof typeof pt.transactions.methods],
         ),
       );
       await userEvent.click(screen.getByTestId('entry-method-option-BOLETO'));
+      await fillAmountAndDescription('10,00', 'mercado');
       await userEvent.click(screen.getByTestId('form-save'));
-      expect(transactions.creates[0]?.input).toMatchObject({ type: 'EXPENSE', method: 'BOLETO' });
+      expect(transactions.creates[1]?.input).toMatchObject({ type: 'EXPENSE', method: 'BOLETO' });
     });
 
     it('Dado Despesa, então o select de conta mostra só contas CASH ativas e as categorias são só de despesa', async () => {
@@ -304,7 +309,7 @@ describe('QuickAddPage', () => {
       expect(screen.queryByTestId('entry-category-option-cat-salary')).not.toBeInTheDocument();
     });
 
-    it('Dado Receita, então só aparecem categorias INCOME e o método é obrigatório', async () => {
+    it('Dado Receita, então só aparecem categorias INCOME e o método é opcional', async () => {
       const { transactions } = await setup({ url: '/quick-add?mode=income' });
 
       await userEvent.click(screen.getByTestId('entry-category'));
@@ -312,9 +317,6 @@ describe('QuickAddPage', () => {
       expect(screen.queryByTestId('entry-category-option-cat-food')).not.toBeInTheDocument();
       await userEvent.click(screen.getByTestId('entry-category-option-cat-salary'));
       await fillAmountAndDescription('5.000,00', 'salário');
-      await userEvent.click(screen.getByTestId('form-save'));
-      expect(transactions.creates).toHaveLength(0);
-
       await pick('entry-method', 'TRANSFER');
       await userEvent.click(screen.getByTestId('form-save'));
       expect(transactions.creates[0]?.input).toMatchObject({
@@ -534,37 +536,35 @@ describe('QuickAddPage', () => {
       await userEvent.click(screen.getByTestId('form-save'));
       expect(screen.getByTestId('form-error')).toBeInTheDocument();
 
-      await userEvent.click(screen.getByTestId('quick-add-mode-income'));
+      await pickMode('income');
 
       await waitFor(() => expect(screen.queryByTestId('form-error')).not.toBeInTheDocument());
     });
   });
 
   describe('Mais tipos (T41)', () => {
-    it('Dado "Mais tipos", então mostra Aplicação ou resgate, Ajuste e Reembolso; ?mode=refund já abre expandido', async () => {
+    it('Dado o seletor, então os tipos vêm agrupados e escolher um troca o formulário', async () => {
       await setup({ accounts: [NUBANK, BROKER] });
 
-      expect(screen.getByTestId('quick-add-more')).toHaveAttribute('aria-expanded', 'false');
-      await userEvent.click(screen.getByTestId('quick-add-more'));
-      expect(screen.getByTestId('quick-add-more')).toHaveAttribute('aria-expanded', 'true');
-      expect(screen.getByTestId('quick-add-more-mode-investment')).toBeVisible();
-      expect(screen.getByTestId('quick-add-more-mode-adjustment')).toBeVisible();
-      expect(screen.getByTestId('quick-add-more-mode-refund')).toBeVisible();
+      await userEvent.click(screen.getByTestId('quick-add-mode'));
+      const groups = pt.quickAdd.modes.groups;
+      for (const label of Object.values(groups)) {
+        expect(screen.getByRole('group', { name: label })).toBeVisible();
+      }
+      expect(screen.getByTestId('quick-add-mode-option-investment')).toBeVisible();
+      expect(screen.getByTestId('quick-add-mode-option-refund')).toBeVisible();
 
-      await userEvent.click(screen.getByTestId('quick-add-more-mode-adjustment'));
+      await userEvent.click(screen.getByTestId('quick-add-mode-option-adjustment'));
       expect(await screen.findByTestId('adjustment-form')).toBeInTheDocument();
-      expect(screen.getByTestId('quick-add-mode-expense')).toHaveAttribute('aria-checked', 'false');
+      expectMode('adjustment');
     });
 
-    it('Dado ?mode=refund, então abre o reembolso com "Mais tipos" expandido', async () => {
+    it('Dado ?mode=refund, então abre o reembolso com o tipo escolhido no seletor', async () => {
       await setup({ url: '/quick-add?mode=refund' });
 
       expect(screen.getByTestId('refund-form')).toBeInTheDocument();
-      expect(screen.getByTestId('quick-add-more')).toHaveAttribute('aria-expanded', 'true');
-      expect(screen.getByTestId('quick-add-more-mode-refund')).toHaveAttribute(
-        'aria-checked',
-        'true',
-      );
+      expectMode('refund');
+      expect(screen.getByRole('dialog', { name: pt.quickAdd.modes.titles.refund })).toBeVisible();
     });
 
     describe('aplicação e resgate', () => {
@@ -1272,7 +1272,7 @@ describe('QuickAddPage: Crédito, compra no cartão (T67)', () => {
 
       expect(transactions.creates).toHaveLength(0);
       expect(field('entry-amount')).toHaveAttribute('aria-invalid', 'true');
-      expect(field('entry-description')).toHaveAttribute('aria-invalid', 'true');
+      expect(field('entry-description')).not.toHaveAttribute('aria-invalid', 'true');
     });
 
     it('Dado o teclado, então Tab segue cartão → valor → descrição → categoria → data → parcelas e Enter na última salva', async () => {

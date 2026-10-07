@@ -155,3 +155,23 @@
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+
+.select__section,
+.select__section-list {
+  display: block;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.select__group {
+  display: block;
+  padding: var(--space-3) var(--space-3) var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.select__section:first-child .select__group {
+  padding-top: var(--space-1);
+}

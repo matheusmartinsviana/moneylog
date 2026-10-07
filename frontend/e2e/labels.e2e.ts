@@ -93,9 +93,8 @@ test.describe('"Novo registro" é o nome único de /quick-add (S-57)', () => {
       await expect(button).toHaveText(name);
       await expect(button).toHaveAccessibleName(name);
       await button.click();
-      await expect(page).toHaveURL(/\/quick-add$/);
-      await expect(page.locator('h1')).toHaveText(name);
-      await expect(page).toHaveTitle(`${name} · moneylog`);
+      await expect(page).toHaveURL(/\(modal:quick-add\)$/);
+      await expect(page.getByRole('dialog')).toBeVisible();
     });
 
     test(`idioma ${lang} em 375: o "+" e o título da página são "${name}"`, async ({ page }) => {
@@ -107,8 +106,8 @@ test.describe('"Novo registro" é o nome único de /quick-add (S-57)', () => {
       const plus = page.locator('[data-cy="bottom-nav-quickAdd"]');
       await expect(plus).toHaveAccessibleName(name);
       await plus.click();
-      await expect(page).toHaveURL(/\/quick-add$/);
-      await expect(page.locator('h1')).toHaveText(name);
+      await expect(page).toHaveURL(/\(modal:quick-add\)$/);
+      await expect(page.getByRole('dialog')).toBeVisible();
       await expect(page.locator('body')).not.toContainText(/captura rápida|quick capture/i);
     });
   }

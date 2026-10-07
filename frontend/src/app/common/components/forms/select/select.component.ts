@@ -100,6 +100,18 @@ export class SelectComponent extends FieldControl<string | null> implements Vali
     const items = this.items();
     return this.hasSearch() && q ? items.filter((o) => normalize(o.label).includes(q)) : items;
   });
+  /** `visible` em seções por `group` (opções vizinhas com o mesmo grupo); sem grupo, uma seção só. */
+  protected readonly sections = computed(() => {
+    const result: { label: string | null; entries: { option: ChoiceOption; index: number }[] }[] =
+      [];
+    this.visible().forEach((option, index) => {
+      const label = option.group ?? null;
+      const last = result[result.length - 1];
+      if (last && last.label === label) last.entries.push({ option, index });
+      else result.push({ label, entries: [{ option, index }] });
+    });
+    return result;
+  });
   private readonly selectedValue = computed(
     () => this.value() ?? (this.emptyLabel() ? EMPTY_VALUE : null),
   );
@@ -145,6 +157,10 @@ export class SelectComponent extends FieldControl<string | null> implements Vali
 
   validate(): ValidationErrors | null {
     return this.mandatory() && this.value() === null ? { required: true } : null;
+  }
+
+  protected groupId(index: number): string {
+    return `${this.controlId()}-group-${index}`;
   }
 
   protected optionId(index: number): string {

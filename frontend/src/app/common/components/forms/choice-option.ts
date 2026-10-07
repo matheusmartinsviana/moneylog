@@ -7,6 +7,8 @@ export interface ChoiceOption {
   readonly disabled?: boolean;
   /** Texto curto de apoio (ex.: saldo da conta, "disponível em breve"). */
   readonly hint?: string;
+  /** Grupo da opção (`Select`): opções vizinhas com o mesmo grupo ganham um cabeçalho (`role=group`). */
+  readonly group?: string;
   /** Idioma do rótulo (ex.: nome do idioma na própria língua), quando difere do da interface. */
   readonly lang?: string;
 }

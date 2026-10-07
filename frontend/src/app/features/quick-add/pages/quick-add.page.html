@@ -1,4 +1,10 @@
-<app-page-layout [heading]="t().nav.quickAdd">
+<app-form-modal
+  #modal
+  [heading]="title()"
+  [dirty]="dirty()"
+  [busy]="facade.saving()"
+  (closed)="close()"
+>
   @switch (load().status) {
     @case ('loading') {
       <div data-cy="quick-add-loading">
@@ -219,4 +225,4 @@
       }
     }
   }
-</app-page-layout>
+</app-form-modal>

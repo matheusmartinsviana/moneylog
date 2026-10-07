@@ -18,7 +18,7 @@ import {
   EmptyStateComponent,
 } from '~/app/common/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '~/app/common/components/error-state/error-state.component';
-import { PageLayoutComponent } from '~/app/common/components/page-layout/page-layout.component';
+import { FormModalComponent } from '~/app/common/components/form-modal/form-modal.component';
 import type { AppI18n } from '~/app/common/i18n/i18n';
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { interpolate } from '~/app/common/i18n/interpolate';
@@ -44,6 +44,7 @@ import {
   QuickAddMode,
 } from '~/app/features/quick-add/quick-add-mode';
 import { sanitizeSharedText } from '~/app/features/quick-add/quick-add-params';
+import { transactionLabel } from '~/app/features/transactions/transaction-label';
 import { AccountsListFacade } from '~/modules/accounts/core/facades/accounts-list.facade';
 import type { Account } from '~/modules/accounts/core/types/account';
 import { CardsListFacade } from '~/modules/cards/core/facades/cards-list.facade';
@@ -102,7 +103,7 @@ function cardOf(input: TransactionInput): string | null {
 @Component({
   selector: 'app-quick-add-page',
   imports: [
-    PageLayoutComponent,
+    FormModalComponent,
     EmptyStateComponent,
     ErrorStateComponent,
     ModeSwitchComponent,
@@ -125,6 +126,11 @@ function cardOf(input: TransactionInput): string | null {
     PeopleListFacade,
     DebtsListFacade,
   ],
+  host: {
+    '(input)': 'markDirty($event)',
+    '(change)': 'markDirty($event)',
+    '(click)': 'markDirty($event)',
+  },
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './quick-add.page.html',
   styleUrl: './quick-add.page.css',
@@ -204,6 +210,10 @@ export class QuickAddPage {
   protected readonly expenseCategories = signal<readonly Category[]>([]);
   protected readonly incomeCategories = signal<readonly Category[]>([]);
   protected readonly mode = signal<QuickAddMode>(DEFAULT_MODE);
+  /** Título do modal: muda com o tipo ("Novo gasto", "Empréstimo", ...). */
+  protected readonly title = computed(() => this.t().quickAdd.modes.titles[this.mode()]);
+  /** Algo foi digitado ou escolhido e não salvo: fechar pede confirmação. */
+  protected readonly dirty = signal(false);
   protected readonly lastUsed = signal<string | null>(readLastUsedAccount());
   /** Sobe a cada registro salvo (limpa valor e descrição) e a cada "novo registro" (foco no valor). */
   protected readonly resetToken = signal(0);
@@ -269,6 +279,8 @@ export class QuickAddPage {
       : [];
   });
 
+  /** Aberto como modal (rota auxiliar `modal`); fora dela (rota primária) a página só fica aberta. */
+  private readonly asModal = this.route.pathFromRoot.some((r) => r.outlet === 'modal');
   private lastInput: TransactionInput | null = null;
 
   constructor() {
@@ -291,6 +303,7 @@ export class QuickAddPage {
       );
       if (mode !== this.mode()) {
         this.mode.set(mode);
+        this.dirty.set(false);
         this.facade.dismissProblem();
         this.purchasePreview.request('', null);
       }
@@ -308,6 +321,7 @@ export class QuickAddPage {
           this.lastCard.set(cardId);
         }
       }
+      const savedMode = this.mode();
       this.resetToken.update((value) => value + 1);
       this.purchasePreview.request('', null);
       // Emprestar cria uma dívida "me devem" e receber muda o `outstanding`: "Receber" recarrega.
@@ -328,6 +342,8 @@ export class QuickAddPage {
               ? // Despesa dividida: o detalhe mostra o `impact` e as partes, do backend.
                 { link: ['/transactions', saved.id], label: copy.viewDetails }
               : { link: ['/transactions'], label: copy.viewTransactions };
+      this.dirty.set(false);
+      if (this.asModal) this.close();
       this.toast.show(this.savedMessage(saved, copy), {
         actions: [
           {
@@ -338,7 +354,13 @@ export class QuickAddPage {
           {
             id: 'new',
             label: copy.newEntry,
-            run: () => this.focusToken.update((value) => value + 1),
+            // O modal fecha ao salvar; "Novo registro" o reabre no mesmo tipo.
+            run: () =>
+              this.asModal
+                ? void this.router.navigate(['/quick-add'], {
+                    queryParams: { mode: savedMode === DEFAULT_MODE ? null : savedMode },
+                  })
+                : this.focusToken.update((value) => value + 1),
           },
         ],
       });
@@ -378,7 +400,10 @@ export class QuickAddPage {
       default:
         return saved.shares.length > 0
           ? lending.shares.toast
-          : interpolate(copy.saved, { description: saved.description, amount });
+          : interpolate(copy.saved, {
+              description: transactionLabel(saved, this.t().transactions.types),
+              amount,
+            });
     }
   }
 
@@ -503,10 +528,24 @@ export class QuickAddPage {
       });
   }
 
+  /** Fechar (já confirmado, se havia algo digitado): tira o modal da URL e volta à tela de trás. */
+  protected close(): void {
+    void this.router.navigate(this.asModal ? [{ outlets: { modal: null } }] : ['/']);
+  }
+
+  /** Marca como sujo por qualquer digitação ou escolha dentro do formulário (eventos que sobem). */
+  protected markDirty(event: Event): void {
+    if (event.type === 'click') {
+      const target = event.target as HTMLElement | null;
+      if (!target?.closest('[role="option"], [role="radio"], [role="switch"], [role="checkbox"]'))
+        return;
+    }
+    this.dirty.set(true);
+  }
+
   protected setMode(mode: QuickAddMode): void {
     if (mode === this.mode()) return;
     void this.router.navigate([], {
-      relativeTo: this.route,
       queryParams: { mode: mode === DEFAULT_MODE ? null : mode },
       replaceUrl: true,
     });
