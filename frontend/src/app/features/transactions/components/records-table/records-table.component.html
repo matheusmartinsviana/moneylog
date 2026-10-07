@@ -50,6 +50,7 @@
     <li
       app-transaction-list-item
       [transaction]="tx"
+      [glyph]="true"
       [accountId]="accountId()"
       (open)="open.emit($event)"
     ></li>

@@ -60,12 +60,6 @@
     }
     @case ('ready') {
       @if (accounts.data(); as data) {
-        <div class="table-head" aria-hidden="true">
-          <span>{{ t().accounts.columns.name }}</span>
-          <span>{{ t().accounts.columns.institution }}</span>
-          <span class="table-head__balance">{{ t().accounts.columns.balance }}</span>
-          <span class="table-head__actions">{{ t().accounts.columns.actions }}</span>
-        </div>
         <ul class="list" data-cy="accounts-list">
           @for (account of data; track account.id) {
             <li

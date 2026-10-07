@@ -1,4 +1,7 @@
 @let a = account();
+<span class="row__glyph" aria-hidden="true" [attr.data-tone]="tone()">
+  <app-icon [name]="icon()" [size]="18" />
+</span>
 <div class="row__main">
   <a
     class="row__name"
@@ -8,15 +11,15 @@
     {{ a.name }}
   </a>
   <span class="row__type"><app-account-type-label [type]="a.type" /></span>
+  <span class="row__institution" [attr.data-cy]="'account-institution-' + a.id">{{
+    a.institution
+  }}</span>
   @if (a.uncovered) {
     <span class="row__uncovered" [attr.data-cy]="'account-uncovered-' + a.id">
       {{ t().accounts.uncovered }}
     </span>
   }
 </div>
-<span class="row__institution" [attr.data-cy]="'account-institution-' + a.id">{{
-  a.institution
-}}</span>
 <div class="row__balance">
   <span class="row__balance-label">{{ t().accounts.columns.balance }}</span>
   <span

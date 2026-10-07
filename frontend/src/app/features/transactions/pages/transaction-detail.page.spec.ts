@@ -294,6 +294,15 @@ describe('TransactionDetailPage', () => {
       expect(router.url).toBe('/transactions?type=EXPENSE');
     });
 
+    it('Dado o celular (tela cheia), quando uso "Voltar", então volta à lista mantendo os filtros', async () => {
+      const { router, fixture } = await setup(undefined, '/transactions/tx-1?type=EXPENSE');
+
+      await userEvent.click(screen.getByTestId('detail-back'));
+      await fixture.whenStable();
+
+      expect(router.url).toBe('/transactions?type=EXPENSE');
+    });
+
     it('Dado o diálogo de estorno aberto, quando aperto Esc, então fecha só o diálogo', async () => {
       const { router } = await setup();
       await userEvent.click(screen.getByTestId('void-open'));

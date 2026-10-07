@@ -6,7 +6,8 @@
   display: grid;
   align-content: start;
   gap: var(--space-5);
-  padding: var(--space-6) var(--space-4) var(--space-8);
+  padding: var(--space-3) var(--space-4) var(--space-8);
+  background-color: var(--color-surface);
 }
 
 .detail__header {
@@ -14,6 +15,31 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-3);
+}
+
+/* Celular: tela cheia com "Voltar" no topo (o X só existe no painel do desktop). */
+.detail__back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  width: fit-content;
+  min-height: 2.75rem;
+  margin-inline-start: calc(var(--space-2) * -1);
+  padding: 0 var(--space-2);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: none;
+  color: var(--color-accent);
+  font-weight: var(--weight-medium);
+}
+
+.detail__back:hover {
+  background-color: var(--color-surface-muted);
+}
+
+.detail__back:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .detail__title {
@@ -28,7 +54,7 @@
 }
 
 .detail__close {
-  display: grid;
+  display: none;
   place-items: center;
   flex: none;
   width: 2.5rem;
@@ -121,5 +147,13 @@
 
   .detail {
     padding: var(--space-8) var(--space-6);
+  }
+
+  .detail__back {
+    display: none;
+  }
+
+  .detail__close {
+    display: grid;
   }
 }

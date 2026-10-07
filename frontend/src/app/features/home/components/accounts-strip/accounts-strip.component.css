@@ -63,7 +63,7 @@
   width: 2.25rem;
   height: 2.25rem;
   margin-bottom: var(--space-2);
-  border-radius: 12px;
+  border-radius: var(--radius-control);
   background-color: var(--tile-bg);
   color: var(--tile-fg);
 }

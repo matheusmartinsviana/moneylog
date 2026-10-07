@@ -1,22 +1,57 @@
+/* Cartão Wallet (T213): glifo + nome/tipo/instituição, saldo grande à direita da mesma faixa, ações embaixo. */
 :host {
   display: grid;
   list-style: none;
 }
 
-/* Celular: card empilhado. */
 :host(.row) {
-  display: grid;
-  gap: var(--space-3);
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    'glyph main'
+    'balance balance'
+    'actions actions';
+  gap: var(--space-3) var(--space-3);
+  align-content: start;
   padding: var(--space-4);
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-card);
   background-color: var(--color-surface);
+  box-shadow: var(--shadow-1);
   list-style: none;
+}
+
+.row__glyph {
+  --tile-fg: var(--color-text-muted);
+  --tile-bg: var(--color-surface-muted);
+  display: grid;
+  grid-area: glyph;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-control);
+  background-color: var(--tile-bg);
+  color: var(--tile-fg);
+}
+
+.row__glyph[data-tone='accent'] {
+  --tile-fg: var(--color-accent);
+  --tile-bg: var(--color-accent-soft);
+}
+
+.row__glyph[data-tone='positive'] {
+  --tile-fg: var(--color-positive);
+  --tile-bg: var(--color-positive-soft);
+}
+
+.row__glyph[data-tone='warning'] {
+  --tile-fg: var(--color-warning);
+  --tile-bg: var(--color-warning-soft);
 }
 
 .row__main {
   display: grid;
-  gap: var(--space-1);
+  grid-area: main;
+  gap: 2px;
   min-width: 0;
 }
 
@@ -25,6 +60,10 @@
   font-weight: var(--weight-semibold);
   overflow-wrap: anywhere;
   text-decoration: none;
+}
+
+.row__name:hover {
+  text-decoration: underline;
 }
 
 .row__type,
@@ -39,6 +78,7 @@
 
 .row__balance {
   display: flex;
+  grid-area: balance;
   align-items: baseline;
   justify-content: space-between;
   gap: var(--space-3);
@@ -50,14 +90,20 @@
 }
 
 .row__balance-value {
-  font-size: var(--text-lg);
+  font-size: var(--text-xl);
   font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
   text-align: right;
+}
+
+.row__balance-value.is-negative {
+  color: var(--color-risk);
 }
 
 .row__actions {
   display: flex;
   flex-wrap: wrap;
+  grid-area: actions;
   align-items: center;
   gap: var(--space-2);
 }
@@ -66,31 +112,6 @@
   flex-basis: 100%;
   color: var(--color-text-muted);
   font-size: var(--text-xs);
-}
-
-/* Desktop: linha de tabela (nome/tipo · instituição · saldo · ações), valor à direita. */
-@media (width >= 768px) {
-  :host(.row) {
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1.5fr) minmax(8rem, 1fr) minmax(0, 2fr);
-    align-items: center;
-    padding: var(--space-3) var(--space-4);
-  }
-
-  .row__balance-label {
-    display: none;
-  }
-
-  .row__balance {
-    justify-content: flex-end;
-  }
-
-  .row__balance-value {
-    font-size: var(--text-md);
-  }
-
-  .row__actions {
-    justify-content: flex-end;
-  }
 }
 
 .row__uncovered {

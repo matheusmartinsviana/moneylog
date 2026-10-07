@@ -1,4 +1,8 @@
 <aside class="detail" aria-labelledby="detail-title" data-cy="transaction-detail">
+  <button type="button" class="detail__back" data-cy="detail-back" (click)="close()">
+    <app-icon name="chevronLeft" [size]="20" />
+    {{ t().transactions.detail.back }}
+  </button>
   <header class="detail__header">
     <h1 class="detail__title" id="detail-title" #heading tabindex="-1" data-cy="detail-title">
       {{ transaction()?.description ?? t().nav.transactions }}
