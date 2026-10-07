@@ -4204,7 +4204,8 @@ export interface components {
             target: components["schemas"]["AmountInput"];
             /** Format: date */
             deadline?: string | null;
-            priority: components["schemas"]["GoalPriority"];
+            /** @description Opcional (alinhado ao `GoalInput`); ausente mantém a prioridade atual da meta. */
+            priority?: components["schemas"]["GoalPriority"];
             description?: string | null;
             /** Format: int64 */
             version: number;
