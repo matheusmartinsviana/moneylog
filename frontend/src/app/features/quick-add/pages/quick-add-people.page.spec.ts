@@ -152,14 +152,47 @@ describe('QuickAddPage: pessoas e dívidas (Etapa 4)', () => {
       expect(field('loan-date')).toHaveValue('01/10/2026');
     });
 
-    it('Dado o Pix com valor digitado, então a dica leva a Emprestei com o valor', async () => {
-      await setup({ url: '/quick-add?mode=pix' });
+    it('Dado o Pix com o interruptor de empréstimo ligado, quando salvo, então grava LOAN_GIVEN com o valor e a data digitados, sem navegar', async () => {
+      const transactions = new TransactionsGatewayStub();
+      transactions.create$ = of(loanTransaction());
+      const { fixture, router } = await setup({ url: '/quick-add?mode=pix', transactions });
+
+      expect(screen.queryByTestId('pix-loan-link')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('entry-person')).not.toBeInTheDocument();
+      await userEvent.type(field('entry-amount'), '80,00');
+      await userEvent.click(screen.getByTestId('entry-loan'));
+      await pick('entry-person', 'person-1');
+      await userEvent.click(screen.getByTestId('form-save'));
+      await fixture.whenStable();
+
+      expect(transactions.creates).toHaveLength(1);
+      expect(transactions.creates[0]?.input).toEqual({
+        type: 'LOAN_GIVEN',
+        amount: '80.00',
+        date: todayIso(),
+        description: 'Empréstimo para João',
+        notes: null,
+        accountId: 'acc-nu',
+        newDebt: { personId: 'person-1', expectedDate: null, description: null },
+      });
+      expect(transactions.creates[0]?.key).toBeTruthy();
+      expect(router.url).toContain('/quick-add');
+    });
+
+    it('Dado o interruptor ligado sem pessoa, então nada é enviado; desligado, grava o Pix normal', async () => {
+      const { transactions, fixture } = await setup({ url: '/quick-add?mode=pix' });
 
       await userEvent.type(field('entry-amount'), '80,00');
+      await userEvent.type(field('entry-description'), 'Pix mercado');
+      await userEvent.click(screen.getByTestId('entry-loan'));
+      await userEvent.click(screen.getByTestId('form-save'));
+      expect(transactions.creates).toHaveLength(0);
 
-      expect(screen.getByTestId('pix-loan-link').getAttribute('href')).toContain(
-        'mode=loan&amount=80.00',
-      );
+      await userEvent.click(screen.getByTestId('entry-loan'));
+      await pick('entry-category', 'cat-food');
+      await userEvent.click(screen.getByTestId('form-save'));
+      await fixture.whenStable();
+      expect(transactions.creates[0]?.input).toMatchObject({ type: 'EXPENSE', method: 'PIX' });
     });
 
     it.each([

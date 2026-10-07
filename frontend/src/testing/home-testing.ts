@@ -3,6 +3,7 @@ import { Provider } from '@angular/core';
 import { provideCategoriesStub } from '~/testing/categories-testing';
 import { provideMonthlySummaryStub } from '~/testing/etapa5-testing';
 import { provideNotificationsStub } from '~/testing/notifications-testing';
+import { providePeopleStub } from '~/testing/people-testing';
 import { provideReportsStub } from '~/testing/reports-testing';
 import { provideTransactionsStub } from '~/testing/transactions-testing';
 
@@ -17,5 +18,6 @@ export function provideHomeSupportStubs(): Provider[] {
     ...provideTransactionsStub(),
     ...provideCategoriesStub(),
     ...provideNotificationsStub(),
+    ...providePeopleStub(),
   ];
 }

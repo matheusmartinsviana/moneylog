@@ -9,7 +9,6 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { Observable, startWith } from 'rxjs';
 
 import type { ChoiceOption } from '~/app/common/components/forms/choice-option';
@@ -18,6 +17,8 @@ import { MoneyInputComponent } from '~/app/common/components/forms/money-input/m
 import { SelectComponent } from '~/app/common/components/forms/select/select.component';
 import { SwitchComponent } from '~/app/common/components/forms/switch/switch.component';
 import { TextFieldComponent } from '~/app/common/components/forms/text-field/text-field.component';
+import { interpolate } from '~/app/common/i18n/interpolate';
+import { PersonFieldComponent } from '~/app/features/people/components/person-field/person-field.component';
 import { FormActionsComponent } from '~/app/features/quick-add/components/form-actions.component';
 import { requiredTrimmed } from '~/app/features/quick-add/components/requirements';
 import {
@@ -58,7 +59,7 @@ import type { PersonRef } from '~/util/debt';
     SwitchComponent,
     SharesFieldComponent,
     FormActionsComponent,
-    RouterLink,
+    PersonFieldComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './cash-entry-form.component.html',
@@ -93,6 +94,7 @@ export class CashEntryFormComponent extends TransactionFormBase {
       validators: [requiredTrimmed, Validators.maxLength(200)],
     }),
     categoryId: new FormControl<string | null>(null),
+    personId: new FormControl<string | null>(null),
     accountId: new FormControl<string | null>(null),
     date: new FormControl<string | null>(todayIso()),
     method: new FormControl<string | null>(null),
@@ -101,25 +103,22 @@ export class CashEntryFormComponent extends TransactionFormBase {
   private readonly formValue = toSignal(this.form.valueChanges.pipe(startWith(null)), {
     initialValue: null,
   });
-  /** Dica do Pix: leva ao "Emprestei" com o que já foi digitado (a tela valida os parâmetros). */
-  protected readonly loanLinkParams = computed(() => {
-    this.formValue();
-    const { amount, description, date } = this.form.getRawValue();
-    const params: Record<string, string> = { mode: 'loan' };
-    if (amount) params['amount'] = amount;
-    if (description.trim()) params['description'] = description.trim();
-    if (date) params['date'] = date;
-    return params;
-  });
-  protected readonly showLoanHint = computed(
+  /** Pix novo: o interruptor "É um empréstimo para uma pessoa" grava `LOAN_GIVEN` no lugar do Pix. */
+  protected readonly showLoanSwitch = computed(
     () => this.fixedMethod() === 'PIX' && this.initial() === null && this.type() === 'EXPENSE',
   );
+  protected readonly loan = new FormControl(false, { nonNullable: true });
+  private readonly loanOn = toSignal(this.loan.valueChanges.pipe(startWith(false)), {
+    initialValue: false,
+  });
+  protected readonly loaning = computed(() => this.showLoanSwitch() && this.loanOn());
   protected readonly split = new FormControl(false, { nonNullable: true });
   private readonly splitOn = toSignal(this.split.valueChanges.pipe(startWith(false)), {
     initialValue: false,
   });
   protected readonly showSplit = computed(
-    () => this.allowSplit() && this.type() === 'EXPENSE' && this.initial() === null,
+    () =>
+      this.allowSplit() && this.type() === 'EXPENSE' && this.initial() === null && !this.loaning(),
   );
   protected readonly splitting = computed(() => this.showSplit() && this.splitOn());
 
@@ -147,6 +146,26 @@ export class CashEntryFormComponent extends TransactionFormBase {
           control.setValue(accountId);
         }
       });
+    });
+    // Ligou o empréstimo: pede as pessoas; a pessoa passa a ser obrigatória e a descrição, opcional.
+    this.loan.valueChanges.subscribe((on) => {
+      const { personId, description, categoryId } = this.form.controls;
+      if (on) {
+        this.peopleNeeded.emit();
+        this.split.setValue(false);
+        categoryId.reset(null);
+        // A categoria não se aplica ao empréstimo (o campo some): desabilitada, não bloqueia o salvar.
+        categoryId.disable({ emitEvent: false });
+      } else {
+        personId.reset(null);
+        categoryId.enable({ emitEvent: false });
+      }
+      personId.setValidators(on ? [Validators.required] : []);
+      description.setValidators(
+        on ? [Validators.maxLength(200)] : [requiredTrimmed, Validators.maxLength(200)],
+      );
+      personId.updateValueAndValidity();
+      description.updateValueAndValidity();
     });
     // Ligou a divisão: pede as pessoas e abre a primeira parte; desligou: descarta as partes.
     this.split.valueChanges.subscribe((on) => {
@@ -195,6 +214,20 @@ export class CashEntryFormComponent extends TransactionFormBase {
           newDebt: { personId: share.personId ?? '', expectedDate: null, description: null },
         }))
       : [];
+    if (this.loaning()) {
+      const name = this.people().find((person) => person.id === value.personId)?.name ?? '';
+      return {
+        type: 'LOAN_GIVEN',
+        amount: value.amount ?? '',
+        date: value.date ?? todayIso(),
+        description:
+          value.description.trim() ||
+          interpolate(this.t().lending.loan.defaultDescription, { name }),
+        notes: null,
+        accountId: value.accountId ?? '',
+        newDebt: { personId: value.personId ?? '', expectedDate: null, description: null },
+      };
+    }
     return {
       type: this.type(),
       amount: value.amount ?? '',
@@ -212,5 +245,6 @@ export class CashEntryFormComponent extends TransactionFormBase {
     this.form.controls.amount.reset(null);
     this.form.controls.description.reset('');
     this.split.setValue(false);
+    this.loan.setValue(false);
   }
 }

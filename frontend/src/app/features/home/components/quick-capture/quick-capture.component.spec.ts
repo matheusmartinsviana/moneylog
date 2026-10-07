@@ -1,8 +1,10 @@
-import { provideRouter } from '@angular/router';
+import { TestBed } from '@angular/core/testing';
+import { provideRouter, Router } from '@angular/router';
 import { render, screen } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 
 import { pt } from '~/app/common/i18n/translations/pt';
+import { ToastService } from '~/app/common/services/toast.service';
 import { QuickCaptureComponent } from '~/app/features/home/components/quick-capture/quick-capture.component';
 import { AccountsListFacade } from '~/modules/accounts/core/facades/accounts-list.facade';
 import { anAccount, AccountsGatewayStub, provideAccountsStub } from '~/testing/accounts-testing';
@@ -12,6 +14,7 @@ import {
   provideCategoriesStub,
 } from '~/testing/categories-testing';
 import { provideI18nTesting } from '~/testing/i18n-testing';
+import { aPerson, PeopleGatewayStub, providePeopleStub } from '~/testing/people-testing';
 import {
   aTransaction,
   provideTransactionsStub,
@@ -30,6 +33,8 @@ async function setup(accountsList = [anAccount({ id: 'acc-1', name: 'Nubank' })]
   transactions.create$ = (await import('rxjs')).of(
     aTransaction({ description: 'almoço', amount: { amount: '42.90', currency: 'BRL' } }),
   );
+  const people = new PeopleGatewayStub();
+  people.people = [aPerson({ id: 'p-1', name: 'Irmã' })];
   const saved = vi.fn();
   const view = await render(QuickCaptureComponent, {
     providers: [
@@ -38,6 +43,7 @@ async function setup(accountsList = [anAccount({ id: 'acc-1', name: 'Nubank' })]
       provideAccountsStub(accounts),
       ...provideCategoriesStub(categories),
       provideTransactionsStub(transactions),
+      ...providePeopleStub(people),
       AccountsListFacade,
     ],
     on: { saved },
@@ -45,7 +51,7 @@ async function setup(accountsList = [anAccount({ id: 'acc-1', name: 'Nubank' })]
   view.fixture.componentRef.injector.get(AccountsListFacade).load('ACTIVE');
   await view.fixture.whenStable();
   view.fixture.detectChanges();
-  return { ...view, transactions, saved };
+  return { ...view, transactions, saved, people };
 }
 
 describe('QuickCaptureComponent (sem IA)', () => {
@@ -109,5 +115,65 @@ describe('QuickCaptureComponent (sem IA)', () => {
       '/accounts/new',
     );
     expect(screen.queryByTestId('quick-capture-form')).not.toBeInTheDocument();
+  });
+
+  it('Dado "Emprestei", quando informo valor e pessoa e salvo, então grava LOAN_GIVEN uma vez e avisa com ação "Ver dívida"', async () => {
+    const { transactions, saved } = await setup();
+    transactions.create$ = (await import('rxjs')).of(
+      aTransaction({
+        type: 'LOAN_GIVEN',
+        amount: { amount: '50.00', currency: 'BRL' },
+        debt: {
+          id: 'debt-1',
+          person: { id: 'p-1', name: 'Irmã' },
+          direction: 'RECEIVABLE',
+          status: 'OPEN',
+          principal: { amount: '50.00', currency: 'BRL' },
+          settled: { amount: '0.00', currency: 'BRL' },
+          outstanding: { amount: '50.00', currency: 'BRL' },
+          date: '2026-10-07',
+          expectedDate: null,
+          overdue: false,
+          description: null,
+        },
+      }),
+    );
+
+    await userEvent.type(await screen.findByTestId('capture-amount'), '50');
+    await userEvent.click(screen.getByTestId('capture-type-LOAN'));
+    expect(screen.queryByTestId('capture-description')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('capture-category')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByTestId('capture-person'));
+    await userEvent.click(await screen.findByTestId('capture-person-option-p-1'));
+    await userEvent.dblClick(screen.getByTestId('quick-capture-save'));
+
+    expect(transactions.creates).toHaveLength(1);
+    expect(transactions.creates[0]?.input).toMatchObject({
+      type: 'LOAN_GIVEN',
+      amount: '50.00',
+      accountId: 'acc-1',
+      newDebt: { personId: 'p-1', expectedDate: null, description: null },
+    });
+    expect(transactions.creates[0]?.key).toBeTruthy();
+    expect(saved).toHaveBeenCalledTimes(1);
+    const toast = TestBed.inject(ToastService).toasts()[0];
+    expect(toast?.message.replace(/\u00a0/g, ' ')).toBe(
+      'Empréstimo de R$ 50,00 para Irmã registrado.',
+    );
+    expect(toast?.actions[0]?.label).toBe(pt.quickAdd.toast.viewDebt);
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    toast?.actions[0]?.run();
+    expect(navigate).toHaveBeenCalledWith(['/debts', 'debt-1']);
+  });
+
+  it('Dado "Emprestei" sem pessoa, então nada é enviado e o erro aparece no campo', async () => {
+    const { transactions } = await setup();
+
+    await userEvent.type(await screen.findByTestId('capture-amount'), '50');
+    await userEvent.click(screen.getByTestId('capture-type-LOAN'));
+    await userEvent.click(screen.getByTestId('quick-capture-save'));
+
+    expect(transactions.creates).toHaveLength(0);
+    expect(screen.getByTestId('capture-person')).toHaveAttribute('aria-invalid', 'true');
   });
 });

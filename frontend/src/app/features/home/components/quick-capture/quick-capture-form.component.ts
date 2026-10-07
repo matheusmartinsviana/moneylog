@@ -12,7 +12,7 @@ import {
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { startWith } from 'rxjs';
+import { Observable, startWith } from 'rxjs';
 
 import type { ChoiceOption } from '~/app/common/components/forms/choice-option';
 import { DatePickerComponent } from '~/app/common/components/forms/date-picker/date-picker.component';
@@ -20,6 +20,8 @@ import { MoneyInputComponent } from '~/app/common/components/forms/money-input/m
 import { SegmentedControlComponent } from '~/app/common/components/forms/segmented-control/segmented-control.component';
 import { SelectComponent } from '~/app/common/components/forms/select/select.component';
 import { TextFieldComponent } from '~/app/common/components/forms/text-field/text-field.component';
+import { interpolate } from '~/app/common/i18n/interpolate';
+import { PersonFieldComponent } from '~/app/features/people/components/person-field/person-field.component';
 import { requiredTrimmed } from '~/app/features/quick-add/components/requirements';
 import { TransactionFormBase } from '~/app/features/quick-add/components/transaction-form.base';
 import type { Account } from '~/modules/accounts/core/types/account';
@@ -27,8 +29,11 @@ import { ACCOUNT_CURRENCY } from '~/modules/accounts/core/types/account-input';
 import type { Category } from '~/modules/categories/core/types/category';
 import type { TransactionInput } from '~/modules/transactions/core/types/transaction-input';
 import { todayIso } from '~/util/date';
+import type { PersonRef } from '~/util/debt';
 
 export type CaptureType = 'EXPENSE' | 'INCOME';
+/** O que o cartão registra: despesa, receita ou dinheiro emprestado a uma pessoa. */
+type FormType = CaptureType | 'LOAN';
 
 /**
  * Formulário do Quick Capture (presentational, sem IA): valor, descrição e Salvar sempre visíveis; tipo,
@@ -46,6 +51,7 @@ export type CaptureType = 'EXPENSE' | 'INCOME';
     SelectComponent,
     DatePickerComponent,
     SegmentedControlComponent,
+    PersonFieldComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './quick-capture-form.component.html',
@@ -63,6 +69,10 @@ export class QuickCaptureFormComponent extends TransactionFormBase {
   readonly defaultAccountId = input<string | null>(null);
   /** Data padrão: a do backend (`summary.asOf`); sem ela, hoje no calendário local. */
   readonly defaultDate = input<string | null>(null);
+  readonly people = input<readonly PersonRef[]>([]);
+  readonly createPerson = input<((name: string) => Observable<PersonRef>) | null>(null);
+  /** Escolheu "Emprestei": quem hospeda carrega as pessoas se ainda não tem. */
+  readonly peopleNeeded = output<void>();
   readonly expanded = input(false);
   readonly expand = output<void>();
 
@@ -76,6 +86,7 @@ export class QuickCaptureFormComponent extends TransactionFormBase {
       validators: [requiredTrimmed, Validators.maxLength(200)],
     }),
     categoryId: new FormControl<string | null>(null, [Validators.required]),
+    personId: new FormControl<string | null>(null),
     accountId: new FormControl<string | null>(null, [Validators.required]),
     date: new FormControl<string | null>(todayIso()),
   });
@@ -86,13 +97,16 @@ export class QuickCaptureFormComponent extends TransactionFormBase {
       initialValue: this.form.getRawValue(),
     },
   );
-  protected readonly type = computed<CaptureType>(() =>
-    this.values().type === 'INCOME' ? 'INCOME' : 'EXPENSE',
-  );
+  protected readonly type = computed<FormType>(() => {
+    const type = this.values().type;
+    return type === 'INCOME' || type === 'LOAN' ? type : 'EXPENSE';
+  });
+  protected readonly loaning = computed(() => this.type() === 'LOAN');
 
   protected readonly typeOptions = computed<readonly ChoiceOption[]>(() => [
     { value: 'EXPENSE', label: this.t().dashboard.quickCapture.expense },
     { value: 'INCOME', label: this.t().dashboard.quickCapture.income },
+    { value: 'LOAN', label: this.t().dashboard.quickCapture.loan },
   ]);
   protected readonly accountOptions = computed<readonly ChoiceOption[]>(() =>
     this.accounts().map((account) => ({ value: account.id, label: account.name })),
@@ -107,8 +121,13 @@ export class QuickCaptureFormComponent extends TransactionFormBase {
   protected readonly moreParams = computed(() => {
     const value = this.values();
     const params: Record<string, string> = {
-      mode: this.type() === 'INCOME' ? 'income' : 'expense',
+      mode: { INCOME: 'income', LOAN: 'loan', EXPENSE: 'expense' }[this.type()],
     };
+    if (this.type() === 'LOAN') {
+      const { personId, date } = this.values();
+      if (personId) params['personId'] = personId;
+      if (date) params['date'] = date;
+    }
     const amount = (value.amount ?? '').trim();
     if (/^\d+(\.\d{1,2})?$/.test(amount)) params['amount'] = amount;
     const description = (value.description ?? '').trim();
@@ -134,7 +153,20 @@ export class QuickCaptureFormComponent extends TransactionFormBase {
       });
     });
     // Trocou receita por despesa (ou o contrário): a categoria escolhida deixa de valer.
-    this.form.controls.type.valueChanges.subscribe(() => this.form.controls.categoryId.reset(null));
+    this.form.controls.type.valueChanges.subscribe((type) => {
+      const { categoryId, personId, description } = this.form.controls;
+      const loan = type === 'LOAN';
+      categoryId.reset(null);
+      personId.reset(null);
+      // Emprestei pede a pessoa; categoria e descrição não se aplicam (a descrição vem do backend/padrão).
+      categoryId.setValidators(loan ? [] : [Validators.required]);
+      personId.setValidators(loan ? [Validators.required] : []);
+      description.setValidators(
+        loan ? [Validators.maxLength(200)] : [requiredTrimmed, Validators.maxLength(200)],
+      );
+      for (const control of [categoryId, personId, description]) control.updateValueAndValidity();
+      if (loan) this.peopleNeeded.emit();
+    });
   }
 
   protected override onSubmit(): void {
@@ -152,8 +184,20 @@ export class QuickCaptureFormComponent extends TransactionFormBase {
 
   protected build(): TransactionInput {
     const value = this.form.getRawValue();
+    if (this.type() === 'LOAN') {
+      const name = this.people().find((person) => person.id === value.personId)?.name ?? '';
+      return {
+        type: 'LOAN_GIVEN',
+        amount: value.amount ?? '',
+        date: value.date ?? todayIso(),
+        description: interpolate(this.t().lending.loan.defaultDescription, { name }),
+        notes: null,
+        accountId: value.accountId ?? '',
+        newDebt: { personId: value.personId ?? '', expectedDate: null, description: null },
+      };
+    }
     return {
-      type: this.type(),
+      type: this.type() as CaptureType,
       amount: value.amount ?? '',
       date: value.date ?? todayIso(),
       description: value.description.trim(),
@@ -168,6 +212,7 @@ export class QuickCaptureFormComponent extends TransactionFormBase {
     this.form.controls.amount.reset(null);
     this.form.controls.description.reset('');
     this.form.controls.categoryId.reset(null);
+    this.form.controls.personId.reset(null);
     this.form.markAsPristine();
     this.form.markAsUntouched();
   }

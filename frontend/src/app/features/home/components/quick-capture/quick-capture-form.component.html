@@ -8,17 +8,19 @@
       [label]="t().entryForm.amount"
       (focusin)="expand.emit()"
     />
-    <app-text-field
-      class="qc__description"
-      formControlName="description"
-      fieldId="capture-description"
-      autocomplete="off"
-      enterkeyhint="done"
-      [maxlength]="200"
-      [placeholder]="t().dashboard.quickCapture.descriptionPlaceholder"
-      [label]="t().entryForm.description"
-      (focusin)="expand.emit()"
-    />
+    @if (!loaning()) {
+      <app-text-field
+        class="qc__description"
+        formControlName="description"
+        fieldId="capture-description"
+        autocomplete="off"
+        enterkeyhint="done"
+        [maxlength]="200"
+        [placeholder]="t().dashboard.quickCapture.descriptionPlaceholder"
+        [label]="t().entryForm.description"
+        (focusin)="expand.emit()"
+      />
+    }
     <button
       type="submit"
       class="button button--primary qc__save"
@@ -40,12 +42,21 @@
           [options]="typeOptions()"
           [label]="t().dashboard.quickCapture.typeLabel"
         />
-        <app-select
-          formControlName="categoryId"
-          fieldId="capture-category"
-          [options]="categoryOptions()"
-          [label]="t().entryForm.category"
-        />
+        @if (loaning()) {
+          <app-person-field
+            [control]="form.controls.personId"
+            fieldId="capture-person"
+            [people]="people()"
+            [createPerson]="createPerson()"
+          />
+        } @else {
+          <app-select
+            formControlName="categoryId"
+            fieldId="capture-category"
+            [options]="categoryOptions()"
+            [label]="t().entryForm.category"
+          />
+        }
         <app-select
           formControlName="accountId"
           fieldId="capture-account"

@@ -16,14 +16,24 @@
     fieldId="entry-description"
     autocomplete="off"
     [maxlength]="200"
+    [mandatory]="!loaning()"
     [label]="t().entryForm.description"
   />
-  <app-select
-    formControlName="categoryId"
-    fieldId="entry-category"
-    [options]="categoryOptions()"
-    [label]="t().entryForm.category"
-  />
+  @if (loaning()) {
+    <app-person-field
+      [control]="form.controls.personId"
+      fieldId="entry-person"
+      [people]="people()"
+      [createPerson]="createPerson()"
+    />
+  } @else {
+    <app-select
+      formControlName="categoryId"
+      fieldId="entry-category"
+      [options]="categoryOptions()"
+      [label]="t().entryForm.category"
+    />
+  }
   <app-select
     formControlName="accountId"
     fieldId="entry-account"
@@ -37,6 +47,15 @@
       fieldId="entry-method"
       [options]="methodOptions()"
       [label]="t().entryForm.method"
+    />
+  }
+
+  @if (showLoanSwitch()) {
+    <app-switch
+      [formControl]="loan"
+      fieldId="entry-loan"
+      [label]="t().entryForm.pixLoanToggle"
+      [hint]="t().entryForm.pixLoanToggleHint"
     />
   }
 
@@ -55,19 +74,6 @@
         [currency]="currency"
       />
     }
-  }
-
-  @if (showLoanHint()) {
-    <p class="form__help" data-cy="pix-loan-hint">
-      {{ t().entryForm.pixLoanHint }}
-      <a
-        class="form__link"
-        data-cy="pix-loan-link"
-        routerLink="/quick-add"
-        [queryParams]="loanLinkParams()"
-        >{{ t().entryForm.pixLoanLink }}</a
-      >
-    </p>
   }
 
   <app-form-actions

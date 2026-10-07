@@ -23,51 +23,59 @@
     </a>
   </nav>
 
-  @if (!creating()) {
-    <div>
-      <button
-        type="button"
-        class="button button--primary"
-        data-cy="categories-add"
-        (click)="startCreate()"
-      >
-        {{ t().categories.add }}
-      </button>
-    </div>
-  } @else {
-    <form
-      class="create surface"
-      (submit)="$event.preventDefault(); submitCreate()"
-      novalidate
-      data-cy="categories-create-form"
+  <div>
+    <button
+      type="button"
+      class="button button--primary"
+      data-cy="categories-add"
+      (click)="startCreate()"
     >
-      <app-text-field
-        class="create__field"
-        [formControl]="newName"
-        fieldId="category-new-name"
-        [label]="t().categories.newName"
-        [maxlength]="maxLength"
-        autocomplete="off"
-      />
-      <div class="create__actions">
-        <button
-          type="button"
-          class="button"
-          data-cy="categories-create-cancel"
-          (click)="cancelCreate()"
-        >
-          {{ t().categories.cancel }}
-        </button>
-        <button
-          type="submit"
-          class="button button--primary"
-          data-cy="categories-create-save"
-          [disabled]="busy()"
-        >
-          {{ t().categories.create }}
-        </button>
-      </div>
-    </form>
+      {{ t().categories.add }}
+    </button>
+  </div>
+  @if (creating()) {
+    <app-form-modal
+      #modal
+      [heading]="t().categories.add"
+      [dirty]="newNameDirty()"
+      [busy]="busy()"
+      (closed)="cancelCreate()"
+    >
+      <form
+        class="create"
+        (submit)="$event.preventDefault(); submitCreate()"
+        novalidate
+        data-cy="categories-create-form"
+      >
+        <app-text-field
+          class="create__field"
+          [formControl]="newName"
+          fieldId="category-new-name"
+          [label]="t().categories.newName"
+          [maxlength]="maxLength"
+          autocomplete="off"
+          data-autofocus
+        />
+        <div class="create__actions">
+          <button
+            type="button"
+            class="button"
+            data-cy="categories-create-cancel"
+            (click)="modal.requestClose()"
+          >
+            {{ t().categories.cancel }}
+          </button>
+          <button
+            type="submit"
+            class="button button--primary"
+            data-cy="categories-create-save"
+            [disabled]="busy()"
+          >
+            {{ t().categories.create }}
+          </button>
+        </div>
+      </form>
+    </app-form-modal>
   }
 
   @switch (categories.state().status) {

@@ -17,8 +17,10 @@ import { ConfirmDialogComponent } from '~/app/common/components/confirm-dialog/c
 import { DisclosureComponent } from '~/app/common/components/disclosure/disclosure.component';
 import { EmptyStateComponent } from '~/app/common/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '~/app/common/components/error-state/error-state.component';
+import { FormModalComponent } from '~/app/common/components/form-modal/form-modal.component';
 import { TextFieldComponent } from '~/app/common/components/forms/text-field/text-field.component';
 import { PageLayoutComponent } from '~/app/common/components/page-layout/page-layout.component';
+import { dirtySignal } from '~/app/common/forms/dirty-signal';
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { interpolate } from '~/app/common/i18n/interpolate';
 import { problemMessage } from '~/app/common/i18n/problem-message';
@@ -52,6 +54,7 @@ type Action =
     EmptyStateComponent,
     ErrorStateComponent,
     ConfirmDialogComponent,
+    FormModalComponent,
     TextFieldComponent,
     CategoryRowComponent,
   ],
@@ -82,6 +85,7 @@ export class CategoriesPage {
     nonNullable: true,
     validators: [Validators.required, Validators.maxLength(CATEGORY_NAME_MAX)],
   });
+  protected readonly newNameDirty = dirtySignal(this.newName);
 
   protected readonly archivedOpen = signal(false);
   protected readonly archivedLabel = computed(() =>

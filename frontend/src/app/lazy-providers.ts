@@ -28,6 +28,7 @@ export const HOME_PROVIDERS: Provider[] = [
   provideDashboard(),
   provideMonthlySummary(),
   provideGoals(),
+  providePeople(),
 ];
 export const GOALS_PROVIDERS: Provider[] = [provideGoals()];
 export const NOTES_PROVIDERS: Provider[] = [

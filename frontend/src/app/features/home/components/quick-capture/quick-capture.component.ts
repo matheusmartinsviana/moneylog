@@ -6,6 +6,7 @@ import {
   effect,
   ElementRef,
   inject,
+  Injector,
   input,
   OnInit,
   output,
@@ -13,8 +14,8 @@ import {
   untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { Router, RouterLink } from '@angular/router';
+import { forkJoin, Observable, tap } from 'rxjs';
 
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { interpolate } from '~/app/common/i18n/interpolate';
@@ -27,8 +28,10 @@ import {
 import { AccountsListFacade } from '~/modules/accounts/core/facades/accounts-list.facade';
 import { CategoriesFacade } from '~/modules/categories/core/facades/categories.facade';
 import type { Category } from '~/modules/categories/core/types/category';
+import { PeopleListFacade } from '~/modules/people/core/facades/people-list.facade';
 import { TransactionFormFacade } from '~/modules/transactions/core/facades/transaction-form.facade';
 import type { TransactionInput } from '~/modules/transactions/core/types/transaction-input';
+import type { PersonRef } from '~/util/debt';
 import { readLastUsedAccount, writeLastUsedAccount } from '~/util/last-used-account';
 import { formatMoney } from '~/util/money';
 
@@ -44,7 +47,7 @@ type CategoriesState = 'loading' | 'error' | 'ready';
 @Component({
   selector: 'app-quick-capture',
   imports: [RouterLink, QuickCaptureFormComponent],
-  providers: [TransactionFormFacade],
+  providers: [TransactionFormFacade, PeopleListFacade],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './quick-capture.component.html',
   styleUrl: './quick-capture.component.css',
@@ -55,6 +58,12 @@ export class QuickCaptureComponent implements OnInit {
   private readonly accountsFacade = inject(AccountsListFacade);
   private readonly categoriesFacade = inject(CategoriesFacade);
   private readonly toast = inject(ToastService);
+  private readonly router = inject(Router);
+  private readonly injector = inject(Injector);
+  /** Resolvida só quando "Emprestei" é usado: o Início não paga a leitura de pessoas antes. */
+  private get peopleFacade(): PeopleListFacade {
+    return this.injector.get(PeopleListFacade);
+  }
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly bus = inject(QuickCaptureBus);
   /** Pedidos anteriores à criação do cartão não valem (a ação rápida pode ter sido usada em outra tela). */
@@ -81,6 +90,8 @@ export class QuickCaptureComponent implements OnInit {
   protected readonly resetToken = signal(0);
   protected readonly expenseCategories = signal<readonly Category[]>([]);
   protected readonly incomeCategories = signal<readonly Category[]>([]);
+  protected readonly people = signal<readonly PersonRef[]>([]);
+  private peopleLoaded = false;
   protected readonly categoriesState = signal<CategoriesState>('loading');
   private readonly lastUsed = signal<string | null>(readLastUsedAccount());
   private lastAccountId = '';
@@ -117,12 +128,32 @@ export class QuickCaptureComponent implements OnInit {
       }
       this.resetToken.update((value) => value + 1);
       this.collapse();
-      this.toast.show(
-        interpolate(this.t().quickAdd.toast.saved, {
-          description: saved.description,
-          amount: formatMoney(saved.amount),
-        }),
-      );
+      if (saved.type === 'LOAN_GIVEN' && saved.debt) {
+        // Emprestar: valor e pessoa vêm da resposta do backend; o aviso leva à dívida criada.
+        const debtId = saved.debt.id;
+        this.toast.show(
+          interpolate(this.t().lending.loan.toast, {
+            amount: formatMoney(saved.amount),
+            name: saved.debt.person.name,
+          }),
+          {
+            actions: [
+              {
+                id: 'view-debt',
+                label: this.t().quickAdd.toast.viewDebt,
+                run: () => void this.router.navigate(['/debts', debtId]),
+              },
+            ],
+          },
+        );
+      } else {
+        this.toast.show(
+          interpolate(this.t().quickAdd.toast.saved, {
+            description: saved.description,
+            amount: formatMoney(saved.amount),
+          }),
+        );
+      }
       this.saved.emit();
     });
   }
@@ -147,6 +178,29 @@ export class QuickCaptureComponent implements OnInit {
         error: () => this.categoriesState.set('error'),
       });
   }
+
+  /** Pessoas ativas, só quando "Emprestei" é escolhido (e de novo depois de uma falha). */
+  protected loadPeople(): void {
+    if (this.peopleLoaded) return;
+    this.peopleLoaded = true;
+    this.peopleFacade
+      .loadAll('ACTIVE')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (list) => this.people.set(list.map(({ id, name }) => ({ id, name }))),
+        error: () => (this.peopleLoaded = false),
+      });
+  }
+
+  /** Cria a pessoa antes da dívida e a põe na lista: a resposta do backend é a escolhida. */
+  protected readonly createPerson = (name: string): Observable<PersonRef> =>
+    this.peopleFacade
+      .create({ name, notes: null })
+      .pipe(
+        tap((person) =>
+          this.people.update((list) => [...list, { id: person.id, name: person.name }]),
+        ),
+      );
 
   protected retry(): void {
     this.loadCategories();
