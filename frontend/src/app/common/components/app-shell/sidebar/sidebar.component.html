@@ -1,70 +1,115 @@
-<div class="sidebar" data-cy="sidebar">
-  <!-- Marca, "Novo registro", grupos e perfil ficam dentro do único landmark da sidebar (axe `region`). -->
+<div class="sidebar" [class.is-expanded]="expanded()" data-cy="sidebar">
+  <!-- Marca, "Novo registro", seções e rodapé ficam dentro do único landmark da sidebar (axe `region`). -->
   <nav class="sidebar__nav" [attr.aria-label]="t().shell.primaryNavigation">
-    <a
-      class="sidebar__brand"
-      routerLink="/"
-      [appTooltip]="collapsed() ? t().shell.brand : null"
-      appTooltipSide="end"
-      [appTooltipDescribes]="false"
-      data-cy="sidebar-brand"
-    >
-      <!-- Espaço reservado para o logo (ainda não definido). Não colocar marca aqui sem decisão do dono. -->
-      <span class="sidebar__logo-slot" aria-hidden="true"></span>
-      <span class="sidebar__label sidebar__brand-name">{{ t().shell.brand }}</span>
-    </a>
-
-    <a
-      class="sidebar__link sidebar__quick-add"
-      [routerLink]="quickAdd.path"
-      routerLinkActive="is-active"
-      ariaCurrentWhenActive="page"
-      [appTooltip]="collapsed() ? t().nav[quickAdd.key] : null"
-      appTooltipSide="end"
-      [appTooltipDescribes]="false"
-      data-cy="sidebar-quickAdd"
-    >
-      <app-icon [name]="quickAdd.icon" />
-      <span class="sidebar__label">{{ t().nav[quickAdd.key] }}</span>
-    </a>
-
-    @for (group of groups; track group.key) {
-      <!-- O título do grupo não é focável nem link: nomeia o grupo (role=group + aria-labelledby). -->
-      <div
-        class="sidebar__group"
-        role="group"
-        [attr.aria-labelledby]="'sidebar-group-' + group.key"
-        [attr.data-cy]="'sidebar-group-' + group.key"
+    <div class="sidebar__top">
+      <a class="sidebar__link sidebar__brand" routerLink="/" data-cy="sidebar-brand">
+        <!-- Espaço reservado do logo (ainda não definido). Não colocar marca aqui sem decisão do dono. -->
+        <!-- prettier-ignore -->
+        <span class="sidebar__sq sidebar__sq--brand"><span class="sidebar__logo-slot" aria-hidden="true"></span></span>
+        <span class="sidebar__label sidebar__brand-name">{{ t().shell.brand }}</span>
+      </a>
+      <button
+        type="button"
+        class="sidebar__link sidebar__toggle"
+        [attr.aria-expanded]="expanded()"
+        [attr.aria-label]="expanded() ? t().shell.sidebarCollapse : t().shell.sidebarExpand"
+        [appTooltip]="expanded() ? null : t().shell.sidebarExpand"
+        appTooltipSide="end"
+        [appTooltipDescribes]="false"
+        data-cy="sidebar-toggle"
+        (click)="toggle()"
       >
-        <p class="sidebar__group-title" [id]="'sidebar-group-' + group.key">
-          {{ t().nav.groups[group.key] }}
-        </p>
-        <ul class="sidebar__list">
-          @for (item of group.items; track item.key) {
-            <li>
-              <a
-                class="sidebar__link"
-                [routerLink]="item.path"
-                routerLinkActive="is-active"
-                [routerLinkActiveOptions]="item.activeOptions"
-                ariaCurrentWhenActive="page"
-                [appTooltip]="collapsed() ? t().nav[item.key] : null"
-                appTooltipSide="end"
-                [appTooltipDescribes]="false"
-                [attr.data-cy]="'sidebar-' + item.key"
-              >
-                <app-icon [name]="item.icon" />
-                <span class="sidebar__label">{{ t().nav[item.key] }}</span>
-              </a>
-            </li>
-          }
-        </ul>
-      </div>
-    }
+        <span class="sidebar__sq">
+          <app-icon [name]="expanded() ? 'chevronLeft' : 'chevronRight'" [size]="18" />
+        </span>
+        @if (expanded()) {
+          <span class="sidebar__label" aria-hidden="true">{{ t().shell.sidebarCollapse }}</span>
+        }
+      </button>
+    </div>
 
-    <!-- Rodapé: só avatar genérico + menu (Configurações, Sair). Sem seletor de workspace e sem nome (M12, D4). -->
+    <div class="sidebar__scroll" data-cy="sidebar-scroll">
+      <a
+        class="sidebar__link sidebar__quick-add"
+        [routerLink]="quickAdd.path"
+        routerLinkActive="is-active"
+        ariaCurrentWhenActive="page"
+        [appTooltip]="expanded() ? null : t().nav[quickAdd.key]"
+        appTooltipSide="end"
+        [appTooltipDescribes]="false"
+        data-cy="sidebar-quickAdd"
+      >
+        <span class="sidebar__sq sidebar__sq--add"
+          ><app-icon [name]="quickAdd.icon" [size]="20"
+        /></span>
+        <span class="sidebar__label">{{ t().nav[quickAdd.key] }}</span>
+      </a>
+
+      <ul class="sidebar__list" data-cy="sidebar-main">
+        @for (item of items; track item.key) {
+          <li>
+            <a
+              class="sidebar__link"
+              [routerLink]="item.path"
+              routerLinkActive="is-active"
+              [routerLinkActiveOptions]="item.activeOptions"
+              ariaCurrentWhenActive="page"
+              [appTooltip]="expanded() ? null : t().nav[item.key]"
+              appTooltipSide="end"
+              [appTooltipDescribes]="false"
+              [attr.data-cy]="'sidebar-' + item.key"
+            >
+              <span class="sidebar__sq"><app-icon [name]="item.icon" [size]="20" /></span>
+              <span class="sidebar__label">{{ t().nav[item.key] }}</span>
+            </a>
+          </li>
+        }
+        <li>
+          <a
+            class="sidebar__link"
+            [routerLink]="more.path"
+            routerLinkActive="is-active"
+            ariaCurrentWhenActive="page"
+            [appTooltip]="expanded() ? null : t().nav.more"
+            appTooltipSide="end"
+            [appTooltipDescribes]="false"
+            data-cy="sidebar-more"
+          >
+            <span class="sidebar__sq"><app-icon [name]="more.icon" [size]="20" /></span>
+            <span class="sidebar__label">{{ t().nav.more }}</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Rodapé fixo: Configurações e Sair nunca saem da tela. -->
     <div class="sidebar__footer">
-      <app-profile-menu cy="sidebar-profile" align="start" />
+      <a
+        class="sidebar__link"
+        [routerLink]="settings.path"
+        routerLinkActive="is-active"
+        ariaCurrentWhenActive="page"
+        [appTooltip]="expanded() ? null : t().nav.settings"
+        appTooltipSide="end"
+        [appTooltipDescribes]="false"
+        data-cy="sidebar-settings"
+      >
+        <span class="sidebar__sq"><app-icon [name]="settings.icon" [size]="20" /></span>
+        <span class="sidebar__label">{{ t().nav.settings }}</span>
+      </a>
+      <button
+        type="button"
+        class="sidebar__link"
+        [attr.aria-label]="t().header.profile.signOut"
+        [appTooltip]="expanded() ? null : t().header.profile.signOut"
+        appTooltipSide="end"
+        [appTooltipDescribes]="false"
+        data-cy="sidebar-signOut"
+        (click)="signOut()"
+      >
+        <span class="sidebar__sq"><app-icon name="logout" [size]="20" /></span>
+        <span class="sidebar__label" aria-hidden="true">{{ t().header.profile.signOut }}</span>
+      </button>
     </div>
   </nav>
 </div>

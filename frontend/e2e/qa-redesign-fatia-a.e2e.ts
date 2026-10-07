@@ -12,7 +12,6 @@ import {
   ROUTES,
   runAxe,
   seedPreferences,
-  SIDEBAR_ORDER,
   test,
   waitForApp,
 } from './support';
@@ -164,12 +163,12 @@ test.describe('foco, teclado e menu do avatar (desktop)', () => {
     await page.setViewportSize({ width: 1280, height: 800 });
   });
 
-  test('ordem de Tab: skip-link, marca, sidebar na ordem dos grupos, avatar, busca, sino, ações rápidas, conteúdo', async ({
+  test('ordem de Tab: skip-link, trilho (marca, alternar, novo registro, essenciais, Mais, Configurações, Sair), busca, tema, sino, avatar, ações rápidas', async ({
     page,
   }) => {
     await open(page, '/');
     const seen: string[] = [];
-    for (let i = 0; i < 3 + SIDEBAR_ORDER.length + 1 + 1 + 1 + 4; i++) {
+    for (let i = 0; i < 1 + 14 + 4 + 4; i++) {
       await page.keyboard.press('Tab');
       seen.push(
         await page.evaluate(() => document.activeElement?.getAttribute('data-cy') ?? 'SEM-DATA-CY'),
@@ -178,12 +177,24 @@ test.describe('foco, teclado e menu do avatar (desktop)', () => {
     expect(seen).toEqual([
       'skip-to-content',
       'sidebar-brand',
+      'sidebar-toggle',
       'sidebar-quickAdd',
-      ...SIDEBAR_ORDER.map((key) => `sidebar-${key}`),
-      'sidebar-profile',
-      // A busca global (T209) e o sino de notificações vêm no cabeçalho, antes das ações rápidas.
+      'sidebar-home',
+      'sidebar-transactions',
+      'sidebar-accounts',
+      'sidebar-cards',
+      'sidebar-goals',
+      'sidebar-planning',
+      'sidebar-people',
+      'sidebar-notes',
+      'sidebar-more',
+      'sidebar-settings',
+      'sidebar-signOut',
+      // Cabeçalho: busca, tema, sino e avatar, antes das ações rápidas.
       'global-search-input',
+      'header-theme-toggle',
       'header-bell',
+      'header-profile',
       'header-action-expense',
       'header-action-income',
       'header-action-transfer',

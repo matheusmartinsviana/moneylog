@@ -109,8 +109,8 @@
   place-items: center;
   width: 2.75rem;
   height: 2.75rem;
-  border: var(--border-width) solid var(--color-control-border);
-  border-radius: var(--radius-control);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-icon);
   background-color: var(--color-surface);
   color: var(--color-text);
   cursor: pointer;

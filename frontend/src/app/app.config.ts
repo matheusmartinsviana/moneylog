@@ -11,6 +11,7 @@ import {
   TitleStrategy,
   withComponentInputBinding,
   withInMemoryScrolling,
+  withViewTransitions,
 } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
 
@@ -18,6 +19,7 @@ import { routes } from '~/app/app.routes';
 import { provideI18n } from '~/app/common/i18n/i18n.providers';
 import { authInterceptor } from '~/app/common/interceptors/auth.interceptor';
 import { unauthorizedInterceptor } from '~/app/common/interceptors/unauthorized.interceptor';
+import { motionEnabled } from '~/app/common/motion/motion';
 import { I18nTitleStrategy } from '~/app/common/services/i18n-title.strategy';
 import { provideTheme } from '~/app/common/services/theme.providers';
 import { provideDemoMode } from '~/app/config/demo-mode';
@@ -45,6 +47,13 @@ export const appConfig: ApplicationConfig = {
       routes,
       withComponentInputBinding(),
       withInMemoryScrolling({ scrollPositionRestoration: 'top' }),
+      // Troca de página com cross-fade só no <main> (`.m-page`); sem animar o primeiro carregamento nem com movimento desligado.
+      withViewTransitions({
+        skipInitialTransition: true,
+        onViewTransitionCreated: ({ transition }) => {
+          if (!motionEnabled()) transition.skipTransition();
+        },
+      }),
     ),
     { provide: TitleStrategy, useExisting: I18nTitleStrategy },
     provideI18n(),

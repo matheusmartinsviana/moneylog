@@ -1,116 +1,126 @@
 :host {
   display: block;
   height: 100%;
+  min-height: 0;
 }
 
-/* O fundo (surface-muted) e a borda ficam na coluna da janela (`.shell__aside`): a sidebar só rola por dentro. */
+/* O painel (superfície, borda e raio) fica na coluna do shell (`.shell__aside`). */
 .sidebar {
   height: 100%;
-  padding: var(--space-4) var(--space-3);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  /* O avatar fixo no fim cobriria o item rolado até a borda (foco por teclado): reserva o espaço dele. */
-  scroll-padding-block-end: 5.5rem;
+  min-height: 0;
 }
 
 .sidebar__nav {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  min-height: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: var(--space-3) var(--space-2);
 }
 
-.sidebar__brand {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-height: 2.5rem;
-  margin-bottom: var(--space-2);
-  padding: 0 var(--space-3);
-  border-radius: var(--radius-control);
-  color: var(--color-text);
-  font-weight: var(--weight-semibold);
-  letter-spacing: -0.01em;
-  text-decoration: none;
+.sidebar__top,
+.sidebar__footer {
+  display: grid;
+  flex: none;
+  gap: var(--space-1);
 }
 
 /*
- * Espaço reservado do logo: vazio de propósito até o dono definir a marca. Enquanto vazio, não ocupa largura
- * (o nome alinha à esquerda com os ícones dos itens em vez de ficar recuado); quando houver logo, o espaço
- * de 24 px volta. Recolhida, o espaço vazio permanece para o botão da marca não ficar sem forma.
+ * A região do meio rola por dentro, sem barra visível (roda, teclado e toque seguem funcionando); a máscara
+ * (token) esmaece as bordas para indicar que há mais itens. O respiro de 0.75rem mantém tudo legível sem rolagem.
  */
-.sidebar__logo-slot {
-  flex: none;
-  width: 1.5rem;
-  height: 1.5rem;
-}
-
-.sidebar__logo-slot:empty {
-  display: none;
-}
-
-.sidebar__group {
+.sidebar__scroll {
   display: grid;
+  flex: 1;
+  align-content: start;
   gap: var(--space-1);
-  margin-top: var(--space-2);
+  min-height: 0;
+  padding-block: 0.75rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  scroll-padding-block: 0.75rem;
+  mask-image: var(--mask-scroll-fade);
 }
 
-.sidebar__group-title {
-  padding: 0 var(--space-3);
-  color: var(--color-text-muted);
-  font-size: var(--text-xs);
-  font-weight: var(--weight-medium);
-  letter-spacing: 0.02em;
+.sidebar__scroll::-webkit-scrollbar {
+  display: none;
 }
 
 .sidebar__list {
   display: grid;
-  gap: 2px;
+  gap: var(--space-1);
 }
 
+/* Linha: quadrado de ícone + rótulo (só expandida). */
 .sidebar__link {
-  position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  min-height: 2.5rem;
-  padding: 0 var(--space-3);
-  border-radius: var(--radius-control);
-  color: var(--color-text-muted);
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-icon);
+  background: none;
+  color: var(--color-text);
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
+  text-align: left;
   text-decoration: none;
+}
+
+.sidebar__sq {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-icon);
+  background-color: var(--color-surface-inset);
+  color: var(--color-text);
   transition:
     background-color var(--duration-fast) var(--ease-standard),
-    color var(--duration-fast) var(--ease-standard);
+    color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
 }
 
-.sidebar__link:hover {
-  background-color: var(--color-surface);
-  color: var(--color-text);
+@media (hover: hover) {
+  .sidebar__link:hover .sidebar__sq {
+    background-color: var(--color-surface-muted);
+  }
 }
 
-/* Item ativo: fundo em tinta de acento e ícone/texto em acento (par conferido pelo `check-contrast`). */
-.sidebar__link.is-active {
-  background-color: var(--color-accent-soft);
+.sidebar__link.is-active .sidebar__sq {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.sidebar__sq--brand {
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+}
+
+.sidebar__sq--add {
   color: var(--color-accent);
 }
 
-.sidebar__link.is-active app-icon {
-  color: var(--color-accent);
+.sidebar__brand-name {
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
 }
 
-.sidebar__quick-add {
-  margin-bottom: var(--space-1);
-  border: var(--border-width) solid var(--color-border);
-  background-color: var(--color-surface);
-  color: var(--color-text);
+.sidebar__link:focus-visible {
+  box-shadow: none;
 }
 
-.sidebar__quick-add.is-active {
-  border-color: transparent;
-  background-color: var(--color-accent-soft);
-  color: var(--color-accent);
+.sidebar__link:focus-visible .sidebar__sq {
+  box-shadow: var(--focus-ring);
 }
 
 .sidebar__label {
@@ -119,94 +129,25 @@
   white-space: nowrap;
 }
 
-/* O avatar fica colado ao fim da área visível quando a coluna rola: Configurações e Sair nunca somem. */
-.sidebar__footer {
-  position: sticky;
-  bottom: calc(var(--space-4) * -1);
-  z-index: 1;
-  margin-top: auto;
-  padding: var(--space-3) var(--space-2) var(--space-4);
-  background-color: var(--color-surface-muted);
+/* Recolhida: o rótulo sai da tela mas continua no DOM (nome acessível). */
+.sidebar:not(.is-expanded) .sidebar__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
 }
 
-/*
- * Tablet e janela estreita: sidebar recolhida. O rótulo some da tela mas continua no DOM (nome acessível) e
- * o balão vem do `appTooltip` (no `body`). A coluna **rola** como a expandida (janelas baixas, zoom, paisagem
- * de celular) e o avatar fica fixo no rodapé da coluna: sempre alcançável.
- */
-@media (width < 1200px) {
-  .sidebar {
-    padding-inline: var(--space-2);
-  }
-
-  .sidebar__nav {
-    align-items: center;
-  }
-
-  .sidebar__brand,
-  .sidebar__link {
-    justify-content: center;
-    width: 2.75rem;
-    padding: 0;
-  }
-
-  /* Os títulos dos grupos saem da tela, mas continuam nomeando o grupo (aria-labelledby). */
-  .sidebar__group-title {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-
-  .sidebar__group {
-    justify-items: center;
-    padding-top: var(--space-2);
-    border-top: var(--border-width) solid var(--color-border);
-  }
-
-  .sidebar__footer {
-    padding-inline: 0;
-  }
-
-  .sidebar__label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-  }
-
-  .sidebar__brand {
-    position: relative;
-  }
-
-  .sidebar__logo-slot:empty {
-    display: block;
-  }
-}
-
-/* Toque: alvos de pelo menos 44 px (WCAG 2.5.8 com folga; revisão A4). */
 @media (pointer: coarse) {
-  .sidebar__link,
-  .sidebar__brand {
-    min-height: 2.75rem;
+  .sidebar__sq {
+    width: 2.75rem;
+    height: 2.75rem;
   }
 }
 
-/* Alto contraste: fundo e cor são forçados, então o item ativo ganha borda, sublinhado e peso (BUG-QA-06b). */
-@media (forced-colors: active) {
-  .sidebar__link {
-    border: 2px solid transparent;
-  }
-
-  .sidebar__link.is-active {
-    border-color: Highlight;
-    font-weight: var(--weight-semibold);
-    text-decoration: underline;
-  }
+/* Espaço do logo: vazio de propósito até o dono definir a marca. */
+.sidebar__logo-slot {
+  width: 1.25rem;
+  height: 1.25rem;
 }

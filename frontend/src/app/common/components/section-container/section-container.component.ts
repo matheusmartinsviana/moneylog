@@ -14,6 +14,8 @@ let nextId = 0;
       class="section"
       [class.lift]="interactive()"
       [class.section--glow]="glow()"
+      [class.glass]="glow()"
+      [class.glass--strong]="glow()"
       [attr.aria-labelledby]="headingId"
       data-cy="section"
     >
@@ -37,8 +39,12 @@ let nextId = 0;
       display: grid;
       gap: var(--space-4);
       padding: var(--space-5);
-      border: var(--border-width) solid var(--color-border);
       border-radius: var(--radius-panel);
+    }
+
+    /* Painéis comuns: superfície sólida; os de destaque (glow) recebem o vidro global (.glass). */
+    .section:not(.glass) {
+      border: var(--border-width) solid var(--color-border);
       background-color: var(--color-surface);
       box-shadow: var(--shadow-1);
     }

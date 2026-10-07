@@ -2,7 +2,8 @@
 /**
  * Regras visuais do DS 00 verificadas no lint:
  * - nenhuma cor literal (hex, rgb, hsl) fora de src/styles/tokens.css;
- * - nenhum gradiente em CSS, templates ou componentes;
+ * - gradiente só como token em src/styles/tokens.css (`--gradient-*`, DS 03: brilho/halo decorativo) e usado por
+ *   `var(--gradient-*)`: nenhum `*-gradient(` literal fora de tokens.css;
  * - movimento (DS 02, T195): toda `transition`/`animation` usa duração por token (`--duration-*`) e nenhuma
  *   transição anima `width`, `height`, `top`, `left`, `right`, `bottom`, `inset`, margens, `padding` nem `all`
  *   (só `transform`, `opacity`, `box-shadow`, cores e a expansão por `grid-template-rows`).
@@ -14,7 +15,12 @@ const root = new URL('..', import.meta.url).pathname;
 const srcDir = join(root, 'src');
 const TOKENS = 'src/styles/tokens.css';
 // index.html e o manifest precisam de cores literais (theme-color); a coerência com os tokens é verificada abaixo.
-const LITERAL_COLOR_ALLOWED = new Set([TOKENS, 'src/index.html']);
+// `liquid-glass-filter.ts`: cores do mapa de deslocamento do vidro (canais R/G = eixos X/Y), funcionais e não paleta.
+const LITERAL_COLOR_ALLOWED = new Set([
+  TOKENS,
+  'src/index.html',
+  'src/app/common/components/liquid-glass/liquid-glass-filter.ts',
+]);
 
 const COLOR =
   /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})\b|\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch)\(/;
@@ -42,8 +48,10 @@ for (const file of files) {
     if (!LITERAL_COLOR_ALLOWED.has(rel) && COLOR.test(code)) {
       problems.push(`${rel}:${index + 1} cor literal fora de tokens.css: ${line.trim()}`);
     }
-    if (GRADIENT.test(code))
-      problems.push(`${rel}:${index + 1} gradiente proibido (DS 00): ${line.trim()}`);
+    if (rel !== TOKENS && GRADIENT.test(code))
+      problems.push(
+        `${rel}:${index + 1} gradiente literal fora de tokens.css (use var(--gradient-*)): ${line.trim()}`,
+      );
   });
 }
 
@@ -85,7 +93,8 @@ for (const file of files) {
       if (/^(none|inherit|initial|unset)$/.test(item)) continue;
       const property = item.split(/\s+/)[0];
       const infinite = /\binfinite\b/.test(item);
-      if (!/var\(--duration-/.test(item) && !infinite && !/^0s?\b|\s0(s|ms)\b/.test(item)) {
+      const tokenized = /var\(--(duration|motion)-/.test(item) || /^none\b/.test(item);
+      if (!tokenized && !infinite && !/^0s?\b|\s0(s|ms)\b/.test(item)) {
         problems.push(`${rel}:${line} ${kind} sem duração por token (--duration-*): ${item}`);
       }
       if (
@@ -134,5 +143,5 @@ if (problems.length > 0) {
   process.exit(1);
 }
 console.log(
-  `check-styles: ${files.length} arquivos verificados, nenhuma cor fora de tokens.css e nenhum gradiente.`,
+  `check-styles: ${files.length} arquivos verificados, nenhuma cor nem gradiente literal fora de tokens.css.`,
 );

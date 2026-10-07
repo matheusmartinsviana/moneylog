@@ -8,6 +8,7 @@
   z-index: 10;
   padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   border-top: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-panel) var(--radius-panel) 0 0;
   background-color: var(--color-scrim);
   backdrop-filter: saturate(1.4) blur(16px);
 }
@@ -31,7 +32,7 @@
   gap: 2px;
   width: 100%;
   max-width: 5.5rem;
-  padding: var(--space-2) 0;
+  padding: var(--space-1) 0;
   border-radius: var(--radius-control);
   color: var(--color-text-muted);
   text-decoration: none;
@@ -55,8 +56,20 @@
   color: var(--color-text);
 }
 
-.bottom-nav__link.is-active app-icon {
-  color: var(--color-accent);
+/* Ícone em quadrado arredondado; o ativo é preenchido em lilás com o ícone escuro (DS 03). */
+.bottom-nav__sq {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-icon);
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.bottom-nav__link.is-active .bottom-nav__sq {
+  background-color: var(--color-accent);
+  color: var(--color-on-accent);
 }
 
 /* Alto contraste: o item ativo se distingue por borda, sublinhado e peso, não só por cor (BUG-QA-06b). */
@@ -84,7 +97,7 @@
   place-items: center;
   width: 3rem;
   height: 3rem;
-  border-radius: var(--radius-card);
+  border-radius: var(--radius-icon);
   background-color: var(--color-accent);
   color: var(--color-on-accent);
   box-shadow: var(--shadow-2);

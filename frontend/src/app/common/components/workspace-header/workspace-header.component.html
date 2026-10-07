@@ -11,7 +11,8 @@
   <div class="wh__status">
     <button
       type="button"
-      class="wh__bell"
+      class="icon-button wh__bell"
+      appLiquidGlass
       data-cy="header-theme-toggle"
       [attr.aria-label]="themeLabel()"
       [appTooltip]="themeLabel()"
@@ -20,7 +21,8 @@
       <app-icon [name]="themeIcon()" [size]="20" />
     </button>
     <a
-      class="wh__bell"
+      class="icon-button wh__bell"
+      appLiquidGlass
       routerLink="/notifications"
       data-cy="header-bell"
       [attr.aria-label]="bellLabel()"

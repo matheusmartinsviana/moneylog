@@ -1,22 +1,25 @@
 <ng-template #field>
-  <app-text-field
-    [formControl]="control"
-    fieldId="global-search-input"
-    [label]="t().search.label"
-    [hideLabel]="true"
-    [mandatory]="false"
-    [placeholder]="t().search.placeholder"
-    [maxlength]="maxLength"
-    [autofocus]="sheetOpen()"
-    [autocomplete]="'off'"
-    [enterkeyhint]="'search'"
-    [role]="'combobox'"
-    [ariaControls]="listId"
-    [ariaExpanded]="expanded()"
-    [ariaActivedescendant]="activeId() ?? undefined"
-    (focusin)="onFocus()"
-    (keydown)="onKeydown($event)"
-  />
+  <div class="search">
+    <app-icon class="search__icon" name="search" [size]="18" />
+    <app-text-field
+      [formControl]="control"
+      fieldId="global-search-input"
+      [label]="t().search.label"
+      [hideLabel]="true"
+      [mandatory]="false"
+      [placeholder]="t().search.placeholder"
+      [maxlength]="maxLength"
+      [autofocus]="sheetOpen()"
+      [autocomplete]="'off'"
+      [enterkeyhint]="'search'"
+      [role]="'combobox'"
+      [ariaControls]="listId"
+      [ariaExpanded]="expanded()"
+      [ariaActivedescendant]="activeId() ?? undefined"
+      (focusin)="onFocus()"
+      (keydown)="onKeydown($event)"
+    />
+  </div>
 </ng-template>
 
 <ng-template #results>

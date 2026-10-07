@@ -21,6 +21,7 @@ import { SectionContainerComponent } from '~/app/common/components/section-conta
 import { HTML_LANG } from '~/app/common/i18n/i18n';
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { interpolate } from '~/app/common/i18n/interpolate';
+import { MotionStaggerDirective } from '~/app/common/motion/motion-stagger.directive';
 import { AiAskDialogComponent } from '~/app/features/ai/components/ai-ask-dialog/ai-ask-dialog.component';
 import { ReserveSheetComponent } from '~/app/features/goals/components/reserve-sheet/reserve-sheet.component';
 import { AccountsStripComponent } from '~/app/features/home/components/accounts-strip/accounts-strip.component';
@@ -78,6 +79,7 @@ import { formatCompetence, formatIsoDate } from '~/util/date';
 @Component({
   selector: 'app-home-page',
   imports: [
+    MotionStaggerDirective,
     DebtSummaryCardComponent,
     RouterLink,
     AccountsStripComponent,

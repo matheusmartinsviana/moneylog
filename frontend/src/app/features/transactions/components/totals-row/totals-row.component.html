@@ -1,6 +1,7 @@
 <div
   class="totals"
   [class.totals--summary]="variant() === 'summary'"
+  [class.glass]="variant() === 'summary'"
   role="group"
   [attr.aria-label]="t().transactions.totals.label"
   [attr.data-cy]="cy()"

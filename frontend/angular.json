@@ -49,7 +49,8 @@
               "node_modules/@fontsource-variable/geist-mono/wght.css",
               "src/styles/typography.css",
               "src/styles/base.css",
-              "src/styles/utilities.css"
+              "src/styles/utilities.css",
+              "src/styles/motion.css"
             ]
           },
           "configurations": {

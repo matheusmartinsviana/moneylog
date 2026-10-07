@@ -39,6 +39,9 @@ export type OverlayLayout = 'bottom' | 'center' | 'side' | 'responsive-center' |
 
 export type ModalRole = 'dialog' | 'alertdialog';
 
+/** Saída animada: carregada na primeira abertura (fora do bundle inicial) e síncrona ao fechar. */
+let ghostExit: typeof import('~/app/common/motion/ghost-exit') | null = null;
+
 /** Pilha de painéis abertos: `Esc` fecha só o do topo. */
 const stack: object[] = [];
 
@@ -73,7 +76,7 @@ const stack: object[] = [];
         <!-- eslint-disable-next-line @angular-eslint/template/no-inline-styles -->
         <div
           #panel
-          class="panel"
+          class="panel glass glass--strong"
           [class.panel--modal]="modal()"
           [class.panel--sheet]="kind() === 'bottom'"
           [class.panel--center]="kind() === 'center'"
@@ -149,10 +152,7 @@ const stack: object[] = [];
       flex-direction: column;
       min-width: 0;
       overflow: hidden;
-      border: var(--border-width) solid var(--color-border);
       border-radius: var(--radius-card);
-      background-color: var(--color-surface);
-      box-shadow: var(--shadow-popover);
       pointer-events: auto;
       animation: overlay-pop var(--duration-fast) var(--ease-standard);
     }
@@ -410,7 +410,10 @@ export class OverlayPanelComponent implements OnDestroy {
         view?.removeEventListener('scroll', reposition, true);
         visual?.removeEventListener('resize', reposition);
         visual?.removeEventListener('scroll', reposition);
-        untracked(() => this.onClose());
+        untracked(() => {
+          this.exitGhost();
+          this.onClose();
+        });
       });
     });
 
@@ -430,6 +433,23 @@ export class OverlayPanelComponent implements OnDestroy {
       this.matchWidth();
       if (this.open()) afterNextRender(() => this.update(), { injector: this.injector });
     });
+  }
+
+  /** Saída animada (clone do fundo + painel): o conteúdo projetado já é removido pelo consumidor. */
+  private exitGhost(): void {
+    const panel = this.panel()?.nativeElement;
+    const backdrop = panel?.parentElement;
+    if (!panel || !backdrop?.isConnected) return;
+    const kind = this.kind();
+    const shape =
+      kind === 'center'
+        ? 'dialog'
+        : kind === 'bottom'
+          ? 'sheet'
+          : kind === 'side'
+            ? 'side'
+            : 'popover';
+    ghostExit?.playGhostExit(backdrop, panel, shape);
   }
 
   ngOnDestroy(): void {
@@ -471,6 +491,7 @@ export class OverlayPanelComponent implements OnDestroy {
   }
 
   private onOpen(): void {
+    if (!ghostExit) void import('~/app/common/motion/ghost-exit').then((m) => (ghostExit = m));
     stack.push(this.token);
     this.returnFocus = focusReturnTarget(this.document);
     this.portal();

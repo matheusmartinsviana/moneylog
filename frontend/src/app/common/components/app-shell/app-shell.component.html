@@ -2,10 +2,10 @@
   {{ t().shell.skipToContent }}
 </button>
 
-<div class="shell">
+<div class="shell" [class.shell--expanded]="sidebarExpanded()">
   <!-- A "janela" (DS 02): a partir de 1024 px é flutuante; abaixo disso é tela cheia (ADR-011). -->
   <div class="shell__window" data-cy="shell-window">
-    <div class="shell__aside">
+    <div class="shell__aside glass">
       <app-sidebar class="shell__sidebar" />
     </div>
     <div class="shell__content">

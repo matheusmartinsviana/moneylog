@@ -864,3 +864,24 @@ Pedido do dono (feedback sobre `/quick-add`). Sem commit, sem E2E completo (spec
 - **Edição:** `/transactions/:id/edit` virou filha do detalhe (modal sobre ele); o detalhe relê ao voltar e ignora Esc com modal aberto.
 - **Ruído:** formulário sem cartão interno (um bloco, gap menor); dicas removidas do interruptor de empréstimo no Pix e da divisão; título muda com o tipo (`quickAdd.modes.titles`); "Dinheiro recebido" virou "Recebi".
 - **Pergunta:** ao salvar, fechar o modal (feito) ou manter aberto para registrar em sequência?
+
+### Registro de execução: linha de design "glass" lilás, dark-first (frontend, modo rápido, fatia 1)
+
+Pedido do dono (4 imagens de referência + vidro líquido do portfólio). Sem commit, sem E2E completo.
+
+- **Tokens:** paleta escura (canvas `#0b0b12`, surface `#14141e`, acento `#b7a3fb`) e clara derivada (`#f6f5fb`, `#ffffff`, `#6948d2`), novo `surface-inset`, `--radius-icon`, gradientes e máscaras só como token; `check-styles` agora permite `--gradient-*` apenas em `tokens.css`; `check-contrast` inclui `surface-inset`.
+- **Shell:** sidebar em trilho recolhível (`SidebarStateService`, `localStorage` com try/catch), só o essencial + "Mais" (`/more`), Configurações e Sair fixos no rodapé, rolagem interna sem barra; cabeçalho com busca em pílula, botões de ícone, sino com selo, avatar genérico; barra inferior com quadrado ativo lilás. Janela flutuante removida.
+- **Componentes:** `.icon-button`, `.pill`, `.status`, `.glyph`, `.row-card`, `.search`, abas em pílula; `app-gauge` (medidor semicircular reutilizável); gráfico com listras, guia sólida e tooltip em vidro.
+- **Vidro:** `.glass`/`.glass-lens`, `appLiquidGlass` (ResizeObserver + cache), `data-glass` por navegador (refração só Chromium desktop; blur em celular; sólido no Safari e com `prefers-reduced-transparency`).
+- **Telas-modelo:** Início (KPIs, gauge da taxa de poupança do backend, gráfico com glow, recentes em cartões) e Movimentações (painel de KPIs, lista em cartões/tabela em painel, chip de status só para "estornada").
+- **Pendências (varredura):** demais telas só herdam tokens; conferir login, Contas, Cartões, Metas, Notas, Configurações, UI Kit e os e2e que contam itens da sidebar.
+
+### Registro de execução: sistema de movimento (frontend, modo rápido)
+
+- **Arquivos novos:** `src/styles/motion.css` (tokens `--motion-*`, `.m-pending/.m-enter`, toasts/banners, view transition, troca de tema, `data-motion="off"`), `src/app/common/motion/` (`motion.ts`, `reveal-engine.ts`, `appStagger`, `appReveal`, `ghost-exit.ts`, README e spec).
+- **Entrada de tela:** `PageLayoutComponent` aplica `appReveal` no cabeçalho e `appStagger` no conteúdo de TODA página; o Início tem cascata própria nos blocos (`.home`). Só elementos novos animam (WeakSet), nada reanima em refresh.
+- **Rotas:** `withViewTransitions` com `skipInitialTransition`, só o `<main class="m-page">` troca; pulado com movimento desligado.
+- **Overlays:** saída por clone animado (`playGhostExit`) dentro de `overlay-panel` (cobre dialog, sheet, form-modal, confirm-dialog, menu, select, calendário); a entrada já existia. Toasts e banners PWA com `animate.enter/leave`. Tema com transição só de cores.
+- **Já existiam e foram mantidos:** disclosure (grid 0fr→1fr), barra de progresso, clip-path dos gráficos, pressed dos botões, hover de linhas e cartões.
+- **Testes:** `data-motion="off"` no `test-setup.ts` e `reducedMotion: 'reduce'` no Playwright; spec das diretivas e `e2e/motion.e2e.ts` (fumaça com movimento ligado).
+- **Pendências:** indicador deslizante de tabs/segmented, skeleton shimmer (gradiente só como token), colapso de linha removida (`.m-collapse` pronto, falta aplicar), ripple do Quick Capture, sidebar/header (do outro agente), medição de 60 fps.

@@ -165,79 +165,65 @@ describe('App shell e rotas', () => {
     expect(link).toHaveAccessibleName(expect.stringContaining(visible!));
   });
 
-  it('Dado a sidebar, então lista as 16 seções na ordem (Orçamentos, Vault, IA e MCP entram com as páginas honestas), sem Dream Board e com Notas', async () => {
+  it('Dado a sidebar, então lista só o essencial, "Mais" e o rodapé (Configurações e Sair), sem Dream Board', async () => {
     await navigate('/');
 
     const nav = sidebarNav();
     expect(Array.from(nav.querySelectorAll('li a'), (link) => link.textContent?.trim())).toEqual([
-      // Ordem dos grupos (DS 02, T193): OVERVIEW, WORKSPACE, SYSTEM. Mudou de propósito (era uma lista plana).
       'Início',
       'Movimentações',
       'Contas',
       'Cartões',
       'Metas',
-      'Orçamentos',
       'Planejamento',
-      'Vault',
-      'Notas',
       'Pessoas',
-      'Insights',
-      'IA',
-      'MCP',
-      'Importar extrato',
-      'Notificações',
-      'Configurações',
+      'Notas',
+      'Mais',
     ]);
+    const footer = nav.querySelector('.sidebar__footer')!;
+    expect(footer.querySelector('[data-cy="sidebar-settings"]')).toHaveAttribute(
+      'href',
+      '/settings',
+    );
+    expect(footer.querySelector('[data-cy="sidebar-signOut"]')).toBeInTheDocument();
+    // Nenhuma rota some: o que saiu do trilho está em "Mais" (`/more`) e em Configurações.
     expect(SIDEBAR_ITEMS).toHaveLength(16);
     expect(screen.queryByText(/dream board/i)).not.toBeInTheDocument();
   });
 
-  it('Dado a sidebar, então os três grupos têm título, role=group nomeado e os títulos não são focáveis (T193 CA1, CA5)', async () => {
+  it('Dado a sidebar, então a ordem do Tab é marca, alternar, Novo registro, seções, Mais, Configurações e Sair', async () => {
     await navigate('/');
 
     const nav = sidebarNav();
-    const groups = within(nav).getAllByRole('group', { hidden: true });
-    expect(groups.map((group) => group.getAttribute('data-cy'))).toEqual([
-      'sidebar-group-overview',
-      'sidebar-group-workspace',
-      'sidebar-group-system',
-    ]);
-    expect(
-      groups.map((group) => group.querySelector('.sidebar__group-title')?.textContent?.trim()),
-    ).toEqual([pt.nav.groups.overview, pt.nav.groups.workspace, pt.nav.groups.system]);
-    for (const group of groups) {
-      const title = group.querySelector<HTMLElement>('.sidebar__group-title')!;
-      expect(group).toHaveAttribute('aria-labelledby', title.id);
-      expect(title).not.toHaveAttribute('tabindex');
-      expect(title.tagName).toBe('P');
-    }
-    // Nenhum item foi para um grupo errado: só os dados de navegação mandam.
-    expect(
-      Array.from(groups[0]!.querySelectorAll('a'), (link) => link.getAttribute('data-cy')),
-    ).toEqual([
+    const order = Array.from(nav.querySelectorAll('a, button'), (el) => el.getAttribute('data-cy'));
+    expect(order).toEqual([
+      'sidebar-brand',
+      'sidebar-toggle',
+      'sidebar-quickAdd',
       'sidebar-home',
       'sidebar-transactions',
       'sidebar-accounts',
       'sidebar-cards',
       'sidebar-goals',
-      'sidebar-budgets',
       'sidebar-planning',
+      'sidebar-people',
+      'sidebar-notes',
+      'sidebar-more',
+      'sidebar-settings',
+      'sidebar-signOut',
     ]);
   });
 
-  it('Dado o rodapé da sidebar, então há só o avatar com menu (Configurações, Sair), sem seletor de workspace nem nome (T193 CA4)', async () => {
+  it('Dado o botão de alternar, então expande o trilho e lembra a escolha no dispositivo', async () => {
     await navigate('/');
 
-    const nav = sidebarNav();
-    const footer = nav.querySelector('.sidebar__footer')!;
-    expect(footer.querySelectorAll('button')).toHaveLength(1);
-    expect(within(footer as HTMLElement).getByTestId('sidebar-profile')).toHaveAttribute(
-      'aria-label',
-      pt.header.profile.label,
-    );
-    await userEvent.click(within(footer as HTMLElement).getByTestId('sidebar-profile'));
-    expect(screen.getByTestId('sidebar-profile-item-settings')).toBeInTheDocument();
-    expect(screen.getByTestId('sidebar-profile-item-signOut')).toBeInTheDocument();
+    const toggle = within(sidebarNav()).getByTestId('sidebar-toggle');
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await userEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(localStorage.getItem('moneylog.sidebar')).toBe('expanded');
+    await userEvent.click(toggle);
+    expect(localStorage.getItem('moneylog.sidebar')).toBe('collapsed');
   });
 
   it('Dado o shell, então o cabeçalho do workspace e a janela existem e a página mantém um h1 e um main (T192, T194)', async () => {

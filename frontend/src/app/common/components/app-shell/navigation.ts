@@ -102,3 +102,21 @@ export const MORE_GROUPS: readonly NavGroup[] = SIDEBAR_GROUPS.map((group) => ({
 })).filter((group) => group.items.length > 0);
 
 export const QUICK_ADD_ITEM: NavItem = ITEMS.quickAdd;
+
+/**
+ * Trilho da sidebar (DS 03): só o essencial cabe sem rolagem em notebook. O resto das rotas continua
+ * alcançável pelo item "Mais" (`/more`), que lista todas as outras seções agrupadas.
+ */
+export const SIDEBAR_MAIN_ITEMS: readonly NavItem[] = [
+  ITEMS.home,
+  ITEMS.transactions,
+  ITEMS.accounts,
+  ITEMS.cards,
+  ITEMS.goals,
+  ITEMS.planning,
+  ITEMS.people,
+  ITEMS.notes,
+];
+
+export const SIDEBAR_MORE_ITEM: NavItem = ITEMS.more;
+export const SIDEBAR_SETTINGS_ITEM: NavItem = ITEMS.settings;

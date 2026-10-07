@@ -15,12 +15,24 @@ import { PwaService } from '~/app/common/services/pwa.service';
   template: `
     <div class="notices" data-cy="pwa-notices">
       @if (!pwa.online()) {
-        <p class="notice" role="status" data-cy="pwa-offline">
+        <p
+          class="notice"
+          role="status"
+          data-cy="pwa-offline"
+          animate.enter="m-banner-in"
+          animate.leave="m-banner-out"
+        >
           <strong>{{ t().pwa.offlineTitle }}</strong> {{ t().pwa.offlineText }}
         </p>
       }
       @if (pwa.updateAvailable()) {
-        <div class="notice" role="status" data-cy="pwa-update">
+        <div
+          class="notice"
+          role="status"
+          data-cy="pwa-update"
+          animate.enter="m-banner-in"
+          animate.leave="m-banner-out"
+        >
           <p class="notice__text">
             <strong>{{ t().pwa.updateTitle }}</strong> {{ t().pwa.updateText }}
           </p>
@@ -35,7 +47,12 @@ import { PwaService } from '~/app/common/services/pwa.service';
         </div>
       }
       @if (pwa.installMode(); as mode) {
-        <div class="notice" data-cy="pwa-install">
+        <div
+          class="notice"
+          data-cy="pwa-install"
+          animate.enter="m-banner-in"
+          animate.leave="m-banner-out"
+        >
           <p class="notice__text">
             <strong>{{ t().pwa.installTitle }}</strong>
             {{ mode === 'ios' ? t().pwa.installIos : t().pwa.installText }}

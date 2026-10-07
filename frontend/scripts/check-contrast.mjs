@@ -11,7 +11,7 @@ import { readFileSync } from 'node:fs';
 const css = readFileSync(new URL('../src/styles/tokens.css', import.meta.url), 'utf8');
 const MIN = 4.5;
 const FOREGROUNDS = ['text', 'text-muted', 'accent', 'positive', 'warning', 'risk'];
-const BACKGROUNDS = ['canvas', 'surface', 'surface-muted'];
+const BACKGROUNDS = ['canvas', 'surface', 'surface-muted', 'surface-inset'];
 const MIN_GRAPHIC = 3;
 /** Texto sobre a própria tinta (chip de variação, item ativo da sidebar). */
 const SOFT_PAIRS = [
@@ -33,6 +33,9 @@ const GRAPHIC_PAIRS = [
   ['control-border', 'surface'],
   ['control-border', 'surface-muted'],
   ['control-border', 'canvas'],
+  ['control-border', 'surface-inset'],
+  ['chart-1', 'surface-inset'],
+  ['chart-2', 'surface-inset'],
   ['focus', 'surface'],
   ['focus', 'surface-muted'],
 ];

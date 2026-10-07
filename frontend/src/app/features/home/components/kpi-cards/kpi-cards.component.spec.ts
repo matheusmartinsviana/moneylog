@@ -246,14 +246,14 @@ describe('KpiCardsComponent', () => {
       expect(text(screen.getByTestId('kpi-savings-empty'))).toBe(
         pt.dashboard.kpis.savings.noIncome,
       );
-      expect(screen.getByTestId('kpi-savings-ring').querySelector('.ring__arc')).toBeNull();
+      expect(screen.getByTestId('kpi-savings-ring').querySelector('.gauge__arc')).toBeNull();
     });
 
-    it('Dado 0.4120, então o anel desenha o arco da razão (aria-hidden) e o número está em texto', async () => {
+    it('Dado 0.4120, então o medidor desenha o arco da razão (aria-hidden) e o número está em texto', async () => {
       await setup();
       const ring = screen.getByTestId('kpi-savings-ring');
-      expect(ring).toHaveAttribute('aria-hidden', 'true');
-      expect(ring.querySelector('.ring__arc')).toHaveAttribute('stroke-dasharray', '41.2 100');
+      expect(ring.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
+      expect(ring.querySelector('.gauge__arc')).toHaveAttribute('stroke-dasharray', '41.2 100');
     });
 
     it('Dado taxa negativa (gastou mais que recebeu), então o texto mostra o sinal em tom de risco e não há arco', async () => {
@@ -261,7 +261,7 @@ describe('KpiCardsComponent', () => {
       const value = screen.getByTestId('kpi-savings-value');
       expect(text(value)).toBe('−15%');
       expect(value).toHaveClass('is-negative');
-      expect(screen.getByTestId('kpi-savings-ring').querySelector('.ring__arc')).toBeNull();
+      expect(screen.getByTestId('kpi-savings-ring').querySelector('.gauge__arc')).toBeNull();
     });
   });
 

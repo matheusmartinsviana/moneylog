@@ -1,6 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { inject, Injectable, signal } from '@angular/core';
 
+import { motionEnabled } from '~/app/common/motion/motion';
 import { readStorage, removeStorage, writeStorage } from '~/util/safe-storage';
 
 export const THEME_PREFERENCES = ['system', 'light', 'dark'] as const;
@@ -22,6 +23,8 @@ export class ThemeService {
   private readonly document = inject(DOCUMENT);
   private readonly preferenceState = signal<ThemePreference>('system');
 
+  private initialized = false;
+
   readonly preference = this.preferenceState.asReadonly();
 
   /** Aplica a preferência salva (ou `system`). */
@@ -41,8 +44,15 @@ export class ThemeService {
   }
 
   private apply(preference: ThemePreference): void {
+    const animate = this.preferenceState() !== preference && this.initialized;
+    this.initialized = true;
     this.preferenceState.set(preference);
     const root = this.document.documentElement;
+    if (animate && motionEnabled(this.document)) {
+      // Transição curta só nas cores (motion.css), removida logo depois.
+      root.classList.add('m-theme-switch');
+      setTimeout(() => root.classList.remove('m-theme-switch'), 300);
+    }
     if (preference === 'system') {
       root.removeAttribute('data-theme');
     } else {

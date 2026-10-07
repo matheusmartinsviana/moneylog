@@ -14,6 +14,7 @@ import { filter, map } from 'rxjs';
 import { ChipComponent } from '~/app/common/components/chip/chip.component';
 import { GlobalSearchComponent } from '~/app/common/components/global-search/global-search.component';
 import { IconComponent } from '~/app/common/components/icon/icon.component';
+import { LiquidGlassDirective } from '~/app/common/components/liquid-glass/liquid-glass.directive';
 import { ProfileMenuComponent } from '~/app/common/components/profile-menu/profile-menu.component';
 import { TooltipDirective } from '~/app/common/components/tooltip/tooltip.directive';
 import { I18nService } from '~/app/common/i18n/i18n.service';
@@ -63,6 +64,7 @@ export function greetingPeriod(hour: number): GreetingPeriod {
     ChipComponent,
     GlobalSearchComponent,
     IconComponent,
+    LiquidGlassDirective,
     ProfileMenuComponent,
     TooltipDirective,
   ],

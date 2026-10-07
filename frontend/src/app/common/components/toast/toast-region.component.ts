@@ -20,7 +20,12 @@ import { ToastService } from '~/app/common/services/toast.service';
       data-cy="toast-region"
     >
       @for (toast of toasts(); track toast.id) {
-        <app-toast [toast]="toast" (dismissed)="service.dismiss($event)" />
+        <app-toast
+          animate.enter="m-toast-in"
+          animate.leave="m-toast-out"
+          [toast]="toast"
+          (dismissed)="service.dismiss($event)"
+        />
       }
     </div>
   `,

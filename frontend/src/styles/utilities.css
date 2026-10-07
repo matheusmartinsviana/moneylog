@@ -20,6 +20,222 @@
 }
 
 /*
+ * Vidro (DS 03, "liquid glass"). Base = SÓLIDO (Safari, sem `backdrop-filter`, `prefers-reduced-transparency`):
+ * o contraste do texto é conferido contra `surface`. Com `<html data-glass>` (`blur` ou `refract`, definido em
+ * `glass-support.ts`) a superfície vira translúcida com desfoque. Só para superfícies grandes e poucas por tela
+ * (sidebar em trilho, modais/sheets/menus, 1 a 2 cartões de destaque); nunca em listas. Refração real (SVG)
+ * só nas lentes pequenas (`.glass-lens` + `appLiquidGlass`).
+ */
+.glass {
+  border: var(--border-width) solid var(--glass-border);
+  background-color: var(--glass-solid);
+  box-shadow: var(--glass-shadow);
+}
+
+html[data-glass] .glass {
+  background-color: var(--glass-bg);
+  backdrop-filter: blur(24px) saturate(180%);
+}
+
+html[data-glass] .glass--strong {
+  background-color: var(--glass-bg-strong);
+}
+
+@media (width <= 767px), (pointer: coarse) {
+  html[data-glass] .glass {
+    backdrop-filter: blur(12px) saturate(150%);
+  }
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  html[data-glass] .glass {
+    background-color: var(--glass-solid);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  html[data-glass] .glass,
+  html[data-glass] .glass--strong {
+    background-color: var(--glass-solid);
+    backdrop-filter: none;
+  }
+}
+
+/* Lente pequena: sólida por padrão; com `data-glass` ganha película de luz + desfoque barato (ou refração via diretiva). */
+.glass-lens {
+  box-shadow: var(--glass-lens-glow);
+}
+
+html[data-glass] .glass-lens {
+  background-color: var(--glass-lens-bg);
+  backdrop-filter: blur(6px) brightness(1.12) saturate(1.7);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  html[data-glass] .glass-lens {
+    backdrop-filter: none !important;
+    background-color: transparent;
+  }
+}
+
+/* Painel em destaque (gráfico, saldo): o mesmo cartão com o halo lilás por baixo (token). */
+.surface--glow {
+  background-image: var(--gradient-panel-glow);
+}
+
+/*
+ * Botão de ícone quadrado arredondado (DS 03): borda sutil; o ativo (`is-active`, `aria-current`,
+ * `aria-pressed`) é preenchido em lilás com o ícone escuro. O nome acessível vai em `aria-label`.
+ */
+.icon-button {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-icon);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  text-decoration: none;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .icon-button:hover {
+    background-color: var(--color-surface-muted);
+  }
+}
+
+.icon-button.is-active,
+.icon-button[aria-current='page'],
+.icon-button[aria-pressed='true'] {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+/* Chip de ação em pílula ("Novo registro", "Configurações"): texto sempre presente. */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 2.5rem;
+  padding: 0 var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .pill:hover:not(:disabled, [aria-disabled='true']) {
+    background-color: var(--color-surface-muted);
+  }
+}
+
+.pill--accent {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+@media (hover: hover) {
+  .pill--accent:hover:not(:disabled, [aria-disabled='true']) {
+    background-color: var(--color-accent);
+    opacity: 0.92;
+  }
+}
+
+/* Estado em pílula ("Concluído", "Estornada"): cor + texto, nunca só cor. */
+.status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.75rem;
+  padding: 0 var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background-color: var(--color-surface-inset);
+  color: var(--color-text);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+}
+
+.status[data-tone='positive'] {
+  border-color: transparent;
+  background-color: var(--color-positive-soft);
+  color: var(--color-positive);
+}
+
+.status[data-tone='warning'] {
+  border-color: transparent;
+  background-color: var(--color-warning-soft);
+  color: var(--color-warning);
+}
+
+.status[data-tone='risk'] {
+  border-color: transparent;
+  background-color: var(--color-risk-soft);
+  color: var(--color-risk);
+}
+
+/* Glifo/inicial em quadrado arredondado (linhas de lista). Decorativo: o nome está em texto ao lado. */
+.glyph {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-icon);
+  background-color: var(--color-surface-muted);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+}
+
+/* Linha de lista como cartão escuro (DS 03): um degrau abaixo do painel, valor à direita. */
+.row-card {
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface-inset);
+}
+
+/* Campo de busca arredondado com ícone à esquerda (o ícone é um elemento filho `.search__icon`). */
+.search {
+  position: relative;
+  display: block;
+}
+
+.search__icon {
+  position: absolute;
+  top: 50%;
+  left: var(--space-3);
+  color: var(--color-text-muted);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.search .input {
+  padding-left: 2.5rem;
+  border-radius: var(--radius-pill);
+}
+
+/*
  * Cartão interativo (DS 02): sobe até 2px e ganha sombra no hover, só em aparelho com mouse e com
  * movimento permitido. Em toque não há hover; com `prefers-reduced-motion` não há `transform`.
  */
@@ -52,7 +268,7 @@
   }
 }
 
-/* Controles: botões calmos, cantos de 12px, sem gradiente. */
+/* Controles: botões calmos, cantos de 12px. */
 .button {
   display: inline-flex;
   align-items: center;
@@ -139,7 +355,7 @@
   padding: 0 var(--space-3);
   border: var(--border-width) solid var(--color-control-border);
   border-radius: var(--radius-control);
-  background-color: var(--color-surface);
+  background-color: var(--color-surface-inset);
   color: var(--color-text);
   font-size: 1rem;
   transition:
@@ -227,9 +443,9 @@
   display: inline-flex;
   gap: var(--space-1);
   padding: var(--space-1);
-  border: var(--border-width) solid var(--color-control-border);
-  border-radius: var(--radius-control);
-  background-color: var(--color-surface-muted);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background-color: var(--color-surface-inset);
 }
 
 .tab {
@@ -238,7 +454,7 @@
   min-height: 2.25rem;
   padding: 0 var(--space-4);
   border: 0;
-  border-radius: calc(var(--radius-control) - 4px);
+  border-radius: var(--radius-pill);
   background: transparent;
   color: var(--color-text-muted);
   font-size: var(--text-sm);
@@ -248,9 +464,8 @@
 
 .tab[aria-current='page'],
 .tab[aria-selected='true'] {
-  background-color: var(--color-surface);
-  color: var(--color-text);
-  box-shadow: var(--shadow-1);
+  background-color: var(--color-accent);
+  color: var(--color-on-accent);
 }
 
 /* Aviso inline de erro de formulário ou ação (sempre com texto, nunca só cor). */

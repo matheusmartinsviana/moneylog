@@ -25,7 +25,7 @@
             ariaCurrentWhenActive="page"
             [attr.data-cy]="'bottom-nav-' + item.key"
           >
-            <app-icon [name]="item.icon" [size]="22" />
+            <span class="bottom-nav__sq"><app-icon [name]="item.icon" [size]="20" /></span>
             <span class="bottom-nav__label">{{ t().nav[item.key] }}</span>
           </a>
         }

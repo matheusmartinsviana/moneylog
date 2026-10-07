@@ -37,7 +37,7 @@ manual; `[data-theme="light|dark"]` (gravado pelo `ThemeService`) vale contra o 
 
 Regras verificadas no `npm run lint`:
 
-- `scripts/check-styles.mjs`: nenhuma cor literal (hex/rgb/hsl) fora de `tokens.css`, nenhum gradiente,
+- `scripts/check-styles.mjs`: nenhuma cor literal (hex/rgb/hsl) fora de `tokens.css` e nenhum gradiente literal fora dele (gradientes só como token `--gradient-*`, usados por `var()`),
   `theme-color`/manifest iguais ao `--color-canvas` e **movimento**: toda `transition`/`animation` usa duração por
   token (`--duration-*`; laços `infinite` de esqueleto são a exceção) e nenhuma transição anima `width`, `height`,
   `top`, `left`, `right`, `bottom`, `inset`, margens, `padding` nem `all` (exceção documentada: o preenchimento da
@@ -120,3 +120,25 @@ Gerado por `npm run contrast`.
 | escuro | `control-border` #74747d | `canvas` #0b0b0d            | 4.25:1    | ok (3:1)   |
 | escuro | `focus` #2dd4bf          | `surface` #161618           | 9.71:1    | ok (3:1)   |
 | escuro | `focus` #2dd4bf          | `surface-muted` #212124     | 8.63:1    | ok (3:1)   |
+
+## Linguagem "glass" lilás, dark-first (DS 03, ADR-011)
+
+- **Paleta final.** Escuro (protagonista): `canvas` `#0b0b12`, `surface` `#14141e`, `surface-muted` `#1c1c2a`, `surface-inset`
+  `#0f0f18` (linhas de lista e campos), `text` `#f2f1fb`, `text-muted` `#a5a3c0`, `accent` `#b7a3fb` (texto sobre ele
+  `#1a1236`), `chart-2` (comparação tracejada) `#d8d3ee`, borda translúcida lilás 13%, `control-border` `#7a7896`. Claro:
+  `canvas` `#f6f5fb`, `surface` `#ffffff`, `surface-muted` `#f1effa`, `surface-inset` `#f8f7fd`, borda `#e3dff3`, `text` `#1a1830`,
+  `accent` `#6948d2`, `control-border` `#85809f`. Positivo/alerta/risco seguem os mesmos tons, com tintas sólidas novas.
+- **Gradientes só por token** (`--gradient-glow-top`, `--gradient-panel-glow`, `--gradient-panel-glow-soft`, `--gradient-gauge`,
+  `--gradient-stripes`) e máscaras (`--mask-scroll-fade`, `--mask-fade-down`). O halo é decorativo: nenhum texto crítico depende
+  dele e o `check-contrast` é calculado sobre a cor sólida do token. Raios: cartão 20, painel 24, controle 12, `--radius-icon` 14.
+- **Vidro (`.glass`, `.glass--strong`, `.glass-lens`).** Tokens `--glass-*` nos dois temas. Base **sólida**
+  (`--glass-solid` = `surface`); `<html data-glass>` (definido em `common/services/glass-support.ts` no bootstrap) liga o desfoque:
+  `refract` (Chromium desktop: refração SVG real, só nas lentes pequenas via diretiva `appLiquidGlass`), `blur` (demais, desfoque
+  CSS; em celular/toque 12 px) ou ausente = sólido (Safari/WebKit, sem `backdrop-filter`, `prefers-reduced-transparency`).
+  Uso: sidebar em trilho, painéis de overlay (modal, sheet, menu), tooltip do gráfico, painel do gráfico (`glow`) e resumo de
+  Movimentações; nunca em listas. Utilitários novos: `.icon-button`, `.pill`, `.status`, `.glyph`, `.row-card`, `.search`.
+- **Barras de rolagem:** finas e discretas (`scrollbar-width: thin`, cor por token); a sidebar rola por dentro sem barra visível.
+
+## Movimento (`motion.css`)
+
+Ver `src/app/common/motion/README.md`: tokens `--motion-*`, `.m-pending`/`.m-enter`, `data-motion="off"`.

@@ -59,7 +59,7 @@
         <p class="daily text-muted" data-cy="home-daily-message">{{ message }}</p>
       }
       @if (dashboard.data(); as data) {
-        <div class="home" data-cy="home-dashboard">
+        <div class="home" data-cy="home-dashboard" data-motion-skip appStagger>
           <app-quick-capture
             class="home__capture"
             [type]="captureType()"

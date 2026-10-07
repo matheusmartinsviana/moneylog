@@ -1,15 +1,25 @@
 import { booleanAttribute, ChangeDetectionStrategy, Component, input } from '@angular/core';
 
+import { MotionRevealDirective } from '~/app/common/motion/motion-reveal.directive';
+import { MotionStaggerDirective } from '~/app/common/motion/motion-stagger.directive';
+
 /**
  * Esqueleto de toda página: o landmark `<main>` e o único `<h1>` da tela.
  * O shell não renderiza `<main>`; cada página traz o seu por aqui.
  */
 @Component({
   selector: 'app-page-layout',
+  imports: [MotionRevealDirective, MotionStaggerDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <main id="main-content" class="page" [class.page--wide]="wide()" tabindex="-1" data-cy="page">
-      <header class="page__header">
+    <main
+      id="main-content"
+      class="page m-page"
+      [class.page--wide]="wide()"
+      tabindex="-1"
+      data-cy="page"
+    >
+      <header class="page__header" [appReveal]="0">
         <div class="page__heading">
           <h1 class="page__title" data-cy="page-title">
             <bdi>{{ heading() }}</bdi>
@@ -22,7 +32,7 @@ import { booleanAttribute, ChangeDetectionStrategy, Component, input } from '@an
           <ng-content select="[pageActions]" />
         </div>
       </header>
-      <div class="page__content">
+      <div class="page__content" appStagger [appStaggerOffset]="1">
         <ng-content />
       </div>
     </main>

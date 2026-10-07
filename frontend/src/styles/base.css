@@ -7,6 +7,9 @@
 }
 
 html {
+  /* Barras de rolagem finas e discretas em todo o app (herdado); a rolagem continua possível. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-control-border) transparent;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   background-color: var(--color-canvas);
@@ -14,10 +17,27 @@ html {
 
 body {
   margin: 0;
+  position: relative;
   min-height: 100dvh;
   background-color: var(--color-canvas);
+  /* Halo lilás difuso no topo do canvas (DS 03): decorativo, só por token; nenhum texto crítico depende dele. */
+  background-image: var(--gradient-glow-top);
+  background-repeat: no-repeat;
+  background-size: 100% 36rem;
   color: var(--color-text);
   overflow-x: hidden;
+}
+
+/* Listras finas das referências no topo do canvas, esmaecendo para baixo (o vidro tem o que refratar). */
+body::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: -1;
+  height: 22rem;
+  background-image: var(--gradient-stripes);
+  mask-image: var(--mask-fade-down);
+  pointer-events: none;
 }
 
 h1,
