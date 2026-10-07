@@ -302,3 +302,13 @@ Paralelo: [T238..T240] com [T241, T242] e com [T246]; depois [T248, T249]. Integ
 - **P7 (parcela "3 de 10"):** faltam 8 parcelas (da 3 até a 10): o usuário informa a próxima a vencer e o total.
 - **P1 (outras dívidas):** dívida com credor livre (banco, loja, financiamento): nome do credor, valor e parcelas, sem exigir Person.
 - **Demais perguntas (P3, P4, P6, P8, P9, P10):** adotar o padrão sugerido neste plano; registrar cada uso como suposição S-nn e listar ao dono no fim.
+
+## Registro da execução do backend (T237 a T245, parcial T244)
+- Contrato 2.13.0 aditivo (`contracts/openapi.yaml`), ADR-013, tipos do front regenerados (`api:types`/`api:check` ok). Migrações V8.02 (source ONGOING), V8.03 (goals.kind/baseline), V8.04 (debts.creditor_name); testes de migração com +3.
+- `DebtOverviewCalculator` (core/finance/domain) + `GetDebtOverviewUseCase`; `GET /v1/debts/overview?months=` (1..36, 400 fora).
+- `POST /v1/cards/{id}/ongoing-installments` (201 + Location, devolve `Transaction`) e `/preview` (`OngoingPreview`, calculada no servidor).
+- `Goal.kind`, `POST /v1/goals/{id}/baseline`, `DEBT_PAYOFF` criado por `POST /v1/goals {kind}` (sem target, nome padrão), uma ativa por usuário.
+- Credor livre: `DebtInput.creditorName` (sem `personId`), `Debt.person` nulo + `creditorName`.
+- Testes: `DebtOverviewTest` (cenários), `DebtOverviewPropertiesTest` (40 sementes: total = partes, cartão = −livro CARD, curva fecha), `DebtOverviewIT` (contrato, 401/400, isolamento, parcelado, meta, credor livre).
+- Suposições adotadas: S-300 P3 sem juros; S-301 P4 renda RECURRING_ESTIMATE, senão último mês completo, senão NONE; S-302 P6 recebíveis fora; S-303 P8 uma meta ativa, re-ancorar permitido, prazo opcional; S-304 P9 recorrência não é dívida; S-305 P10 `kind` em `Goal`; S-306 `grewSinceBaseline` = total atual > baseline; S-307 credor livre sem parcelas nem categoria; S-308 categoria no parcelado em andamento exige competência atual ou futura (`ONGOING_CATEGORY_RETROACTIVE`); S-309 "patrimônio" do impacto da compra segue S-8 (por competência: −150 hoje, não −1.200).
+- Pendências: front; ITs completos (`clean verify`) pela sessão principal.

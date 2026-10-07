@@ -551,6 +551,60 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/cards/{id}/ongoing-installments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cadastra uma compra parcelada que já estava em andamento
+         * @description Para o que já está parcelado antes do app ("parcela 3 de 10": faltam 8, a próxima inclusive). Grava **só as parcelas que faltam**
+         *     (numeradas `totalInstallments − remainingInstallments + 1 .. totalInstallments`, cada uma com `installmentAmount`) na fatura que
+         *     contém `firstInvoiceDate` e nas seguintes. **Não cria consumo retroativo** (P5): sem `categoryId` cada parcela é `CARD −p / EQUITY +p`
+         *     (consumo 0 em todos os meses, dívida +p, patrimônio −p); com `categoryId` é `EXPENSE(cat) +p / CARD −p` só na competência de cada
+         *     parcela (e a competência da próxima parcela não pode ser anterior ao mês atual: `422 ONGOING_CATEGORY_RETROACTIVE`). A compra entra
+         *     na fatura, no limite e em `GET /v1/debts/overview` pelos mesmos caminhos de leitura de qualquer compra parcelada; estorno, cancelar
+         *     parcelas restantes e `future-installments` funcionam como nas demais. Edição: só descrição (e categoria, se a compra tem categoria).
+         *     Corrigir valor ou quantidade = estornar e recriar. **Sem idempotência no MVP**: repetir o mesmo `POST` cria outra compra.
+         *     A origem é `ONGOING` (`Transaction.source`). `201` devolve a compra (`CARD_PURCHASE`) com `Location` para `/v1/transactions/{id}`.
+         */
+        post: operations["createOngoingInstallments"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/cards/{id}/ongoing-installments/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Prévia da compra parcelada em andamento (não grava nada)
+         * @description Monta a compra pelo **mesmo caminho de código** da criação e a descarta: parcelas (número, valor, competência, fatura alvo), o total
+         *     que passa a ser devido (`remaining`), o vencimento da primeira e da última, o limite depois e os avisos. O front não soma parcelas:
+         *     exibe `remaining` e `lastDueDate`. Os mesmos erros da criação.
+         */
+        post: operations["previewOngoingInstallments"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/cards/{id}/billing-change-preview": {
         parameters: {
             query?: never;
@@ -827,6 +881,46 @@ export interface paths {
          * @description Pessoa ativa → `422 PERSON_NOT_ARCHIVED`.
          */
         post: operations["unarchivePerson"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/debts/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Visão total de dívidas (cartões + pessoas + outras), custo fixo, comparação e cronograma
+         * @description Quanto o usuário **ainda deve**, calculado só pelo backend a partir do **estado** (faturas e dívidas), nunca somando movimentos:
+         *     compra → parcela → fatura → pagamento não conta em dobro (PR 01). `total = parts.cards + parts.people + parts.other`.
+         *
+         *     - **Cartões**: Σ `outstanding` de todas as faturas não pagas (aberta, fechada, vencida **e futura**), líquido do crédito transportado
+         *       (decisão P2). Por cartão vale a identidade `total = Σ plans.remaining + otherCharges + adjustment`, com `adjustment ≤ 0`
+         *       (pagamento parcial, crédito transportado, reembolso em fatura não paga). `plans` são as compras parceladas (2x ou mais) com
+         *       parcelas não canceladas em faturas não pagas; `otherCharges` são as compras à vista (1x) em fatura não paga.
+         *     - **Pessoas / outras**: Σ `outstanding` das dívidas `PAYABLE` `OPEN`/`PARTIALLY_SETTLED`, inclusive sem `expectedDate`. Com pessoa vai em
+         *       `people`; com credor livre (`creditorName`, sem `Person`) vai em `other`. `RECEIVABLE`, perdoada, estornada ou quitada nunca entra; o
+         *       que as pessoas devem ao usuário vai em `receivablesInfo` (informativo, fora do total).
+         *     - **Custo fixo** (`fixedCosts`, estimativa mensal das recorrências de despesa) **nunca soma no total**: fluxo mensal x saldo devedor.
+         *     - **Renda** (`income`): `RECURRING_ESTIMATE` (receita recorrente mensal); se for 0, `LAST_FULL_MONTH` (receita do mês anterior); senão
+         *       `NONE` (`monthly` nulo). Sem renda, as razões de `comparison` são `null` com `reason: NO_INCOME` (sem divisão por zero).
+         *     - **Cronograma** (`schedule`): o cronograma **contratual** ("se pagar tudo no vencimento"), não uma previsão. Um ponto por mês, do mês
+         *       de hoje por `months` meses, pelo vencimento da fatura e pela `expectedDate` da dívida. Fatura vencida e dívida atrasada ficam em
+         *       `overdue`; dívida sem data em `undated`; o que passa do horizonte em `beyondHorizon`. Identidade:
+         *       `overdue + Σ points.total + undated + beyondHorizon = total`. `remainingAfter` = `total − overdue − Σ points` até o mês (o vencido é
+         *       considerado pago no 1º mês). `payoffCompetence` é o mês do último vencimento, ou `null` com `payoffReason` (`UNDATED_DEBTS`,
+         *       `BEYOND_HORIZON`); também `null`, sem motivo, quando o total é 0.
+         *     - `hasRecords`: existe ao menos um cartão ou uma dívida cadastrados. Com `total = 0.00` e `hasRecords = false` a tela é "nada
+         *       cadastrado", nunca "livre de dívidas".
+         */
+        get: operations["getDebtOverview"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1207,6 +1301,30 @@ export interface paths {
          *     reservas simultâneas na mesma meta se serializam e ambas valem. Devolve a meta atualizada (`200`).
          */
         post: operations["reserveOnGoal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/goals/{id}/baseline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * "Cadastrei tudo": fixa a baseline da meta de quitar dívidas
+         * @description Só para `kind = DEBT_PAYOFF`. Grava `baseline` = total de dívidas de hoje (o mesmo de `GET /v1/debts/overview`) e `baselineAt`;
+         *     `target` passa a ser a baseline. Pode ser repetido (re-ancorar) e é sempre ação explícita: nada muda sozinho quando aparece dívida
+         *     nova (`grewSinceBaseline`). Total 0 → `422 DEBT_PAYOFF_NOTHING_TO_BASELINE`. Meta de guardar dinheiro → `422 GOAL_KIND_MISMATCH`.
+         */
+        post: operations["anchorGoalBaseline"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2550,10 +2668,10 @@ export interface components {
         /** @enum {string} */
         TransactionStatus: "ACTIVE" | "VOIDED";
         /**
-         * @description Como nasceu. `RECURRENCE` quando a movimentação confirma uma ocorrência (Etapa 4).
+         * @description Como nasceu. `RECURRENCE` quando a movimentação confirma uma ocorrência (Etapa 4). `ONGOING` (2.13.0) é a compra parcelada cadastrada já em andamento.
          * @enum {string}
          */
-        TransactionSource: "MANUAL" | "IMPORT" | "RECURRENCE";
+        TransactionSource: "MANUAL" | "IMPORT" | "RECURRENCE" | "ONGOING";
         /** @enum {string} */
         EntryLens: "CONSUMPTION" | "INCOME";
         /** @enum {string} */
@@ -3580,6 +3698,35 @@ export interface components {
             /** @description Uma entrada por fatura `FUTURE` com parcela, em ordem de fechamento. */
             byInvoice: components["schemas"]["FutureInstallmentsInvoice"][];
         };
+        OngoingInstallmentsRequest: {
+            description: string;
+            /** @description Valor de **cada** parcela. */
+            installmentAmount: components["schemas"]["AmountInput"];
+            totalInstallments: number;
+            /** @description Quantas faltam pagar, a próxima inclusive ("parcela 3 de 10" = 8). Acima de `totalInstallments` → `422 ONGOING_INVALID_COUNT`. */
+            remainingInstallments: number;
+            /**
+             * Format: date
+             * @description Data dentro do ciclo da fatura da próxima parcela. Ausente = hoje (fatura corrente). Fatura paga → `422 ONGOING_FIRST_INVOICE_NOT_PAYABLE`.
+             */
+            firstInvoiceDate?: string | null;
+            /**
+             * Format: uuid
+             * @description Ausente = sem categoria (consumo 0 em todos os meses). Com categoria, cada parcela vira consumo só na competência dela.
+             */
+            categoryId?: string | null;
+        };
+        OngoingPreview: {
+            remainingInstallments: number;
+            installmentAmount: components["schemas"]["Money"];
+            /** @description Σ das parcelas que faltam; o que passa a ser devido. */
+            remaining: components["schemas"]["Money"];
+            /** Format: date */
+            firstDueDate: string;
+            /** Format: date */
+            lastDueDate: string;
+            purchase: components["schemas"]["PurchasePreview"];
+        };
         PurchasePreviewRequest: {
             amount: components["schemas"]["AmountInput"];
             installments: number;
@@ -3811,7 +3958,10 @@ export interface components {
         DebtSummary: {
             /** Format: uuid */
             id: string;
-            person: components["schemas"]["PersonRef"];
+            /** @description Nulo na dívida com credor livre (`creditorName`). */
+            person: components["schemas"]["PersonRef"] | null;
+            /** @description Credor livre das "outras dívidas" (2.13.0); `null` quando há `person`. */
+            creditorName: string | null;
             direction: components["schemas"]["DebtDirection"];
             status: components["schemas"]["DebtStatus"];
             principal: components["schemas"]["Money"];
@@ -3840,7 +3990,10 @@ export interface components {
         Debt: {
             /** Format: uuid */
             id: string;
-            person: components["schemas"]["PersonRef"];
+            /** @description Nulo na dívida com credor livre (`creditorName`, "outras dívidas"). */
+            person: components["schemas"]["PersonRef"] | null;
+            /** @description Credor livre (banco, loja, financiamento) das "outras dívidas" (2.13.0); `null` quando há `person`. */
+            creditorName: string | null;
             direction: components["schemas"]["DebtDirection"];
             origin: components["schemas"]["DebtOrigin"];
             /**
@@ -3881,10 +4034,16 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
-        /** @description Dívida sem movimentação (`WITHOUT_MOVEMENT`). */
+        /**
+         * @description Dívida sem movimentação (`WITHOUT_MOVEMENT`). Informe `personId` **ou** `creditorName` (2.13.0, "outras dívidas": banco, loja,
+         *     financiamento, sem `Person`): os dois juntos, nenhum dos dois, `creditorName` em `RECEIVABLE` ou `categoryId` com `creditorName` são
+         *     `422 DEBT_CREDITOR_INVALID`. A dívida com credor livre também é reconhecida contra `EQUITY` (consumo 0) e vai em `other` de
+         *     `GET /v1/debts/overview`.
+         */
         DebtInput: {
             /** Format: uuid */
-            personId: string;
+            personId?: string;
+            creditorName?: string;
             direction: components["schemas"]["DebtDirection"];
             principal: components["schemas"]["AmountInput"];
             /**
@@ -3917,6 +4076,138 @@ export interface components {
          */
         DebtReasonInput: {
             reason?: string | null;
+        };
+        /** @description Compra parcelada (2x ou mais) com parcelas não canceladas em faturas não pagas. */
+        DebtOverviewPlan: {
+            /** Format: uuid */
+            purchaseId: string;
+            description: string | null;
+            /** @description Cadastrada já em andamento (`Transaction.source = ONGOING`). */
+            ongoing: boolean;
+            /** @description Valor da próxima parcela. */
+            installmentAmount: components["schemas"]["Money"];
+            totalInstallments: number;
+            /** @description Parcelas ainda não pagas e não canceladas. */
+            remainingInstallments: number;
+            nextInstallmentNumber: number;
+            /** @description Σ das parcelas ainda não pagas e não canceladas. */
+            remaining: components["schemas"]["Money"];
+            /** Format: date */
+            nextDueDate: string;
+            /** Format: date */
+            lastDueDate: string;
+        };
+        /**
+         * @description Um cartão. Identidade: `total = Σ plans[].remaining + otherCharges + adjustment`, com `adjustment ≤ 0` (0 sem pagamento
+         *     parcial, crédito transportado nem reembolso em fatura não paga). `total = invoiced + future`.
+         */
+        DebtOverviewCardItem: {
+            card: {
+                /** Format: uuid */
+                id: string;
+                name: string;
+            };
+            total: components["schemas"]["Money"];
+            /** @description Faturas aberta, fechada e vencida. */
+            invoiced: components["schemas"]["Money"];
+            /** @description Faturas futuras. */
+            future: components["schemas"]["Money"];
+            /** @description Compras à vista (1x) em fatura não paga. */
+            otherCharges: components["schemas"]["Money"];
+            /** @description Pagamento parcial, crédito transportado e reembolso (≤ 0). */
+            adjustment: components["schemas"]["Money"];
+            plans: components["schemas"]["DebtOverviewPlan"][];
+        };
+        DebtOverviewDebtItem: {
+            /** Format: uuid */
+            debtId: string;
+            /** @description Nulo na dívida com credor livre. */
+            person: components["schemas"]["PersonRef"] | null;
+            /** @description Nome da pessoa ou do credor livre. */
+            creditorName: string;
+            description: string | null;
+            outstanding: components["schemas"]["Money"];
+            /** Format: date */
+            expectedDate: string | null;
+            overdue: boolean;
+        };
+        DebtOverviewGroup: {
+            total: components["schemas"]["Money"];
+            items: components["schemas"]["DebtOverviewDebtItem"][];
+        };
+        DebtOverviewPoint: {
+            competence: components["schemas"]["Competence"];
+            cards: components["schemas"]["Money"];
+            people: components["schemas"]["Money"];
+            other: components["schemas"]["Money"];
+            total: components["schemas"]["Money"];
+            remainingAfter: components["schemas"]["Money"];
+        };
+        /** @description Veja `GET /v1/debts/overview`. Tudo calculado pelo backend; o front só exibe. */
+        DebtOverview: {
+            /** Format: date */
+            asOf: string;
+            total: components["schemas"]["Money"];
+            parts: {
+                cards: components["schemas"]["Money"];
+                people: components["schemas"]["Money"];
+                other: components["schemas"]["Money"];
+            };
+            cards: {
+                total: components["schemas"]["Money"];
+                invoiced: components["schemas"]["Money"];
+                future: components["schemas"]["Money"];
+                /** @description Cartões com saldo devedor ou compras parceladas pendentes (cartão sem nada a pagar não aparece). */
+                items: components["schemas"]["DebtOverviewCardItem"][];
+            };
+            people: components["schemas"]["DebtOverviewGroup"];
+            other: components["schemas"]["DebtOverviewGroup"];
+            /** @description O que as pessoas devem ao usuário. Informativo, fora do total. */
+            receivablesInfo: components["schemas"]["Money"];
+            hasRecords: boolean;
+            /** @description Custo fixo mensal estimado (recorrências de despesa ativas e não encerradas). Nunca soma no total. */
+            fixedCosts: {
+                monthly: components["schemas"]["Money"];
+                estimate: boolean;
+            };
+            income: {
+                /** @description Nulo com `source = NONE`. */
+                monthly: components["schemas"]["Money"] | null;
+                /** @enum {string} */
+                source: "RECURRING_ESTIMATE" | "LAST_FULL_MONTH" | "NONE";
+            };
+            liquidity: {
+                inAccounts: components["schemas"]["Money"];
+                available: components["schemas"]["Money"];
+            };
+            comparison: {
+                /** @description `total` ÷ renda mensal (4 casas, pode passar de 1); nulo com `reason = NO_INCOME`. */
+                debtToIncome: components["schemas"]["Ratio"] | null;
+                fixedCostToIncome: components["schemas"]["Ratio"] | null;
+                /** @description `total` − em contas (pode ser negativo: o saldo cobre a dívida). */
+                debtMinusInAccounts: components["schemas"]["Money"];
+                /** @enum {string|null} */
+                reason: "NO_INCOME" | null;
+            };
+            /** @description Cronograma contratual. Identidade: `overdue + Σ points.total + undated + beyondHorizon = total`. */
+            schedule: {
+                months: number;
+                points: components["schemas"]["DebtOverviewPoint"][];
+                overdue: components["schemas"]["Money"];
+                undated: components["schemas"]["Money"];
+                beyondHorizon: components["schemas"]["Money"];
+                payoffCompetence: components["schemas"]["Competence"] | null;
+                /** @enum {string|null} */
+                payoffReason: "UNDATED_DEBTS" | "BEYOND_HORIZON" | null;
+            };
+            /** @description A meta `DEBT_PAYOFF` ativa, se houver (o progresso sai do mesmo total). */
+            payoffGoal: {
+                /** Format: uuid */
+                goalId: string;
+                baselineSet: boolean;
+                progress: components["schemas"]["Ratio"];
+                remaining: components["schemas"]["Money"];
+            } | null;
         };
         DebtSlice: components["schemas"]["SliceBase"] & {
             items: components["schemas"]["Debt"][];
@@ -4188,9 +4479,21 @@ export interface components {
          * @example 0.4250
          */
         Ratio: string;
+        /**
+         * @description `SAVINGS` (padrão; a meta de guardar dinheiro por reserva lógica) ou `DEBT_PAYOFF` (2.13.0, "quitar todas as dívidas": sem reservas,
+         *     progresso vindo do total de dívidas em relação à `baseline`). Não entra em `balances.reserved` nem em `uncovered`.
+         * @enum {string}
+         */
+        GoalKind: "SAVINGS" | "DEBT_PAYOFF";
+        /**
+         * @description `kind` ausente = `SAVINGS`: `name` e `target` obrigatórios. `kind = DEBT_PAYOFF`: `target` é ignorado (sem alvo), `name` é opcional
+         *     (padrão "Quitar todas as dívidas"), `deadline` e `priority` opcionais; só uma meta `DEBT_PAYOFF` ativa por usuário
+         *     (`422 DEBT_PAYOFF_GOAL_EXISTS`). A meta nasce "montando" (`baselineSet = false`, `progress` `0.0000`) até `POST /v1/goals/{id}/baseline`.
+         */
         GoalInput: {
-            name: string;
-            target: components["schemas"]["AmountInput"];
+            kind?: components["schemas"]["GoalKind"];
+            name?: string;
+            target?: components["schemas"]["AmountInput"];
             /**
              * Format: date
              * @description Prazo opcional (de 2000-01-01 a 2100-12-31).
@@ -4245,6 +4548,7 @@ export interface components {
          *     reservado que saldo (S-148; só avisa). Tudo calculado pelo backend.
          * @example {
          *       "id": "5b0f6c3e-7e0a-4f6b-9d57-0e8f3a1c2b10",
+         *       "kind": "SAVINGS",
          *       "name": "Reserva de emergência",
          *       "target": {
          *         "amount": "20000.00",
@@ -4284,6 +4588,10 @@ export interface components {
          *           "createdAt": "2026-10-10T13:00:00Z"
          *         }
          *       ],
+         *       "baselineSet": false,
+         *       "baseline": null,
+         *       "baselineAt": null,
+         *       "grewSinceBaseline": false,
          *       "version": 1,
          *       "createdAt": "2026-10-10T12:00:00Z",
          *       "updatedAt": "2026-10-10T13:00:00Z"
@@ -4292,10 +4600,15 @@ export interface components {
         Goal: {
             /** Format: uuid */
             id: string;
+            kind: components["schemas"]["GoalKind"];
             name: string;
+            /** @description Em `DEBT_PAYOFF`, a `baseline` (0,00 enquanto "montando"). */
             target: components["schemas"]["Money"];
+            /** @description Em `DEBT_PAYOFF`, `max(0, baseline − remaining)` (quanto já foi quitado). */
             current: components["schemas"]["Money"];
+            /** @description Em `DEBT_PAYOFF`, `current / baseline` limitado a 0..1 (`0.0000` sem baseline); dívida nova nunca deixa negativo. */
             progress: components["schemas"]["Ratio"];
+            /** @description Em `DEBT_PAYOFF`, o total de dívidas hoje (o mesmo de `GET /v1/debts/overview`), mesmo acima da baseline. */
             remaining: components["schemas"]["Money"];
             status: components["schemas"]["GoalStatus"];
             /** Format: date */
@@ -4305,8 +4618,19 @@ export interface components {
             /** @description Estimativa (S-156). */
             monthlyNeeded: components["schemas"]["Money"] | null;
             uncovered: boolean;
-            /** @description Todas as reservas, da mais recente para a mais antiga. */
+            /** @description Todas as reservas, da mais recente para a mais antiga (sempre vazio em `DEBT_PAYOFF`). */
             reservations: components["schemas"]["GoalReservation"][];
+            /** @description `DEBT_PAYOFF`: "cadastrei tudo" foi confirmado. `false` = "montando" (sem percentual). Sempre `false` em `SAVINGS`. */
+            baselineSet: boolean;
+            /** @description Total de dívidas fixado em "cadastrei tudo"; `null` em `SAVINGS` e enquanto "montando". */
+            baseline: components["schemas"]["Money"] | null;
+            /** Format: date-time */
+            baselineAt: string | null;
+            /**
+             * @description `DEBT_PAYOFF`: o total de dívidas passou da baseline (dívida nova depois de ancorar). Nada é re-ancorado sozinho; o aviso é
+             *     da UI e re-ancorar é `POST /v1/goals/{id}/baseline`. `ACHIEVED` só com baseline e total 0,00; total 0 sem baseline não é conquista.
+             */
+            grewSinceBaseline: boolean;
             /** Format: int64 */
             version: number;
             /** Format: date-time */
@@ -4759,8 +5083,12 @@ export interface components {
         BackupDebt: {
             /** Format: uuid */
             id: string;
-            /** Format: uuid */
-            personId: string;
+            /**
+             * Format: uuid
+             * @description Nulo na dívida com credor livre.
+             */
+            personId: string | null;
+            creditorName: string | null;
             direction: components["schemas"]["DebtDirection"];
             origin: components["schemas"]["DebtOrigin"];
             principal: components["schemas"]["Money"];
@@ -6781,6 +7109,69 @@ export interface operations {
             500: components["responses"]["InternalServerError"];
         };
     };
+    createOngoingInstallments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OngoingInstallmentsRequest"];
+            };
+        };
+        responses: {
+            /** @description Compra criada. */
+            201: {
+                headers: {
+                    Location: components["headers"]["Location"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Transaction"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    previewOngoingInstallments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OngoingInstallmentsRequest"];
+            };
+        };
+        responses: {
+            /** @description A prévia. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OngoingPreview"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
     previewBillingChange: {
         parameters: {
             query: {
@@ -7169,6 +7560,32 @@ export interface operations {
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
             422: components["responses"]["UnprocessableEntity"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    getDebtOverview: {
+        parameters: {
+            query?: {
+                /** @description Horizonte do cronograma em meses, de 1 a 36 (padrão 12). Fora disso, `400 VALIDATION_FAILED`. */
+                months?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A visão. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DebtOverview"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
             500: components["responses"]["InternalServerError"];
         };
     };
@@ -7828,6 +8245,33 @@ export interface operations {
                 };
             };
             400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["UnprocessableEntity"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    anchorGoalBaseline: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Meta atualizada. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Goal"];
+                };
+            };
             401: components["responses"]["Unauthorized"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
