@@ -2624,9 +2624,9 @@ export interface components {
             type: components["schemas"]["AccountType"];
             institution?: string | null;
             /** @description Pode ser negativo (cheque especial); em módulo até R$ 999.999.999,99. */
-            openingBalance: components["schemas"]["Money"];
+            openingBalance?: components["schemas"]["Money"];
             /** Format: date */
-            openingDate: string;
+            openingDate?: string;
         };
         AccountUpdate: {
             name: string;
@@ -2679,7 +2679,7 @@ export interface components {
              * @description Data financeira (no fuso do usuário).
              */
             date: string;
-            description: string;
+            description?: string;
             notes?: string | null;
             /**
              * Format: uuid
@@ -2690,8 +2690,8 @@ export interface components {
              * Format: uuid
              * @description Categoria `EXPENSE`.
              */
-            categoryId: string;
-            method: components["schemas"]["PaymentMethod"];
+            categoryId?: string;
+            method?: components["schemas"]["PaymentMethod"];
             /**
              * @description Divisão da despesa (S-40, S-137): cada parte é uma dívida `RECEIVABLE` cuja origem é esta despesa. Paguei 200,00 e o
              *     João me deve 100,00: caixa −200,00 (igual à linha do extrato), consumo 100,00, recebível +100,00. Σ das partes tem de
@@ -2712,7 +2712,7 @@ export interface components {
              * @description Data financeira (no fuso do usuário).
              */
             date: string;
-            description: string;
+            description?: string;
             notes?: string | null;
             /**
              * Format: uuid
@@ -2723,8 +2723,8 @@ export interface components {
              * Format: uuid
              * @description Categoria `INCOME`.
              */
-            categoryId: string;
-            method: components["schemas"]["PaymentMethod"];
+            categoryId?: string;
+            method?: components["schemas"]["PaymentMethod"];
         };
         /** @description Transferência entre contas próprias da mesma liquidez (`TRANSFER`). */
         TransferInput: {
@@ -2739,7 +2739,7 @@ export interface components {
              * @description Data financeira (no fuso do usuário).
              */
             date: string;
-            description: string;
+            description?: string;
             notes?: string | null;
             /** Format: uuid */
             fromAccountId: string;
@@ -2759,7 +2759,7 @@ export interface components {
              * @description Data financeira (no fuso do usuário).
              */
             date: string;
-            description: string;
+            description?: string;
             notes?: string | null;
             /** Format: uuid */
             cashAccountId: string;
@@ -2780,7 +2780,7 @@ export interface components {
              * @description Data financeira (no fuso do usuário).
              */
             date: string;
-            description: string;
+            description?: string;
             notes?: string | null;
             /** Format: uuid */
             accountId: string;
@@ -2802,7 +2802,7 @@ export interface components {
              * @description Data financeira (no fuso do usuário).
              */
             date: string;
-            description: string;
+            description?: string;
             notes?: string | null;
             /**
              * Format: uuid
@@ -2813,7 +2813,7 @@ export interface components {
              * Format: uuid
              * @description Categoria `EXPENSE`; com `refundOfTransactionId` tem de ser a da despesa original.
              */
-            categoryId: string;
+            categoryId?: string;
             /**
              * Format: uuid
              * @description Despesa de origem (opcional). A soma dos reembolsos não passa do valor dela.
@@ -2841,7 +2841,7 @@ export interface components {
              * @description Data financeira (no fuso do usuário).
              */
             date: string;
-            description: string;
+            description?: string;
             notes?: string | null;
             /**
              * Format: uuid
@@ -2852,8 +2852,8 @@ export interface components {
              * Format: uuid
              * @description Categoria `EXPENSE`.
              */
-            categoryId: string;
-            method: components["schemas"]["PaymentMethod"];
+            categoryId?: string;
+            method?: components["schemas"]["PaymentMethod"];
             /**
              * @description Uma despesa **dividida** só muda descrição, categoria e observação: valor, data, conta, meio de pagamento e divisão
              *     iguais aos da despesa (senão `422 TRANSACTION_NOT_EDITABLE`); a divisão não se cria numa edição. Repetir as mesmas
@@ -2877,7 +2877,7 @@ export interface components {
              * @description Data financeira (no fuso do usuário).
              */
             date: string;
-            description: string;
+            description?: string;
             notes?: string | null;
             /**
              * Format: uuid
@@ -2888,8 +2888,8 @@ export interface components {
              * Format: uuid
              * @description Categoria `INCOME`.
              */
-            categoryId: string;
-            method: components["schemas"]["PaymentMethod"];
+            categoryId?: string;
+            method?: components["schemas"]["PaymentMethod"];
             /** Format: int64 */
             version: number;
         };
@@ -2906,7 +2906,7 @@ export interface components {
              * @description Data financeira (no fuso do usuário).
              */
             date: string;
-            description: string;
+            description?: string;
             notes?: string | null;
             /** Format: uuid */
             fromAccountId: string;
@@ -2928,7 +2928,7 @@ export interface components {
              * @description Data financeira (no fuso do usuário).
              */
             date: string;
-            description: string;
+            description?: string;
             notes?: string | null;
             /** Format: uuid */
             cashAccountId: string;
@@ -2951,7 +2951,7 @@ export interface components {
              * @description Data financeira (no fuso do usuário).
              */
             date: string;
-            description: string;
+            description?: string;
             notes?: string | null;
             /** Format: uuid */
             accountId: string;
@@ -2975,7 +2975,7 @@ export interface components {
              * @description Data financeira (no fuso do usuário).
              */
             date: string;
-            description: string;
+            description?: string;
             notes?: string | null;
             /**
              * Format: uuid
@@ -2986,7 +2986,7 @@ export interface components {
              * Format: uuid
              * @description Categoria `EXPENSE`; com `refundOfTransactionId` tem de ser a da despesa original.
              */
-            categoryId: string;
+            categoryId?: string;
             /**
              * Format: uuid
              * @description Despesa de origem (opcional). A soma dos reembolsos não passa do valor dela.
@@ -3676,8 +3676,8 @@ export interface components {
              * Format: uuid
              * @description Categoria `EXPENSE`.
              */
-            categoryId: string;
-            installments: number;
+            categoryId?: string;
+            installments?: number;
         };
         /**
          * @description Edição limitada da compra no cartão (S-121, T57): o corpo do `POST` (`CardPurchaseInput`) + `version`. Só
@@ -3708,7 +3708,7 @@ export interface components {
              * Format: uuid
              * @description Categoria `EXPENSE`.
              */
-            categoryId: string;
+            categoryId?: string;
             /** @description Tem de ser o número atual de parcelas. */
             installments: number;
             /** Format: int64 */
@@ -3897,7 +3897,7 @@ export interface components {
              * @description Previsão de pagamento/cobrança. Sem ela a dívida fica em `undated` e fora dos horizontes (S-145).
              */
             expectedDate?: string | null;
-            description: string;
+            description?: string;
             /**
              * Format: uuid
              * @description Categoria `EXPENSE`; só em `PAYABLE` (S-137).
@@ -3907,7 +3907,7 @@ export interface components {
         DebtUpdate: {
             /** Format: date */
             expectedDate?: string | null;
-            description: string;
+            description?: string;
             /** Format: int64 */
             version: number;
         };
@@ -3951,7 +3951,7 @@ export interface components {
             amount: components["schemas"]["AmountInput"];
             /** Format: date */
             date: string;
-            description: string;
+            description?: string;
             notes?: string | null;
             /**
              * Format: uuid
@@ -3976,7 +3976,7 @@ export interface components {
             amount: components["schemas"]["AmountInput"];
             /** Format: date */
             date: string;
-            description: string;
+            description?: string;
             notes?: string | null;
             /**
              * Format: uuid
@@ -3997,7 +3997,7 @@ export interface components {
             amount: components["schemas"]["AmountInput"];
             /** Format: date */
             date: string;
-            description: string;
+            description?: string;
             notes?: string | null;
             /**
              * Format: uuid
@@ -4067,9 +4067,9 @@ export interface components {
         RecurrenceInput: {
             type: components["schemas"]["RecurrenceType"];
             amount: components["schemas"]["AmountInput"];
-            description: string;
+            description?: string;
             /** Format: uuid */
-            categoryId: string;
+            categoryId?: string;
             /** Format: uuid */
             accountId?: string | null;
             method?: components["schemas"]["PaymentMethod"] | null;
@@ -4087,7 +4087,7 @@ export interface components {
         /** @description Só os dados do modelo (S-139). Frequência e início não existem aqui. */
         RecurrenceUpdate: {
             amount: components["schemas"]["AmountInput"];
-            description: string;
+            description?: string;
             /** Format: uuid */
             categoryId: string;
             /** Format: uuid */
@@ -4196,7 +4196,7 @@ export interface components {
              * @description Prazo opcional (de 2000-01-01 a 2100-12-31).
              */
             deadline?: string | null;
-            priority: components["schemas"]["GoalPriority"];
+            priority?: components["schemas"]["GoalPriority"];
             description?: string | null;
         };
         GoalUpdate: {

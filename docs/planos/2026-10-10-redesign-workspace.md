@@ -834,3 +834,13 @@ Pedido do dono: "quanto menos tela melhor". Sem commit, sem E2E rodado, sem test
 - **Formulários reaproveitados:** as páginas de formulário só trocaram `page-layout` por `app-form-modal` (mesma lógica, mesmos `data-cy`; "Cancelar" virou botão). Categorias: o formulário inline de "Nova categoria" virou modal na mesma tela (renomear continua inline na linha). Notas, lembretes, quitar e pagar já eram folhas.
 - **Testes:** specs dos 5 formulários ajustados (título agora é `h2` do diálogo, criar volta para a lista), novos testes de descarte, spec do `form-modal` e `accounts.routes.spec.ts` (deep link + salvar atualiza a lista). E2E de `cards`, `etapa4` e `etapa5` ajustados (criar volta para a lista), mas não rodados: a porta 4200 está ocupada pelo `npm start` do dono.
 - **Próxima fatia:** o mesmo para `quick-add`, `home` (Quick Capture/atalhos) e `transactions-edit`, e rodar os E2E. Pergunta de regra: editar cartão/meta/pessoa a partir da lista abre o modal sobre o detalhe (a lista some atrás); prefere o modal sobre a lista também?
+
+### Registro de execução: nova paleta e alternador de tema (frontend, modo rápido)
+
+Feedback do dono: o azul com cinza não agradava. Sem commit, sem E2E. Fora de `quick-add` e `transactions`.
+
+- **Tokens:** mesmos nomes, valores novos (Tailwind zinc/teal/green/amber/rose). Claro: canvas `#f4f4f2`, cartão `#ffffff`, acento `#0f766e`, positivo `#15803d`, alerta `#a85108`, risco `#be123c`. Escuro: canvas `#0b0b0d`, cartão `#161618`, acento `#2dd4bf`, positivo `#4ade80`, alerta `#fbbf24`, risco `#fb7185`. Tintas `soft` sólidas; gráfico 1 = acento, 2 = zinc tracejado.
+- **Contraste:** `check-contrast` passa sem mudar pares (AA nos dois temas); `theme-color` e manifest passaram a `#f4f4f2`/`#0b0b0d`.
+- **Alternador:** botão cíclico (Sistema, Claro, Escuro) no `workspace-header`, ícones sol/lua/monitor, `aria-label` com estado atual e próximo; usa o `ThemeService` que já existia (Configurações usa o mesmo). Script mínimo no `index.html` aplica `data-theme` antes do bootstrap (sem CSP no projeto).
+- **Em Sistema** o CSS segue `prefers-color-scheme` ao vivo, sem listener em JS.
+- **Pergunta:** a ordem do ciclo e o ícone do estado Sistema (monitor) estão bons?

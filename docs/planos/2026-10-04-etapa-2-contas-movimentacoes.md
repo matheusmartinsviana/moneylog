@@ -929,3 +929,14 @@ flowchart TD
 | D1 §2.3                                             | Lista do seed de categorias (S-59)                                                                                                                                                                                                                 | T23                  |
 | D1 §2.5.1, §6, §8, D2 §3.4, §8 e ADR-002 (adendo 6) | `credit_card_billing_rules`, S-75 revisada (chave derivada + `original_dedup_key`), S-49 a S-55, S-77, S-78, S-56 a S-76 e S-79 a S-93                                                                                                             | T48                  |
 | `backend/README.md` / `frontend/README.md`          | como rodar com auth, HTTPS local com `mkcert`, `start:mock`, `api:types`, stack de E2E                                                                                                                                                             | T22b, T30, T44       |
+
+## 9. Registro: campos opcionais com padrão no servidor (contrato 2.11.0)
+
+Pedido do dono (menos burocracia). Só afrouxa o contrato: cliente antigo continua válido. O servidor resolve o padrão; o front pode omitir os campos.
+
+- `description` opcional em todos os inputs de movimentação, `DebtInput`, `RecurrenceInput` (e nos `*Update` correspondentes); ausente fica `null` (o front gera o rótulo). Listas, busca, CSV, backup e importação já tratavam nulo; coberto em `OptionalFieldsIT`.
+- `categoryId` opcional em despesa, receita, reembolso, compra no cartão e recorrência: resolve para `OTHER_EXPENSE` / `OTHER_INCOME` do usuário (`SystemCategories.DEFAULT_*_KEY`, `CategoryGateway.findBySystemKey`). Reembolso com `refundOfTransactionId` herda a categoria da original. Categoria padrão ausente ou arquivada: `422 DEFAULT_CATEGORY_UNAVAILABLE`.
+- `method` opcional em despesa, receita e recorrência de conta (padrão `OTHER`); `installments` opcional na compra no cartão (padrão 1); `openingBalance` (0,00) e `openingDate` (hoje, relógio injetado) opcionais em `AccountInput`; `priority` opcional em `GoalInput` (`MEDIUM`).
+- Partida dobrada intacta: a categoria resolvida continua sendo a contrapartida; testes provam soma zero e impacto idêntico ao caso explícito (PR 01).
+- Continuam obrigatórios: valor, data, conta/cartão, tipo/direção, pessoa da dívida, dias do cartão, limite, alvo da meta, motivo do ajuste e nomes.
+- Mudou o teste que esperava `400` para `installments` ausente (`CardPurchaseIT`): agora é `201` com 1x.
