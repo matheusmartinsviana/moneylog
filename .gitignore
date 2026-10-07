@@ -1,0 +1,18 @@
+# Segredos locais
+.env
+.env.*
+!.env.example
+
+# Backend (Maven)
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+
+# Frontend (Angular)
+node_modules/
+dist/
+.angular/
+
+# IDEs e SO
+.idea/
+*.iml
+.DS_Store
