@@ -19,6 +19,7 @@ import { TooltipDirective } from '~/app/common/components/tooltip/tooltip.direct
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { interpolate } from '~/app/common/i18n/interpolate';
 import { CaptureRequestType, QuickCaptureBus } from '~/app/common/services/quick-capture-bus';
+import { ThemePreference, ThemeService } from '~/app/common/services/theme.service';
 import { AiStatusFacade } from '~/modules/ai/core/facades/ai-status.facade';
 import { UnreadCountFacade } from '~/modules/notifications/core/facades/unread-count.facade';
 
@@ -76,6 +77,29 @@ export class WorkspaceHeaderComponent implements OnInit {
   protected readonly t = inject(I18nService).t;
   private readonly unread = inject(UnreadCountFacade);
   protected readonly aiStatus = inject(AiStatusFacade);
+
+  private readonly theme = inject(ThemeService);
+  protected readonly themeIcon = computed(() => {
+    const p = this.theme.preference();
+    return p === 'light' ? 'sun' : p === 'dark' ? 'moon' : 'monitor';
+  });
+  protected readonly themeLabel = computed(() => {
+    const copy = this.t().header.theme;
+    const next = this.nextTheme(this.theme.preference());
+    return interpolate(copy.toggle, {
+      current: copy[this.theme.preference()],
+      next: copy[next],
+    });
+  });
+
+  /** Ciclo: Sistema, Claro, Escuro. */
+  protected cycleTheme(): void {
+    this.theme.set(this.nextTheme(this.theme.preference()));
+  }
+
+  private nextTheme(current: ThemePreference): ThemePreference {
+    return current === 'system' ? 'light' : current === 'light' ? 'dark' : 'system';
+  }
 
   protected readonly unreadCount = this.unread.count;
   protected readonly bellLabel = computed(() => {

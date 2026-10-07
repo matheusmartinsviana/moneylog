@@ -15,9 +15,10 @@ manual; `[data-theme="light|dark"]` (gravado pelo `ThemeService`) vale contra o 
 
 ## Redesign "workspace" (DS 02, ADR-011)
 
-- **Paleta:** `canvas` cinza muito claro (`#f2f2f5` / `#0e0e10`) atrás da janela; `surface` branco quente (`#fdfcfa`) ou
-  `#1c1c1e`, **mais clara que o canvas também no escuro**; acento azul Apple (`#0066cc` / `#2997ff`); verde, laranja e
-  vermelho dessaturados, só para variação, risco e saldo negativo.
+- **Paleta (escala Tailwind zinc/teal/green/amber/rose):** claro com `canvas` off-white neutro (`#f4f4f2`) e cartões
+  `surface` brancos (`#ffffff`); escuro com `canvas` `#0b0b0d` e `surface` `#161618` (cinzas neutros, sem preto puro, mais
+  clara que o canvas). Acento teal (`#0f766e` claro / `#2dd4bf` escuro); positivo verde (`#15803d` / `#4ade80`), alerta âmbar
+  (`#a85108` / `#fbbf24`), risco rose (`#be123c` / `#fb7185`). Tema escolhido no alternador do cabeçalho (Sistema, Claro, Escuro).
 - **Tintas `*-soft`** (`accent`, `positive`, `warning`, `risk`): **hex sólido** (10% do tom sobre `surface` no claro, 14% no
   escuro) porque `check-contrast` só lê `#rrggbb` e uma tinta translúcida mudaria de contraste conforme o fundo. Dois pares
   que a revisão apontou como falha (`accent` sobre `accent-soft` em `surface-muted`, 4,40:1; `accent` a 18% no escuro,
@@ -49,61 +50,73 @@ Regras verificadas no `npm run lint`:
 
 Gerado por `npm run contrast`.
 
-| Tema   | Texto                | Fundo                   | Contraste | AA (4,5:1) |
-| ------ | -------------------- | ----------------------- | --------- | ---------- |
-| claro  | `text` #1d1d1f       | `canvas` #f2f2f5        | 15.06:1   | ok         |
-| claro  | `text` #1d1d1f       | `surface` #fdfcfa       | 16.41:1   | ok         |
-| claro  | `text` #1d1d1f       | `surface-muted` #f6f4f1 | 15.33:1   | ok         |
-| claro  | `text-muted` #66666b | `canvas` #f2f2f5        | 5.11:1    | ok         |
-| claro  | `text-muted` #66666b | `surface` #fdfcfa       | 5.57:1    | ok         |
-| claro  | `text-muted` #66666b | `surface-muted` #f6f4f1 | 5.20:1    | ok         |
-| claro  | `accent` #0066cc     | `canvas` #f2f2f5        | 4.98:1    | ok         |
-| claro  | `accent` #0066cc     | `surface` #fdfcfa       | 5.43:1    | ok         |
-| claro  | `accent` #0066cc     | `surface-muted` #f6f4f1 | 5.07:1    | ok         |
-| claro  | `positive` #2e7048   | `canvas` #f2f2f5        | 5.33:1    | ok         |
-| claro  | `positive` #2e7048   | `surface` #fdfcfa       | 5.81:1    | ok         |
-| claro  | `positive` #2e7048   | `surface-muted` #f6f4f1 | 5.42:1    | ok         |
-| claro  | `warning` #9a5b00    | `canvas` #f2f2f5        | 4.86:1    | ok         |
-| claro  | `warning` #9a5b00    | `surface` #fdfcfa       | 5.29:1    | ok         |
-| claro  | `warning` #9a5b00    | `surface-muted` #f6f4f1 | 4.94:1    | ok         |
-| claro  | `risk` #b3402f       | `canvas` #f2f2f5        | 5.09:1    | ok         |
-| claro  | `risk` #b3402f       | `surface` #fdfcfa       | 5.55:1    | ok         |
-| claro  | `risk` #b3402f       | `surface-muted` #f6f4f1 | 5.18:1    | ok         |
-| claro  | `on-accent` #ffffff  | `accent` #0066cc        | 5.57:1    | ok         |
-| claro  | `accent` #0066cc     | `accent-soft` #e4edf5   | 4.70:1    | ok (4,5:1) |
-| claro  | `positive` #2e7048   | `positive-soft` #e8eee8 | 5.05:1    | ok (4,5:1) |
-| claro  | `warning` #9a5b00    | `warning-soft` #f3ece1  | 4.62:1    | ok (4,5:1) |
-| claro  | `risk` #b3402f       | `risk-soft` #f6e9e6     | 4.80:1    | ok (4,5:1) |
-| claro  | `text` #1d1d1f       | `accent-soft` #e4edf5   | 14.21:1   | ok (4,5:1) |
-| claro  | `chart-1` #0066cc    | `surface` #fdfcfa       | 5.43:1    | ok (3:1)   |
-| claro  | `chart-2` #8a7f72    | `surface` #fdfcfa       | 3.82:1    | ok (3:1)   |
-| claro  | `chart-1` #0066cc    | `surface-muted` #f6f4f1 | 5.07:1    | ok (3:1)   |
-| claro  | `chart-2` #8a7f72    | `surface-muted` #f6f4f1 | 3.57:1    | ok (3:1)   |
-| escuro | `text` #f5f5f7       | `canvas` #0e0e10        | 17.71:1   | ok         |
-| escuro | `text` #f5f5f7       | `surface` #1c1c1e       | 15.63:1   | ok         |
-| escuro | `text` #f5f5f7       | `surface-muted` #2a2a2d | 13.14:1   | ok         |
-| escuro | `text-muted` #a1a1a6 | `canvas` #0e0e10        | 7.50:1    | ok         |
-| escuro | `text-muted` #a1a1a6 | `surface` #1c1c1e       | 6.61:1    | ok         |
-| escuro | `text-muted` #a1a1a6 | `surface-muted` #2a2a2d | 5.56:1    | ok         |
-| escuro | `accent` #2997ff     | `canvas` #0e0e10        | 6.40:1    | ok         |
-| escuro | `accent` #2997ff     | `surface` #1c1c1e       | 5.64:1    | ok         |
-| escuro | `accent` #2997ff     | `surface-muted` #2a2a2d | 4.75:1    | ok         |
-| escuro | `positive` #7daf90   | `canvas` #0e0e10        | 7.72:1    | ok         |
-| escuro | `positive` #7daf90   | `surface` #1c1c1e       | 6.81:1    | ok         |
-| escuro | `positive` #7daf90   | `surface-muted` #2a2a2d | 5.73:1    | ok         |
-| escuro | `warning` #cda765    | `canvas` #0e0e10        | 8.55:1    | ok         |
-| escuro | `warning` #cda765    | `surface` #1c1c1e       | 7.54:1    | ok         |
-| escuro | `warning` #cda765    | `surface-muted` #2a2a2d | 6.34:1    | ok         |
-| escuro | `risk` #d08a7f       | `canvas` #0e0e10        | 7.00:1    | ok         |
-| escuro | `risk` #d08a7f       | `surface` #1c1c1e       | 6.18:1    | ok         |
-| escuro | `risk` #d08a7f       | `surface-muted` #2a2a2d | 5.20:1    | ok         |
-| escuro | `on-accent` #00111f  | `accent` #2997ff        | 6.33:1    | ok         |
-| escuro | `accent` #2997ff     | `accent-soft` #1e2d3e   | 4.64:1    | ok (4,5:1) |
-| escuro | `positive` #7daf90   | `positive-soft` #2a312e | 5.33:1    | ok (4,5:1) |
-| escuro | `warning` #cda765    | `warning-soft` #352f28  | 5.86:1    | ok (4,5:1) |
-| escuro | `risk` #d08a7f       | `risk-soft` #352b2c     | 4.97:1    | ok (4,5:1) |
-| escuro | `text` #f5f5f7       | `accent-soft` #1e2d3e   | 12.86:1   | ok (4,5:1) |
-| escuro | `chart-1` #2997ff    | `surface` #1c1c1e       | 5.64:1    | ok (3:1)   |
-| escuro | `chart-2` #a89c8c    | `surface` #1c1c1e       | 6.32:1    | ok (3:1)   |
-| escuro | `chart-1` #2997ff    | `surface-muted` #2a2a2d | 4.75:1    | ok (3:1)   |
-| escuro | `chart-2` #a89c8c    | `surface-muted` #2a2a2d | 5.31:1    | ok (3:1)   |
+| Tema   | Texto                    | Fundo                       | Contraste | AA (4,5:1) |
+| ------ | ------------------------ | --------------------------- | --------- | ---------- |
+| claro  | `text` #18181b           | `canvas` #f4f4f2            | 16.09:1   | ok         |
+| claro  | `text` #18181b           | `surface` #ffffff           | 17.72:1   | ok         |
+| claro  | `text` #18181b           | `surface-muted` #f4f4f5     | 16.12:1   | ok         |
+| claro  | `text-muted` #52525b     | `canvas` #f4f4f2            | 7.02:1    | ok         |
+| claro  | `text-muted` #52525b     | `surface` #ffffff           | 7.73:1    | ok         |
+| claro  | `text-muted` #52525b     | `surface-muted` #f4f4f5     | 7.03:1    | ok         |
+| claro  | `accent` #0f766e         | `canvas` #f4f4f2            | 4.97:1    | ok         |
+| claro  | `accent` #0f766e         | `surface` #ffffff           | 5.47:1    | ok         |
+| claro  | `accent` #0f766e         | `surface-muted` #f4f4f5     | 4.98:1    | ok         |
+| claro  | `positive` #15803d       | `canvas` #f4f4f2            | 4.55:1    | ok         |
+| claro  | `positive` #15803d       | `surface` #ffffff           | 5.02:1    | ok         |
+| claro  | `positive` #15803d       | `surface-muted` #f4f4f5     | 4.56:1    | ok         |
+| claro  | `warning` #a85108        | `canvas` #f4f4f2            | 4.96:1    | ok         |
+| claro  | `warning` #a85108        | `surface` #ffffff           | 5.46:1    | ok         |
+| claro  | `warning` #a85108        | `surface-muted` #f4f4f5     | 4.97:1    | ok         |
+| claro  | `risk` #be123c           | `canvas` #f4f4f2            | 5.71:1    | ok         |
+| claro  | `risk` #be123c           | `surface` #ffffff           | 6.29:1    | ok         |
+| claro  | `risk` #be123c           | `surface-muted` #f4f4f5     | 5.72:1    | ok         |
+| claro  | `on-accent` #ffffff      | `accent` #0f766e            | 5.47:1    | ok         |
+| claro  | `accent` #0f766e         | `accent-soft` #e3f4f1       | 4.82:1    | ok (4,5:1) |
+| claro  | `positive` #15803d       | `positive-soft` #eaf6ee     | 4.52:1    | ok (4,5:1) |
+| claro  | `warning` #a85108        | `warning-soft` #fbefdb      | 4.80:1    | ok (4,5:1) |
+| claro  | `risk` #be123c           | `risk-soft` #fce8ed         | 5.36:1    | ok (4,5:1) |
+| claro  | `text` #18181b           | `accent-soft` #e3f4f1       | 15.59:1   | ok (4,5:1) |
+| claro  | `accent` #0f766e         | `accent-soft-hover` #d6eeea | 4.50:1    | ok (4,5:1) |
+| claro  | `chart-1` #0f766e        | `surface` #ffffff           | 5.47:1    | ok (3:1)   |
+| claro  | `chart-2` #71717a        | `surface` #ffffff           | 4.83:1    | ok (3:1)   |
+| claro  | `chart-1` #0f766e        | `surface-muted` #f4f4f5     | 4.98:1    | ok (3:1)   |
+| claro  | `chart-2` #71717a        | `surface-muted` #f4f4f5     | 4.40:1    | ok (3:1)   |
+| claro  | `control-border` #85858f | `surface` #ffffff           | 3.65:1    | ok (3:1)   |
+| claro  | `control-border` #85858f | `surface-muted` #f4f4f5     | 3.32:1    | ok (3:1)   |
+| claro  | `control-border` #85858f | `canvas` #f4f4f2            | 3.32:1    | ok (3:1)   |
+| claro  | `focus` #0f766e          | `surface` #ffffff           | 5.47:1    | ok (3:1)   |
+| claro  | `focus` #0f766e          | `surface-muted` #f4f4f5     | 4.98:1    | ok (3:1)   |
+| escuro | `text` #fafafa           | `canvas` #0b0b0d            | 18.84:1   | ok         |
+| escuro | `text` #fafafa           | `surface` #161618           | 17.31:1   | ok         |
+| escuro | `text` #fafafa           | `surface-muted` #212124     | 15.39:1   | ok         |
+| escuro | `text-muted` #a1a1aa     | `canvas` #0b0b0d            | 7.67:1    | ok         |
+| escuro | `text-muted` #a1a1aa     | `surface` #161618           | 7.05:1    | ok         |
+| escuro | `text-muted` #a1a1aa     | `surface-muted` #212124     | 6.27:1    | ok         |
+| escuro | `accent` #2dd4bf         | `canvas` #0b0b0d            | 10.56:1   | ok         |
+| escuro | `accent` #2dd4bf         | `surface` #161618           | 9.71:1    | ok         |
+| escuro | `accent` #2dd4bf         | `surface-muted` #212124     | 8.63:1    | ok         |
+| escuro | `positive` #4ade80       | `canvas` #0b0b0d            | 11.29:1   | ok         |
+| escuro | `positive` #4ade80       | `surface` #161618           | 10.37:1   | ok         |
+| escuro | `positive` #4ade80       | `surface-muted` #212124     | 9.22:1    | ok         |
+| escuro | `warning` #fbbf24        | `canvas` #0b0b0d            | 11.78:1   | ok         |
+| escuro | `warning` #fbbf24        | `surface` #161618           | 10.83:1   | ok         |
+| escuro | `warning` #fbbf24        | `surface-muted` #212124     | 9.62:1    | ok         |
+| escuro | `risk` #fb7185           | `canvas` #0b0b0d            | 7.31:1    | ok         |
+| escuro | `risk` #fb7185           | `surface` #161618           | 6.71:1    | ok         |
+| escuro | `risk` #fb7185           | `surface-muted` #212124     | 5.97:1    | ok         |
+| escuro | `on-accent` #042f2e      | `accent` #2dd4bf            | 7.77:1    | ok         |
+| escuro | `accent` #2dd4bf         | `accent-soft` #10302e       | 7.60:1    | ok (4,5:1) |
+| escuro | `positive` #4ade80       | `positive-soft` #122c1b     | 8.60:1    | ok (4,5:1) |
+| escuro | `warning` #fbbf24        | `warning-soft` #33270d      | 8.76:1    | ok (4,5:1) |
+| escuro | `risk` #fb7185           | `risk-soft` #3a1620         | 5.93:1    | ok (4,5:1) |
+| escuro | `text` #fafafa           | `accent-soft` #10302e       | 13.56:1   | ok (4,5:1) |
+| escuro | `accent` #2dd4bf         | `accent-soft-hover` #0c2826 | 8.37:1    | ok (4,5:1) |
+| escuro | `chart-1` #2dd4bf        | `surface` #161618           | 9.71:1    | ok (3:1)   |
+| escuro | `chart-2` #a1a1aa        | `surface` #161618           | 7.05:1    | ok (3:1)   |
+| escuro | `chart-1` #2dd4bf        | `surface-muted` #212124     | 8.63:1    | ok (3:1)   |
+| escuro | `chart-2` #a1a1aa        | `surface-muted` #212124     | 6.27:1    | ok (3:1)   |
+| escuro | `control-border` #74747d | `surface` #161618           | 3.90:1    | ok (3:1)   |
+| escuro | `control-border` #74747d | `surface-muted` #212124     | 3.47:1    | ok (3:1)   |
+| escuro | `control-border` #74747d | `canvas` #0b0b0d            | 4.25:1    | ok (3:1)   |
+| escuro | `focus` #2dd4bf          | `surface` #161618           | 9.71:1    | ok (3:1)   |
+| escuro | `focus` #2dd4bf          | `surface-muted` #212124     | 8.63:1    | ok (3:1)   |

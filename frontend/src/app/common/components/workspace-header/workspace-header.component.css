@@ -182,6 +182,9 @@
   border-radius: var(--radius-control);
   color: var(--color-text);
   text-decoration: none;
+  background: none;
+  border: 0;
+  cursor: pointer;
 }
 
 .wh__bell:focus-visible {

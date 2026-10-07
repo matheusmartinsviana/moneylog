@@ -175,3 +175,18 @@ describe('WorkspaceHeaderComponent', () => {
     expect(violations, describeViolations(violations)).toEqual([]);
   });
 });
+
+describe('WorkspaceHeaderComponent: alternador de tema', () => {
+  it('Dado o tema Sistema, quando clica no alternador, então vai para Claro e anuncia o estado', async () => {
+    const user = userEvent.setup();
+    await setup();
+    const toggle = screen.getByRole('button', { name: /Tema: Automático/ });
+    await user.click(toggle);
+    expect(document.documentElement.getAttribute('data-theme')).toBe('light');
+    expect(screen.getByRole('button', { name: /Tema: Claro/ })).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: /Tema: Claro/ }));
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+    await user.click(screen.getByRole('button', { name: /Tema: Escuro/ }));
+    expect(document.documentElement.getAttribute('data-theme')).toBeNull();
+  });
+});

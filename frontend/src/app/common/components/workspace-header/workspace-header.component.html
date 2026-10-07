@@ -9,6 +9,16 @@
   <app-global-search class="wh__search" />
 
   <div class="wh__status">
+    <button
+      type="button"
+      class="wh__bell"
+      data-cy="header-theme-toggle"
+      [attr.aria-label]="themeLabel()"
+      [appTooltip]="themeLabel()"
+      (click)="cycleTheme()"
+    >
+      <app-icon [name]="themeIcon()" [size]="20" />
+    </button>
     <a
       class="wh__bell"
       routerLink="/notifications"

@@ -116,6 +116,12 @@ export const en: AppI18n = {
       afternoon: 'Good afternoon',
       evening: 'Good evening',
     },
+    theme: {
+      toggle: 'Theme: {current}. Switch to {next}.',
+      system: 'System',
+      light: 'Light',
+      dark: 'Dark',
+    },
     subtitle: 'Here is what is happening with your money.',
     actions: {
       label: 'Quick actions',
@@ -1238,13 +1244,30 @@ export const en: AppI18n = {
       investment: 'Investment or redemption',
       adjustment: 'Adjustment',
       refund: 'Refund',
-      more: 'More types',
-      moreLabel: 'More entry types',
       loan: 'Lent',
       received: 'Money received',
       debt: 'New debt',
-      people: 'People and debts',
-      peopleLabel: 'Types with people',
+      groups: {
+        spending: 'Spending',
+        inflow: 'Income',
+        between: 'Between accounts',
+        people: 'People',
+        other: 'Other',
+      },
+      titles: {
+        expense: 'New expense',
+        pix: 'New Pix',
+        debit: 'New debit',
+        credit: 'Card purchase',
+        income: 'New income',
+        transfer: 'New transfer',
+        investment: 'Investment or redemption',
+        adjustment: 'New adjustment',
+        refund: 'New refund',
+        loan: 'Loan',
+        received: 'Money received',
+        debt: 'New debt',
+      },
     },
     toast: {
       saved: 'Saved: {description}, {amount}.',
@@ -1281,7 +1304,6 @@ export const en: AppI18n = {
 
   entryForm: {
     pixLoanToggle: 'This is a loan to someone',
-    pixLoanToggleHint: 'Saved as money lent, not as an expense.',
     amount: 'Amount',
     description: 'Description',
     category: 'Category',
@@ -1804,7 +1826,6 @@ export const en: AppI18n = {
     },
     shares: {
       toggle: 'Split with someone',
-      hint: 'Enter how much each person owes you. The server checks the split and shows the effect after saving.',
       legend: 'Split shares',
       row: 'Share {number}',
       person: 'Person',

@@ -117,6 +117,12 @@ export const pt: AppI18n = {
       afternoon: 'Boa tarde',
       evening: 'Boa noite',
     },
+    theme: {
+      toggle: 'Tema: {current}. Alternar para {next}.',
+      system: 'Automático',
+      light: 'Claro',
+      dark: 'Escuro',
+    },
     subtitle: 'Veja o que está acontecendo com o seu dinheiro.',
     actions: {
       label: 'Ações rápidas',
@@ -313,7 +319,7 @@ export const pt: AppI18n = {
       investedNet: 'Investido (líquido)',
       debtConsumption: 'Gastos pagos por outra pessoa',
       lent: 'Emprestado',
-      received: 'Recebido',
+      received: 'Recebi',
     },
     netWorth: {
       title: 'Patrimônio',
@@ -1248,13 +1254,30 @@ export const pt: AppI18n = {
       investment: 'Aplicação ou resgate',
       adjustment: 'Ajuste',
       refund: 'Reembolso',
-      more: 'Mais tipos',
-      moreLabel: 'Mais tipos de registro',
       loan: 'Emprestei',
       received: 'Dinheiro recebido',
       debt: 'Nova dívida',
-      people: 'Pessoas e dívidas',
-      peopleLabel: 'Tipos com pessoas',
+      groups: {
+        spending: 'Gastos',
+        inflow: 'Entradas',
+        between: 'Entre contas',
+        people: 'Pessoas',
+        other: 'Outros',
+      },
+      titles: {
+        expense: 'Novo gasto',
+        pix: 'Novo Pix',
+        debit: 'Novo débito',
+        credit: 'Compra no cartão',
+        income: 'Nova receita',
+        transfer: 'Nova transferência',
+        investment: 'Aplicação ou resgate',
+        adjustment: 'Novo ajuste',
+        refund: 'Novo reembolso',
+        loan: 'Empréstimo',
+        received: 'Recebimento',
+        debt: 'Nova dívida',
+      },
     },
     toast: {
       saved: 'Registrado: {description}, {amount}.',
@@ -1291,7 +1314,6 @@ export const pt: AppI18n = {
 
   entryForm: {
     pixLoanToggle: 'É um empréstimo para uma pessoa',
-    pixLoanToggleHint: 'Grava como dinheiro emprestado, não como despesa.',
     amount: 'Valor',
     description: 'Descrição',
     category: 'Categoria',
@@ -1816,7 +1838,6 @@ export const pt: AppI18n = {
     },
     shares: {
       toggle: 'Dividir com alguém',
-      hint: 'Informe quanto cada pessoa deve a você. O servidor confere a divisão e mostra o efeito depois de salvar.',
       legend: 'Partes da divisão',
       row: 'Parte {number}',
       person: 'Pessoa',

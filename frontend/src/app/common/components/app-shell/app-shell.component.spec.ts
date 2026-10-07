@@ -129,8 +129,8 @@ describe('App shell e rotas', () => {
     await userEvent.click(screen.getByTestId('bottom-nav-quickAdd'));
     await fixture.whenStable();
 
-    expect(TestBed.inject(Router).url).toBe('/quick-add');
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Novo registro');
+    expect(TestBed.inject(Router).url).toBe('/(modal:quick-add)');
+    expect(screen.getByRole('dialog', { name: pt.quickAdd.modes.titles.expense })).toBeVisible();
   });
 
   it.each([
@@ -151,9 +151,8 @@ describe('App shell e rotas', () => {
       await userEvent.click(plus);
       await fixture.whenStable();
 
-      expect(TestBed.inject(Router).url).toBe('/quick-add');
-      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(name);
-      expect(document.title).toBe(`${name} · moneylog`);
+      expect(TestBed.inject(Router).url).toBe('/(modal:quick-add)');
+      expect(screen.getByRole('dialog')).toBeVisible();
     },
   );
 
@@ -383,7 +382,8 @@ describe('App shell e rotas', () => {
   it('Dado as rotas, então toda seção é lazy (loadChildren) dentro do shell', () => {
     // As rotas `dev/*` (UI Kit) só existem nos builds de desenvolvimento/mock (`config/dev-routes`).
     const children = (routes.find((route) => route.component)?.children ?? []).filter(
-      (route) => !route.path?.startsWith('dev/'),
+      // A rota auxiliar `modal` (Novo registro) é lazy e tratada à parte.
+      (route) => !route.path?.startsWith('dev/') && !route.outlet,
     );
     expect(children).toHaveLength(20);
     children.forEach((route) => {
@@ -450,7 +450,9 @@ describe('App shell e rotas', () => {
     // A busca global (T209) vem antes do perfil; em tela compacta ela é o botão de lupa.
     await userEvent.tab();
     expect(screen.getByTestId('global-search-input')).toHaveFocus();
-    // O sino de notificações (Etapa 7) vem antes do perfil.
+    // O alternador de tema vem antes do sino de notificações (Etapa 7), que vem antes do perfil.
+    await userEvent.tab();
+    expect(screen.getByTestId('header-theme-toggle')).toHaveFocus();
     await userEvent.tab();
     expect(screen.getByTestId('header-bell')).toHaveFocus();
     await userEvent.tab();

@@ -147,6 +147,13 @@ export abstract class AppI18n {
       readonly afternoon: string;
       readonly evening: string;
     };
+    /** Alternador de tema; `toggle` usa `{current}` e `{next}`. */
+    readonly theme: {
+      readonly toggle: string;
+      readonly system: string;
+      readonly light: string;
+      readonly dark: string;
+    };
     readonly subtitle: string;
     readonly actions: {
       readonly label: string;
@@ -1020,14 +1027,33 @@ export abstract class AppI18n {
       readonly investment: string;
       readonly adjustment: string;
       readonly refund: string;
-      readonly more: string;
-      readonly moreLabel: string;
       /** Pessoas e dívidas (Etapa 4): emprestar, receber e registrar dívida. */
       readonly loan: string;
       readonly received: string;
       readonly debt: string;
-      readonly people: string;
-      readonly peopleLabel: string;
+      /** Cabeçalhos dos grupos do seletor de tipo. */
+      readonly groups: {
+        readonly spending: string;
+        readonly inflow: string;
+        readonly between: string;
+        readonly people: string;
+        readonly other: string;
+      };
+      /** Título do modal por tipo. */
+      readonly titles: {
+        readonly expense: string;
+        readonly pix: string;
+        readonly debit: string;
+        readonly credit: string;
+        readonly income: string;
+        readonly transfer: string;
+        readonly investment: string;
+        readonly adjustment: string;
+        readonly refund: string;
+        readonly loan: string;
+        readonly received: string;
+        readonly debt: string;
+      };
     };
     readonly toast: {
       /** `{description}` e `{amount}`: o registro como o backend devolveu. */
@@ -1049,7 +1075,6 @@ export abstract class AppI18n {
   /** Campos comuns dos formulários de movimentação (quick-add e edição). */
   abstract readonly entryForm: {
     readonly pixLoanToggle: string;
-    readonly pixLoanToggleHint: string;
     readonly amount: string;
     readonly description: string;
     readonly category: string;
@@ -1597,7 +1622,6 @@ export abstract class AppI18n {
     };
     readonly shares: {
       readonly toggle: string;
-      readonly hint: string;
       readonly legend: string;
       /** `{number}`: posição da parte. */
       readonly row: string;
