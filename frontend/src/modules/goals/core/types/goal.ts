@@ -14,6 +14,9 @@ export const GOAL_STATUSES = [
   'ARCHIVED',
 ] as const satisfies readonly GoalStatus[];
 
+/** `SAVINGS` = reserva (padrão); `DEBT_PAYOFF` = "quitar todas as dívidas" (sem reservas, progresso do servidor). */
+export type GoalKind = 'SAVINGS' | 'DEBT_PAYOFF';
+
 export interface Ref {
   readonly id: string;
   readonly name: string;
@@ -38,6 +41,7 @@ export interface GoalReservation {
  */
 export interface Goal {
   readonly id: string;
+  readonly kind: GoalKind;
   readonly name: string;
   readonly target: Money;
   readonly current: Money;
@@ -54,11 +58,19 @@ export interface Goal {
   readonly uncovered: boolean;
   /** Da mais recente para a mais antiga. */
   readonly reservations: readonly GoalReservation[];
+  /** `DEBT_PAYOFF`: "cadastrei tudo" confirmado. `false` = "montando" (sem percentual). */
+  readonly baselineSet: boolean;
+  /** Total de dívidas fixado em "cadastrei tudo" (`DEBT_PAYOFF`). */
+  readonly baseline: Money | null;
+  /** `DEBT_PAYOFF`: dívida nova depois de ancorar; a UI avisa e oferece re-ancorar. */
+  readonly grewSinceBaseline: boolean;
   readonly version: number;
 }
 
 /** Criação (`POST /v1/goals`). `target` é a string decimal digitada. */
 export interface GoalInput {
+  /** Omitido = `SAVINGS`. `DEBT_PAYOFF` não leva `name` nem `target` (nome padrão do servidor). */
+  readonly kind?: GoalKind;
   readonly name: string;
   readonly target: string;
   readonly deadline: string | null;

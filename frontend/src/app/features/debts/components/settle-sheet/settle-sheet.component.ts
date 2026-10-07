@@ -31,6 +31,7 @@ import type { Debt } from '~/modules/debts/core/types/debt';
 import { TransactionFormFacade } from '~/modules/transactions/core/facades/transaction-form.facade';
 import type { Transaction } from '~/modules/transactions/core/types/transaction';
 import { todayIso } from '~/util/date';
+import { counterpartyName } from '~/util/debt-name';
 import { formatMoney, isPositive } from '~/util/money';
 
 /** Códigos de regra que o backend atribui a um campo do formulário (além dos de movimentação). */
@@ -110,7 +111,7 @@ export class SettleSheetComponent {
       this.receivable()
         ? this.t().debts.settle.defaultDescriptionReceivable
         : this.t().debts.settle.defaultDescriptionPayable,
-      { name: this.debt().person.name },
+      { name: counterpartyName(this.debt()) },
     ),
   );
 

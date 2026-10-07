@@ -352,6 +352,25 @@ describe('DebtPage', () => {
     const violations = await axeViolations(container);
     expect(violations, describeViolations(violations)).toEqual([]);
   });
+
+  it('Dado dívida com credor livre (person nulo), então mostra o credor sem link de pessoa e não quebra', async () => {
+    const debts = new DebtsGatewayStub();
+    debts.debts = [
+      aDebt({
+        person: null,
+        creditorName: 'Banco Azul',
+        direction: 'PAYABLE',
+        description: null,
+        origin: 'WITHOUT_MOVEMENT',
+        originTransactionId: null,
+      }),
+    ];
+    await setup(debts);
+
+    expect(screen.getByTestId('debt-creditor-name')).toHaveTextContent('Banco Azul');
+    expect(screen.queryByTestId('debt-person-link')).not.toBeInTheDocument();
+    expect(screen.getByTestId('debt-field-person')).toHaveTextContent(pt.debts.detail.creditor);
+  });
 });
 
 void aTransaction;

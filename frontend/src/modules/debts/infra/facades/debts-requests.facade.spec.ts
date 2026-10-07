@@ -177,4 +177,61 @@ describe('DebtsRequestsFacade', () => {
       },
     );
   });
+
+  describe('credor livre (2.13.0)', () => {
+    it('Dado dívida com credor livre, então o POST leva creditorName e não leva personId nem categoria', async () => {
+      const { gateway, http } = setup(false);
+
+      const result = firstValueFrom(
+        gateway.create(
+          {
+            personId: null,
+            creditorName: ' Banco Azul ',
+            direction: 'PAYABLE',
+            principal: '30000.00',
+            date: '2026-10-07',
+            expectedDate: null,
+            description: '',
+            categoryId: 'cat-1',
+          },
+          'key-1',
+        ),
+      );
+      const req = http.expectOne(DEBTS_ENDPOINTS.collection);
+      expect(req.request.body).toEqual({
+        creditorName: 'Banco Azul',
+        direction: 'PAYABLE',
+        principal: '30000.00',
+        date: '2026-10-07',
+        expectedDate: null,
+      });
+      req.flush(aDebtResponse({ person: null, creditorName: 'Banco Azul', direction: 'PAYABLE' }));
+
+      expect(await result).toMatchObject({ person: null, creditorName: 'Banco Azul' });
+    });
+
+    it('Dado dívida de pessoa, então o corpo continua com personId e sem creditorName', async () => {
+      const { gateway, http } = setup(false);
+
+      const result = firstValueFrom(
+        gateway.create(
+          {
+            personId: 'person-1',
+            direction: 'RECEIVABLE',
+            principal: '10.00',
+            date: '2026-10-07',
+            expectedDate: null,
+            description: '',
+            categoryId: null,
+          },
+          'key-2',
+        ),
+      );
+      const req = http.expectOne(DEBTS_ENDPOINTS.collection);
+      expect(req.request.body).toMatchObject({ personId: 'person-1' });
+      expect(req.request.body).not.toHaveProperty('creditorName');
+      req.flush(aDebtResponse());
+      expect((await result).person).toMatchObject({ id: 'person-1' });
+    });
+  });
 });

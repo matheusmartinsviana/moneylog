@@ -110,6 +110,7 @@ const loanTransaction = () =>
     debt: {
       id: 'debt-9',
       person: { id: 'person-1', name: 'João' },
+      creditorName: null,
       direction: 'RECEIVABLE',
       status: 'OPEN',
       principal: brl('300.00'),
@@ -680,6 +681,41 @@ describe('QuickAddPage: pessoas e dívidas (Etapa 4)', () => {
         categoryId: 'cat-food',
         principal: '60.00',
       });
+    });
+
+    it('Dado "Eu devo" a um banco ou loja, então o credor livre vai no corpo, sem pessoa nem categoria', async () => {
+      const debts = new DebtsGatewayStub();
+      const { fixture } = await setup({ url: '/quick-add?mode=debt', debts });
+
+      expect(screen.queryByTestId('debt-creditor-kind')).not.toBeInTheDocument();
+      await userEvent.click(screen.getByTestId('debt-direction-PAYABLE'));
+      await userEvent.click(screen.getByTestId('debt-creditor-kind-OTHER'));
+      expect(screen.queryByTestId('debt-person')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('debt-category')).not.toBeInTheDocument();
+      await userEvent.type(field('debt-principal'), '30000,00');
+      await userEvent.type(field('debt-creditor-name'), 'Banco Azul');
+      await userEvent.click(screen.getByTestId('form-save'));
+      await fixture.whenStable();
+
+      expect(debts.creates[0]).toMatchObject({
+        direction: 'PAYABLE',
+        creditorName: 'Banco Azul',
+        principal: '30000.00',
+        personId: null,
+        categoryId: null,
+      });
+    });
+
+    it('Dado credor livre sem nome, então não envia e pede o nome', async () => {
+      const debts = new DebtsGatewayStub();
+      await setup({ url: '/quick-add?mode=debt', debts });
+
+      await userEvent.click(screen.getByTestId('debt-direction-PAYABLE'));
+      await userEvent.click(screen.getByTestId('debt-creditor-kind-OTHER'));
+      await userEvent.type(field('debt-principal'), '100,00');
+      await userEvent.click(screen.getByTestId('form-save'));
+
+      expect(debts.creates).toHaveLength(0);
     });
 
     it('Dado descrição vazia, então a dívida é enviada normalmente (a descrição é opcional)', async () => {

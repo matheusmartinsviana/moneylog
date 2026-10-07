@@ -124,6 +124,7 @@ describe('Traduções', () => {
       'categories',
       'charts',
       'dashboard',
+      'debtOverview',
       'debts',
       'emptyState',
       'entryForm',

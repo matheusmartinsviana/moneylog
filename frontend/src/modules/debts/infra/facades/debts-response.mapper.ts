@@ -15,7 +15,8 @@ const money = (value: { amount: string; currency: string }): Money => ({
 export function toDebt(response: DebtResponse): Debt {
   return {
     id: response.id,
-    person: { id: response.person.id, name: response.person.name },
+    person: response.person ? { id: response.person.id, name: response.person.name } : null,
+    creditorName: response.creditorName ?? null,
     direction: response.direction,
     origin: response.origin,
     originTransactionId: response.originTransactionId,
@@ -46,13 +47,18 @@ export function toDebt(response: DebtResponse): Debt {
 /** Corpo do `POST /v1/debts`: `categoryId` só vai em `PAYABLE` (S-137). */
 export function toCreateRequest(input: DebtInput): DebtCreateRequest {
   return {
-    personId: input.personId,
+    ...(input.personId ? { personId: input.personId } : {}),
+    ...(!input.personId && input.creditorName?.trim()
+      ? { creditorName: input.creditorName.trim() }
+      : {}),
     direction: input.direction,
     principal: input.principal,
     date: input.date,
     expectedDate: input.expectedDate,
     ...(input.description.trim() !== '' ? { description: input.description.trim() } : {}),
-    ...(input.direction === 'PAYABLE' && input.categoryId ? { categoryId: input.categoryId } : {}),
+    ...(input.direction === 'PAYABLE' && input.personId && input.categoryId
+      ? { categoryId: input.categoryId }
+      : {}),
   };
 }
 

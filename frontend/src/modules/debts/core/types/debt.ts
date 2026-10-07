@@ -29,7 +29,9 @@ export interface DebtSettlement {
  */
 export interface Debt {
   readonly id: string;
-  readonly person: PersonRef;
+  /** Nulo na dívida com credor livre ("outras dívidas"): use `creditorName`. */
+  readonly person: PersonRef | null;
+  readonly creditorName: string | null;
   readonly direction: DebtDirection;
   readonly origin: DebtOrigin;
   readonly originTransactionId: string | null;
@@ -54,7 +56,9 @@ export interface Debt {
 
 /** Dívida sem movimentação (`POST /v1/debts`). `principal` é a string decimal digitada. */
 export interface DebtInput {
-  readonly personId: string;
+  /** Pessoa **ou** `creditorName` (credor livre, só `PAYABLE` e sem categoria). */
+  readonly personId: string | null;
+  readonly creditorName?: string | null;
   readonly direction: DebtDirection;
   readonly principal: string;
   readonly date: string;

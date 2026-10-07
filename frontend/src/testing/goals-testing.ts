@@ -32,6 +32,7 @@ export function aReservation(overrides: Partial<GoalReservation> = {}): GoalRese
 export function aGoal(overrides: Partial<Goal> = {}): Goal {
   return {
     id: 'goal-1',
+    kind: 'SAVINGS',
     name: 'Reserva de emergência',
     target: brl('20000.00'),
     current: brl('8500.00'),
@@ -44,6 +45,9 @@ export function aGoal(overrides: Partial<Goal> = {}): Goal {
     monthlyNeeded: brl('766.67'),
     uncovered: false,
     reservations: [aReservation()],
+    baselineSet: false,
+    baseline: null,
+    grewSinceBaseline: false,
     version: 1,
     ...overrides,
   };
@@ -95,6 +99,11 @@ export class GoalsGatewayStub extends GoalsGateway {
     this.calls.push(`reserve:${id}`);
     this.reservations.push({ goalId: id, input, key });
     return this.reserve$ ?? of(aGoal({ id }));
+  }
+
+  baseline(id: string): Observable<Goal> {
+    this.calls.push(`baseline:${id}`);
+    return this.next ?? of(aGoal({ id, kind: 'DEBT_PAYOFF', baselineSet: true }));
   }
 
   archive(id: string): Observable<Goal> {

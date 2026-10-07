@@ -13,12 +13,31 @@
     [currency]="currency"
     [label]="t().lending.debt.amount"
   />
-  <app-person-field
-    [control]="form.controls.personId"
-    fieldId="debt-person"
-    [people]="people()"
-    [createPerson]="createPerson()"
-  />
+  @if (payable()) {
+    <app-segmented-control
+      formControlName="creditorKind"
+      fieldId="debt-creditor-kind"
+      [options]="creditorOptions()"
+      [label]="t().lending.debt.creditorLabel"
+    />
+  }
+  @if (freeCreditor()) {
+    <app-text-field
+      formControlName="creditorName"
+      fieldId="debt-creditor-name"
+      autocomplete="off"
+      [maxlength]="200"
+      [label]="t().lending.debt.creditorName"
+      [hint]="t().lending.debt.creditorHint"
+    />
+  } @else {
+    <app-person-field
+      [control]="form.controls.personId"
+      fieldId="debt-person"
+      [people]="people()"
+      [createPerson]="createPerson()"
+    />
+  }
   <app-date-picker formControlName="date" fieldId="debt-date" [label]="t().lending.debt.date" />
   <app-date-picker
     formControlName="expectedDate"
@@ -36,7 +55,7 @@
     [hint]="t().entryForm.optionalHint"
     [label]="t().lending.debt.description"
   />
-  @if (payable()) {
+  @if (payable() && !freeCreditor()) {
     <app-select
       formControlName="categoryId"
       fieldId="debt-category"

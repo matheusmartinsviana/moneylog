@@ -29,6 +29,7 @@ import { FutureInstallmentsListComponent } from '~/app/features/cards/components
 import { InvoiceSummaryRowComponent } from '~/app/features/cards/components/invoice-summary-row/invoice-summary-row.component';
 import { PayInvoiceSheetComponent } from '~/app/features/cards/components/pay-invoice-sheet/pay-invoice-sheet.component';
 import { LinkedNotesComponent } from '~/app/features/notes/components/linked-notes/linked-notes.component';
+import { OngoingInstallmentsModalComponent } from '~/app/features/planning/components/ongoing-installments-modal/ongoing-installments-modal.component';
 import { AccountsListFacade } from '~/modules/accounts/core/facades/accounts-list.facade';
 import type { Account } from '~/modules/accounts/core/types/account';
 import { CardDetailFacade } from '~/modules/cards/core/facades/card-detail.facade';
@@ -36,7 +37,7 @@ import type { InvoiceSummary } from '~/modules/cards/core/types/invoice';
 import { isPositive } from '~/util/money';
 
 type TabId = 'invoices' | 'future';
-type ActionId = 'pay' | 'purchase' | 'edit';
+type ActionId = 'pay' | 'purchase' | 'ongoing' | 'edit';
 
 /**
  * Tela do cartão (`/cards/:id`, smart, T65): resumo (limite, disponível, **total comprometido** e, à
@@ -61,6 +62,7 @@ type ActionId = 'pay' | 'purchase' | 'edit';
     InvoiceSummaryRowComponent,
     FutureInstallmentsListComponent,
     PayInvoiceSheetComponent,
+    OngoingInstallmentsModalComponent,
   ],
   providers: [CardDetailFacade, AccountsListFacade],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -138,6 +140,7 @@ export class CardPage {
     return [
       { id: 'pay', label: copy.payInvoice, disabled: this.payTarget() === null },
       { id: 'purchase', label: copy.newPurchase },
+      { id: 'ongoing', label: this.t().debtOverview.actions.addOngoing },
       { id: 'edit', label: copy.edit },
     ];
   });
@@ -188,6 +191,14 @@ export class CardPage {
     });
   }
 
+  protected readonly ongoingOpen = signal(false);
+
+  /** Cadastrou o parcelado em andamento: o cartão relê fatura, limite e parcelas futuras do backend. */
+  protected afterOngoing(): void {
+    this.ongoingOpen.set(false);
+    this.facade.refresh(this.id());
+  }
+
   protected run(action: string): void {
     switch (action as ActionId) {
       case 'pay':
@@ -197,6 +208,9 @@ export class CardPage {
         void this.router.navigate(['/quick-add'], {
           queryParams: { mode: 'credit', cardId: this.id() },
         });
+        break;
+      case 'ongoing':
+        this.ongoingOpen.set(true);
         break;
       case 'edit':
         void this.router.navigate(['/cards', this.id(), 'edit']);

@@ -212,4 +212,87 @@ describe('GoalsRequestsFacade', () => {
       });
     });
   });
+
+  describe('meta de quitar dívidas (2.13.0)', () => {
+    it('Dado DEBT_PAYOFF, então o POST não leva nome nem alvo e a meta volta com a base e o aviso', async () => {
+      const { gateway, http } = setup(false);
+
+      const result = firstValueFrom(
+        gateway.create(
+          { kind: 'DEBT_PAYOFF', name: '', target: '', deadline: null, description: null },
+          'key-1',
+        ),
+      );
+      const req = http.expectOne(GOALS_ENDPOINTS.collection);
+      expect(req.request.body).toEqual({ kind: 'DEBT_PAYOFF', deadline: null, description: null });
+      req.flush(
+        aGoalResponse({
+          kind: 'DEBT_PAYOFF',
+          baselineSet: true,
+          baseline: { amount: '5000.00', currency: 'BRL' },
+          grewSinceBaseline: true,
+          reservations: [],
+        }),
+      );
+
+      expect(await result).toMatchObject({
+        kind: 'DEBT_PAYOFF',
+        baselineSet: true,
+        baseline: { amount: '5000.00' },
+        grewSinceBaseline: true,
+        reservations: [],
+      });
+    });
+
+    it('Dado "Cadastrei tudo", então posta no baseline sem corpo e devolve a meta', async () => {
+      const { gateway, http } = setup(false);
+
+      const result = firstValueFrom(gateway.baseline('g-1'));
+      const req = http.expectOne(GOALS_ENDPOINTS.baseline('g-1'));
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toBeNull();
+      req.flush(aGoalResponse({ kind: 'DEBT_PAYOFF', baselineSet: true }));
+
+      expect((await result).baselineSet).toBe(true);
+    });
+
+    it('Dado resposta sem os campos novos, então o mapper tolera: SAVINGS, sem base e sem aviso', async () => {
+      const { gateway, http } = setup(false);
+
+      const result = firstValueFrom(gateway.get('g-1'));
+      const raw = aGoalResponse();
+      delete raw.kind;
+      delete raw.baselineSet;
+      delete raw.baseline;
+      delete raw.baselineAt;
+      delete raw.grewSinceBaseline;
+      http.expectOne(GOALS_ENDPOINTS.item('g-1')).flush(raw);
+
+      expect(await result).toMatchObject({
+        kind: 'SAVINGS',
+        baselineSet: false,
+        baseline: null,
+        grewSinceBaseline: false,
+      });
+    });
+
+    it('Dado o PUT de uma meta, então ainda manda name e target (o servidor ignora o alvo na quitação)', async () => {
+      const { gateway, http } = setup(false);
+
+      const result = firstValueFrom(
+        gateway.update('g-1', {
+          kind: 'DEBT_PAYOFF',
+          name: 'Quitar',
+          target: '0.00',
+          deadline: null,
+          description: null,
+          version: 2,
+        }),
+      );
+      const req = http.expectOne(GOALS_ENDPOINTS.item('g-1'));
+      expect(req.request.body).toMatchObject({ name: 'Quitar', target: '0.00', version: 2 });
+      req.flush(aGoalResponse());
+      await result;
+    });
+  });
 });

@@ -72,8 +72,8 @@ describe('ThemeService', () => {
 
     beforeEach(() => {
       for (const [color, scheme] of [
-        ['#f4f4f2', 'light'],
-        ['#0b0b0d', 'dark'],
+        ['#f6f5fb', 'light'],
+        ['#0b0b12', 'dark'],
       ] as const) {
         const meta = document.createElement('meta');
         meta.name = 'theme-color';
@@ -88,13 +88,13 @@ describe('ThemeService', () => {
     it('Dado o usuário escolhe escuro, então as duas metas passam a ter a cor do canvas escuro', () => {
       service().set('dark');
 
-      expect(metas().map((m) => m.content)).toEqual(['#0b0b0d', '#0b0b0d']);
+      expect(metas().map((m) => m.content)).toEqual(['#0b0b12', '#0b0b12']);
     });
 
     it('Dado o usuário escolhe claro, então as duas metas têm o canvas claro', () => {
       service().set('light');
 
-      expect(metas().map((m) => m.content)).toEqual(['#f4f4f2', '#f4f4f2']);
+      expect(metas().map((m) => m.content)).toEqual(['#f6f5fb', '#f6f5fb']);
     });
 
     it('Dado uma escolha manual, quando volto para o sistema, então as cores originais do HTML voltam', () => {
@@ -102,7 +102,7 @@ describe('ThemeService', () => {
 
       service().set('system');
 
-      expect(metas().map((m) => m.content)).toEqual(['#f4f4f2', '#0b0b0d']);
+      expect(metas().map((m) => m.content)).toEqual(['#f6f5fb', '#0b0b12']);
     });
 
     it('Dado escuro salvo, quando inicio, então a meta já nasce com o tema escolhido', () => {
@@ -110,7 +110,7 @@ describe('ThemeService', () => {
 
       service().init();
 
-      expect(metas().map((m) => m.content)).toEqual(['#0b0b0d', '#0b0b0d']);
+      expect(metas().map((m) => m.content)).toEqual(['#0b0b12', '#0b0b12']);
     });
   });
 });

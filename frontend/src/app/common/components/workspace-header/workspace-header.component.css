@@ -8,7 +8,7 @@
  */
 .wh {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: var(--space-2) var(--space-3);
   max-width: var(--content-max-width);
@@ -30,8 +30,8 @@
  * 20 px sobre um título de 32 px e a hierarquia parecia invertida (revisão M6).
  */
 .wh__hello {
-  grid-column: 1;
-  grid-row: 1;
+  grid-column: 1 / -1;
+  grid-row: 2;
   overflow-wrap: anywhere;
   color: var(--color-text);
   font-size: var(--text-md);
@@ -41,22 +41,22 @@
 
 .wh__subtitle {
   grid-column: 1 / -1;
-  grid-row: 2;
+  grid-row: 3;
   color: var(--color-text-muted);
   font-size: var(--text-sm);
 }
 
 .wh__search {
-  grid-column: 2;
+  grid-column: 1;
   grid-row: 1;
   min-width: 0;
 }
 
 .wh__status {
-  grid-column: 3;
+  grid-column: 2;
   grid-row: 1;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: flex-end;
   gap: var(--space-2) var(--space-3);
@@ -65,7 +65,7 @@
 
 .wh__actions {
   grid-column: 1 / -1;
-  grid-row: 3;
+  grid-row: 4;
   display: flex;
   gap: var(--space-2);
   min-width: 0;
@@ -97,6 +97,12 @@
 }
 
 /* Mobile fora do Início: só a barra fina (busca, chip e perfil); as ações vivem na barra inferior ("+"). */
+@media (width < 480px) {
+  .wh__status app-chip {
+    display: none;
+  }
+}
+
 @media (width < 768px) {
   .wh:not(.wh--home) .wh__actions {
     display: none;
@@ -109,14 +115,21 @@
     padding: var(--space-6) var(--space-8) 0;
   }
 
+  .wh__status {
+    grid-column: 3;
+  }
+
+  .wh:not(.wh--home) {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .wh:not(.wh--home) .wh__status {
+    grid-column: 2;
+  }
+
   .wh--home {
     grid-template-columns: minmax(0, 1fr) minmax(12rem, 26rem) auto;
     padding-top: var(--space-6);
-  }
-
-  /* O perfil fica no rodapé da sidebar. */
-  .wh__profile {
-    display: none;
   }
 
   .wh__greeting {
@@ -157,34 +170,10 @@
   }
 }
 
-/* Janela larga e sem saudação: a busca e as ações dividem a mesma linha. */
-@media (width >= 1200px) {
-  .wh:not(.wh--home) .wh__actions {
-    grid-column: 2;
-    grid-row: 1;
-  }
-}
-
 @media (width <= 640px), (pointer: coarse) {
   .wh__actions .button {
     min-height: 2.75rem;
   }
-}
-
-.wh__bell {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-1);
-  min-width: 2.75rem;
-  min-height: 2.75rem;
-  border-radius: var(--radius-control);
-  color: var(--color-text);
-  text-decoration: none;
-  background: none;
-  border: 0;
-  cursor: pointer;
 }
 
 .wh__bell:focus-visible {
@@ -192,13 +181,35 @@
   box-shadow: var(--focus-ring);
 }
 
+/* Contador de não lidas: selo lilás no canto do sino (o número também está no nome acessível). */
 .wh__bell-count {
-  min-width: 1.25rem;
+  position: absolute;
+  top: -0.375rem;
+  right: -0.375rem;
+  min-width: 1.125rem;
   padding: 0 var(--space-1);
-  border: var(--border-width) solid var(--color-text);
+  border: 2px solid var(--color-canvas);
   border-radius: var(--radius-pill);
-  font-size: var(--text-xs);
-  font-weight: var(--weight-medium);
-  line-height: 1.25rem;
+  background-color: var(--color-accent);
+  color: var(--color-on-accent);
+  font-size: var(--text-tab);
+  font-weight: var(--weight-semibold);
+  line-height: 1rem;
   text-align: center;
+}
+
+/* Ações rápidas em pílula (DS 03). */
+.wh__actions .button {
+  border-color: var(--color-border);
+  border-radius: var(--radius-pill);
+}
+
+.wh__actions .button--primary {
+  border-color: var(--color-accent);
+}
+
+.wh__actions .button--soft {
+  border-color: var(--color-border);
+  background-color: var(--color-surface);
+  color: var(--color-text);
 }

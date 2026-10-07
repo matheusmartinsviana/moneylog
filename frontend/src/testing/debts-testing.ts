@@ -11,6 +11,7 @@ export function aDebt(overrides: Partial<Debt> = {}): Debt {
   return {
     id: 'debt-1',
     person: { id: 'person-1', name: 'João' },
+    creditorName: null,
     direction: 'RECEIVABLE',
     origin: 'WITH_MOVEMENT',
     originTransactionId: 'tx-loan',
@@ -58,7 +59,7 @@ export class DebtsGatewayStub extends DebtsGateway {
       (d) =>
         (!query.direction || d.direction === query.direction) &&
         (!query.status || d.status === query.status) &&
-        (!query.personId || d.person.id === query.personId),
+        (!query.personId || d.person?.id === query.personId),
     );
     const start = (query.page - 1) * query.pageSize;
     const items = filtered.slice(start, start + query.pageSize);

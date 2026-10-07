@@ -88,4 +88,47 @@ describe('modo demonstração (backend de exemplo)', () => {
     )) as HttpResponse<{ dailyMessageEnabled: boolean }>;
     expect(put.body).toEqual({ dailyMessageEnabled: true });
   });
+
+  it('Dado o demo, quando leio as dívidas totais, então o total fecha com as partes e o cronograma', async () => {
+    const overview = await get<{
+      total: { amount: string };
+      parts: { cards: { amount: string }; people: { amount: string }; other: { amount: string } };
+      hasRecords: boolean;
+      schedule: {
+        points: { total: { amount: string } }[];
+        overdue: { amount: string };
+        undated: { amount: string };
+        beyondHorizon: { amount: string };
+      };
+    }>('/v1/debts/overview?months=12');
+    expect(overview.hasRecords).toBe(true);
+    expect(cents(overview.total)).toBe(
+      cents(overview.parts.cards) + cents(overview.parts.people) + cents(overview.parts.other),
+    );
+    const scheduled = overview.schedule.points.reduce((s, p) => s + cents(p.total), 0);
+    expect(
+      scheduled +
+        cents(overview.schedule.overdue) +
+        cents(overview.schedule.undated) +
+        cents(overview.schedule.beyondHorizon),
+    ).toBe(cents(overview.total));
+  });
+
+  it('Dado a prévia do parcelado em andamento, então o demo devolve o que falta e não grava nada', async () => {
+    const backend = new DemoHttpBackend();
+    const preview = (await firstValueFrom(
+      backend.handle(
+        new HttpRequest('POST', '/v1/cards/c1/ongoing-installments/preview', {
+          installmentAmount: '150.00',
+          remainingInstallments: 8,
+        }),
+      ),
+    )) as HttpResponse<{ remaining: { amount: string }; remainingInstallments: number }>;
+    expect(preview.body?.remaining.amount).toBe('1200.00');
+    await expect(
+      firstValueFrom(
+        backend.handle(new HttpRequest('POST', '/v1/cards/c1/ongoing-installments', {})),
+      ),
+    ).rejects.toMatchObject({ status: 409 });
+  });
 });

@@ -4,14 +4,15 @@
 
 .narrow {
   margin: 0;
-  padding: var(--space-1) var(--space-2);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-card);
-  background-color: var(--color-surface);
+  padding: 0;
 }
 
 .wide {
   display: none;
+  padding: var(--space-2) var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-panel);
+  background-color: var(--color-surface);
 }
 
 .table {
@@ -67,10 +68,8 @@
 
 .row__tag {
   margin-left: var(--space-2);
-  color: var(--color-warning);
-  font-size: var(--text-xs);
   text-decoration: none;
-  display: inline-block;
+  display: inline-flex;
 }
 
 @media (width >= 768px) {

@@ -411,6 +411,7 @@ export function debtSummary(w: World, d: DebtDef): S['DebtSummary'] {
   return {
     id: d.id,
     person: personRef(w.people.find((p) => p.id === d.personId)!),
+    creditorName: null,
     direction: d.direction,
     status: debtStatus(d),
     principal: money(d.principal),
@@ -585,6 +586,7 @@ export function goalView(w: World, g: GoalDef): S['Goal'] {
   }
   return {
     id: g.id,
+    kind: 'SAVINGS',
     name: g.name,
     target: money(g.target),
     current: money(current),
@@ -606,6 +608,10 @@ export function goalView(w: World, g: GoalDef): S['Goal'] {
         note: r.note,
         createdAt: ts(r.date),
       })),
+    baselineSet: false,
+    baseline: null,
+    baselineAt: null,
+    grewSinceBaseline: false,
     version: 0,
     createdAt: ts(g.reservations[0]?.date ?? w.today),
     updatedAt: ts(g.reservations[0]?.date ?? w.today),

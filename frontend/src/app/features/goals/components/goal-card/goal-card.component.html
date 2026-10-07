@@ -9,6 +9,9 @@
     {{ g.name }}
   </a>
   <p class="card__tags">
+    @if (g.kind === 'DEBT_PAYOFF') {
+      <span class="tag" [attr.data-cy]="'goal-kind-' + g.id">{{ t().goals.payoff.tag }}</span>
+    }
     <span class="tag" [attr.data-cy]="'goal-priority-' + g.id">{{ priority() }}</span>
     @if (g.status !== 'ACTIVE') {
       <span
@@ -22,21 +25,34 @@
   </p>
 </div>
 
-<app-progress-bar
-  [fieldId]="'goal-progress-' + g.id"
-  [label]="progressLabel()"
-  [value]="bar()"
-  [valueText]="progressText()"
-  [hideLabel]="true"
-/>
+@if (g.kind === 'DEBT_PAYOFF' && !g.baselineSet) {
+  <p class="card__meta" [attr.data-cy]="'goal-building-' + g.id">
+    <span class="tag">{{ t().goals.payoff.building }}</span>
+    {{ t().goals.payoff.buildingCard }}
+  </p>
+} @else {
+  <app-progress-bar
+    [fieldId]="'goal-progress-' + g.id"
+    [label]="progressLabel()"
+    [value]="bar()"
+    [valueText]="progressText()"
+    [hideLabel]="true"
+  />
+}
 
 <dl class="card__facts">
+  @if (g.kind !== 'DEBT_PAYOFF' || g.baselineSet) {
+    <div class="fact">
+      <dt class="fact__label">{{ t().goals.card.percentLabel }}</dt>
+      <dd class="fact__value num" [attr.data-cy]="'goal-percent-' + g.id">{{ percent() }}</dd>
+    </div>
+  }
   <div class="fact">
-    <dt class="fact__label">{{ t().goals.card.percentLabel }}</dt>
-    <dd class="fact__value num" [attr.data-cy]="'goal-percent-' + g.id">{{ percent() }}</dd>
-  </div>
-  <div class="fact">
-    <dt class="fact__label">{{ t().goals.card.remainingLabel }}</dt>
+    <dt class="fact__label">
+      {{
+        g.kind === 'DEBT_PAYOFF' ? t().goals.payoff.remainingLabel : t().goals.card.remainingLabel
+      }}
+    </dt>
     <dd class="fact__value" [attr.data-cy]="'goal-remaining-' + g.id">
       <app-money [value]="g.remaining" />
     </dd>

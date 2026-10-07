@@ -237,6 +237,7 @@
       'available committed'
       'upcoming month'
       'upcoming net-worth'
+      'debts debts'
       'cards cards'
       'actions actions';
     align-items: start;
@@ -260,6 +261,10 @@
 
   .area-net-worth {
     grid-area: net-worth;
+  }
+
+  .area-debts {
+    grid-area: debts;
   }
 
   .area-cards {

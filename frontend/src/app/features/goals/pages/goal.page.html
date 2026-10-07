@@ -48,34 +48,72 @@
             </span>
           </p>
 
-          <app-progress-bar
-            fieldId="goal-progress"
-            [label]="progressLabel()"
-            [value]="bar()"
-            [valueText]="progressText()"
-            [hideLabel]="true"
-          />
+          @if (g.kind === 'DEBT_PAYOFF' && !g.baselineSet) {
+            <div class="note" data-cy="goal-building">
+              <p class="note__title">
+                <span class="tag" data-cy="goal-building-tag">{{ t().goals.payoff.building }}</span>
+                {{ t().goals.payoff.stepsTitle }}
+              </p>
+              <p>{{ t().goals.payoff.steps }}</p>
+            </div>
+            <dl class="facts">
+              <div class="fact">
+                <dt class="fact__label">{{ t().goals.payoff.remainingLabel }}</dt>
+                <dd class="fact__value" data-cy="goal-remaining">
+                  <app-money [value]="g.remaining" />
+                </dd>
+              </div>
+            </dl>
+          } @else {
+            <app-progress-bar
+              fieldId="goal-progress"
+              [label]="progressLabel()"
+              [value]="bar()"
+              [valueText]="progressText()"
+              [hideLabel]="true"
+            />
 
-          <dl class="facts">
-            <div class="fact">
-              <dt class="fact__label">{{ t().goals.card.percentLabel }}</dt>
-              <dd class="fact__value num" data-cy="goal-percent">{{ percent() }}</dd>
-            </div>
-            <div class="fact">
-              <dt class="fact__label">{{ t().goals.form.target }}</dt>
-              <dd class="fact__value" data-cy="goal-target"><app-money [value]="g.target" /></dd>
-            </div>
-            <div class="fact">
-              <dt class="fact__label">{{ t().goals.card.currentLabel }}</dt>
-              <dd class="fact__value" data-cy="goal-current"><app-money [value]="g.current" /></dd>
-            </div>
-            <div class="fact">
-              <dt class="fact__label">{{ t().goals.card.remainingLabel }}</dt>
-              <dd class="fact__value" data-cy="goal-remaining">
-                <app-money [value]="g.remaining" />
-              </dd>
-            </div>
-          </dl>
+            <dl class="facts">
+              <div class="fact">
+                <dt class="fact__label">{{ t().goals.card.percentLabel }}</dt>
+                <dd class="fact__value num" data-cy="goal-percent">{{ percent() }}</dd>
+              </div>
+              <div class="fact">
+                <dt class="fact__label">
+                  {{
+                    g.kind === 'DEBT_PAYOFF'
+                      ? t().goals.payoff.baselineLabel
+                      : t().goals.form.target
+                  }}
+                </dt>
+                <dd class="fact__value" data-cy="goal-target"><app-money [value]="g.target" /></dd>
+              </div>
+              <div class="fact">
+                <dt class="fact__label">
+                  {{
+                    g.kind === 'DEBT_PAYOFF'
+                      ? t().goals.payoff.paidLabel
+                      : t().goals.card.currentLabel
+                  }}
+                </dt>
+                <dd class="fact__value" data-cy="goal-current">
+                  <app-money [value]="g.current" />
+                </dd>
+              </div>
+              <div class="fact">
+                <dt class="fact__label">
+                  {{
+                    g.kind === 'DEBT_PAYOFF'
+                      ? t().goals.payoff.remainingLabel
+                      : t().goals.card.remainingLabel
+                  }}
+                </dt>
+                <dd class="fact__value" data-cy="goal-remaining">
+                  <app-money [value]="g.remaining" />
+                </dd>
+              </div>
+            </dl>
+          }
 
           <p class="summary__meta" data-cy="goal-deadline">{{ deadline() }}</p>
           @if (g.monthlyNeeded; as monthly) {
@@ -97,16 +135,42 @@
           </div>
         }
 
+        @if (g.kind === 'DEBT_PAYOFF' && g.baselineSet && g.grewSinceBaseline) {
+          <div class="alert" role="status" data-cy="goal-grew">
+            <p class="alert__title">{{ t().goals.payoff.grewTitle }}</p>
+            <p>{{ t().goals.payoff.grewDescription }}</p>
+            <button
+              type="button"
+              class="button"
+              data-cy="goal-reanchor"
+              [disabled]="detail.busy()"
+              (click)="askReanchor()"
+            >
+              {{ t().goals.payoff.reanchor }}
+            </button>
+          </div>
+        }
+
         @if (g.status === 'ACHIEVED') {
           <div class="note" data-cy="goal-achieved">
             <p class="note__title">{{ t().goals.detail.achievedTitle }}</p>
-            <p>{{ t().goals.detail.achievedDescription }}</p>
+            <p>
+              {{
+                g.kind === 'DEBT_PAYOFF'
+                  ? t().goals.payoff.achievedDescription
+                  : t().goals.detail.achievedDescription
+              }}
+            </p>
           </div>
         }
 
         @if (g.status === 'ARCHIVED') {
           <p class="banner" role="status" data-cy="goal-archived-note">
             {{ t().goals.detail.archivedNote }}
+          </p>
+        } @else if (g.kind === 'DEBT_PAYOFF') {
+          <p class="summary__note" data-cy="goal-payoff-note">
+            {{ t().goals.payoff.progressNote }}
           </p>
         } @else {
           <p class="summary__note" data-cy="goal-not-money">{{ t().goals.detail.notMoney }}</p>
@@ -118,26 +182,44 @@
 
         <div class="actions">
           @if (g.status !== 'ARCHIVED') {
-            <button
-              type="button"
-              class="button button--primary"
-              data-cy="goal-reserve"
-              (click)="openReserve(false)"
-            >
-              {{ t().goals.detail.reserve }}
-            </button>
-            <button
-              type="button"
-              class="button"
-              data-cy="goal-release"
-              [disabled]="!canRelease()"
-              (click)="openReserve(true)"
-            >
-              {{ t().goals.detail.release }}
-            </button>
-            <a class="button" [routerLink]="['/goals', g.id, 'edit']" data-cy="goal-edit">
-              {{ t().goals.detail.edit }}
-            </a>
+            @if (g.kind === 'DEBT_PAYOFF') {
+              @if (!g.baselineSet) {
+                <button
+                  type="button"
+                  class="button button--primary"
+                  data-cy="goal-baseline"
+                  [disabled]="detail.busy()"
+                  [attr.aria-busy]="detail.busy()"
+                  (click)="confirmBaseline()"
+                >
+                  {{ detail.busy() ? t().goals.payoff.confirming : t().goals.payoff.confirm }}
+                </button>
+              }
+              <a class="button" routerLink="/planning/debts" data-cy="goal-view-debts">
+                {{ t().goals.payoff.viewDebts }}
+              </a>
+            } @else {
+              <button
+                type="button"
+                class="button button--primary"
+                data-cy="goal-reserve"
+                (click)="openReserve(false)"
+              >
+                {{ t().goals.detail.reserve }}
+              </button>
+              <button
+                type="button"
+                class="button"
+                data-cy="goal-release"
+                [disabled]="!canRelease()"
+                (click)="openReserve(true)"
+              >
+                {{ t().goals.detail.release }}
+              </button>
+              <a class="button" [routerLink]="['/goals', g.id, 'edit']" data-cy="goal-edit">
+                {{ t().goals.detail.edit }}
+              </a>
+            }
             <button
               type="button"
               class="button"
@@ -160,19 +242,21 @@
           }
         </div>
 
-        <app-section-container [heading]="t().goals.detail.reservations">
-          @if (g.reservations.length === 0) {
-            <p class="empty-note" data-cy="goal-no-reservations">
-              {{ t().goals.detail.noReservations }}
-            </p>
-          } @else {
-            <ul class="list" data-cy="goal-reservations">
-              @for (reservation of g.reservations; track reservation.id) {
-                <li app-reservation-row [reservation]="reservation"></li>
-              }
-            </ul>
-          }
-        </app-section-container>
+        @if (g.kind !== 'DEBT_PAYOFF') {
+          <app-section-container [heading]="t().goals.detail.reservations">
+            @if (g.reservations.length === 0) {
+              <p class="empty-note" data-cy="goal-no-reservations">
+                {{ t().goals.detail.noReservations }}
+              </p>
+            } @else {
+              <ul class="list" data-cy="goal-reservations">
+                @for (reservation of g.reservations; track reservation.id) {
+                  <li app-reservation-row [reservation]="reservation"></li>
+                }
+              </ul>
+            }
+          </app-section-container>
+        }
 
         <app-linked-notes
           type="GOAL"
@@ -190,6 +274,15 @@
           (closed)="reserveOpen.set(false)"
           (reserved)="afterReserve($event)"
           (stale)="retry()"
+        />
+        <app-confirm-dialog
+          [open]="confirmingReanchor()"
+          [heading]="t().goals.payoff.reanchorConfirm.title"
+          [description]="t().goals.payoff.reanchorConfirm.description"
+          [confirmLabel]="t().goals.payoff.reanchorConfirm.confirm"
+          [busy]="detail.busy()"
+          (confirmed)="confirmReanchor()"
+          (cancelled)="cancelReanchor()"
         />
         <app-confirm-dialog
           [open]="confirmingArchive()"

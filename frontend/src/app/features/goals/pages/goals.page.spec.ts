@@ -1,11 +1,16 @@
 import { provideRouter } from '@angular/router';
 import { render, screen } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
-import { NEVER } from 'rxjs';
+import { NEVER, of } from 'rxjs';
 
 import { pt } from '~/app/common/i18n/translations/pt';
 import { GoalsPage } from '~/app/features/goals/pages/goals.page';
-import { AccountsGatewayStub, anAccount, provideAccountsStub } from '~/testing/accounts-testing';
+import {
+  AccountsGatewayStub,
+  anAccount,
+  failWith,
+  provideAccountsStub,
+} from '~/testing/accounts-testing';
 import { axeViolations, describeViolations } from '~/testing/axe';
 import { aGoal, GoalsGatewayStub, provideGoalsStub } from '~/testing/goals-testing';
 import { provideI18nTesting } from '~/testing/i18n-testing';
@@ -143,5 +148,40 @@ describe('GoalsPage', () => {
 
     const violations = await axeViolations(container);
     expect(violations, describeViolations(violations)).toEqual([]);
+  });
+
+  it('Dado "Quitar todas as dívidas", então cria a meta sem nome nem alvo e abre o detalhe dela', async () => {
+    const gateway = new GoalsGatewayStub();
+    gateway.next = of(aGoal({ id: 'goal-9', kind: 'DEBT_PAYOFF' }));
+    await setup(gateway);
+
+    await userEvent.click(screen.getByTestId('goals-add-payoff'));
+
+    expect(gateway.creates).toEqual([
+      { kind: 'DEBT_PAYOFF', name: '', target: '', deadline: null, description: null },
+    ]);
+  });
+
+  it('Dado erro DEBT_PAYOFF_GOAL_EXISTS, então mostra o motivo do servidor', async () => {
+    const gateway = new GoalsGatewayStub();
+    gateway.next = failWith(422, 'DEBT_PAYOFF_GOAL_EXISTS');
+    await setup(gateway);
+
+    await userEvent.click(screen.getByTestId('goals-add-payoff'));
+
+    expect(screen.getByTestId('goals-payoff-error')).toHaveTextContent(
+      pt.errors.codes['DEBT_PAYOFF_GOAL_EXISTS']!,
+    );
+  });
+
+  it('Dado já existir a meta de quitar dívidas, então não oferece criar outra nem reservar nela', async () => {
+    const gateway = new GoalsGatewayStub();
+    gateway.goals = [aGoal({ id: 'goal-9', kind: 'DEBT_PAYOFF', baselineSet: false })];
+    await setup(gateway);
+
+    expect(screen.queryByTestId('goals-add-payoff')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('goal-reserve-goal-9')).not.toBeInTheDocument();
+    expect(screen.getByTestId('goal-building-goal-9')).toHaveTextContent(pt.goals.payoff.building);
+    expect(screen.queryByTestId('goal-percent-goal-9')).not.toBeInTheDocument();
   });
 });

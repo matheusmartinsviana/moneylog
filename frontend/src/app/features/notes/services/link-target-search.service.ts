@@ -12,6 +12,7 @@ import { TransactionsGateway } from '~/modules/transactions/core/interfaces/tran
 import { defaultFilters } from '~/modules/transactions/core/types/list-filters';
 import { MAX_PAGE_SIZE } from '~/util/api/slice';
 import { formatCompetence, formatIsoDate } from '~/util/date';
+import { counterpartyName } from '~/util/debt-name';
 import { formatMoney } from '~/util/money';
 
 /** Um registro que o seletor oferece para vincular (rótulo e dica já legíveis). */
@@ -92,15 +93,15 @@ export class LinkTargetSearchService {
           map((slice) =>
             slice.items
               .filter((item) =>
-                fold(`${item.person.name} ${item.description ?? ''}`).includes(fold(q)),
+                fold(`${counterpartyName(item)} ${item.description ?? ''}`).includes(fold(q)),
               )
               .slice(0, RESULT_LIMIT)
               .map((item) => ({
                 type: 'DEBT' as const,
                 id: item.id,
                 label: item.description
-                  ? `${item.person.name} · ${item.description}`
-                  : item.person.name,
+                  ? `${counterpartyName(item)} · ${item.description}`
+                  : counterpartyName(item),
                 hint: formatMoney(item.outstanding),
               })),
           ),

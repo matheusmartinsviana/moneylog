@@ -16,7 +16,7 @@
   min-width: 0;
   padding: var(--space-4);
   border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-card);
+  border-radius: var(--radius-panel);
   background-color: var(--color-surface);
   box-shadow: var(--shadow-1);
 }
@@ -37,8 +37,9 @@
 
 /* O herói é o número dominante da tela: maior e com a tinta de acento no topo. */
 .kpi--hero {
-  border-color: var(--color-accent-soft);
+  border-color: var(--color-border);
   background-color: var(--color-accent-soft);
+  background-image: var(--gradient-panel-glow-soft);
 }
 
 .kpi__value--hero {
@@ -71,7 +72,7 @@
 }
 
 .delta[data-tone='neutral'] {
-  background-color: var(--color-surface-muted);
+  background-color: var(--color-surface-inset);
   color: var(--color-text-muted);
 }
 
@@ -108,10 +109,8 @@
   cursor: pointer;
 }
 
-.kpi--ring {
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  column-gap: var(--space-3);
+.kpi--gauge {
+  gap: var(--space-2);
 }
 
 .kpi__text {
@@ -120,25 +119,13 @@
   min-width: 0;
 }
 
-.ring {
-  width: 3.5rem;
-  height: 3.5rem;
-  transform: rotate(-90deg);
+.kpi__text--center {
+  justify-items: center;
+  text-align: center;
 }
 
-.ring__track,
-.ring__arc {
-  fill: none;
-  stroke-width: 3.5;
-}
-
-.ring__track {
-  stroke: var(--color-surface-muted);
-}
-
-.ring__arc {
-  stroke: var(--color-accent);
-  stroke-linecap: round;
+.kpi__value--gauge {
+  font-size: var(--text-2xl);
 }
 
 /* Telas largas: os 4 numa linha (herói maior). Abaixo, 2 por linha (3º e 4º dividem a segunda). */
@@ -164,26 +151,11 @@
   .kpi__value--hero {
     font-size: var(--text-xl);
   }
-
-  .ring {
-    width: 2.75rem;
-    height: 2.75rem;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .delta--skeleton,
   .kpi__skeleton {
     animation: none;
-  }
-}
-
-@media (forced-colors: active) {
-  .ring__arc {
-    stroke: Highlight;
-  }
-
-  .ring__track {
-    stroke: GrayText;
   }
 }

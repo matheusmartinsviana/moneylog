@@ -30,6 +30,9 @@
         >
           {{ t().cards.detail.newPurchase }}
         </a>
+        <button type="button" class="button" data-cy="card-ongoing" (click)="ongoingOpen.set(true)">
+          {{ t().debtOverview.actions.addOngoing }}
+        </button>
         <a class="button" [routerLink]="['/cards', c.id, 'edit']" data-cy="card-edit">
           {{ t().cards.detail.edit }}
         </a>
@@ -169,6 +172,13 @@
         />
       }
     }
+  }
+  @if (ongoingOpen()) {
+    <app-ongoing-installments-modal
+      [cardId]="id()"
+      (closed)="ongoingOpen.set(false)"
+      (saved)="afterOngoing()"
+    />
   }
 </app-page-layout>
 <router-outlet />

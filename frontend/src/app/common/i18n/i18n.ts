@@ -29,6 +29,8 @@ export abstract class AppI18n {
     readonly skipToContent: string;
     readonly primaryNavigation: string;
     readonly bottomNavigation: string;
+    readonly sidebarExpand: string;
+    readonly sidebarCollapse: string;
   };
 
   /** Avisos do PWA: sem conexão, nova versão e instalação. */
@@ -1487,6 +1489,7 @@ export abstract class AppI18n {
       readonly settled: string;
       readonly outstanding: string;
       readonly person: string;
+      readonly creditor: string;
       readonly directionLabel: string;
       readonly date: string;
       readonly expectedDate: string;
@@ -1619,6 +1622,11 @@ export abstract class AppI18n {
       readonly category: string;
       readonly categoryHint: string;
       readonly categoryNone: string;
+      readonly creditorLabel: string;
+      readonly creditorPerson: string;
+      readonly creditorOther: string;
+      readonly creditorName: string;
+      readonly creditorHint: string;
       readonly save: string;
       /** `{amount}` e `{name}`. */
       readonly toast: string;
@@ -1650,6 +1658,7 @@ export abstract class AppI18n {
       readonly pending: string;
       readonly summary: string;
       readonly projections: string;
+      readonly debts: string;
     };
     /** Custo fixo e receita recorrente mensais: sempre rotulados como estimativa (S-146). */
     readonly summary: {
@@ -1839,6 +1848,35 @@ export abstract class AppI18n {
         readonly title: string;
         readonly description: string;
         readonly back: string;
+      };
+    };
+    /** Meta "quitar todas as dívidas" (`DEBT_PAYOFF`, 2.13.0). */
+    readonly payoff: {
+      readonly add: string;
+      readonly created: string;
+      readonly creating: string;
+      readonly exists: string;
+      readonly tag: string;
+      readonly building: string;
+      readonly buildingCard: string;
+      readonly stepsTitle: string;
+      readonly steps: string;
+      readonly confirm: string;
+      readonly confirming: string;
+      readonly viewDebts: string;
+      readonly baselineToast: string;
+      readonly baselineLabel: string;
+      readonly paidLabel: string;
+      readonly achievedDescription: string;
+      readonly remainingLabel: string;
+      readonly progressNote: string;
+      readonly grewTitle: string;
+      readonly grewDescription: string;
+      readonly reanchor: string;
+      readonly reanchorConfirm: {
+        readonly title: string;
+        readonly description: string;
+        readonly confirm: string;
       };
     };
     readonly archiveConfirm: {
@@ -2707,6 +2745,144 @@ export abstract class AppI18n {
         readonly denied: string;
         readonly error: string;
       };
+    };
+  };
+
+  /** Visão total de dívidas, parcelado em andamento e cartão do Início (2.13.0). Valores vêm da API. */
+  abstract readonly debtOverview: {
+    readonly title: string;
+    readonly description: string;
+    readonly loading: string;
+    readonly refreshing: string;
+    readonly total: {
+      readonly label: string;
+      readonly asOf: string;
+      readonly note: string;
+    };
+    readonly parts: {
+      readonly cards: string;
+      readonly people: string;
+      readonly other: string;
+    };
+    readonly empty: {
+      readonly title: string;
+      readonly description: string;
+      readonly addOngoing: string;
+      readonly addDebt: string;
+    };
+    readonly none: {
+      readonly title: string;
+      readonly description: string;
+    };
+    readonly actions: {
+      readonly addOngoing: string;
+      readonly addDebt: string;
+    };
+    readonly comparison: {
+      readonly title: string;
+      readonly incomeBase: string;
+      readonly incomeSource: Readonly<
+        Record<'RECURRING_ESTIMATE' | 'LAST_FULL_MONTH' | 'NONE', string>
+      >;
+      readonly debtToIncome: string;
+      readonly fixedCostToIncome: string;
+      readonly debtMinusInAccounts: string;
+      readonly inAccounts: string;
+      readonly noIncome: string;
+    };
+    readonly cards: {
+      readonly title: string;
+      readonly invoiced: string;
+      readonly future: string;
+      readonly otherCharges: string;
+      readonly adjustment: string;
+      readonly plans: string;
+      readonly noPlans: string;
+      readonly empty: string;
+      readonly remainingText: string;
+      readonly installmentText: string;
+      readonly until: string;
+      readonly ongoing: string;
+      readonly noDescription: string;
+    };
+    readonly people: {
+      readonly title: string;
+      readonly empty: string;
+      readonly expected: string;
+      readonly noDate: string;
+      readonly overdue: string;
+    };
+    readonly other: {
+      readonly title: string;
+      readonly empty: string;
+      readonly hint: string;
+    };
+    readonly receivables: {
+      readonly label: string;
+      readonly note: string;
+    };
+    readonly fixedCosts: {
+      readonly title: string;
+      readonly estimate: string;
+      readonly note: string;
+      readonly link: string;
+    };
+    readonly schedule: {
+      readonly title: string;
+      readonly description: string;
+      readonly horizon: string;
+      readonly horizonOption: string;
+      readonly chartLabel: string;
+      readonly remainingLine: string;
+      readonly empty: string;
+      readonly dueLine: string;
+      readonly chips: {
+        readonly overdue: string;
+        readonly undated: string;
+        readonly beyond: string;
+      };
+      readonly payoff: Readonly<Record<'on' | 'UNDATED_DEBTS' | 'BEYOND_HORIZON', string>>;
+    };
+    readonly goal: {
+      readonly title: string;
+      readonly none: string;
+      readonly create: string;
+      readonly open: string;
+      readonly building: string;
+      readonly progress: string;
+    };
+    readonly ongoing: {
+      readonly title: string;
+      readonly description: string;
+      readonly card: string;
+      readonly descriptionField: string;
+      readonly installmentAmount: string;
+      readonly totalInstallments: string;
+      readonly remainingInstallments: string;
+      readonly remainingHint: string;
+      readonly firstInvoiceDate: string;
+      readonly firstInvoiceHint: string;
+      readonly noCards: string;
+      readonly addCard: string;
+      readonly preview: {
+        readonly title: string;
+        readonly loading: string;
+        readonly text: string;
+        readonly note: string;
+      };
+      readonly save: string;
+      readonly saving: string;
+      readonly cancel: string;
+      readonly toast: string;
+    };
+    readonly home: {
+      readonly title: string;
+      readonly open: string;
+      readonly empty: string;
+      readonly emptyAction: string;
+      readonly loading: string;
+      readonly error: string;
+      readonly retry: string;
     };
   };
 

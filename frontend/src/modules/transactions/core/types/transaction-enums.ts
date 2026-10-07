@@ -29,7 +29,7 @@ export const PAYMENT_METHODS = ['CASH', 'DEBIT', 'PIX', 'TRANSFER', 'BOLETO', 'O
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
 export type TransactionStatus = 'ACTIVE' | 'VOIDED';
-export type TransactionSource = 'MANUAL' | 'IMPORT' | 'RECURRENCE';
+export type TransactionSource = 'MANUAL' | 'IMPORT' | 'RECURRENCE' | 'ONGOING';
 
 export type AdjustmentDirection = 'INCREASE' | 'DECREASE';
 export type InvestmentDirection = 'CONTRIBUTION' | 'REDEMPTION';

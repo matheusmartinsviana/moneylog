@@ -116,4 +116,28 @@ describe('GoalDetailFacade', () => {
     expect(facade.goal()).toMatchObject({ progress: '0.4750' });
     expect(facade.goal()?.current.amount).toBe('9500.00');
   });
+
+  it('Dado "Cadastrei tudo", então a meta devolvida pelo servidor vira o estado e o evento sai', () => {
+    const { facade, gateway } = setup();
+    const done: string[] = [];
+    facade.done$.subscribe(({ kind, goal }) => done.push(`${kind}:${goal.baselineSet}`));
+    facade.load('goal-1');
+
+    facade.baseline('goal-1');
+
+    expect(gateway.calls).toContain('baseline:goal-1');
+    expect(done).toEqual(['baseline:true']);
+    expect(facade.goal()).toMatchObject({ kind: 'DEBT_PAYOFF', baselineSet: true });
+  });
+
+  it('Dado DEBT_PAYOFF_NOTHING_TO_BASELINE, então o problema fica disponível e a meta não muda', () => {
+    const { facade, gateway } = setup();
+    facade.load('goal-1');
+    gateway.next = failWith(422, 'DEBT_PAYOFF_NOTHING_TO_BASELINE');
+
+    facade.baseline('goal-1');
+
+    expect(facade.problem()).toMatchObject({ code: 'DEBT_PAYOFF_NOTHING_TO_BASELINE' });
+    expect(facade.goal()).toMatchObject({ kind: 'SAVINGS' });
+  });
 });

@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 
 import { pageTitle } from '~/app/common/services/i18n-title.strategy';
+import { DebtsOverviewPage } from '~/app/features/planning/pages/debts-overview.page';
 import { OccurrencesPage } from '~/app/features/planning/pages/occurrences.page';
 import { ProjectionsPage } from '~/app/features/planning/pages/projections.page';
 import { RecurrenceFormPage } from '~/app/features/planning/pages/recurrence-form.page';
@@ -28,6 +29,7 @@ const routes: Routes = [
       { path: 'summary', component: SummaryPage, title: pageTitle('planning') },
       { path: 'summary/:month', component: SummaryPage, title: pageTitle('planning') },
       { path: 'projections', component: ProjectionsPage, title: pageTitle('planning') },
+      { path: 'debts', component: DebtsOverviewPage, title: pageTitle('planning') },
     ],
   },
 ];

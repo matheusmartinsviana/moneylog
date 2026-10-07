@@ -130,6 +130,7 @@ describe('QuickCaptureComponent (sem IA)', () => {
         debt: {
           id: 'debt-1',
           person: { id: 'p-1', name: 'Irmã' },
+          creditorName: null,
           direction: 'RECEIVABLE',
           status: 'OPEN',
           principal: { amount: '50.00', currency: 'BRL' },

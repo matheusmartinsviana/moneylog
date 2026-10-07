@@ -13,6 +13,7 @@ let nextId = 0;
     <section
       class="section"
       [class.lift]="interactive()"
+      [class.section--glow]="glow()"
       [attr.aria-labelledby]="headingId"
       data-cy="section"
     >
@@ -37,9 +38,14 @@ let nextId = 0;
       gap: var(--space-4);
       padding: var(--space-5);
       border: var(--border-width) solid var(--color-border);
-      border-radius: var(--radius-card);
+      border-radius: var(--radius-panel);
       background-color: var(--color-surface);
       box-shadow: var(--shadow-1);
+    }
+
+    /* Painel em destaque (gráfico): halo lilás por trás, decorativo (token). */
+    .section--glow {
+      background-image: var(--gradient-panel-glow);
     }
 
     /* O box-shadow de .section empata em especificidade com .lift:hover e vence por ordem. */
@@ -69,6 +75,8 @@ export class SectionContainerComponent {
   readonly heading = input.required<string>();
   readonly description = input<string>();
   readonly interactive = input(false, { transform: booleanAttribute });
+  /** Halo lilás de destaque (gráfico principal). */
+  readonly glow = input(false, { transform: booleanAttribute });
 
   protected readonly headingId = `section-title-${++nextId}`;
 }

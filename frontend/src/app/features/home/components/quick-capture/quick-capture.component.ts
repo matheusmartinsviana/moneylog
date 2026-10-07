@@ -32,7 +32,8 @@ import type { Category } from '~/modules/categories/core/types/category';
 import { PeopleListFacade } from '~/modules/people/core/facades/people-list.facade';
 import { TransactionFormFacade } from '~/modules/transactions/core/facades/transaction-form.facade';
 import type { TransactionInput } from '~/modules/transactions/core/types/transaction-input';
-import type { PersonRef } from '~/util/debt';
+import { type PersonRef } from '~/util/debt';
+import { counterpartyName } from '~/util/debt-name';
 import { readLastUsedAccount, writeLastUsedAccount } from '~/util/last-used-account';
 import { formatMoney } from '~/util/money';
 
@@ -135,7 +136,7 @@ export class QuickCaptureComponent implements OnInit {
         this.toast.show(
           interpolate(this.t().lending.loan.toast, {
             amount: formatMoney(saved.amount),
-            name: saved.debt.person.name,
+            name: counterpartyName(saved.debt),
           }),
           {
             actions: [

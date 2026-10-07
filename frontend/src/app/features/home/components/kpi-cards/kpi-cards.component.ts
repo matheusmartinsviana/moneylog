@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 
+import { GaugeComponent } from '~/app/common/components/charts/gauge.component';
 import { MoneyComponent } from '~/app/common/components/money/money.component';
 import { HTML_LANG } from '~/app/common/i18n/i18n';
 import { I18nService } from '~/app/common/i18n/i18n.service';
@@ -29,7 +30,7 @@ interface Chip {
  */
 @Component({
   selector: 'app-kpi-cards',
-  imports: [MoneyComponent],
+  imports: [MoneyComponent, GaugeComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="kpis" role="group" [attr.aria-label]="t().dashboard.kpis.label" data-cy="home-kpis">
@@ -85,19 +86,34 @@ interface Chip {
         }
       </section>
 
-      <section class="kpi kpi--ring" aria-labelledby="kpi-savings-title" data-cy="kpi-savings">
-        <div class="kpi__text">
-          <h3 class="kpi__label" id="kpi-savings-title">{{ t().dashboard.kpis.savings.title }}</h3>
+      <section class="kpi kpi--gauge" aria-labelledby="kpi-savings-title" data-cy="kpi-savings">
+        <h3 class="kpi__label" id="kpi-savings-title">{{ t().dashboard.kpis.savings.title }}</h3>
+        <!-- O arco só desenha a razão do backend (savingsRate); o número está em texto, dentro do medidor. -->
+        <app-gauge [share]="ringShare()" data-cy="kpi-savings-ring">
           @switch (monthlyStatus()) {
             @case ('ready') {
               @if (monthly(); as m) {
                 <p
-                  class="kpi__value"
+                  class="kpi__value kpi__value--gauge"
                   [class.is-negative]="m.savingsRate !== null && negative(m.savingsRate)"
                   data-cy="kpi-savings-value"
                 >
                   {{ savingsText() }}
                 </p>
+              }
+            }
+            @case ('error') {
+              <p class="kpi__value kpi__value--gauge" data-cy="kpi-savings-value">—</p>
+            }
+            @default {
+              <p class="kpi__skeleton" aria-hidden="true"></p>
+            }
+          }
+        </app-gauge>
+        <div class="kpi__text kpi__text--center">
+          @switch (monthlyStatus()) {
+            @case ('ready') {
+              @if (monthly(); as m) {
                 @if (m.savingsRate === null) {
                   <p class="kpi__caption" data-cy="kpi-savings-empty">
                     {{ t().dashboard.kpis.savings.noIncome }}
@@ -113,7 +129,6 @@ interface Chip {
               }
             }
             @case ('error') {
-              <p class="kpi__value" data-cy="kpi-savings-value">—</p>
               <p class="kpi__caption" role="status" data-cy="kpi-savings-error">
                 {{ t().dashboard.kpis.unavailable }}
               </p>
@@ -123,24 +138,9 @@ interface Chip {
             }
             @default {
               <p class="visually-hidden" role="status">{{ t().dashboard.kpis.loading }}</p>
-              <p class="kpi__skeleton" aria-hidden="true"></p>
             }
           }
         </div>
-        <!-- O anel só desenha a razão do backend; o número está em texto (aria-hidden). -->
-        <svg class="ring" viewBox="0 0 36 36" aria-hidden="true" data-cy="kpi-savings-ring">
-          <circle class="ring__track" cx="18" cy="18" r="15.915" />
-          @if (ringShare(); as share) {
-            <circle
-              class="ring__arc"
-              cx="18"
-              cy="18"
-              r="15.915"
-              pathLength="100"
-              [attr.stroke-dasharray]="share + ' 100'"
-            />
-          }
-        </svg>
       </section>
     </div>
   `,

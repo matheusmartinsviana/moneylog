@@ -211,6 +211,8 @@
                 <app-net-worth [netWorth]="data.summary.netWorth" />
               </app-section-container>
 
+              <app-debt-summary-card class="area-debts" />
+
               <app-section-container
                 class="area-cards"
                 [heading]="t().home.cards.title"
@@ -299,9 +301,9 @@
 
   <!-- Fora de qualquer @if: a folha (e a chave de idempotência pendente) não é destruída por uma recarga. -->
   <app-reserve-sheet
-    [open]="goalSheetOpen() && goals.data() !== null"
-    [goals]="goals.data() ?? []"
-    [goalId]="goals.data()?.[0]?.id"
+    [open]="goalSheetOpen() && reservableGoals().length > 0"
+    [goals]="reservableGoals()"
+    [goalId]="reservableGoals()[0]?.id"
     (closed)="goalSheetOpen.set(false)"
     (reserved)="afterGoalReserve()"
     (stale)="afterGoalReserve()"

@@ -19,16 +19,10 @@
   display: none;
 }
 
+/* O resumo vira o painel de KPIs do topo em toda largura; a linha de rodapé repetiria os mesmos totais. */
 @media (width >= 768px) {
   .summary {
-    display: none;
-  }
-
-  .footer {
-    display: block;
-    position: sticky;
-    bottom: var(--space-3);
-    z-index: 2;
+    position: static;
   }
 }
 

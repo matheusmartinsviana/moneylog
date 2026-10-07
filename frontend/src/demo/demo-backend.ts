@@ -11,6 +11,7 @@ import { delay, Observable, of, throwError } from 'rxjs';
 
 import { aiStatus, insightsView } from '~/demo/demo-ai';
 import { addDays, localToday } from '~/demo/demo-dates';
+import { debtOverviewView, ongoingPreviewView } from '~/demo/demo-debts';
 import {
   dailyMessage,
   importBatches,
@@ -124,6 +125,14 @@ export class DemoHttpBackend extends HttpBackend {
     if (req.method === 'POST' && preview)
       return this.purchasePreview(
         req.body as { amount: string; installments: number; date: string },
+      );
+
+    // Prévia do parcelado em andamento: o "servidor" do demo calcula o que falta (nada é gravado).
+    const ongoingPreview = /^\/v1\/cards\/[^/]+\/ongoing-installments\/preview$/.exec(path);
+    if (req.method === 'POST' && ongoingPreview)
+      return ongoingPreviewView(
+        w,
+        req.body as { installmentAmount: string; remainingInstallments: number },
       );
 
     // O envio de um extrato devolve o lote de exemplo em revisão (as demais escritas seguem recusadas).
@@ -259,6 +268,7 @@ export class DemoHttpBackend extends HttpBackend {
         .map((d) => debtView(w, d));
       return paged(list, page, pageSize);
     }
+    if (path === '/v1/debts/overview') return debtOverviewView(w, num('months', 12));
     const debt = /^\/v1\/debts\/([^/]+)$/.exec(path);
     if (debt) return debtView(w, this.find(w.debts, debt[1]!));
 

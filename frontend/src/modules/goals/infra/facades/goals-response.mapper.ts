@@ -34,6 +34,7 @@ export function toReservation(response: GoalReservationResponse): GoalReservatio
 export function toGoal(response: GoalResponse): Goal {
   return {
     id: response.id,
+    kind: response.kind ?? 'SAVINGS',
     name: response.name,
     target: money(response.target),
     current: money(response.current),
@@ -46,6 +47,9 @@ export function toGoal(response: GoalResponse): Goal {
     monthlyNeeded: response.monthlyNeeded ? money(response.monthlyNeeded) : null,
     uncovered: response.uncovered,
     reservations: response.reservations.map(toReservation),
+    baselineSet: response.baselineSet ?? false,
+    baseline: response.baseline ? money(response.baseline) : null,
+    grewSinceBaseline: response.grewSinceBaseline ?? false,
     version: response.version,
   };
 }
@@ -56,6 +60,14 @@ function description(input: GoalInput): string | null {
 }
 
 export function toCreateRequest(input: GoalInput): GoalCreateRequest {
+  if (input.kind === 'DEBT_PAYOFF') {
+    return {
+      kind: 'DEBT_PAYOFF',
+      deadline: input.deadline,
+      ...(input.priority ? { priority: input.priority } : {}),
+      description: description(input),
+    };
+  }
   return {
     name: input.name.trim(),
     target: input.target,
@@ -65,8 +77,16 @@ export function toCreateRequest(input: GoalInput): GoalCreateRequest {
   };
 }
 
+/** `PUT` ainda exige `name` e `target` (em `DEBT_PAYOFF` o `target` é ignorado pelo servidor). */
 export function toUpdateRequest(input: GoalUpdate): GoalUpdateRequest {
-  return { ...toCreateRequest(input), version: input.version };
+  return {
+    name: input.name.trim(),
+    target: input.target,
+    deadline: input.deadline,
+    ...(input.priority ? { priority: input.priority } : {}),
+    description: description(input),
+    version: input.version,
+  };
 }
 
 /** Liberar manda o valor **negativo** no corpo: o usuário digita o valor positivo (S-147). */

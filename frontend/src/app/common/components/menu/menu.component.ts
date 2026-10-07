@@ -150,12 +150,13 @@ const normalize = (text: string): string =>
 
     /* Avatar genérico (DS 02): círculo em tinta de acento; não leva nome nem foto (D4). */
     .menu__trigger--avatar {
-      min-width: 2.25rem;
-      width: 2.25rem;
-      min-height: 2.25rem;
-      height: 2.25rem;
+      min-width: 2.75rem;
+      width: 2.75rem;
+      min-height: 2.75rem;
+      height: 2.75rem;
       padding: 0;
-      border-radius: var(--radius-pill);
+      border-color: var(--color-border);
+      border-radius: var(--radius-icon);
       background-color: var(--color-accent-soft);
       color: var(--color-accent);
     }

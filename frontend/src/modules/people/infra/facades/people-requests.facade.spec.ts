@@ -112,7 +112,7 @@ describe('PeopleRequestsFacade', () => {
 
       const person = await result;
       expect(person.debts[0]?.outstanding.amount).toBe('77.77');
-      expect(person.debts[0]?.person.name).toBe('João');
+      expect(person.debts[0]?.person?.name).toBe('João');
     });
 
     it('Dado criar e editar, então os corpos levam nome sem espaços, notas vazias como null e a version', async () => {

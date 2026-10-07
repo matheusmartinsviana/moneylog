@@ -10,7 +10,8 @@ import { DebtFormComponent } from '~/app/features/quick-add/components/debt-form
 import type { Category } from '~/modules/categories/core/types/category';
 import { DebtFormFacade } from '~/modules/debts/core/facades/debt-form.facade';
 import type { Debt, DebtInput } from '~/modules/debts/core/types/debt';
-import type { PersonRef } from '~/util/debt';
+import { type PersonRef } from '~/util/debt';
+import { counterpartyName } from '~/util/debt-name';
 import { formatMoney } from '~/util/money';
 
 /**
@@ -65,7 +66,7 @@ export class DebtEntryComponent {
       this.toast.show(
         interpolate(this.t().lending.debt.toast, {
           amount: formatMoney(debt.principal),
-          name: debt.person.name,
+          name: counterpartyName(debt),
         }),
         {
           actions: [

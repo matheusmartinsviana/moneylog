@@ -30,7 +30,6 @@ import { provideAuth } from '~/modules/auth/infra/auth.providers';
 import { provideCards } from '~/modules/cards/infra/cards.providers';
 import { provideCategories } from '~/modules/categories/infra/categories.providers';
 import { provideNotifications } from '~/modules/notifications/infra/notifications.providers';
-import { provideReports } from '~/modules/reports/infra/reports.providers';
 import { provideSearch } from '~/modules/search/infra/search.providers';
 import { provideTransactions } from '~/modules/transactions/infra/transactions.providers';
 import { API_MOCKS } from '~/util/api-mocks';
@@ -64,7 +63,6 @@ export const appConfig: ApplicationConfig = {
     provideNotifications(),
     provideSessionEndHooks(),
     provideAi(),
-    provideReports(),
     provideSearch(),
     // Restaura a sessão pelo cookie de refresh antes de ativar as rotas (T33 CA5). Nunca lança.
     provideAppInitializer(() => inject(SessionFacade).restore()),

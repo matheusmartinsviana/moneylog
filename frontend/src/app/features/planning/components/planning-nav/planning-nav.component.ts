@@ -14,7 +14,7 @@ import { I18nService } from '~/app/common/i18n/i18n.service';
       min-width: 0;
     }
 
-    /* Quatro abas podem não caber numa linha de 375 px: quebram em vez de alargar a página. */
+    /* Cinco abas podem não caber numa linha de 375 px: quebram em vez de alargar a página. */
     .tabs {
       display: flex;
       flex-wrap: wrap;
@@ -55,10 +55,20 @@ import { I18nService } from '~/app/common/i18n/i18n.service';
       >
         {{ t().recurrences.tabs.projections }}
       </a>
+      <a
+        class="tab"
+        routerLink="/planning/debts"
+        data-cy="planning-tab-debts"
+        [attr.aria-current]="current() === 'debts' ? 'page' : null"
+      >
+        {{ t().recurrences.tabs.debts }}
+      </a>
     </nav>
   `,
 })
 export class PlanningNavComponent {
   protected readonly t = inject(I18nService).t;
-  readonly current = input.required<'recurrences' | 'pending' | 'summary' | 'projections'>();
+  readonly current = input.required<
+    'recurrences' | 'pending' | 'summary' | 'projections' | 'debts'
+  >();
 }

@@ -40,6 +40,7 @@ import { REPORT_PERIODS, type ReportPeriod } from '~/modules/reports/core/types/
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-section-container
+      glow
       [heading]="t().dashboard.overview.title"
       [description]="t().dashboard.overview.description"
     >

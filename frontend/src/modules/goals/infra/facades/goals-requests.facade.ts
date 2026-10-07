@@ -93,6 +93,13 @@ export class GoalsRequestsFacade extends GoalsGateway {
       .pipe(map(toGoal), catchError(fail));
   }
 
+  baseline(id: string): Observable<Goal> {
+    if (this.useMocks) return notFound();
+    return this.http
+      .post<GoalResponse>(GOALS_ENDPOINTS.baseline(id), null)
+      .pipe(map(toGoal), catchError(fail));
+  }
+
   archive(id: string): Observable<Goal> {
     if (this.useMocks) return notFound();
     return this.http

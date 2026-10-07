@@ -26,6 +26,7 @@ import {
   DashboardGatewayStub,
   provideDashboardStub,
 } from '~/testing/dashboard-testing';
+import { provideDebtOverviewStub } from '~/testing/debt-overview-testing';
 import {
   aSummary,
   MonthlySummaryGatewayStub,
@@ -90,6 +91,7 @@ async function setup(s: Stubs = stubs(), language: 'pt' | 'en' = 'pt') {
       provideGoalsStub(),
       ...provideCategoriesStub(),
       ...provideNotificationsStub(),
+      ...provideDebtOverviewStub(),
     ],
   });
   await result.fixture.whenStable();

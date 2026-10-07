@@ -29,6 +29,7 @@ import { BudgetCardComponent } from '~/app/features/home/components/budget-card/
 import { CardsSummaryComponent } from '~/app/features/home/components/cards-summary/cards-summary.component';
 import { CategorySpendingComponent } from '~/app/features/home/components/category-spending/category-spending.component';
 import { CommitmentsComponent } from '~/app/features/home/components/commitments/commitments.component';
+import { DebtSummaryCardComponent } from '~/app/features/home/components/debt-summary-card/debt-summary-card.component';
 import {
   hasInsight,
   InsightCardComponent,
@@ -77,6 +78,7 @@ import { formatCompetence, formatIsoDate } from '~/util/date';
 @Component({
   selector: 'app-home-page',
   imports: [
+    DebtSummaryCardComponent,
     RouterLink,
     AccountsStripComponent,
     BudgetCardComponent,
@@ -138,6 +140,10 @@ export class HomePage implements OnInit {
   protected readonly overview = inject(SpendingOverviewFacade);
   protected readonly categories = inject(CategorySpendingFacade);
   protected readonly recent = inject(RecentTransactionsFacade);
+  /** A meta de quitar dívidas não tem reservas: só as de reserva entram no atalho "Meta". */
+  protected readonly reservableGoals = computed(() =>
+    (this.goals.data() ?? []).filter((goal) => goal.kind === 'SAVINGS'),
+  );
 
   /** `?mode=income` no Início abre o Quick Capture em Receita; qualquer outro valor é despesa. */
   protected readonly captureType = toSignal(
@@ -274,6 +280,10 @@ export class HomePage implements OnInit {
   protected openGoalQuick(): void {
     switch (this.goals.state().status) {
       case 'ready':
+        if (this.reservableGoals().length === 0) {
+          void this.router.navigate(['/goals/new']);
+          break;
+        }
         this.goalSheetOpen.set(true);
         break;
       case 'empty':

@@ -76,6 +76,7 @@ export class GoalPage {
   protected readonly reserveOpen = signal(false);
   protected readonly releasing = signal(false);
   protected readonly confirmingArchive = signal(false);
+  protected readonly confirmingReanchor = signal(false);
 
   private readonly locale = computed(() => HTML_LANG[this.i18n.language()]);
   protected readonly bar = computed(() => {
@@ -135,8 +136,15 @@ export class GoalPage {
     });
     this.detail.done$.pipe(takeUntilDestroyed()).subscribe(({ kind }) => {
       this.confirmingArchive.set(false);
+      this.confirmingReanchor.set(false);
       const copy = this.t().goals.toast;
-      this.toast.show(kind === 'archive' ? copy.archived : copy.unarchived);
+      this.toast.show(
+        kind === 'baseline'
+          ? this.t().goals.payoff.baselineToast
+          : kind === 'archive'
+            ? copy.archived
+            : copy.unarchived,
+      );
     });
   }
 
@@ -162,6 +170,25 @@ export class GoalPage {
 
   protected cancelArchive(): void {
     if (!this.detail.busy()) this.confirmingArchive.set(false);
+  }
+
+  /** "Cadastrei tudo": o servidor fixa o total de hoje; a meta devolvida vira o estado. */
+  protected confirmBaseline(): void {
+    this.detail.clearProblem();
+    this.detail.baseline(this.id());
+  }
+
+  protected askReanchor(): void {
+    this.detail.clearProblem();
+    this.confirmingReanchor.set(true);
+  }
+
+  protected confirmReanchor(): void {
+    this.detail.baseline(this.id());
+  }
+
+  protected cancelReanchor(): void {
+    if (!this.detail.busy()) this.confirmingReanchor.set(false);
   }
 
   protected unarchive(): void {

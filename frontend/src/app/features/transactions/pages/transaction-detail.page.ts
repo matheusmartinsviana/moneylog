@@ -37,6 +37,7 @@ import { transactionLabel } from '~/app/features/transactions/transaction-label'
 import { TransactionDetailFacade } from '~/modules/transactions/core/facades/transaction-detail.facade';
 import type { Transaction } from '~/modules/transactions/core/types/transaction';
 import { formatCompetenceShort, formatInstant, formatIsoDate } from '~/util/date';
+import { counterpartyName } from '~/util/debt-name';
 import { formatMoney } from '~/util/money';
 
 interface Field {
@@ -265,7 +266,7 @@ export class TransactionDetailPage {
       fields.push({
         key: 'debt',
         label: copy.debt,
-        text: `${tx.debt.person.name} · ${tx.debt.description ?? labels.types[tx.type]}`,
+        text: `${counterpartyName(tx.debt)} · ${tx.debt.description ?? labels.types[tx.type]}`,
         link: ['/debts', tx.debt.id],
         linkCy: 'detail-debt-link',
       });
@@ -273,7 +274,7 @@ export class TransactionDetailPage {
     for (const share of tx.shares) {
       fields.push({
         key: `share-${share.id}`,
-        label: interpolate(copy.share, { name: share.person.name }),
+        label: interpolate(copy.share, { name: counterpartyName(share) }),
         text: formatMoney(share.principal),
         link: ['/debts', share.id],
         linkCy: `detail-share-link-${share.id}`,

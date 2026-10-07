@@ -1,7 +1,7 @@
 import { provideRouter } from '@angular/router';
 import { render, screen } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
-import { Subject } from 'rxjs';
+import { of, Subject } from 'rxjs';
 
 import { pt } from '~/app/common/i18n/translations/pt';
 import { GoalPage } from '~/app/features/goals/pages/goal.page';
@@ -267,5 +267,113 @@ describe('GoalPage', () => {
 
     const violations = await axeViolations(container.ownerDocument.body);
     expect(violations, describeViolations(violations)).toEqual([]);
+  });
+
+  describe('meta "quitar todas as dívidas" (DEBT_PAYOFF)', () => {
+    const payoff = (overrides: Partial<Goal> = {}) =>
+      aGoal({
+        id: 'goal-1',
+        kind: 'DEBT_PAYOFF',
+        name: 'Quitar todas as dívidas',
+        target: brl('0.00'),
+        current: brl('0.00'),
+        progress: '0.0000',
+        remaining: brl('6500.00'),
+        deadline: null,
+        monthlyNeeded: null,
+        reservations: [],
+        baselineSet: false,
+        baseline: null,
+        ...overrides,
+      });
+
+    it('Dado "montando", então não mostra percentual nem reservas e explica o passo a passo', async () => {
+      const gateway = new GoalsGatewayStub();
+      gateway.goals = [payoff()];
+      await setup(gateway);
+
+      expect(screen.getByTestId('goal-building')).toHaveTextContent(pt.goals.payoff.steps);
+      expect(screen.queryByTestId('goal-percent')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('goal-reserve')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('goal-release')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('goal-edit')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('goal-reservations')).not.toBeInTheDocument();
+      expect(text(screen.getByTestId('goal-remaining'))).toBe('R$ 6.500,00');
+    });
+
+    it('Dado "Cadastrei tudo", então chama o baseline e mostra o progresso devolvido pelo servidor', async () => {
+      const gateway = new GoalsGatewayStub();
+      gateway.goals = [payoff()];
+      await setup(gateway);
+      gateway.next = of(
+        payoff({
+          baselineSet: true,
+          baseline: brl('6500.00'),
+          target: brl('6500.00'),
+          current: brl('1300.00'),
+          progress: '0.2000',
+          remaining: brl('5200.00'),
+        }),
+      );
+
+      await userEvent.click(screen.getByTestId('goal-baseline'));
+
+      expect(gateway.calls).toContain('baseline:goal-1');
+      expect(text(screen.getByTestId('goal-percent'))).toBe('20%');
+      expect(text(screen.getByTestId('goal-target'))).toBe('R$ 6.500,00');
+      expect(text(screen.getByTestId('goal-current'))).toBe('R$ 1.300,00');
+      expect(screen.queryByTestId('goal-baseline')).not.toBeInTheDocument();
+    });
+
+    it('Dado grewSinceBaseline, então avisa e re-ancorar pede confirmação antes de chamar o servidor', async () => {
+      const gateway = new GoalsGatewayStub();
+      gateway.goals = [
+        payoff({
+          baselineSet: true,
+          baseline: brl('5000.00'),
+          target: brl('5000.00'),
+          progress: '0.0000',
+          remaining: brl('7000.00'),
+          grewSinceBaseline: true,
+        }),
+      ];
+      await setup(gateway);
+
+      expect(screen.getByTestId('goal-grew')).toHaveTextContent(pt.goals.payoff.grewTitle);
+      await userEvent.click(screen.getByTestId('goal-reanchor'));
+      expect(gateway.calls).not.toContain('baseline:goal-1');
+      await userEvent.click(await screen.findByTestId('confirm-dialog-confirm'));
+
+      expect(gateway.calls).toContain('baseline:goal-1');
+    });
+
+    it('Dado meta conquistada, então mostra o estado de conquista da quitação', async () => {
+      const gateway = new GoalsGatewayStub();
+      gateway.goals = [
+        payoff({
+          status: 'ACHIEVED',
+          baselineSet: true,
+          baseline: brl('5000.00'),
+          target: brl('5000.00'),
+          current: brl('5000.00'),
+          progress: '1.0000',
+          remaining: brl('0.00'),
+        }),
+      ];
+      await setup(gateway);
+
+      expect(screen.getByTestId('goal-achieved')).toHaveTextContent(
+        pt.goals.payoff.achievedDescription,
+      );
+    });
+
+    it('Dado meta de reserva (SAVINGS), então a tela segue igual: reservar, liberar e editar', async () => {
+      await setup();
+
+      expect(screen.getByTestId('goal-reserve')).toBeInTheDocument();
+      expect(screen.getByTestId('goal-edit')).toBeInTheDocument();
+      expect(screen.queryByTestId('goal-baseline')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('goal-building')).not.toBeInTheDocument();
+    });
   });
 });

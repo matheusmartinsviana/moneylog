@@ -5,6 +5,7 @@ import { CardFormPage } from '~/app/features/cards/pages/card-form.page';
 import { CardPage } from '~/app/features/cards/pages/card.page';
 import { CardsPage } from '~/app/features/cards/pages/cards.page';
 import { InvoicePage } from '~/app/features/cards/pages/invoice.page';
+import { CARD_DETAIL_PROVIDERS } from '~/app/lazy-providers';
 
 const routes: Routes = [
   // Criar abre em modal sobre a lista; editar, sobre o detalhe do cartão (ambos com `<router-outlet>`).
@@ -16,6 +17,7 @@ const routes: Routes = [
   },
   {
     path: ':id',
+    providers: CARD_DETAIL_PROVIDERS,
     component: CardPage,
     title: pageTitle('cards'),
     children: [{ path: 'edit', component: CardFormPage }],

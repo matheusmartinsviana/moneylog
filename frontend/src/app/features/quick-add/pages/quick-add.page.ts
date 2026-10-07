@@ -62,6 +62,7 @@ import type { PaymentMethod } from '~/modules/transactions/core/types/transactio
 import type { TransactionInput } from '~/modules/transactions/core/types/transaction-input';
 import { Problem, problemOf } from '~/util/api/problem';
 import { isOpenStatus, type PersonRef } from '~/util/debt';
+import { counterpartyName } from '~/util/debt-name';
 import { readLastUsedAccount, writeLastUsedAccount } from '~/util/last-used-account';
 import { readLastUsedCard, writeLastUsedCard } from '~/util/last-used-card';
 import { formatMoney } from '~/util/money';
@@ -388,7 +389,7 @@ export class QuickAddPage {
   private savedMessage(saved: Transaction, copy: AppI18n['quickAdd']['toast']): string {
     const lending = this.t().lending;
     const amount = formatMoney(saved.amount);
-    const name = saved.debt?.person.name ?? '';
+    const name = saved.debt ? counterpartyName(saved.debt) : '';
     switch (saved.type) {
       case 'LOAN_GIVEN':
         return interpolate(lending.loan.toast, { amount, name });
@@ -458,6 +459,7 @@ export class QuickAddPage {
             debts
               // Rede de segurança: o backend já filtrou o status.
               .filter((debt) => isOpenStatus(debt.status))
+              .flatMap((debt) => (debt.person ? [{ ...debt, person: debt.person }] : []))
               .map((debt) => ({
                 id: debt.id,
                 person: debt.person,

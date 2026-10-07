@@ -2,6 +2,22 @@
   <a pageActions class="button button--primary" routerLink="/goals/new" data-cy="goals-add">
     {{ t().goals.add }}
   </a>
+  @if (!hasPayoff()) {
+    <button
+      pageActions
+      type="button"
+      class="button"
+      data-cy="goals-add-payoff"
+      [disabled]="creating.saving()"
+      [attr.aria-busy]="creating.saving()"
+      (click)="createPayoff()"
+    >
+      {{ creating.saving() ? t().goals.payoff.creating : t().goals.payoff.add }}
+    </button>
+  }
+  @if (createError(); as message) {
+    <p class="banner" role="alert" data-cy="goals-payoff-error">{{ message }}</p>
+  }
 
   <nav class="tabs" [attr.aria-label]="t().goals.tabsLabel" data-cy="goals-tabs">
     <a
@@ -69,7 +85,7 @@
         <ul class="list" data-cy="goals-list">
           @for (goal of data; track goal.id) {
             <li app-goal-card [goal]="goal">
-              @if (goal.status !== 'ARCHIVED') {
+              @if (goal.status !== 'ARCHIVED' && goal.kind !== 'DEBT_PAYOFF') {
                 <button
                   type="button"
                   class="button"

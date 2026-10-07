@@ -1,4 +1,7 @@
-<app-page-layout [heading]="title()" [description]="debt()?.person?.name">
+<app-page-layout
+  [heading]="title()"
+  [description]="debt()?.person?.name ?? debt()?.creditorName ?? undefined"
+>
   @if (debt(); as d) {
     @if (isOpen()) {
       <div pageActions class="actions" data-cy="debt-actions">
@@ -84,11 +87,15 @@
 
         <dl class="fields">
           <div class="fields__row" data-cy="debt-field-person">
-            <dt>{{ t().debts.detail.person }}</dt>
+            <dt>{{ d.person ? t().debts.detail.person : t().debts.detail.creditor }}</dt>
             <dd>
-              <a [routerLink]="['/people', d.person.id]" data-cy="debt-person-link">{{
-                d.person.name
-              }}</a>
+              @if (d.person; as person) {
+                <a [routerLink]="['/people', person.id]" data-cy="debt-person-link">{{
+                  person.name
+                }}</a>
+              } @else {
+                <span data-cy="debt-creditor-name">{{ d.creditorName }}</span>
+              }
             </dd>
           </div>
           <div class="fields__row" data-cy="debt-field-direction">
@@ -229,7 +236,7 @@
           type="DEBT"
           cy="debt-notes"
           [entityId]="d.id"
-          [label]="d.description ?? d.person.name"
+          [label]="d.description ?? d.person?.name ?? d.creditorName ?? ''"
           [status]="d.status === 'CANCELED' ? 'CANCELED' : d.status === 'VOIDED' ? 'VOIDED' : null"
         />
 

@@ -42,6 +42,7 @@ const CODE_TO_FIELD: Readonly<Record<string, string>> = {
   CATEGORY_NOT_FOUND: 'categoryId',
   CATEGORY_KIND_MISMATCH: 'categoryId',
   CATEGORY_ARCHIVED: 'categoryId',
+  DEBT_CREDITOR_INVALID: 'creditorName',
   DEBT_DESCRIPTION_TOO_LONG: 'description',
   DEBT_FIELD_REQUIRED: 'description',
 };
@@ -89,7 +90,12 @@ export class DebtFormComponent {
   protected readonly currency = DEBT_CURRENCY;
   protected readonly form = new FormGroup({
     direction: new FormControl<string | null>('RECEIVABLE'),
+    creditorKind: new FormControl<string | null>('PERSON'),
     personId: new FormControl<string | null>(null),
+    creditorName: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(200)],
+    }),
     principal: new FormControl<string | null>(null),
     date: new FormControl<string | null>(todayIso()),
     expectedDate: new FormControl<string | null>(null),
@@ -113,6 +119,20 @@ export class DebtFormComponent {
   );
   /** A categoria só existe em "Eu devo" (S-137). */
   protected readonly payable = computed(() => this.directionValue() === 'PAYABLE');
+  private readonly creditorKindValue = toSignal(
+    this.form.controls.creditorKind.valueChanges.pipe(
+      startWith(this.form.controls.creditorKind.value),
+    ),
+    { initialValue: this.form.controls.creditorKind.value },
+  );
+  /** Credor livre (banco, loja, financiamento): só em "Eu devo" e sem categoria. */
+  protected readonly freeCreditor = computed(
+    () => this.payable() && this.creditorKindValue() === 'OTHER',
+  );
+  protected readonly creditorOptions = computed<readonly ChoiceOption[]>(() => [
+    { value: 'PERSON', label: this.t().lending.debt.creditorPerson },
+    { value: 'OTHER', label: this.t().lending.debt.creditorOther },
+  ]);
 
   private readonly fieldHandled = signal(false);
   protected readonly banner = computed(() => {
@@ -141,7 +161,12 @@ export class DebtFormComponent {
       });
     });
     effect(() => {
-      if (!this.payable()) untracked(() => this.form.controls.categoryId.setValue(null));
+      if (!this.payable()) {
+        untracked(() => {
+          this.form.controls.categoryId.setValue(null);
+          this.form.controls.creditorKind.setValue('PERSON');
+        });
+      }
     });
     effect(() => {
       if (this.resetToken() > 0) {
@@ -150,6 +175,7 @@ export class DebtFormComponent {
           this.form.controls.description.reset('');
           this.form.controls.expectedDate.reset(null);
           this.form.controls.categoryId.reset(null);
+          this.form.controls.creditorName.reset('');
           this.focusAmount();
         });
       }
@@ -161,18 +187,26 @@ export class DebtFormComponent {
   }
 
   protected onSubmit(): void {
+    // O campo de pessoa saiu da tela (credor livre): o `required` dele não vale mais.
+    if (this.freeCreditor()) this.form.controls.personId.updateValueAndValidity();
     this.form.markAllAsTouched();
     if (this.form.invalid) return;
     const value = this.form.getRawValue();
     const direction = value.direction === 'PAYABLE' ? 'PAYABLE' : 'RECEIVABLE';
+    const free = this.freeCreditor();
+    if (free && value.creditorName.trim() === '') {
+      this.form.controls.creditorName.setErrors({ required: true });
+      return;
+    }
     this.submitted.emit({
-      personId: value.personId ?? '',
+      personId: free ? null : (value.personId ?? ''),
+      ...(free ? { creditorName: value.creditorName.trim() } : {}),
       direction,
       principal: value.principal ?? '',
       date: value.date ?? todayIso(),
       expectedDate: value.expectedDate,
       description: value.description.trim(),
-      categoryId: direction === 'PAYABLE' ? value.categoryId : null,
+      categoryId: direction === 'PAYABLE' && !free ? value.categoryId : null,
     });
   }
 

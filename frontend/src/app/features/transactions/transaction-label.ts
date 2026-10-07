@@ -1,4 +1,5 @@
 import type { Transaction } from '~/modules/transactions/core/types/transaction';
+import { counterpartyName } from '~/util/debt-name';
 
 /** Subconjunto da movimentação que basta para montar o rótulo de exibição. */
 export type LabelledTransaction = Pick<Transaction, 'description' | 'type'> &
@@ -14,9 +15,10 @@ export function transactionLabel(
 ): string {
   const own = (tx.description ?? '').trim();
   if (own !== '') return own;
+  const debtName = tx.debt ? counterpartyName(tx.debt) : '';
   return (
     tx.category?.name ??
-    tx.debt?.person.name ??
+    (debtName !== '' ? debtName : undefined) ??
     tx.account?.name ??
     tx.card?.name ??
     typeNames[tx.type] ??

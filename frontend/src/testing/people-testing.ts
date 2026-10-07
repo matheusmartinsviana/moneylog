@@ -31,6 +31,7 @@ export function aDebtSummary(overrides: Partial<DebtSummary> = {}): DebtSummary 
   return {
     id: 'debt-1',
     person: { id: 'person-1', name: 'João' },
+    creditorName: null,
     direction: 'RECEIVABLE',
     status: 'OPEN',
     principal: brl('300.00'),

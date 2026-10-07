@@ -11,11 +11,13 @@ export type GoalDetailState =
   | { readonly status: 'error'; readonly problem: Problem }
   | { readonly status: 'ready'; readonly goal: Goal };
 
-/** O código que o backend devolve quando a meta já está no estado pedido. */
-const ALREADY_DONE = {
+type GoalAction = 'archive' | 'unarchive' | 'baseline';
+
+/** O código que o backend devolve quando a meta já está no estado pedido (`baseline` pode repetir). */
+const ALREADY_DONE: Readonly<Partial<Record<GoalAction, string>>> = {
   archive: 'GOAL_ALREADY_ARCHIVED',
   unarchive: 'GOAL_NOT_ARCHIVED',
-} as const;
+};
 
 /**
  * Facade do detalhe da meta: carrega pelo id (o `switchMap` cancela a anterior), arquiva e desarquiva
@@ -26,8 +28,8 @@ const ALREADY_DONE = {
 export class GoalDetailFacade {
   private readonly gateway = inject(GoalsGateway);
   private readonly loads = new Subject<string>();
-  private readonly actions = new Subject<{ kind: 'archive' | 'unarchive'; id: string }>();
-  private readonly doneEvents = new Subject<{ kind: 'archive' | 'unarchive'; goal: Goal }>();
+  private readonly actions = new Subject<{ kind: GoalAction; id: string }>();
+  private readonly doneEvents = new Subject<{ kind: GoalAction; goal: Goal }>();
   private readonly current = signal<GoalDetailState>({ status: 'loading' });
   private readonly busyState = signal(false);
   private readonly problemState = signal<Problem | null>(null);
@@ -67,7 +69,12 @@ export class GoalDetailFacade {
         exhaustMap(({ kind, id }) => {
           this.busyState.set(true);
           this.problemState.set(null);
-          const call = kind === 'archive' ? this.gateway.archive(id) : this.gateway.unarchive(id);
+          const call =
+            kind === 'archive'
+              ? this.gateway.archive(id)
+              : kind === 'unarchive'
+                ? this.gateway.unarchive(id)
+                : this.gateway.baseline(id);
           return call.pipe(
             tap((goal) => {
               this.apply(goal);
@@ -78,7 +85,7 @@ export class GoalDetailFacade {
               const problem = problemOf(error);
               // Já está no estado pedido (um clique anterior deu certo e a resposta se perdeu): é sucesso
               // silencioso; só relê a meta, sem aviso nem falha (FE-S-172).
-              if (problem.code === ALREADY_DONE[kind]) {
+              if (ALREADY_DONE[kind] !== undefined && problem.code === ALREADY_DONE[kind]) {
                 return this.gateway.get(id).pipe(
                   tap((goal) => this.apply(goal)),
                   map(() => null),
@@ -107,6 +114,11 @@ export class GoalDetailFacade {
 
   unarchive(id: string): void {
     this.actions.next({ kind: 'unarchive', id });
+  }
+
+  /** "Cadastrei tudo" (ou re-ancorar): o servidor fixa o total atual; a meta da resposta vira o estado. */
+  baseline(id: string): void {
+    this.actions.next({ kind: 'baseline', id });
   }
 
   /** A meta devolvida pelo backend (reserva, arquivar...) vira o estado: nada é chutado. */

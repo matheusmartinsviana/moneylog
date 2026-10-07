@@ -25,7 +25,10 @@ export interface PersonRef {
  */
 export interface DebtSummary {
   readonly id: string;
-  readonly person: PersonRef;
+  /** Nulo na dívida com credor livre (`creditorName`). */
+  readonly person: PersonRef | null;
+  /** Credor livre (banco, loja, financiamento); `null` quando há `person`. */
+  readonly creditorName: string | null;
   readonly direction: DebtDirection;
   readonly status: DebtStatus;
   readonly principal: Money;
@@ -42,7 +45,8 @@ export interface DebtSummary {
 /** Forma da dívida resumida na resposta da API (a infra passa o schema gerado, que a satisfaz). */
 export interface DebtSummaryResponse {
   readonly id: string;
-  readonly person: { readonly id: string; readonly name: string };
+  readonly person: { readonly id: string; readonly name: string } | null;
+  readonly creditorName?: string | null;
   readonly direction: DebtDirection;
   readonly status: DebtStatus;
   readonly principal: { readonly amount: string; readonly currency: string };
@@ -63,7 +67,8 @@ const money = (value: { amount: string; currency: string }): Money => ({
 export function toDebtSummary(response: DebtSummaryResponse): DebtSummary {
   return {
     id: response.id,
-    person: { id: response.person.id, name: response.person.name },
+    person: response.person ? { id: response.person.id, name: response.person.name } : null,
+    creditorName: response.creditorName ?? null,
     direction: response.direction,
     status: response.status,
     principal: money(response.principal),

@@ -38,7 +38,7 @@ import { formatIsoDate } from '~/util/date';
         {{ dateLabel() ?? date() }}
       </span>
       @if (tx.status === 'VOIDED') {
-        <span class="item__tag">{{ t().transactions.voided }}</span>
+        <span class="item__tag status" data-tone="warning">{{ t().transactions.voided }}</span>
       }
     </div>
     <span class="item__amount" [class.is-in]="flow() === 'in'"
@@ -51,10 +51,16 @@ import { formatIsoDate } from '~/util/date';
       align-items: flex-start;
       justify-content: space-between;
       gap: var(--space-3);
+      margin-bottom: var(--space-2);
       padding: var(--space-3) var(--space-4);
-      border-bottom: var(--border-width) solid var(--color-border);
+      border: var(--border-width) solid var(--color-border);
+      border-radius: var(--radius-control);
+      background-color: var(--color-surface-inset);
       list-style: none;
       cursor: pointer;
+    }
+    :host(:last-child) {
+      margin-bottom: 0;
     }
     .item__main {
       display: grid;
@@ -66,11 +72,12 @@ import { formatIsoDate } from '~/util/date';
       display: grid;
       flex: none;
       place-items: center;
-      width: 2.25rem;
-      height: 2.25rem;
-      border-radius: 50%;
+      width: 2.5rem;
+      height: 2.5rem;
+      border: var(--border-width) solid var(--color-border);
+      border-radius: var(--radius-icon);
       background-color: var(--color-surface-muted);
-      color: var(--color-text-muted);
+      color: var(--color-text);
       font-size: var(--text-sm);
       font-weight: var(--weight-semibold);
     }
@@ -93,8 +100,6 @@ import { formatIsoDate } from '~/util/date';
     }
     .item__tag {
       width: fit-content;
-      color: var(--color-warning);
-      font-size: var(--text-xs);
     }
     .item__amount {
       white-space: nowrap;
