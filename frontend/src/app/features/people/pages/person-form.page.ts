@@ -10,16 +10,18 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 
 import { EmptyStateComponent } from '~/app/common/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '~/app/common/components/error-state/error-state.component';
+import { FormModalComponent } from '~/app/common/components/form-modal/form-modal.component';
 import { TextFieldComponent } from '~/app/common/components/forms/text-field/text-field.component';
-import { PageLayoutComponent } from '~/app/common/components/page-layout/page-layout.component';
+import { dirtySignal } from '~/app/common/forms/dirty-signal';
 import { applyProblemToForm } from '~/app/common/forms/problem-form';
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { interpolate } from '~/app/common/i18n/interpolate';
 import { problemMessage } from '~/app/common/i18n/problem-message';
+import { EntityChanges } from '~/app/common/services/entity-changes';
 import { ToastService } from '~/app/common/services/toast.service';
 import { PersonFormFacade } from '~/modules/people/core/facades/person-form.facade';
 
@@ -38,8 +40,7 @@ const CODE_TO_FIELD: Readonly<Record<string, string>> = {
   selector: 'app-person-form-page',
   imports: [
     ReactiveFormsModule,
-    RouterLink,
-    PageLayoutComponent,
+    FormModalComponent,
     EmptyStateComponent,
     ErrorStateComponent,
     TextFieldComponent,
@@ -51,6 +52,7 @@ const CODE_TO_FIELD: Readonly<Record<string, string>> = {
 })
 export class PersonFormPage {
   private readonly router = inject(Router);
+  private readonly changes = inject(EntityChanges);
   private readonly toast = inject(ToastService);
   protected readonly t = inject(I18nService).t;
   protected readonly facade = inject(PersonFormFacade);
@@ -68,6 +70,9 @@ export class PersonFormPage {
     }),
     notes: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(2000)] }),
   });
+
+  /** Alterações digitadas e não salvas: fechar pede confirmação. */
+  protected readonly dirty = dirtySignal(this.form);
 
   private readonly fieldHandled = signal(false);
   protected readonly banner = computed(() => {
@@ -112,8 +117,19 @@ export class PersonFormPage {
           { name: person.name },
         ),
       );
-      void this.router.navigate(['/people', person.id]);
+      this.changes.notify('people');
+      void this.router.navigate(this.backUrl());
     });
+  }
+
+  /** Para onde o modal volta: a lista (criar) ou a página de origem (editar). */
+  private backUrl(): string[] {
+    return this.editing() ? ['/people', this.id() as string] : ['/people'];
+  }
+
+  /** Fechar sem salvar (já confirmado, se havia alterações). */
+  protected close(): void {
+    void this.router.navigate(this.backUrl());
   }
 
   protected onSubmit(): void {

@@ -44,7 +44,7 @@ describe('AccountFormPage', () => {
     it('Dado o formulário novo, então pede nome, tipo, instituição (opcional), saldo inicial (0,00) e data (hoje)', async () => {
       await setup();
 
-      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(
         pt.accounts.form.createTitle,
       );
       expect(input('account-name')).toBeInTheDocument();
@@ -67,6 +67,40 @@ describe('AccountFormPage', () => {
       expect(gateway.calls).toEqual(['create:Nubank']);
       expect(toast.toasts()[0]?.message).toBe('Nubank adicionada.');
       expect(router.url).toBe('/accounts');
+    });
+
+    it('Dado o formulário limpo, quando cancelo, então volta para a lista sem pedir confirmação', async () => {
+      const { router } = await setup();
+
+      await userEvent.click(screen.getByTestId('account-form-cancel'));
+
+      expect(screen.queryByTestId('confirm-dialog')).not.toBeInTheDocument();
+      expect(router.url).toBe('/accounts');
+    });
+
+    it('Dado um campo preenchido, quando cancelo, então pede para descartar e só volta ao confirmar', async () => {
+      const { router, gateway } = await setup();
+
+      await userEvent.type(input('account-name'), 'Nubank');
+      await userEvent.click(screen.getByTestId('account-form-cancel'));
+
+      expect(screen.getByTestId('confirm-dialog')).toHaveAccessibleName(pt.form.discard.title);
+      await userEvent.click(screen.getByTestId('confirm-dialog-cancel'));
+      expect(screen.queryByTestId('confirm-dialog')).not.toBeInTheDocument();
+      expect(input('account-name').value).toBe('Nubank');
+
+      await userEvent.click(screen.getByTestId('account-form-cancel'));
+      await userEvent.click(screen.getByTestId('confirm-dialog-confirm'));
+      expect(router.url).toBe('/accounts');
+      expect(gateway.calls).toEqual([]);
+    });
+
+    it('Dado o formulário aberto, então é um diálogo com o título como nome', async () => {
+      await setup();
+
+      expect(
+        screen.getByRole('dialog', { name: pt.accounts.form.createTitle }),
+      ).toBeInTheDocument();
     });
 
     it('Dado o nome vazio, quando salvo, então mostra o erro do campo e não chama a API', async () => {
@@ -130,7 +164,7 @@ describe('AccountFormPage', () => {
       ];
       await setup(gateway, 'acc-1');
 
-      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(
         pt.accounts.form.editTitle,
       );
       expect(input('account-name').value).toBe('Nubank');

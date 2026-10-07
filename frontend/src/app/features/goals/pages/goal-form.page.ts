@@ -10,19 +10,21 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 
 import { EmptyStateComponent } from '~/app/common/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '~/app/common/components/error-state/error-state.component';
+import { FormModalComponent } from '~/app/common/components/form-modal/form-modal.component';
 import type { ChoiceOption } from '~/app/common/components/forms/choice-option';
 import { DatePickerComponent } from '~/app/common/components/forms/date-picker/date-picker.component';
 import { MoneyInputComponent } from '~/app/common/components/forms/money-input/money-input.component';
 import { SegmentedControlComponent } from '~/app/common/components/forms/segmented-control/segmented-control.component';
 import { TextFieldComponent } from '~/app/common/components/forms/text-field/text-field.component';
-import { PageLayoutComponent } from '~/app/common/components/page-layout/page-layout.component';
+import { dirtySignal } from '~/app/common/forms/dirty-signal';
 import { applyProblemToForm } from '~/app/common/forms/problem-form';
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { problemMessage } from '~/app/common/i18n/problem-message';
+import { EntityChanges } from '~/app/common/services/entity-changes';
 import { ToastService } from '~/app/common/services/toast.service';
 import { requiredTrimmed } from '~/app/features/quick-add/components/requirements';
 import { GoalFormFacade } from '~/modules/goals/core/facades/goal-form.facade';
@@ -52,8 +54,7 @@ const CODE_TO_FIELD: Readonly<Record<string, string>> = {
   selector: 'app-goal-form-page',
   imports: [
     ReactiveFormsModule,
-    RouterLink,
-    PageLayoutComponent,
+    FormModalComponent,
     EmptyStateComponent,
     ErrorStateComponent,
     TextFieldComponent,
@@ -68,6 +69,7 @@ const CODE_TO_FIELD: Readonly<Record<string, string>> = {
 })
 export class GoalFormPage {
   private readonly router = inject(Router);
+  private readonly changes = inject(EntityChanges);
   private readonly toast = inject(ToastService);
   protected readonly t = inject(I18nService).t;
   protected readonly facade = inject(GoalFormFacade);
@@ -93,6 +95,9 @@ export class GoalFormPage {
       validators: [Validators.maxLength(500)],
     }),
   });
+
+  /** Alterações digitadas e não salvas: fechar pede confirmação. */
+  protected readonly dirty = dirtySignal(this.form);
 
   protected readonly priorityOptions = computed<readonly ChoiceOption[]>(() =>
     GOAL_PRIORITIES.map((priority) => ({
@@ -153,10 +158,21 @@ export class GoalFormPage {
       // Conflito de versão: nada é recarregado sozinho (o digitado fica); o usuário escolhe recarregar.
       untracked(() => this.fieldHandled.set(applyProblemToForm(this.form, problem, CODE_TO_FIELD)));
     });
-    this.facade.saved$.pipe(takeUntilDestroyed()).subscribe((goal) => {
+    this.facade.saved$.pipe(takeUntilDestroyed()).subscribe(() => {
       this.toast.show(this.editing() ? this.t().goals.toast.updated : this.t().goals.toast.created);
-      void this.router.navigate(['/goals', goal.id]);
+      this.changes.notify('goals');
+      void this.router.navigate(this.backUrl());
     });
+  }
+
+  /** Para onde o modal volta: a lista (criar) ou a página de origem (editar). */
+  private backUrl(): string[] {
+    return this.editing() ? ['/goals', this.id() as string] : ['/goals'];
+  }
+
+  /** Fechar sem salvar (já confirmado, se havia alterações). */
+  protected close(): void {
+    void this.router.navigate(this.backUrl());
   }
 
   protected onSubmit(): void {

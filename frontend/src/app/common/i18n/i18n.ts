@@ -349,6 +349,7 @@ export abstract class AppI18n {
       readonly typeLabel: string;
       readonly expense: string;
       readonly income: string;
+      readonly loan: string;
       readonly moreOptions: string;
       readonly loading: string;
       readonly error: string;
@@ -619,6 +620,13 @@ export abstract class AppI18n {
       readonly resultsCount: string;
       readonly on: string;
       readonly off: string;
+    };
+    /** Fechar um formulário em modal com alterações não salvas. */
+    readonly discard: {
+      readonly title: string;
+      readonly description: string;
+      readonly confirm: string;
+      readonly stay: string;
     };
     /** Contador numérico (`NumberStepper`). */
     readonly stepper: {
@@ -1040,8 +1048,8 @@ export abstract class AppI18n {
 
   /** Campos comuns dos formulários de movimentação (quick-add e edição). */
   abstract readonly entryForm: {
-    readonly pixLoanHint: string;
-    readonly pixLoanLink: string;
+    readonly pixLoanToggle: string;
+    readonly pixLoanToggleHint: string;
     readonly amount: string;
     readonly description: string;
     readonly category: string;

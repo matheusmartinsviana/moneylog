@@ -1,5 +1,9 @@
-<app-page-layout
+<app-form-modal
+  #modal
   [heading]="editing() ? t().recurrences.form.editTitle : t().recurrences.form.createTitle"
+  [dirty]="dirty()"
+  [busy]="facade.saving()"
+  (closed)="close()"
 >
   @if (
     optionsLoading() || (editing() && !recurrence() && facade.loadStatus().status === 'loading')
@@ -45,7 +49,7 @@
     />
   } @else if (!editing() || recurrence()) {
     <form
-      class="form surface"
+      class="form"
       [formGroup]="form"
       (ngSubmit)="onSubmit()"
       novalidate
@@ -183,9 +187,14 @@
       }
 
       <div class="form__actions">
-        <a class="button" routerLink="/planning/recurrences" data-cy="recurrence-form-cancel">
+        <button
+          type="button"
+          class="button"
+          data-cy="recurrence-form-cancel"
+          (click)="modal.requestClose()"
+        >
           {{ t().recurrences.form.cancel }}
-        </a>
+        </button>
         <button
           type="submit"
           class="button button--primary"
@@ -198,4 +207,4 @@
       </div>
     </form>
   }
-</app-page-layout>
+</app-form-modal>

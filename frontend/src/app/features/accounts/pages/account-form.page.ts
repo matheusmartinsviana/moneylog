@@ -10,20 +10,22 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 
 import { EmptyStateComponent } from '~/app/common/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '~/app/common/components/error-state/error-state.component';
+import { FormModalComponent } from '~/app/common/components/form-modal/form-modal.component';
 import type { ChoiceOption } from '~/app/common/components/forms/choice-option';
 import { DatePickerComponent } from '~/app/common/components/forms/date-picker/date-picker.component';
 import { MoneyInputComponent } from '~/app/common/components/forms/money-input/money-input.component';
 import { SelectComponent } from '~/app/common/components/forms/select/select.component';
 import { TextFieldComponent } from '~/app/common/components/forms/text-field/text-field.component';
-import { PageLayoutComponent } from '~/app/common/components/page-layout/page-layout.component';
+import { dirtySignal } from '~/app/common/forms/dirty-signal';
 import { applyProblemToForm } from '~/app/common/forms/problem-form';
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { interpolate } from '~/app/common/i18n/interpolate';
 import { problemMessage } from '~/app/common/i18n/problem-message';
+import { EntityChanges } from '~/app/common/services/entity-changes';
 import { ToastService } from '~/app/common/services/toast.service';
 import { AccountFormFacade } from '~/modules/accounts/core/facades/account-form.facade';
 import { ACCOUNT_TYPES, AccountType } from '~/modules/accounts/core/types/account';
@@ -42,8 +44,7 @@ const CODE_TO_FIELD = { ACCOUNT_OPENING_LOCKED: 'type' } as const;
   selector: 'app-account-form-page',
   imports: [
     ReactiveFormsModule,
-    RouterLink,
-    PageLayoutComponent,
+    FormModalComponent,
     EmptyStateComponent,
     ErrorStateComponent,
     TextFieldComponent,
@@ -58,6 +59,7 @@ const CODE_TO_FIELD = { ACCOUNT_OPENING_LOCKED: 'type' } as const;
 })
 export class AccountFormPage {
   private readonly router = inject(Router);
+  private readonly changes = inject(EntityChanges);
   private readonly toast = inject(ToastService);
   protected readonly t = inject(I18nService).t;
   protected readonly facade = inject(AccountFormFacade);
@@ -86,6 +88,9 @@ export class AccountFormPage {
     openingBalance: new FormControl<string | null>('0.00'),
     openingDate: new FormControl<string | null>(todayIso()),
   });
+
+  /** Alterações digitadas e não salvas: fechar pede confirmação. */
+  protected readonly dirty = dirtySignal(this.form);
 
   protected readonly typeOptions = computed<readonly ChoiceOption[]>(() =>
     ACCOUNT_TYPES.map((type) => ({ value: type, label: this.t().accounts.types[type] })),
@@ -152,8 +157,19 @@ export class AccountFormPage {
           { name: account.name },
         ),
       );
-      void this.router.navigate(['/accounts']);
+      this.changes.notify('accounts');
+      void this.router.navigate(this.backUrl());
     });
+  }
+
+  /** Para onde o modal volta: a lista (criar) ou a página de origem (editar). */
+  private backUrl(): string[] {
+    return this.editing() ? ['/accounts'] : ['/accounts'];
+  }
+
+  /** Fechar sem salvar (já confirmado, se havia alterações). */
+  protected close(): void {
+    void this.router.navigate(this.backUrl());
   }
 
   protected onSubmit(): void {

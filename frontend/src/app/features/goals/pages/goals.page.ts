@@ -8,7 +8,8 @@ import {
   signal,
   untracked,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { RouterLink, RouterOutlet } from '@angular/router';
 
 import {
   EmptyStateAction,
@@ -17,6 +18,7 @@ import {
 import { ErrorStateComponent } from '~/app/common/components/error-state/error-state.component';
 import { PageLayoutComponent } from '~/app/common/components/page-layout/page-layout.component';
 import { I18nService } from '~/app/common/i18n/i18n.service';
+import { EntityChanges } from '~/app/common/services/entity-changes';
 import { GoalCardComponent } from '~/app/features/goals/components/goal-card/goal-card.component';
 import { ReserveSheetComponent } from '~/app/features/goals/components/reserve-sheet/reserve-sheet.component';
 import { GoalsListFacade } from '~/modules/goals/core/facades/goals-list.facade';
@@ -31,6 +33,7 @@ import type { Goal, GoalStatus } from '~/modules/goals/core/types/goal';
 @Component({
   selector: 'app-goals-page',
   imports: [
+    RouterOutlet,
     RouterLink,
     PageLayoutComponent,
     EmptyStateComponent,
@@ -44,6 +47,7 @@ import type { Goal, GoalStatus } from '~/modules/goals/core/types/goal';
   styleUrl: './goals.page.css',
 })
 export class GoalsPage {
+  private readonly changes = inject(EntityChanges);
   protected readonly t = inject(I18nService).t;
   protected readonly goals = inject(GoalsListFacade);
 
@@ -69,6 +73,11 @@ export class GoalsPage {
   ]);
 
   constructor() {
+    // Um cadastro foi salvo no modal por cima desta página: relê do backend.
+    this.changes
+      .of('goals')
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.goals.load(this.filter()));
     effect(() => {
       const status = this.filter();
       untracked(() => this.goals.load(status));

@@ -823,3 +823,14 @@ Sem commit, sem E2E, sem tester/revisor (T216 e T217 puladas por pedido). Só fr
 - **Demo:** nada a mudar (as telas leem os mesmos dados).
 - **Bundle inicial:** 532,11 kB (aviso de 500 kB). Esta fatia só mexe em chunks lazy e não o altera; não achei corte barato (Angular core/router/forms + shell + providers de todos os módulos em `app.config`). Opção futura: providers por rota.
 - **Pendências:** E2E de Contas/Movimentações não rodados; capturas de evidência de T215; sem perguntas de regra de negócio novas.
+
+### Registro de execução: cadastros em modal (frontend, modo rápido)
+
+Pedido do dono: "quanto menos tela melhor". Sem commit, sem E2E rodado, sem tester/revisor. Só frontend; `quick-add`, `home` e `transactions-edit` intocados. `lint`, `lint:deps`, `typecheck`, `build` (bundle inicial 499,29 kB) verdes; `npm test` com 2.776 testes verdes.
+
+- **Container:** `app-form-modal` (`common/components/form-modal`) sobre o `Sheet` (folha inferior até 640 px, diálogo central acima): `role=dialog` nomeado pelo título, foco preso, Esc/fundo/X pedem o fechamento, foco volta ao gatilho. Com `dirty`, abre o `confirm-dialog` "Descartar as alterações?" (`form.discard.*`, pt/en/es). Helpers: `dirtySignal` (`common/forms`) e `EntityChanges` (`common/services`, avisa a página de trás que um cadastro foi salvo).
+- **Rotas como deep link:** criar e editar viraram rotas-filhas da lista, que ganhou `<router-outlet>`. `/accounts/new`, `/accounts/:id/edit`, `/cards/new`, `/goals/new`, `/people/new`, `/planning/recurrences/new` e `.../:id/edit` abrem a lista com o modal. Editar cartão, meta e pessoa abre sobre o **detalhe** (`/cards/:id/edit` etc.), como antes.
+- **Salvar:** fecha, avisa por toast e a página de trás relê do backend (lista ou detalhe). Criar volta para a lista (antes ia para o detalhe); editar cartão/meta/pessoa volta ao detalhe.
+- **Formulários reaproveitados:** as páginas de formulário só trocaram `page-layout` por `app-form-modal` (mesma lógica, mesmos `data-cy`; "Cancelar" virou botão). Categorias: o formulário inline de "Nova categoria" virou modal na mesma tela (renomear continua inline na linha). Notas, lembretes, quitar e pagar já eram folhas.
+- **Testes:** specs dos 5 formulários ajustados (título agora é `h2` do diálogo, criar volta para a lista), novos testes de descarte, spec do `form-modal` e `accounts.routes.spec.ts` (deep link + salvar atualiza a lista). E2E de `cards`, `etapa4` e `etapa5` ajustados (criar volta para a lista), mas não rodados: a porta 4200 está ocupada pelo `npm start` do dono.
+- **Próxima fatia:** o mesmo para `quick-add`, `home` (Quick Capture/atalhos) e `transactions-edit`, e rodar os E2E. Pergunta de regra: editar cartão/meta/pessoa a partir da lista abre o modal sobre o detalhe (a lista some atrás); prefere o modal sobre a lista também?

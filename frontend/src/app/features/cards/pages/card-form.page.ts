@@ -11,21 +11,23 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { merge } from 'rxjs';
 
 import { EmptyStateComponent } from '~/app/common/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '~/app/common/components/error-state/error-state.component';
+import { FormModalComponent } from '~/app/common/components/form-modal/form-modal.component';
 import type { ChoiceOption } from '~/app/common/components/forms/choice-option';
 import { MoneyInputComponent } from '~/app/common/components/forms/money-input/money-input.component';
 import { NumberStepperComponent } from '~/app/common/components/forms/number-stepper/number-stepper.component';
 import { SelectComponent } from '~/app/common/components/forms/select/select.component';
 import { TextFieldComponent } from '~/app/common/components/forms/text-field/text-field.component';
-import { PageLayoutComponent } from '~/app/common/components/page-layout/page-layout.component';
+import { dirtySignal } from '~/app/common/forms/dirty-signal';
 import { applyProblemToForm } from '~/app/common/forms/problem-form';
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { interpolate } from '~/app/common/i18n/interpolate';
 import { problemMessage } from '~/app/common/i18n/problem-message';
+import { EntityChanges } from '~/app/common/services/entity-changes';
 import { ToastService } from '~/app/common/services/toast.service';
 import { BillingChangeNoticeComponent } from '~/app/features/cards/components/billing-change-notice/billing-change-notice.component';
 import { AccountsListFacade } from '~/modules/accounts/core/facades/accounts-list.facade';
@@ -60,8 +62,7 @@ const MAX_DAY = 31;
   selector: 'app-card-form-page',
   imports: [
     ReactiveFormsModule,
-    RouterLink,
-    PageLayoutComponent,
+    FormModalComponent,
     EmptyStateComponent,
     ErrorStateComponent,
     TextFieldComponent,
@@ -78,6 +79,7 @@ const MAX_DAY = 31;
 export class CardFormPage {
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
+  private readonly changes = inject(EntityChanges);
   private readonly toast = inject(ToastService);
   private readonly accountsFacade = inject(AccountsListFacade);
   protected readonly t = inject(I18nService).t;
@@ -106,6 +108,9 @@ export class CardFormPage {
     dueDay: new FormControl<number | null>(null, [Validators.required]),
     defaultPaymentAccountId: new FormControl<string | null>(null),
   });
+
+  /** Alterações digitadas e não salvas: fechar pede confirmação. */
+  protected readonly dirty = dirtySignal(this.form);
 
   private readonly accounts = signal<readonly Account[]>([]);
   protected readonly accountOptions = computed<readonly ChoiceOption[]>(() =>
@@ -210,8 +215,19 @@ export class CardFormPage {
           name: card.name,
         }),
       );
-      void this.router.navigate(['/cards', card.id]);
+      this.changes.notify('cards');
+      void this.router.navigate(this.backUrl());
     });
+  }
+
+  /** Para onde o modal volta: a lista (criar) ou a página de origem (editar). */
+  private backUrl(): string[] {
+    return this.editing() ? ['/cards', this.id() as string] : ['/cards'];
+  }
+
+  /** Fechar sem salvar (já confirmado, se havia alterações). */
+  protected close(): void {
+    void this.router.navigate(this.backUrl());
   }
 
   protected onSubmit(): void {

@@ -10,7 +10,7 @@ import {
   untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, RouterOutlet } from '@angular/router';
 
 import {
   EmptyStateAction,
@@ -23,6 +23,7 @@ import { PageLayoutComponent } from '~/app/common/components/page-layout/page-la
 import { TabPanelDirective } from '~/app/common/components/tabs/tab-panel.directive';
 import { TabItem, TabsComponent } from '~/app/common/components/tabs/tabs.component';
 import { I18nService } from '~/app/common/i18n/i18n.service';
+import { EntityChanges } from '~/app/common/services/entity-changes';
 import { CardHeaderComponent } from '~/app/features/cards/components/card-header/card-header.component';
 import { FutureInstallmentsListComponent } from '~/app/features/cards/components/future-installments-list/future-installments-list.component';
 import { InvoiceSummaryRowComponent } from '~/app/features/cards/components/invoice-summary-row/invoice-summary-row.component';
@@ -47,6 +48,7 @@ type ActionId = 'pay' | 'purchase' | 'edit';
 @Component({
   selector: 'app-card-page',
   imports: [
+    RouterOutlet,
     LinkedNotesComponent,
     RouterLink,
     PageLayoutComponent,
@@ -66,6 +68,7 @@ type ActionId = 'pay' | 'purchase' | 'edit';
   styleUrl: './card.page.css',
 })
 export class CardPage {
+  private readonly changes = inject(EntityChanges);
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
   private readonly accountsFacade = inject(AccountsListFacade);
@@ -154,6 +157,11 @@ export class CardPage {
   });
 
   constructor() {
+    // Um cadastro foi salvo no modal por cima desta página: relê do backend.
+    this.changes
+      .of('cards')
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.facade.refresh(this.id()));
     effect(() => {
       const id = this.id();
       untracked(() => this.facade.load(id));

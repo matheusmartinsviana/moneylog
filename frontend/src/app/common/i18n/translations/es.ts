@@ -363,6 +363,7 @@ export const es: AppI18n = {
       typeLabel: 'Tipo',
       expense: 'Gasto',
       income: 'Ingreso',
+      loan: 'Presté',
       moreOptions: 'Más opciones',
       loading: 'Cargando cuentas y categorías.',
       error: 'No se pudieron cargar las cuentas y categorías.',
@@ -634,6 +635,13 @@ export const es: AppI18n = {
       resultsCount: '{count} opciones',
       on: 'Activado',
       off: 'Desactivado',
+    },
+    /** Fechar um formulário em modal com alterações não salvas. */
+    discard: {
+      title: '¿Descartar los cambios?',
+      description: 'Lo que completaste y no guardaste se perderá.',
+      confirm: 'Descartar',
+      stay: 'Seguir editando',
     },
     stepper: {
       decrease: 'Disminuir',
@@ -1287,8 +1295,8 @@ export const es: AppI18n = {
   },
 
   entryForm: {
-    pixLoanHint: '¿Fue para alguien que te lo va a devolver?',
-    pixLoanLink: 'Regístralo como préstamo',
+    pixLoanToggle: 'Es un préstamo a una persona',
+    pixLoanToggleHint: 'Se guarda como dinero prestado, no como gasto.',
     amount: 'Valor',
     description: 'Descripción',
     category: 'Categoría',

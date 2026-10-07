@@ -1,5 +1,9 @@
-<app-page-layout
+<app-form-modal
+  #modal
   [heading]="editing() ? t().accounts.form.editTitle : t().accounts.form.createTitle"
+  [dirty]="dirty()"
+  [busy]="facade.saving()"
+  (closed)="close()"
 >
   @if (editing() && !account() && facade.loadStatus().status === 'loading') {
     <div data-cy="account-form-loading">
@@ -27,13 +31,7 @@
   } @else if (loadProblem()) {
     <app-error-state [problem]="loadProblem()" (retry)="retryLoad()" />
   } @else if (!editing() || account()) {
-    <form
-      class="form surface"
-      [formGroup]="form"
-      (ngSubmit)="onSubmit()"
-      novalidate
-      data-cy="account-form"
-    >
+    <form class="form" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate data-cy="account-form">
       @if (conflict()) {
         <p class="banner" role="alert" data-cy="account-form-conflict">
           {{ t().accounts.form.conflict }}
@@ -85,9 +83,14 @@
       }
 
       <div class="form__actions">
-        <a class="button" routerLink="/accounts" data-cy="account-form-cancel">
+        <button
+          type="button"
+          class="button"
+          data-cy="account-form-cancel"
+          (click)="modal.requestClose()"
+        >
           {{ t().accounts.form.cancel }}
-        </a>
+        </button>
         <button
           type="submit"
           class="button button--primary"
@@ -100,4 +103,4 @@
       </div>
     </form>
   }
-</app-page-layout>
+</app-form-modal>

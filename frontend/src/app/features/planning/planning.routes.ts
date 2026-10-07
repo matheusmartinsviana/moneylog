@@ -14,9 +14,16 @@ const routes: Routes = [
     providers: PLANNING_PROVIDERS,
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'recurrences' },
-      { path: 'recurrences', component: RecurrencesPage, title: pageTitle('planning') },
-      { path: 'recurrences/new', component: RecurrenceFormPage, title: pageTitle('planning') },
-      { path: 'recurrences/:id/edit', component: RecurrenceFormPage, title: pageTitle('planning') },
+      // Criar e editar abrem em modal sobre a lista (`RecurrencesPage` tem o `<router-outlet>`).
+      {
+        path: 'recurrences',
+        component: RecurrencesPage,
+        title: pageTitle('planning'),
+        children: [
+          { path: 'new', component: RecurrenceFormPage },
+          { path: ':id/edit', component: RecurrenceFormPage },
+        ],
+      },
       { path: 'occurrences', component: OccurrencesPage, title: pageTitle('planning') },
       { path: 'summary', component: SummaryPage, title: pageTitle('planning') },
       { path: 'summary/:month', component: SummaryPage, title: pageTitle('planning') },

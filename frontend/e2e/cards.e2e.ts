@@ -70,9 +70,7 @@ test.describe('/cards/new', () => {
     await expect(closing).toHaveValue('31');
   });
 
-  test('criar mostra o aviso e leva à tela do cartão (no mock o cartão não persiste: "não encontrado")', async ({
-    page,
-  }) => {
+  test('criar fecha o modal, mostra o aviso e volta para a lista', async ({ page }) => {
     await seedPreferences(page, { language: 'pt' });
     await page.goto('/cards/new');
     await waitForApp(page);
@@ -84,10 +82,8 @@ test.describe('/cards/new', () => {
     await page.locator('[data-cy="card-form-save"]').click();
 
     await expect(page.locator('[data-cy="toast-info"]')).toContainText('Roxinho');
-    await expect(page).toHaveURL(/\/cards\/[0-9a-f-]+$/);
-    await expect(page.locator('[data-cy="empty-state-title"]')).toHaveText(
-      'Cartão não encontrado.',
-    );
+    await expect(page).toHaveURL(/\/cards$/);
+    await expect(page.locator('[data-cy="form-modal-panel"]')).toHaveCount(0);
   });
 });
 

@@ -81,9 +81,7 @@ test.describe('/goals/new', () => {
     );
   });
 
-  test('criar mostra o aviso e abre a meta (no mock ela não persiste: "não encontrada" com o caminho de volta)', async ({
-    page,
-  }) => {
+  test('criar fecha o modal, mostra o aviso e volta para a lista', async ({ page }) => {
     await seedPreferences(page, { language: 'pt' });
     await page.goto('/goals/new');
     await waitForApp(page);
@@ -92,10 +90,8 @@ test.describe('/goals/new', () => {
     await page.locator('[data-cy="goal-target"]').fill('20.000,00');
     await page.locator('[data-cy="goal-form-save"]').click();
 
-    await expect(page).toHaveURL(/\/goals\/[0-9a-f-]{36}$/);
-    await expect(page.locator('[data-cy="empty-state-title"]')).toHaveText('Meta não encontrada');
-    await page.locator('[data-cy="empty-state-action-back"]').click();
     await expect(page).toHaveURL(/\/goals$/);
+    await expect(page.locator('[data-cy="form-modal-panel"]')).toHaveCount(0);
   });
 });
 

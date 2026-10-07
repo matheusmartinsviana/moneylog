@@ -1,4 +1,10 @@
-<app-page-layout [heading]="editing() ? t().goals.form.editTitle : t().goals.form.createTitle">
+<app-form-modal
+  #modal
+  [heading]="editing() ? t().goals.form.editTitle : t().goals.form.createTitle"
+  [dirty]="dirty()"
+  [busy]="facade.saving()"
+  (closed)="close()"
+>
   @if (editing() && !goal() && facade.loadStatus().status !== 'error') {
     <div data-cy="goal-form-loading">
       <p class="visually-hidden" role="status">{{ t().goals.loading }}</p>
@@ -25,13 +31,7 @@
   } @else if (loadProblem()) {
     <app-error-state [problem]="loadProblem()" (retry)="retryLoad()" />
   } @else {
-    <form
-      class="form surface"
-      [formGroup]="form"
-      (ngSubmit)="onSubmit()"
-      novalidate
-      data-cy="goal-form"
-    >
+    <form class="form" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate data-cy="goal-form">
       @if (archived()) {
         <p class="banner" role="status" data-cy="goal-form-archived">
           {{ t().goals.detail.archivedNote }}
@@ -87,13 +87,14 @@
       />
 
       <div class="form__actions">
-        <a
+        <button
+          type="button"
           class="button"
-          [routerLink]="editing() ? ['/goals', id()] : ['/goals']"
           data-cy="goal-form-cancel"
+          (click)="modal.requestClose()"
         >
           {{ t().goals.form.cancel }}
-        </a>
+        </button>
         <button
           type="submit"
           class="button button--primary"
@@ -106,4 +107,4 @@
       </div>
     </form>
   }
-</app-page-layout>
+</app-form-modal>

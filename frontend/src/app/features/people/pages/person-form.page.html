@@ -1,4 +1,10 @@
-<app-page-layout [heading]="editing() ? t().people.form.editTitle : t().people.form.createTitle">
+<app-form-modal
+  #modal
+  [heading]="editing() ? t().people.form.editTitle : t().people.form.createTitle"
+  [dirty]="dirty()"
+  [busy]="facade.saving()"
+  (closed)="close()"
+>
   @if (editing() && !person() && facade.loadStatus().status === 'loading') {
     <div data-cy="person-form-loading">
       <p class="visually-hidden" role="status">{{ t().people.loading }}</p>
@@ -25,13 +31,7 @@
   } @else if (loadProblem()) {
     <app-error-state [problem]="loadProblem()" (retry)="retryLoad()" />
   } @else if (!editing() || person()) {
-    <form
-      class="form surface"
-      [formGroup]="form"
-      (ngSubmit)="onSubmit()"
-      novalidate
-      data-cy="person-form"
-    >
+    <form class="form" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate data-cy="person-form">
       @if (conflict()) {
         <p class="banner" role="alert" data-cy="person-form-conflict">
           {{ t().people.form.conflict }}
@@ -72,13 +72,14 @@
       />
 
       <div class="form__actions">
-        <a
+        <button
+          type="button"
           class="button"
-          [routerLink]="editing() ? ['/people', id()] : ['/people']"
           data-cy="person-form-cancel"
+          (click)="modal.requestClose()"
         >
           {{ t().people.form.cancel }}
-        </a>
+        </button>
         <button
           type="submit"
           class="button button--primary"
@@ -91,4 +92,4 @@
       </div>
     </form>
   }
-</app-page-layout>
+</app-form-modal>

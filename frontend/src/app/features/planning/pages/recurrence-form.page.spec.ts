@@ -99,7 +99,7 @@ describe('RecurrenceFormPage', () => {
     it('Dado o formulário novo, então pede tipo, valor, descrição, categoria, conta, método, frequência, início e fim', async () => {
       await setup();
 
-      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(
         pt.recurrences.form.createTitle,
       );
       for (const id of [

@@ -359,6 +359,7 @@ export const en: AppI18n = {
       typeLabel: 'Type',
       expense: 'Expense',
       income: 'Income',
+      loan: 'I lent',
       moreOptions: 'More options',
       loading: 'Loading accounts and categories.',
       error: 'Could not load accounts and categories.',
@@ -629,6 +630,13 @@ export const en: AppI18n = {
       resultsCount: '{count} options',
       on: 'On',
       off: 'Off',
+    },
+    /** Fechar um formulário em modal com alterações não salvas. */
+    discard: {
+      title: 'Discard your changes?',
+      description: 'What you filled in and did not save will be lost.',
+      confirm: 'Discard',
+      stay: 'Keep editing',
     },
     stepper: {
       decrease: 'Decrease',
@@ -1272,8 +1280,8 @@ export const en: AppI18n = {
   },
 
   entryForm: {
-    pixLoanHint: 'Was it for someone who will pay you back?',
-    pixLoanLink: 'Record it as a loan',
+    pixLoanToggle: 'This is a loan to someone',
+    pixLoanToggleHint: 'Saved as money lent, not as an expense.',
     amount: 'Amount',
     description: 'Description',
     category: 'Category',

@@ -8,7 +8,8 @@ import {
   signal,
   untracked,
 } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router, RouterLink, RouterOutlet } from '@angular/router';
 
 import { ConfirmDialogComponent } from '~/app/common/components/confirm-dialog/confirm-dialog.component';
 import {
@@ -24,6 +25,7 @@ import { HTML_LANG } from '~/app/common/i18n/i18n';
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { interpolate } from '~/app/common/i18n/interpolate';
 import { problemMessage } from '~/app/common/i18n/problem-message';
+import { EntityChanges } from '~/app/common/services/entity-changes';
 import { LinkedNotesComponent } from '~/app/features/notes/components/linked-notes/linked-notes.component';
 import { DebtRowComponent } from '~/app/features/people/components/debt-row/debt-row.component';
 import { balanceText, openDebtsText } from '~/app/features/people/person-balance';
@@ -48,6 +50,7 @@ interface DebtGroup {
 @Component({
   selector: 'app-person-page',
   imports: [
+    RouterOutlet,
     LinkedNotesComponent,
     RouterLink,
     PageLayoutComponent,
@@ -65,6 +68,7 @@ interface DebtGroup {
   styleUrl: './person.page.css',
 })
 export class PersonPage {
+  private readonly changes = inject(EntityChanges);
   private readonly router = inject(Router);
   private readonly i18n = inject(I18nService);
   protected readonly t = this.i18n.t;
@@ -144,6 +148,11 @@ export class PersonPage {
   });
 
   constructor() {
+    // Um cadastro foi salvo no modal por cima desta página: relê do backend.
+    this.changes
+      .of('people')
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.facade.load(this.id()));
     effect(() => {
       const id = this.id();
       untracked(() => this.facade.load(id));

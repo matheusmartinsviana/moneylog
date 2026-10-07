@@ -7,10 +7,19 @@ import { CardsPage } from '~/app/features/cards/pages/cards.page';
 import { InvoicePage } from '~/app/features/cards/pages/invoice.page';
 
 const routes: Routes = [
-  { path: '', component: CardsPage, title: pageTitle('cards') },
-  { path: 'new', component: CardFormPage, title: pageTitle('cards') },
-  { path: ':id/edit', component: CardFormPage, title: pageTitle('cards') },
-  { path: ':id', component: CardPage, title: pageTitle('cards') },
+  // Criar abre em modal sobre a lista; editar, sobre o detalhe do cartão (ambos com `<router-outlet>`).
+  {
+    path: '',
+    component: CardsPage,
+    title: pageTitle('cards'),
+    children: [{ path: 'new', component: CardFormPage }],
+  },
+  {
+    path: ':id',
+    component: CardPage,
+    title: pageTitle('cards'),
+    children: [{ path: 'edit', component: CardFormPage }],
+  },
   { path: ':id/invoices/:invoiceId', component: InvoicePage, title: pageTitle('cards') },
 ];
 

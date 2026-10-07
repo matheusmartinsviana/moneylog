@@ -9,7 +9,7 @@ import {
   untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
+import { RouterLink, RouterOutlet } from '@angular/router';
 import { catchError, exhaustMap, finalize, map, of, Subject } from 'rxjs';
 
 import { ConfirmDialogComponent } from '~/app/common/components/confirm-dialog/confirm-dialog.component';
@@ -22,6 +22,7 @@ import { PageLayoutComponent } from '~/app/common/components/page-layout/page-la
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { interpolate } from '~/app/common/i18n/interpolate';
 import { problemMessage } from '~/app/common/i18n/problem-message';
+import { EntityChanges } from '~/app/common/services/entity-changes';
 import { ToastService } from '~/app/common/services/toast.service';
 import { AccountRowComponent } from '~/app/features/accounts/components/account-row/account-row.component';
 import { AccountsListFacade } from '~/modules/accounts/core/facades/accounts-list.facade';
@@ -41,6 +42,7 @@ interface RowAction {
 @Component({
   selector: 'app-accounts-page',
   imports: [
+    RouterOutlet,
     RouterLink,
     PageLayoutComponent,
     EmptyStateComponent,
@@ -54,6 +56,7 @@ interface RowAction {
   styleUrl: './accounts.page.css',
 })
 export class AccountsPage {
+  private readonly changes = inject(EntityChanges);
   private readonly toast = inject(ToastService);
   protected readonly t = inject(I18nService).t;
   protected readonly accounts = inject(AccountsListFacade);
@@ -87,6 +90,11 @@ export class AccountsPage {
   );
 
   constructor() {
+    // Um cadastro foi salvo no modal por cima desta página: relê do backend.
+    this.changes
+      .of('accounts')
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.accounts.load(this.filter()));
     effect(() => {
       const filter = this.filter();
       untracked(() => this.accounts.load(filter));

@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, RouterOutlet } from '@angular/router';
 import { catchError, exhaustMap, finalize, map, of, Subject } from 'rxjs';
 
 import { ConfirmDialogComponent } from '~/app/common/components/confirm-dialog/confirm-dialog.component';
@@ -24,6 +24,7 @@ import { PageLayoutComponent } from '~/app/common/components/page-layout/page-la
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { interpolate } from '~/app/common/i18n/interpolate';
 import { problemMessage } from '~/app/common/i18n/problem-message';
+import { EntityChanges } from '~/app/common/services/entity-changes';
 import { ToastService } from '~/app/common/services/toast.service';
 import { PersonRowComponent } from '~/app/features/people/components/person-row/person-row.component';
 import { PeopleListFacade } from '~/modules/people/core/facades/people-list.facade';
@@ -43,6 +44,7 @@ interface RowAction {
 @Component({
   selector: 'app-people-page',
   imports: [
+    RouterOutlet,
     RouterLink,
     ReactiveFormsModule,
     PageLayoutComponent,
@@ -58,6 +60,7 @@ interface RowAction {
   styleUrl: './people.page.css',
 })
 export class PeoplePage {
+  private readonly changes = inject(EntityChanges);
   private readonly toast = inject(ToastService);
   protected readonly t = inject(I18nService).t;
   protected readonly people = inject(PeopleListFacade);
@@ -87,6 +90,11 @@ export class PeoplePage {
   );
 
   constructor() {
+    // Um cadastro foi salvo no modal por cima desta página: relê do backend.
+    this.changes
+      .of('people')
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.people.load(this.filter(), this.search.value));
     effect(() => {
       const filter = this.filter();
       untracked(() => {

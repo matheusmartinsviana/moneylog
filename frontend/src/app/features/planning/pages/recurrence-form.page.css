@@ -5,8 +5,6 @@
 .form {
   display: grid;
   gap: var(--space-4);
-  max-width: 32rem;
-  padding: var(--space-5);
 }
 
 .form__pair {

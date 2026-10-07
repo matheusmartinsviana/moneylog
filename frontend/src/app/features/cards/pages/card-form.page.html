@@ -1,4 +1,10 @@
-<app-page-layout [heading]="editing() ? t().cards.form.editTitle : t().cards.form.createTitle">
+<app-form-modal
+  #modal
+  [heading]="editing() ? t().cards.form.editTitle : t().cards.form.createTitle"
+  [dirty]="dirty()"
+  [busy]="facade.saving()"
+  (closed)="close()"
+>
   @if (editing() && !card() && facade.loadStatus().status === 'loading') {
     <div data-cy="card-form-loading">
       <p class="visually-hidden" role="status">{{ t().cards.loading }}</p>
@@ -25,13 +31,7 @@
   } @else if (loadProblem()) {
     <app-error-state [problem]="loadProblem()" (retry)="retryLoad()" />
   } @else if (!editing() || card()) {
-    <form
-      class="form surface"
-      [formGroup]="form"
-      (ngSubmit)="onSubmit()"
-      novalidate
-      data-cy="card-form"
-    >
+    <form class="form" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate data-cy="card-form">
       @if (conflict()) {
         <p class="banner" role="alert" data-cy="card-form-conflict">
           {{ t().cards.form.conflict }}
@@ -114,13 +114,14 @@
       }
 
       <div class="form__actions">
-        <a
+        <button
+          type="button"
           class="button"
-          [routerLink]="editing() ? ['/cards', id()] : ['/cards']"
           data-cy="card-form-cancel"
+          (click)="modal.requestClose()"
         >
           {{ t().cards.form.cancel }}
-        </a>
+        </button>
         <button
           type="submit"
           class="button button--primary"
@@ -133,4 +134,4 @@
       </div>
     </form>
   }
-</app-page-layout>
+</app-form-modal>

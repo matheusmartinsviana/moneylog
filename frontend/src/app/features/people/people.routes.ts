@@ -11,10 +11,19 @@ const routes: Routes = [
     path: '',
     providers: PEOPLE_PROVIDERS,
     children: [
-      { path: '', component: PeoplePage, title: pageTitle('people') },
-      { path: 'new', component: PersonFormPage, title: pageTitle('people') },
-      { path: ':id/edit', component: PersonFormPage, title: pageTitle('people') },
-      { path: ':id', component: PersonPage, title: pageTitle('people') },
+      // Criar abre em modal sobre a lista; editar, sobre o detalhe da pessoa.
+      {
+        path: '',
+        component: PeoplePage,
+        title: pageTitle('people'),
+        children: [{ path: 'new', component: PersonFormPage }],
+      },
+      {
+        path: ':id',
+        component: PersonPage,
+        title: pageTitle('people'),
+        children: [{ path: 'edit', component: PersonFormPage }],
+      },
     ],
   },
 ];

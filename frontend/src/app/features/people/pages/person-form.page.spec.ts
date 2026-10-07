@@ -27,7 +27,10 @@ async function setup(gateway = new PeopleGatewayStub(), id?: string) {
     providers: [
       provideI18nTesting('pt'),
       providePeopleStub(gateway),
-      provideRouter([{ path: 'people/:id', component: DummyComponent }]),
+      provideRouter([
+        { path: 'people', component: DummyComponent },
+        { path: 'people/:id', component: DummyComponent },
+      ]),
     ],
   });
   return {
@@ -49,14 +52,14 @@ describe('PersonFormPage', () => {
     it('Dado o formulário novo, então pede nome e observações', async () => {
       await setup();
 
-      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(
         pt.people.form.createTitle,
       );
       expect(screen.getByTestId('person-name')).toBeInTheDocument();
       expect(screen.getByTestId('person-notes')).toBeInTheDocument();
     });
 
-    it('Dado o nome, quando salvo, então cria, avisa e leva à tela da pessoa devolvida', async () => {
+    it('Dado o nome, quando salvo, então cria, avisa e volta para a lista', async () => {
       const { gateway, toast, router, fixture } = await setup();
       const navigate = vi.spyOn(router, 'navigate');
 
@@ -66,7 +69,7 @@ describe('PersonFormPage', () => {
 
       expect(gateway.creates).toEqual([{ name: 'Maria', notes: null }]);
       expect(toast.toasts()[0]?.message).toBe('Maria foi adicionada.');
-      expect(navigate).toHaveBeenCalledWith(['/people', 'person-new']);
+      expect(navigate).toHaveBeenCalledWith(['/people']);
     });
 
     it('Dado nome vazio, então o erro é do campo e nada é enviado', async () => {

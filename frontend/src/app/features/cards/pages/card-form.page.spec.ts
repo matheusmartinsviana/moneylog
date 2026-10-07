@@ -37,7 +37,10 @@ async function setup(
       provideI18nTesting('pt'),
       provideCardsStub(gateway),
       provideAccountsStub(accounts),
-      provideRouter([{ path: 'cards/:id', component: DummyComponent }]),
+      provideRouter([
+        { path: 'cards', component: DummyComponent },
+        { path: 'cards/:id', component: DummyComponent },
+      ]),
     ],
   });
   return {
@@ -59,7 +62,7 @@ describe('CardFormPage', () => {
     it('Dado o formulário novo, então pede nome, instituição, limite, dias e conta padrão; nunca número nem CVV', async () => {
       await setup();
 
-      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(
         pt.cards.form.createTitle,
       );
       for (const id of [
@@ -77,7 +80,7 @@ describe('CardFormPage', () => {
       expect(screen.queryByTestId('billing-change')).not.toBeInTheDocument();
     });
 
-    it('Dado os dados, quando salvo, então cria com os valores, mostra o toast e leva à tela do cartão devolvido', async () => {
+    it('Dado os dados, quando salvo, então cria com os valores, mostra o toast e volta para a lista', async () => {
       const { gateway, toast, router, fixture } = await setup();
 
       await type('card-name', ' Roxinho ');
@@ -89,7 +92,7 @@ describe('CardFormPage', () => {
 
       expect(gateway.calls).toEqual(['create:Roxinho']);
       expect(toast.toasts()[0]?.message).toBe('Cartão Roxinho adicionado.');
-      expect(router.url).toBe('/cards/card-1');
+      expect(router.url).toBe('/cards');
     });
 
     it('Dado campos vazios, quando salvo, então mostra os erros de UX e não chama a API', async () => {
@@ -197,7 +200,7 @@ describe('CardFormPage', () => {
       gateway.cards = [aCard({ id: 'card-1', name: 'Roxinho', closingDay: 25, dueDay: 5 })];
       await setup(gateway, 'card-1');
 
-      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(pt.cards.form.editTitle);
+      expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(pt.cards.form.editTitle);
       expect(input('card-name').value).toBe('Roxinho');
       expect(input('card-limit').value).toBe('10.000,00');
       expect(input('card-closing-day').value).toBe('25');

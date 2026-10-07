@@ -5,8 +5,6 @@
 .form {
   display: grid;
   gap: var(--space-4);
-  max-width: 32rem;
-  padding: var(--space-5);
 }
 
 /* Fechamento e vencimento lado a lado quando cabe; empilhados no celular estreito. */

@@ -9,7 +9,7 @@ import {
   untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
+import { RouterLink, RouterOutlet } from '@angular/router';
 
 import { ConfirmDialogComponent } from '~/app/common/components/confirm-dialog/confirm-dialog.component';
 import { EmptyStateComponent } from '~/app/common/components/empty-state/empty-state.component';
@@ -22,6 +22,7 @@ import { HTML_LANG } from '~/app/common/i18n/i18n';
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { interpolate } from '~/app/common/i18n/interpolate';
 import { problemMessage } from '~/app/common/i18n/problem-message';
+import { EntityChanges } from '~/app/common/services/entity-changes';
 import { ToastService } from '~/app/common/services/toast.service';
 import { ReservationRowComponent } from '~/app/features/goals/components/reservation-row/reservation-row.component';
 import { ReserveSheetComponent } from '~/app/features/goals/components/reserve-sheet/reserve-sheet.component';
@@ -41,6 +42,7 @@ import { formatRatio, ratioForBar } from '~/util/ratio';
 @Component({
   selector: 'app-goal-page',
   imports: [
+    RouterOutlet,
     LinkedNotesComponent,
     RouterLink,
     PageLayoutComponent,
@@ -59,6 +61,7 @@ import { formatRatio, ratioForBar } from '~/util/ratio';
   styleUrl: './goal.page.css',
 })
 export class GoalPage {
+  private readonly changes = inject(EntityChanges);
   private readonly i18n = inject(I18nService);
   private readonly toast = inject(ToastService);
   protected readonly t = this.i18n.t;
@@ -121,6 +124,11 @@ export class GoalPage {
   protected readonly canRelease = computed(() => (this.goal()?.reservations.length ?? 0) > 0);
 
   constructor() {
+    // Um cadastro foi salvo no modal por cima desta página: relê do backend.
+    this.changes
+      .of('goals')
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.detail.load(this.id()));
     effect(() => {
       const id = this.id();
       untracked(() => this.detail.load(id));

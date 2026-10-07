@@ -11,10 +11,19 @@ const routes: Routes = [
     path: '',
     providers: GOALS_PROVIDERS,
     children: [
-      { path: '', component: GoalsPage, title: pageTitle('goals') },
-      { path: 'new', component: GoalFormPage, title: pageTitle('goals') },
-      { path: ':id/edit', component: GoalFormPage, title: pageTitle('goals') },
-      { path: ':id', component: GoalPage, title: pageTitle('goals') },
+      // Criar abre em modal sobre a lista; editar, sobre o detalhe da meta.
+      {
+        path: '',
+        component: GoalsPage,
+        title: pageTitle('goals'),
+        children: [{ path: 'new', component: GoalFormPage }],
+      },
+      {
+        path: ':id',
+        component: GoalPage,
+        title: pageTitle('goals'),
+        children: [{ path: 'edit', component: GoalFormPage }],
+      },
     ],
   },
 ];

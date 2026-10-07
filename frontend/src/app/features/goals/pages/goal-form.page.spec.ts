@@ -49,7 +49,7 @@ describe('GoalFormPage', () => {
   it('Dado o formulário novo, então pede nome, alvo, prazo, prioridade e descrição, sem imagem', async () => {
     await setup();
 
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(pt.goals.form.createTitle);
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(pt.goals.form.createTitle);
     for (const id of [
       'goal-name',
       'goal-target',
@@ -62,7 +62,7 @@ describe('GoalFormPage', () => {
     expect(document.querySelector('input[type="file"]')).toBeNull();
   });
 
-  it('Dado a reserva de emergência, quando salvo, então cria com os valores digitados, avisa e abre a meta', async () => {
+  it('Dado a reserva de emergência, quando salvo, então cria com os valores digitados, avisa e volta para a lista', async () => {
     const { gateway, toast, router, fixture } = await setup();
     const navigate = vi.spyOn(router, 'navigate');
 
@@ -81,7 +81,7 @@ describe('GoalFormPage', () => {
     });
     expect(gateway.createKeys).toHaveLength(1);
     expect(toast.toasts()[0]?.message).toBe(pt.goals.toast.created);
-    expect(navigate).toHaveBeenCalledWith(['/goals', 'goal-new']);
+    expect(navigate).toHaveBeenCalledWith(['/goals']);
   });
 
   it('Dado nome vazio, quando salvo, então aponta o campo e não envia', async () => {
@@ -129,7 +129,7 @@ describe('GoalFormPage', () => {
     gateway.goals = [aGoal({ version: 5 })];
     const { fixture } = await setup(gateway, 'goal-1');
 
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(pt.goals.form.editTitle);
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(pt.goals.form.editTitle);
     expect(field('goal-name').value).toBe('Reserva de emergência');
     await type('goal-name', 'Reserva');
     await userEvent.click(screen.getByTestId('goal-form-save'));

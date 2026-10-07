@@ -7,7 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
+import { RouterLink, RouterOutlet } from '@angular/router';
 
 import { ConfirmDialogComponent } from '~/app/common/components/confirm-dialog/confirm-dialog.component';
 import {
@@ -19,6 +19,7 @@ import { PageLayoutComponent } from '~/app/common/components/page-layout/page-la
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { interpolate } from '~/app/common/i18n/interpolate';
 import { problemMessage } from '~/app/common/i18n/problem-message';
+import { EntityChanges } from '~/app/common/services/entity-changes';
 import { ToastService } from '~/app/common/services/toast.service';
 import { EndRecurrenceSheetComponent } from '~/app/features/planning/components/end-recurrence-sheet/end-recurrence-sheet.component';
 import { FixedCostsSummaryComponent } from '~/app/features/planning/components/fixed-costs-summary/fixed-costs-summary.component';
@@ -36,6 +37,7 @@ import type { Recurrence } from '~/modules/recurrences/core/types/recurrence';
 @Component({
   selector: 'app-recurrences-page',
   imports: [
+    RouterOutlet,
     RouterLink,
     PageLayoutComponent,
     EmptyStateComponent,
@@ -52,6 +54,7 @@ import type { Recurrence } from '~/modules/recurrences/core/types/recurrence';
   styleUrl: './recurrences.page.css',
 })
 export class RecurrencesPage implements OnInit {
+  private readonly changes = inject(EntityChanges);
   private readonly toast = inject(ToastService);
   protected readonly t = inject(I18nService).t;
   protected readonly recurrences = inject(RecurrencesListFacade);
@@ -79,6 +82,11 @@ export class RecurrencesPage implements OnInit {
   });
 
   constructor() {
+    // Um cadastro foi salvo no modal por cima desta página: relê do backend.
+    this.changes
+      .of('recurrences')
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.recurrences.load());
     // Encerrar ou desativar deu certo: fecha e avisa (a lista já tem a recorrência da resposta).
     this.recurrences.done$.pipe(takeUntilDestroyed()).subscribe(({ action }) => {
       const copy = this.t().recurrences.toast;

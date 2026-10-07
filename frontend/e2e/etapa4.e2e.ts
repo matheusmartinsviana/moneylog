@@ -64,9 +64,7 @@ test.describe('/people/new', () => {
     await expectNoRawKeys(page);
   });
 
-  test('criar mostra o aviso e leva à tela da pessoa (no mock ela não persiste: "não encontrada")', async ({
-    page,
-  }) => {
+  test('criar fecha o modal, mostra o aviso e volta para a lista', async ({ page }) => {
     await seedPreferences(page, { language: 'pt' });
     await page.goto('/people/new');
     await waitForApp(page);
@@ -74,8 +72,8 @@ test.describe('/people/new', () => {
     await page.locator('[data-cy="person-name"]').fill('João');
     await page.locator('[data-cy="person-form-save"]').click();
 
-    await expect(page).toHaveURL(/\/people\/[0-9a-f-]{36}$/);
-    await expect(page.locator('[data-cy="empty-state-title"]')).toHaveText('Pessoa não encontrada');
+    await expect(page).toHaveURL(/\/people$/);
+    await expect(page.locator('[data-cy="form-modal-panel"]')).toHaveCount(0);
   });
 });
 
