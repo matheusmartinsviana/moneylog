@@ -9,18 +9,31 @@ export interface ImportApplyFailure {
   readonly cause: ImportApplyCause;
 }
 
+const KNOWN_CAUSES: readonly ImportApplyCause[] = [
+  'IMPORT_LINE_ALREADY_RECORDED',
+  'IMPORT_TRANSFER_LEG_ALREADY_RECORDED',
+];
+
+function causeOf(raw: string | null | undefined, detail: string): ImportApplyCause {
+  const found = KNOWN_CAUSES.find((known) => known === raw);
+  if (found) return found;
+  if (raw) return 'OTHER'; // `cause` informado e desconhecido: não adivinha pelo texto.
+  return KNOWN_CAUSES.find((known) => detail.includes(known)) ?? 'OTHER';
+}
+
 /**
- * `IMPORT_APPLY_FAILED` traz a linha e a causa só no `detail`; extraímos o mínimo para a tela oferecer
- * rejeitar a linha ou descartar o lote. Sem causa conhecida cai em `OTHER` (mensagem genérica).
+ * `IMPORT_APPLY_FAILED` traz `position` e `cause` (contrato 2.10.0). O regex sobre `detail` fica só
+ * como fallback de backend antigo. `cause` desconhecida vira `OTHER`; `position` ausente, `null`.
  */
 export function applyFailureOf(problem: Problem | null): ImportApplyFailure | null {
   if (problem?.code !== 'IMPORT_APPLY_FAILED') return null;
   const detail = problem.detail ?? '';
-  const cause: ImportApplyCause = detail.includes('IMPORT_TRANSFER_LEG_ALREADY_RECORDED')
-    ? 'IMPORT_TRANSFER_LEG_ALREADY_RECORDED'
-    : detail.includes('IMPORT_LINE_ALREADY_RECORDED')
-      ? 'IMPORT_LINE_ALREADY_RECORDED'
-      : 'OTHER';
   const match = /(?:linha|line|línea)\s*#?\s*(\d+)/i.exec(detail);
-  return { position: match?.[1] ? Number.parseInt(match[1], 10) : null, cause };
+  const position =
+    typeof problem.position === 'number'
+      ? problem.position
+      : match?.[1]
+        ? Number.parseInt(match[1], 10)
+        : null;
+  return { position, cause: causeOf(problem.cause, detail) };
 }

@@ -2,12 +2,12 @@
  * Fronteiras de camada do frontend (FE 01 e docs/arquitetura/arquitetura.md §5.2).
  * Violação de camada ou ciclo é erro; arquivo órfão é aviso.
  *
- * Exceção explícita (S-31): só o bootstrap (`src/main.ts` e `src/app/app.config.ts`)
+ * Exceção explícita (S-31): só o bootstrap (`src/main.ts` e `src/app/app.config.ts` e `src/app/lazy-providers.ts`)
  * pode importar `src/modules/<ctx>/infra` para ligar a porta do core à implementação.
  *
  * @type {import('dependency-cruiser').IConfiguration}
  */
-const BOOTSTRAP = '^src/(main\\.ts|app/app\\.config\\.ts)$';
+const BOOTSTRAP = '^src/(main\\.ts|app/(app\\.config|lazy-providers)\\.ts)$';
 
 module.exports = {
   forbidden: [

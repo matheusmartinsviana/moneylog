@@ -24,6 +24,10 @@ export interface Problem {
   readonly retryAfterSeconds: number | null;
   /** `detail` do corpo, só para extrair a linha/causa de `IMPORT_APPLY_FAILED`; nunca é exibido. */
   readonly detail?: string | null;
+  /** `IMPORT_APPLY_FAILED` (contrato 2.10.0): posição (1 = primeira) da linha que falhou. */
+  readonly position?: number | null;
+  /** `IMPORT_APPLY_FAILED` (contrato 2.10.0): `code` aberto da recusa da linha. */
+  readonly cause?: string | null;
 }
 
 /** Erro lançável com o `Problem` dentro, para as facades de requisições repassarem ao core. */
@@ -105,6 +109,11 @@ export function toProblem(error: unknown): Problem {
     traceId,
     retryAfterSeconds: toRetryAfter(error.headers?.get('Retry-After') ?? null),
     detail: isRecord(body) && typeof body['detail'] === 'string' ? body['detail'] : null,
+    position:
+      isRecord(body) && typeof body['position'] === 'number' && Number.isInteger(body['position'])
+        ? body['position']
+        : null,
+    cause: isRecord(body) && typeof body['cause'] === 'string' ? body['cause'] : null,
   };
 }
 

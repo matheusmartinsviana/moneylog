@@ -188,4 +188,36 @@ describe('ImportReviewFacade', () => {
     await vi.waitFor(() => expect(gateway.patches).toHaveLength(1));
     expect(gateway.patches[0]).toEqual({ lineId: 'l-7', patch: { action: 'REJECT' } });
   });
+
+  it('Dado IMPORT_APPLY_FAILED com position e cause do contrato, então os usa sem ler o detail', async () => {
+    const gateway = new ImportsGatewayStub();
+    gateway.applyError = {
+      ...aProblem(422, 'IMPORT_APPLY_FAILED'),
+      position: 3,
+      cause: 'IMPORT_TRANSFER_LEG_ALREADY_RECORDED',
+      detail: 'linha 9: IMPORT_LINE_ALREADY_RECORDED',
+    };
+    const { facade } = await setup(gateway);
+    facade.applyBatch();
+    await vi.waitFor(() =>
+      expect(facade.applyFailure()).toEqual({
+        position: 3,
+        cause: 'IMPORT_TRANSFER_LEG_ALREADY_RECORDED',
+      }),
+    );
+  });
+
+  it('Dado IMPORT_APPLY_FAILED com cause desconhecida e sem position, então vira OTHER e posição nula', async () => {
+    const gateway = new ImportsGatewayStub();
+    gateway.applyError = {
+      ...aProblem(422, 'IMPORT_APPLY_FAILED'),
+      cause: 'SOMETHING_NEW',
+      detail: 'IMPORT_LINE_ALREADY_RECORDED',
+    };
+    const { facade } = await setup(gateway);
+    facade.applyBatch();
+    await vi.waitFor(() =>
+      expect(facade.applyFailure()).toEqual({ position: null, cause: 'OTHER' }),
+    );
+  });
 });

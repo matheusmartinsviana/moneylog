@@ -29,17 +29,7 @@ import { SessionFacade } from '~/modules/auth/core/facades/session.facade';
 import { provideAuth } from '~/modules/auth/infra/auth.providers';
 import { provideCards } from '~/modules/cards/infra/cards.providers';
 import { provideCategories } from '~/modules/categories/infra/categories.providers';
-import { provideDashboard } from '~/modules/dashboard/infra/dashboard.providers';
-import { provideDebts } from '~/modules/debts/infra/debts.providers';
-import { provideExports } from '~/modules/exports/infra/exports.providers';
-import { provideGoals } from '~/modules/goals/infra/goals.providers';
-import { provideImports } from '~/modules/imports/infra/imports.providers';
-import { provideMonthlySummary } from '~/modules/monthly-summary/infra/monthly-summary.providers';
-import { provideNotes } from '~/modules/notes/infra/notes.providers';
 import { provideNotifications } from '~/modules/notifications/infra/notifications.providers';
-import { providePeople } from '~/modules/people/infra/people.providers';
-import { provideProjections } from '~/modules/projections/infra/projections.providers';
-import { provideRecurrences } from '~/modules/recurrences/infra/recurrences.providers';
 import { provideReports } from '~/modules/reports/infra/reports.providers';
 import { provideSearch } from '~/modules/search/infra/search.providers';
 import { provideTransactions } from '~/modules/transactions/infra/transactions.providers';
@@ -71,19 +61,9 @@ export const appConfig: ApplicationConfig = {
     provideCards(),
     provideCategories(),
     provideTransactions(),
-    provideDashboard(),
-    providePeople(),
-    provideDebts(),
-    provideRecurrences(),
-    provideGoals(),
-    provideMonthlySummary(),
-    provideProjections(),
-    provideExports(),
-    provideImports(),
     provideNotifications(),
     provideSessionEndHooks(),
     provideAi(),
-    provideNotes(),
     provideReports(),
     provideSearch(),
     // Restaura a sessão pelo cookie de refresh antes de ativar as rotas (T33 CA5). Nunca lança.
