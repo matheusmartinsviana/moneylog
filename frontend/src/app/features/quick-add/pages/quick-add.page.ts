@@ -40,7 +40,7 @@ import { loadFormOptions } from '~/app/features/quick-add/form-options';
 import {
   DEFAULT_MODE,
   parseMode,
-  PEOPLE_MODES,
+  PEOPLE_DATA_MODES,
   QuickAddMode,
 } from '~/app/features/quick-add/quick-add-mode';
 import { sanitizeSharedText } from '~/app/features/quick-add/quick-add-params';
@@ -161,7 +161,7 @@ export class QuickAddPage {
     () => this.mode() === 'credit' && ['idle', 'loading'].includes(this.cardsLoad()),
   );
   protected readonly isPeopleMode = computed(() =>
-    (PEOPLE_MODES as readonly string[]).includes(this.mode()),
+    (PEOPLE_DATA_MODES as readonly string[]).includes(this.mode()),
   );
   /** Os modos com pessoas esperam a carga (e, no recebido, as dívidas a receber). */
   protected readonly peopleLoading = computed(() => {
@@ -195,9 +195,11 @@ export class QuickAddPage {
   private receivablesSub: Subscription | null = null;
   protected readonly peopleProblem = signal<Problem | null>(null);
   /** `?amount=&description=` (Quick Capture do Início): valores inválidos são ignorados. */
-  protected readonly prefill = signal<{ amount: string | null; description: string | null } | null>(
-    null,
-  );
+  protected readonly prefill = signal<{
+    amount: string | null;
+    description: string | null;
+    date: string | null;
+  } | null>(null);
   private readonly lastCard = signal<string | null>(readLastUsedCard());
   protected readonly expenseCategories = signal<readonly Category[]>([]);
   protected readonly incomeCategories = signal<readonly Category[]>([]);
@@ -280,9 +282,11 @@ export class QuickAddPage {
         params.get('description') ?? params.get('text') ?? params.get('title'),
       );
       const validAmount = /^\d+(\.\d{1,2})?$/.test(amount) ? amount : null;
+      const rawDate = params.get('date')?.trim() ?? '';
+      const validDate = /^\d{4}-\d{2}-\d{2}$/.test(rawDate) ? rawDate : null;
       this.prefill.set(
-        validAmount || description
-          ? { amount: validAmount, description: description || null }
+        validAmount || description || validDate
+          ? { amount: validAmount, description: description || null, date: validDate }
           : null,
       );
       if (mode !== this.mode()) {

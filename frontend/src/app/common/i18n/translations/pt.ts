@@ -1242,7 +1242,7 @@ export const pt: AppI18n = {
       refund: 'Reembolso',
       more: 'Mais tipos',
       moreLabel: 'Mais tipos de registro',
-      loan: 'Dinheiro emprestado',
+      loan: 'Emprestei',
       received: 'Dinheiro recebido',
       debt: 'Nova dívida',
       people: 'Pessoas e dívidas',
@@ -1282,6 +1282,8 @@ export const pt: AppI18n = {
   },
 
   entryForm: {
+    pixLoanHint: 'Foi para uma pessoa que vai te devolver?',
+    pixLoanLink: 'Registre como empréstimo',
     amount: 'Valor',
     description: 'Descrição',
     category: 'Categoria',

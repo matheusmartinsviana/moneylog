@@ -75,6 +75,7 @@
               }
               @case ('loan') {
                 <app-loan-form
+                  [prefill]="prefill()"
                   [accounts]="cashAccounts()"
                   [people]="people()"
                   [createPerson]="createPerson"

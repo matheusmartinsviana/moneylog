@@ -104,7 +104,7 @@ test.describe('/quick-add: pessoas e dívidas', () => {
       'true',
     );
 
-    for (const mode of ['loan', 'received', 'debt']) {
+    for (const mode of ['received', 'debt']) {
       await expect(page.locator(`[data-cy="quick-add-people-mode-${mode}"]`)).toBeVisible();
     }
   });

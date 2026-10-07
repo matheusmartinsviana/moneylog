@@ -53,6 +53,13 @@ export class LoanFormComponent extends TransactionFormBase {
   /** `?personId=` da URL: a pessoa já escolhida (o botão "Emprestar" da tela dela). */
   readonly defaultPersonId = input<string | null>(null);
 
+  /** `?amount=&description=&date=` (vindo do aviso do Pix): só campos vazios. */
+  readonly prefill = input<{
+    amount: string | null;
+    description: string | null;
+    date?: string | null;
+  } | null>(null);
+
   protected readonly currency = ACCOUNT_CURRENCY;
   protected readonly form = new FormGroup({
     amount: new FormControl<string | null>(null),
@@ -81,6 +88,17 @@ export class LoanFormComponent extends TransactionFormBase {
       untracked(() => {
         const control = this.form.controls.accountId;
         if (accountId && control.value === null) control.setValue(accountId);
+      });
+    });
+    effect(() => {
+      const prefill = this.prefill();
+      if (!prefill) return;
+      untracked(() => {
+        const { amount, description, date } = this.form.controls;
+        if (prefill.amount && amount.value === null) amount.setValue(prefill.amount);
+        if (prefill.description && description.value === '')
+          description.setValue(prefill.description);
+        if (prefill.date) date.setValue(prefill.date);
       });
     });
     effect(() => {

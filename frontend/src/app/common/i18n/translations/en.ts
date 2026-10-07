@@ -1232,7 +1232,7 @@ export const en: AppI18n = {
       refund: 'Refund',
       more: 'More types',
       moreLabel: 'More entry types',
-      loan: 'Money lent',
+      loan: 'Lent',
       received: 'Money received',
       debt: 'New debt',
       people: 'People and debts',
@@ -1272,6 +1272,8 @@ export const en: AppI18n = {
   },
 
   entryForm: {
+    pixLoanHint: 'Was it for someone who will pay you back?',
+    pixLoanLink: 'Record it as a loan',
     amount: 'Amount',
     description: 'Description',
     category: 'Category',

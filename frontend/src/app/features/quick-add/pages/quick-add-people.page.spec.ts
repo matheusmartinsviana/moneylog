@@ -124,19 +124,45 @@ describe('QuickAddPage: pessoas e dívidas (Etapa 4)', () => {
   beforeEach(() => localStorage.clear());
 
   describe('seletor de modos', () => {
-    it('Dado o grupo "Pessoas e dívidas", então oferece Dinheiro emprestado, Dinheiro recebido e Nova dívida', async () => {
+    it('Dado o seletor, então "Emprestei" é um modo principal', async () => {
+      await setup({ url: '/quick-add' });
+
+      expect(screen.getByTestId('quick-add-mode-loan')).toHaveTextContent('Emprestei');
+    });
+
+    it('Dado o grupo "Pessoas e dívidas", então oferece Dinheiro recebido e Nova dívida', async () => {
       await setup({ url: '/quick-add' });
 
       await userEvent.click(screen.getByTestId('quick-add-people'));
 
       expect(screen.getByTestId('quick-add-people')).toHaveAttribute('aria-expanded', 'true');
-      for (const mode of ['loan', 'received', 'debt']) {
+      for (const mode of ['received', 'debt']) {
         expect(screen.getByTestId(`quick-add-people-mode-${mode}`)).toBeInTheDocument();
       }
     });
 
+    it('Dado ?mode=loan&amount=&description=&date=, então abre Emprestei com os campos preenchidos', async () => {
+      await setup({
+        url: '/quick-add?mode=loan&amount=50.00&description=Pix-irma&date=2026-10-01',
+      });
+
+      expect(await screen.findByTestId('loan-form')).toBeInTheDocument();
+      expect(screen.getByTestId('quick-add-mode-loan')).toHaveAttribute('aria-checked', 'true');
+      await waitFor(() => expect(field('loan-description')).toHaveValue('Pix-irma'));
+      expect(field('loan-date')).toHaveValue('01/10/2026');
+    });
+
+    it('Dado o Pix com valor digitado, então a dica leva a Emprestei com o valor', async () => {
+      await setup({ url: '/quick-add?mode=pix' });
+
+      await userEvent.type(field('entry-amount'), '80,00');
+
+      expect(screen.getByTestId('pix-loan-link').getAttribute('href')).toContain(
+        'mode=loan&amount=80.00',
+      );
+    });
+
     it.each([
-      ['loan', 'loan-form'],
       ['received', 'received-form'],
       ['debt', 'debt-form'],
     ])('Dado ?mode=%s, então abre o formulário certo e o grupo fica aberto', async (mode, form) => {
@@ -436,8 +462,7 @@ describe('QuickAddPage: pessoas e dívidas (Etapa 4)', () => {
         transactions,
       });
       const before = stub.queries.length;
-      await userEvent.click(screen.getByTestId('quick-add-people'));
-      await userEvent.click(screen.getByTestId('quick-add-people-mode-loan'));
+      await userEvent.click(screen.getByTestId('quick-add-mode-loan'));
       await screen.findByTestId('loan-form');
       await userEvent.type(field('loan-amount'), '300,00');
       await pick('loan-person', 'person-1');

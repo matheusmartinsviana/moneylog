@@ -57,6 +57,19 @@
     }
   }
 
+  @if (showLoanHint()) {
+    <p class="form__help" data-cy="pix-loan-hint">
+      {{ t().entryForm.pixLoanHint }}
+      <a
+        class="form__link"
+        data-cy="pix-loan-link"
+        routerLink="/quick-add"
+        [queryParams]="loanLinkParams()"
+        >{{ t().entryForm.pixLoanLink }}</a
+      >
+    </p>
+  }
+
   <app-form-actions
     [banner]="banner()"
     [canRetry]="canRetry()"

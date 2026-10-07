@@ -1040,6 +1040,8 @@ export abstract class AppI18n {
 
   /** Campos comuns dos formulários de movimentação (quick-add e edição). */
   abstract readonly entryForm: {
+    readonly pixLoanHint: string;
+    readonly pixLoanLink: string;
     readonly amount: string;
     readonly description: string;
     readonly category: string;

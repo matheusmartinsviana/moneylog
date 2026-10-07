@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { Observable, startWith } from 'rxjs';
 
 import type { ChoiceOption } from '~/app/common/components/forms/choice-option';
@@ -57,6 +58,7 @@ import type { PersonRef } from '~/util/debt';
     SwitchComponent,
     SharesFieldComponent,
     FormActionsComponent,
+    RouterLink,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './cash-entry-form.component.html',
@@ -71,7 +73,11 @@ export class CashEntryFormComponent extends TransactionFormBase {
   readonly initial = input<ExpenseInput | IncomeInput | null>(null);
   readonly defaultAccountId = input<string | null>(null);
   /** Valor e descrição que vieram do Quick Capture do Início (`/quick-add?amount=&description=`), só na criação. */
-  readonly prefill = input<{ amount: string | null; description: string | null } | null>(null);
+  readonly prefill = input<{
+    amount: string | null;
+    description: string | null;
+    date?: string | null;
+  } | null>(null);
   /** "Dividir com alguém" só na criação de uma despesa (T86): as partes não se editam depois (S-137). */
   readonly allowSplit = input(false);
   readonly people = input<readonly PersonRef[]>([]);
@@ -92,6 +98,22 @@ export class CashEntryFormComponent extends TransactionFormBase {
     method: new FormControl<string | null>(null),
     shares: new FormArray<ShareGroup>([]),
   });
+  private readonly formValue = toSignal(this.form.valueChanges.pipe(startWith(null)), {
+    initialValue: null,
+  });
+  /** Dica do Pix: leva ao "Emprestei" com o que já foi digitado (a tela valida os parâmetros). */
+  protected readonly loanLinkParams = computed(() => {
+    this.formValue();
+    const { amount, description, date } = this.form.getRawValue();
+    const params: Record<string, string> = { mode: 'loan' };
+    if (amount) params['amount'] = amount;
+    if (description.trim()) params['description'] = description.trim();
+    if (date) params['date'] = date;
+    return params;
+  });
+  protected readonly showLoanHint = computed(
+    () => this.fixedMethod() === 'PIX' && this.initial() === null && this.type() === 'EXPENSE',
+  );
   protected readonly split = new FormControl(false, { nonNullable: true });
   private readonly splitOn = toSignal(this.split.valueChanges.pipe(startWith(false)), {
     initialValue: false,
