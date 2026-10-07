@@ -17,7 +17,6 @@ import { SheetComponent } from '~/app/common/components/sheet/sheet.component';
 import { applyProblemToForm } from '~/app/common/forms/problem-form';
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { problemMessage } from '~/app/common/i18n/problem-message';
-import { requiredTrimmed } from '~/app/features/quick-add/components/requirements';
 import type { Debt } from '~/modules/debts/core/types/debt';
 import type { Problem } from '~/util/api/problem';
 
@@ -67,6 +66,8 @@ export interface DebtEdit {
             fieldId="debt-edit-description"
             autocomplete="off"
             [maxlength]="200"
+            [mandatory]="false"
+            [hint]="t().entryForm.optionalHint"
             [label]="t().debts.edit.descriptionField"
           />
           <app-date-picker
@@ -134,7 +135,7 @@ export class DebtEditSheetComponent {
   protected readonly form = new FormGroup({
     description: new FormControl('', {
       nonNullable: true,
-      validators: [requiredTrimmed, Validators.maxLength(200)],
+      validators: [Validators.maxLength(200)],
     }),
     expectedDate: new FormControl<string | null>(null),
   });

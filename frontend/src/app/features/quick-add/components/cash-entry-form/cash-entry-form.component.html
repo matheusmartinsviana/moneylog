@@ -1,5 +1,5 @@
 <form
-  class="form surface"
+  class="form"
   [formGroup]="form"
   (ngSubmit)="onSubmit()"
   novalidate
@@ -16,7 +16,8 @@
     fieldId="entry-description"
     autocomplete="off"
     [maxlength]="200"
-    [mandatory]="!loaning()"
+    [mandatory]="false"
+    [hint]="t().entryForm.optionalHint"
     [label]="t().entryForm.description"
   />
   @if (loaning()) {
@@ -31,6 +32,8 @@
       formControlName="categoryId"
       fieldId="entry-category"
       [options]="categoryOptions()"
+      [mandatory]="false"
+      [emptyLabel]="t().entryForm.noCategory"
       [label]="t().entryForm.category"
     />
   }
@@ -46,26 +49,18 @@
       formControlName="method"
       fieldId="entry-method"
       [options]="methodOptions()"
+      [mandatory]="false"
+      [emptyLabel]="t().transactions.methods.OTHER"
       [label]="t().entryForm.method"
     />
   }
 
   @if (showLoanSwitch()) {
-    <app-switch
-      [formControl]="loan"
-      fieldId="entry-loan"
-      [label]="t().entryForm.pixLoanToggle"
-      [hint]="t().entryForm.pixLoanToggleHint"
-    />
+    <app-switch [formControl]="loan" fieldId="entry-loan" [label]="t().entryForm.pixLoanToggle" />
   }
 
   @if (showSplit()) {
-    <app-switch
-      [formControl]="split"
-      fieldId="entry-split"
-      [label]="t().lending.shares.toggle"
-      [hint]="t().lending.shares.hint"
-    />
+    <app-switch [formControl]="split" fieldId="entry-split" [label]="t().lending.shares.toggle" />
     @if (splitting()) {
       <app-shares-field
         [array]="form.controls.shares"

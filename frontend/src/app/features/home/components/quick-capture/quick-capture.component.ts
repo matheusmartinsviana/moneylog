@@ -25,6 +25,7 @@ import {
   CaptureType,
   QuickCaptureFormComponent,
 } from '~/app/features/home/components/quick-capture/quick-capture-form.component';
+import { transactionLabel } from '~/app/features/transactions/transaction-label';
 import { AccountsListFacade } from '~/modules/accounts/core/facades/accounts-list.facade';
 import { CategoriesFacade } from '~/modules/categories/core/facades/categories.facade';
 import type { Category } from '~/modules/categories/core/types/category';
@@ -149,7 +150,7 @@ export class QuickCaptureComponent implements OnInit {
       } else {
         this.toast.show(
           interpolate(this.t().quickAdd.toast.saved, {
-            description: saved.description,
+            description: transactionLabel(saved, this.t().transactions.types),
             amount: formatMoney(saved.amount),
           }),
         );

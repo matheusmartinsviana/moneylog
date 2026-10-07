@@ -1,10 +1,4 @@
-<form
-  class="form surface"
-  [formGroup]="form"
-  (ngSubmit)="onSubmit()"
-  novalidate
-  data-cy="credit-form"
->
+<form class="form" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate data-cy="credit-form">
   <app-select
     formControlName="cardId"
     fieldId="entry-card"
@@ -22,12 +16,16 @@
     fieldId="entry-description"
     autocomplete="off"
     [maxlength]="200"
+    [mandatory]="false"
+    [hint]="t().entryForm.optionalHint"
     [label]="t().cards.purchase.description"
   />
   <app-select
     formControlName="categoryId"
     fieldId="entry-category"
     [options]="categoryOptions()"
+    [mandatory]="false"
+    [emptyLabel]="t().entryForm.noCategory"
     [label]="t().cards.purchase.category"
   />
   <app-date-picker formControlName="date" fieldId="entry-date" [label]="t().cards.purchase.date" />

@@ -91,7 +91,7 @@
             type="TRANSACTION"
             cy="detail-notes"
             [entityId]="tx.id"
-            [label]="tx.description"
+            [label]="titleOf(tx)"
             [status]="tx.status === 'VOIDED' ? 'VOIDED' : null"
           />
 
@@ -138,3 +138,4 @@
     }
   }
 </aside>
+<router-outlet (deactivate)="reloadAfterEdit()" />

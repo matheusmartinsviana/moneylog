@@ -46,7 +46,7 @@ const type = async (id: string, value: string) => {
 };
 
 describe('GoalFormPage', () => {
-  it('Dado o formulário novo, então pede nome, alvo, prazo, prioridade e descrição, sem imagem', async () => {
+  it('Dado o formulário novo, então pede nome, alvo, prazo e descrição, com a prioridade recolhida, sem imagem', async () => {
     await setup();
 
     expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(pt.goals.form.createTitle);
@@ -68,6 +68,7 @@ describe('GoalFormPage', () => {
 
     await type('goal-name', 'Reserva de emergência');
     await type('goal-target', '20000,00');
+    await userEvent.click(screen.getByTestId('goal-more-toggle'));
     await userEvent.click(screen.getByTestId('goal-priority-HIGH'));
     await userEvent.click(screen.getByTestId('goal-form-save'));
     await fixture.whenStable();
@@ -82,6 +83,17 @@ describe('GoalFormPage', () => {
     expect(gateway.createKeys).toHaveLength(1);
     expect(toast.toasts()[0]?.message).toBe(pt.goals.toast.created);
     expect(navigate).toHaveBeenCalledWith(['/goals']);
+  });
+
+  it('Dado a prioridade não escolhida, quando salvo, então ela não vai no envio', async () => {
+    const { gateway, fixture } = await setup();
+
+    await type('goal-name', 'Viagem');
+    await type('goal-target', '1000,00');
+    await userEvent.click(screen.getByTestId('goal-form-save'));
+    await fixture.whenStable();
+
+    expect(gateway.creates[0]).not.toHaveProperty('priority');
   });
 
   it('Dado nome vazio, quando salvo, então aponta o campo e não envia', async () => {

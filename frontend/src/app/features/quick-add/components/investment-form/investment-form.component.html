@@ -1,10 +1,4 @@
-<form
-  class="form surface"
-  [formGroup]="form"
-  (ngSubmit)="onSubmit()"
-  novalidate
-  data-cy="investment-form"
->
+<form class="form" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate data-cy="investment-form">
   <app-money-input
     formControlName="amount"
     fieldId="entry-amount"

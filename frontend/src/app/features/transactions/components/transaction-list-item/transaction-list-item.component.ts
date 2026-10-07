@@ -5,6 +5,7 @@ import { HTML_LANG } from '~/app/common/i18n/i18n';
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { interpolate } from '~/app/common/i18n/interpolate';
 import { flowOf, flowSign } from '~/app/features/transactions/transaction-flow';
+import { transactionLabel } from '~/app/features/transactions/transaction-label';
 import type { Transaction } from '~/modules/transactions/core/types/transaction';
 import { formatIsoDate } from '~/util/date';
 
@@ -30,7 +31,7 @@ import { formatIsoDate } from '~/util/date';
       <span class="item__glyph" aria-hidden="true" data-cy="item-glyph">{{ initial() }}</span>
     }
     <div class="item__main">
-      <span class="item__description">{{ tx.description }}</span>
+      <span class="item__description">{{ title() }}</span>
       <span class="item__meta">
         {{ tx.category?.name ?? t().transactions.noCategory }} ·
         {{ tx.account?.name ?? tx.card?.name }} ·
@@ -121,16 +122,19 @@ export class TransactionListItemComponent {
   readonly dateLabel = input<string | null>(null);
   readonly open = output<Transaction>();
 
+  protected readonly title = computed(() =>
+    transactionLabel(this.transaction(), this.t().transactions.types),
+  );
   protected readonly flow = computed(() => flowOf(this.transaction(), this.accountId()));
   protected readonly sign = computed(() => flowSign(this.flow()));
   protected readonly date = computed(() =>
     formatIsoDate(this.transaction().date, HTML_LANG[this.i18n.language()]),
   );
   protected readonly initial = computed(() => {
-    const name = this.transaction().category?.name ?? this.transaction().description;
+    const name = this.title();
     return Array.from(name.trim())[0]?.toLocaleUpperCase() ?? '·';
   });
   protected readonly label = computed(() =>
-    interpolate(this.t().transactions.open, { description: this.transaction().description }),
+    interpolate(this.t().transactions.open, { description: this.title() }),
   );
 }

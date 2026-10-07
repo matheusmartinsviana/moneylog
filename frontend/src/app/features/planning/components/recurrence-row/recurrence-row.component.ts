@@ -32,7 +32,10 @@ export class RecurrenceRowComponent {
   readonly deactivate = output<Recurrence>();
 
   protected readonly title = computed(
-    () => this.recurrence().description ?? this.t().recurrences.types[this.recurrence().type],
+    () =>
+      this.recurrence().description?.trim() ||
+      this.recurrence().category.name ||
+      this.t().recurrences.types[this.recurrence().type],
   );
   protected readonly frequency = computed(() =>
     frequencyText(this.recurrence(), this.t().recurrences),

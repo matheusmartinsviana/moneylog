@@ -52,7 +52,7 @@ export function toFormValue(response: TransactionResponse): TransactionInput | n
   const base = {
     amount: response.amount.amount,
     date: response.date,
-    description: response.description,
+    description: response.description ?? '',
     notes: response.notes,
   };
   const accountId = response.account?.id ?? null;
@@ -63,8 +63,14 @@ export function toFormValue(response: TransactionResponse): TransactionInput | n
   switch (response.type) {
     case 'EXPENSE':
     case 'INCOME':
-      if (!accountId || !categoryId || !response.method) return null;
-      return { ...base, type: response.type, accountId, categoryId, method: response.method };
+      if (!accountId) return null;
+      return {
+        ...base,
+        type: response.type,
+        accountId,
+        categoryId: categoryId ?? '',
+        method: response.method ?? 'OTHER',
+      };
     case 'TRANSFER':
       if (!accountId || !counterpartId) return null;
       return { ...base, type: 'TRANSFER', fromAccountId: accountId, toAccountId: counterpartId };
@@ -91,20 +97,20 @@ export function toFormValue(response: TransactionResponse): TransactionInput | n
       };
     case 'REFUND':
       // Em conta ou no cartão: exatamente um dos dois.
-      if (!categoryId || (accountId === null) === (cardId === null)) return null;
+      if ((accountId === null) === (cardId === null)) return null;
       return {
         ...base,
         type: 'REFUND',
         accountId,
         cardId,
-        categoryId,
+        categoryId: categoryId ?? '',
         refundOfTransactionId: response.refundOf?.id ?? null,
       };
     case 'CARD_PURCHASE': {
       // `total` de cada parcela é o nº de parcelas da compra (as canceladas continuam na lista).
       const installments = response.installments[0]?.total ?? null;
-      if (!cardId || !categoryId || installments === null) return null;
-      return { ...base, type: 'CARD_PURCHASE', cardId, categoryId, installments };
+      if (!cardId || installments === null) return null;
+      return { ...base, type: 'CARD_PURCHASE', cardId, categoryId: categoryId ?? '', installments };
     }
     default:
       return null;
@@ -118,7 +124,7 @@ export function toTransaction(response: TransactionResponse): Transaction {
     status: response.status,
     amount: money(response.amount),
     date: response.date,
-    description: response.description,
+    description: response.description ?? '',
     notes: response.notes,
     category: response.category ? { id: response.category.id, name: response.category.name } : null,
     card: response.card ? { id: response.card.id, name: response.card.name } : null,
@@ -240,7 +246,15 @@ export function toEntrySlice(response: EntrySliceResponse): EntrySlice {
 /** Corpo do `POST` (e base do `PUT`): campos do tipo, sem `notes` vazio. */
 export function toRequestBody(input: TransactionInput): TransactionCreateRequest {
   const notes = input.notes !== null && input.notes.trim() !== '' ? input.notes : null;
-  const common = { amount: input.amount, date: input.date, description: input.description, notes };
+  const description = input.description.trim();
+  // Opcionais (contrato 2.11): vazio é omitido; o servidor aplica o padrão.
+  const common = {
+    amount: input.amount,
+    date: input.date,
+    ...(description !== '' ? { description: input.description } : {}),
+    notes,
+  };
+  const category = (id: string) => (id !== '' ? { categoryId: id } : {});
   switch (input.type) {
     case 'EXPENSE':
     case 'INCOME':
@@ -248,8 +262,8 @@ export function toRequestBody(input: TransactionInput): TransactionCreateRequest
         ...common,
         type: input.type,
         accountId: input.accountId,
-        categoryId: input.categoryId,
-        method: input.method,
+        ...category(input.categoryId),
+        ...(input.method ? { method: input.method } : {}),
         ...(input.type === 'EXPENSE' && input.shares && input.shares.length > 0
           ? {
               shares: input.shares.map((share) => ({
@@ -289,7 +303,7 @@ export function toRequestBody(input: TransactionInput): TransactionCreateRequest
         type: 'REFUND',
         // Só o destino escolhido vai no corpo: conta **ou** cartão (nunca os dois).
         ...(input.cardId !== null ? { cardId: input.cardId } : { accountId: input.accountId }),
-        categoryId: input.categoryId,
+        ...category(input.categoryId),
         refundOfTransactionId: input.refundOfTransactionId,
       };
     case 'CARD_PURCHASE':
@@ -297,8 +311,8 @@ export function toRequestBody(input: TransactionInput): TransactionCreateRequest
         ...common,
         type: 'CARD_PURCHASE',
         cardId: input.cardId,
-        categoryId: input.categoryId,
-        installments: input.installments,
+        ...category(input.categoryId),
+        ...(input.installments !== 1 ? { installments: input.installments } : {}),
       };
     case 'LOAN_GIVEN':
       return {

@@ -117,7 +117,8 @@ export abstract class TransactionFormBase {
       if (this.focusToken() > 0) untracked(() => this.focusAmount());
     });
     afterNextRender(() => {
-      if (this.autofocus()) this.focusAmount();
+      // Depois do painel do modal, que também move o foco ao abrir: o valor é quem fica com ele.
+      if (this.autofocus()) void Promise.resolve().then(() => this.focusAmount());
     });
   }
 

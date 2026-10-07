@@ -226,7 +226,7 @@ describe('RecurrenceFormPage', () => {
 
       expect(gateway.creates).toHaveLength(0);
       expect(field('recurrence-amount')).toHaveAttribute('aria-invalid', 'true');
-      expect(field('recurrence-description')).toHaveAttribute('aria-invalid', 'true');
+      expect(field('recurrence-description')).not.toHaveAttribute('aria-invalid', 'true');
     });
 
     it('Dado RECURRENCE_INVALID, então o aviso geral traduz o code e o digitado fica', async () => {

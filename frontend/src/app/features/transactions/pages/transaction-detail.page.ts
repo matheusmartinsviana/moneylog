@@ -14,7 +14,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, RouterOutlet } from '@angular/router';
 
 import {
   EmptyStateAction,
@@ -33,6 +33,7 @@ import { ImpactPanelComponent } from '~/app/features/transactions/components/imp
 import { InstallmentsListComponent } from '~/app/features/transactions/components/installments-list/installments-list.component';
 import { VoidActionComponent } from '~/app/features/transactions/components/void-action/void-action.component';
 import { flowOf, flowSign } from '~/app/features/transactions/transaction-flow';
+import { transactionLabel } from '~/app/features/transactions/transaction-label';
 import { TransactionDetailFacade } from '~/modules/transactions/core/facades/transaction-detail.facade';
 import type { Transaction } from '~/modules/transactions/core/types/transaction';
 import { formatCompetenceShort, formatInstant, formatIsoDate } from '~/util/date';
@@ -60,6 +61,7 @@ interface Field {
   imports: [
     LinkedNotesComponent,
     RouterLink,
+    RouterOutlet,
     EmptyStateComponent,
     ErrorStateComponent,
     IconComponent,
@@ -71,7 +73,7 @@ interface Field {
   ],
   providers: [TransactionDetailFacade],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { '(document:keydown.escape)': 'close()' },
+  host: { '(document:keydown.escape)': 'onEscape($event)' },
   templateUrl: './transaction-detail.page.html',
   styleUrl: './transaction-detail.page.css',
 })
@@ -161,6 +163,21 @@ export class TransactionDetailPage {
 
   protected confirmCancel(reason: string): void {
     this.facade.cancelInstallments(this.id(), reason);
+  }
+
+  protected titleOf(tx: Transaction): string {
+    return transactionLabel(tx, this.t().transactions.types);
+  }
+
+  /** Esc fecha o painel, a não ser que haja um modal por cima (edição, Novo registro): ele trata o Esc. */
+  protected onEscape(event: Event): void {
+    if (event.defaultPrevented || this.document.querySelector('[role="dialog"]')) return;
+    this.close();
+  }
+
+  /** Voltou da edição (salva ou não): relê a movimentação do backend. */
+  protected reloadAfterEdit(): void {
+    this.facade.load(this.id());
   }
 
   /** Fecha o painel (ou volta à lista no celular) e devolve o foco à linha de origem. */

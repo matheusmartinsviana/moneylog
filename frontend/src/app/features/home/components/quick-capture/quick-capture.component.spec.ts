@@ -71,7 +71,6 @@ describe('QuickCaptureComponent (sem IA)', () => {
       description: 'almoço',
       accountId: 'acc-1',
       categoryId: 'cat-food',
-      method: 'OTHER',
     });
     expect(saved).toHaveBeenCalledTimes(1);
   });
@@ -85,15 +84,20 @@ describe('QuickCaptureComponent (sem IA)', () => {
     expect(screen.getByTestId('capture-category')).not.toHaveTextContent('Alimentação');
   });
 
-  it('Dado Salvar sem categoria, então nada é enviado e o erro aparece no campo', async () => {
+  it('Dado só o valor, quando salvo, então envia sem descrição nem categoria (o servidor aplica o padrão)', async () => {
     const { transactions } = await setup();
 
     await userEvent.type(await screen.findByTestId('capture-amount'), '10');
-    await userEvent.type(screen.getByTestId('capture-description'), 'x');
     await userEvent.click(screen.getByTestId('quick-capture-save'));
 
-    expect(transactions.creates).toHaveLength(0);
-    expect(screen.getByTestId('capture-category')).toHaveAttribute('aria-invalid', 'true');
+    expect(transactions.creates).toHaveLength(1);
+    expect(transactions.creates[0]?.input).toMatchObject({
+      type: 'EXPENSE',
+      amount: '10.00',
+      description: '',
+      categoryId: '',
+    });
+    expect(screen.getByTestId('capture-category')).not.toHaveAttribute('aria-invalid', 'true');
   });
 
   it('Dado o bloco de IA, então é inerte, sem número nem confiança, e leva a /ai', async () => {

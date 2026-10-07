@@ -22,6 +22,7 @@ import { EMPTY_ACCOUNTS } from '~/modules/accounts/mock-data/empty-accounts';
 import { Problem, ProblemError, toProblem } from '~/util/api/problem';
 import type { Slice } from '~/util/api/slice';
 import { API_MOCKS, mockResponse } from '~/util/api-mocks';
+import { todayIso } from '~/util/date';
 
 /** Falha de rede/HTTP → `ProblemError` tipado (o core nunca vê `HttpErrorResponse`). */
 function fail(error: unknown): Observable<never> {
@@ -68,6 +69,8 @@ export class AccountsRequestsFacade extends AccountsGateway {
   create(input: AccountInput): Observable<Account> {
     if (this.useMocks) {
       // Sem persistência no mock: devolve a conta como o backend a devolveria.
+      const openingBalance = input.openingBalance ?? '0.00';
+      const openingDate = input.openingDate ?? todayIso();
       return of(
         toAccount({
           id: '00000000-0000-4000-8000-000000000001',
@@ -75,15 +78,15 @@ export class AccountsRequestsFacade extends AccountsGateway {
           type: input.type,
           liquidity: input.type === 'INVESTMENT' ? 'INVESTMENT' : 'CASH',
           institution: input.institution,
-          openingBalance: { amount: input.openingBalance, currency: 'BRL' },
-          openingDate: input.openingDate,
-          currentBalance: { amount: input.openingBalance, currency: 'BRL' },
+          openingBalance: { amount: openingBalance, currency: 'BRL' },
+          openingDate: openingDate,
+          currentBalance: { amount: openingBalance, currency: 'BRL' },
           status: 'ACTIVE',
           openingEditable: true,
           archivable: false,
           version: 0,
-          createdAt: input.openingDate,
-          updatedAt: input.openingDate,
+          createdAt: openingDate,
+          updatedAt: openingDate,
         }),
       );
     }

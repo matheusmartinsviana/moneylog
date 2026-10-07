@@ -31,7 +31,6 @@ import { interpolate } from '~/app/common/i18n/interpolate';
 import { problemMessage } from '~/app/common/i18n/problem-message';
 import { EntityChanges } from '~/app/common/services/entity-changes';
 import { ToastService } from '~/app/common/services/toast.service';
-import { requiredTrimmed } from '~/app/features/quick-add/components/requirements';
 import { FormOptions, loadFormOptions } from '~/app/features/quick-add/form-options';
 import { AccountsListFacade } from '~/modules/accounts/core/facades/accounts-list.facade';
 import { CardsListFacade } from '~/modules/cards/core/facades/cards-list.facade';
@@ -128,7 +127,7 @@ export class RecurrenceFormPage {
     amount: new FormControl<string | null>(null),
     description: new FormControl('', {
       nonNullable: true,
-      validators: [requiredTrimmed, Validators.maxLength(200)],
+      validators: [Validators.maxLength(200)],
     }),
     categoryId: new FormControl<string | null>(null),
     accountId: new FormControl<string | null>(null),

@@ -15,7 +15,6 @@ import { MoneyInputComponent } from '~/app/common/components/forms/money-input/m
 import { SelectComponent } from '~/app/common/components/forms/select/select.component';
 import { TextFieldComponent } from '~/app/common/components/forms/text-field/text-field.component';
 import { FormActionsComponent } from '~/app/features/quick-add/components/form-actions.component';
-import { requiredTrimmed } from '~/app/features/quick-add/components/requirements';
 import { TransactionFormBase } from '~/app/features/quick-add/components/transaction-form.base';
 import type { Account } from '~/modules/accounts/core/types/account';
 import { ACCOUNT_CURRENCY } from '~/modules/accounts/core/types/account-input';
@@ -57,7 +56,7 @@ export class TransferFormComponent extends TransactionFormBase {
     date: new FormControl<string | null>(todayIso()),
     description: new FormControl('', {
       nonNullable: true,
-      validators: [requiredTrimmed, Validators.maxLength(200)],
+      validators: [Validators.maxLength(200)],
     }),
   });
 

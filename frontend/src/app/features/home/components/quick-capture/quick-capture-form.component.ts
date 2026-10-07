@@ -22,7 +22,6 @@ import { SelectComponent } from '~/app/common/components/forms/select/select.com
 import { TextFieldComponent } from '~/app/common/components/forms/text-field/text-field.component';
 import { interpolate } from '~/app/common/i18n/interpolate';
 import { PersonFieldComponent } from '~/app/features/people/components/person-field/person-field.component';
-import { requiredTrimmed } from '~/app/features/quick-add/components/requirements';
 import { TransactionFormBase } from '~/app/features/quick-add/components/transaction-form.base';
 import type { Account } from '~/modules/accounts/core/types/account';
 import { ACCOUNT_CURRENCY } from '~/modules/accounts/core/types/account-input';
@@ -83,9 +82,9 @@ export class QuickCaptureFormComponent extends TransactionFormBase {
     amount: new FormControl<string | null>(null),
     description: new FormControl('', {
       nonNullable: true,
-      validators: [requiredTrimmed, Validators.maxLength(200)],
+      validators: [Validators.maxLength(200)],
     }),
-    categoryId: new FormControl<string | null>(null, [Validators.required]),
+    categoryId: new FormControl<string | null>(null),
     personId: new FormControl<string | null>(null),
     accountId: new FormControl<string | null>(null, [Validators.required]),
     date: new FormControl<string | null>(todayIso()),
@@ -154,17 +153,13 @@ export class QuickCaptureFormComponent extends TransactionFormBase {
     });
     // Trocou receita por despesa (ou o contrário): a categoria escolhida deixa de valer.
     this.form.controls.type.valueChanges.subscribe((type) => {
-      const { categoryId, personId, description } = this.form.controls;
+      const { categoryId, personId } = this.form.controls;
       const loan = type === 'LOAN';
       categoryId.reset(null);
       personId.reset(null);
-      // Emprestei pede a pessoa; categoria e descrição não se aplicam (a descrição vem do backend/padrão).
-      categoryId.setValidators(loan ? [] : [Validators.required]);
+      // Emprestei pede a pessoa; categoria e descrição são opcionais (vazio = omitido no envio).
       personId.setValidators(loan ? [Validators.required] : []);
-      description.setValidators(
-        loan ? [Validators.maxLength(200)] : [requiredTrimmed, Validators.maxLength(200)],
-      );
-      for (const control of [categoryId, personId, description]) control.updateValueAndValidity();
+      personId.updateValueAndValidity();
       if (loan) this.peopleNeeded.emit();
     });
   }
@@ -204,7 +199,6 @@ export class QuickCaptureFormComponent extends TransactionFormBase {
       notes: null,
       accountId: value.accountId ?? '',
       categoryId: value.categoryId ?? '',
-      method: 'OTHER',
     } as TransactionInput;
   }
 

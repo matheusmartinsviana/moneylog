@@ -24,7 +24,7 @@
         >
           <td class="num">{{ date(tx) }}</td>
           <td class="row__description">
-            {{ tx.description }}
+            {{ title(tx) }}
             @if (tx.status === 'VOIDED') {
               <span class="row__tag">{{ t().transactions.voided }}</span>
             }

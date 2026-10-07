@@ -6,6 +6,7 @@ import { I18nService } from '~/app/common/i18n/i18n.service';
 import { interpolate } from '~/app/common/i18n/interpolate';
 import { TransactionListItemComponent } from '~/app/features/transactions/components/transaction-list-item/transaction-list-item.component';
 import { Flow, flowOf, flowSign } from '~/app/features/transactions/transaction-flow';
+import { transactionLabel } from '~/app/features/transactions/transaction-label';
 import type { Transaction } from '~/modules/transactions/core/types/transaction';
 import { formatIsoDate } from '~/util/date';
 
@@ -54,8 +55,12 @@ export class RecordsTableComponent {
     return tx.counterpartAccount ? `${from} → ${tx.counterpartAccount.name}` : from;
   }
 
+  protected title(tx: Transaction): string {
+    return transactionLabel(tx, this.t().transactions.types);
+  }
+
   protected openLabel(tx: Transaction): string {
-    return interpolate(this.t().transactions.open, { description: tx.description });
+    return interpolate(this.t().transactions.open, { description: this.title(tx) });
   }
 
   /** Setas sobem e descem entre as linhas; Enter abre. */

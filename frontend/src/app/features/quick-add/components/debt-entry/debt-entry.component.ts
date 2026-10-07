@@ -77,7 +77,8 @@ export class DebtEntryComponent {
             {
               id: 'new',
               label: copy.newEntry,
-              run: () => this.focusToken.update((value) => value + 1),
+              run: () =>
+                void this.router.navigate(['/quick-add'], { queryParams: { mode: 'debt' } }),
             },
           ],
         },

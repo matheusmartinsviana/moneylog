@@ -20,7 +20,6 @@ import { TextFieldComponent } from '~/app/common/components/forms/text-field/tex
 import { interpolate } from '~/app/common/i18n/interpolate';
 import { PersonFieldComponent } from '~/app/features/people/components/person-field/person-field.component';
 import { FormActionsComponent } from '~/app/features/quick-add/components/form-actions.component';
-import { requiredTrimmed } from '~/app/features/quick-add/components/requirements';
 import {
   newShareGroup,
   ShareGroup,
@@ -91,7 +90,7 @@ export class CashEntryFormComponent extends TransactionFormBase {
     amount: new FormControl<string | null>(null),
     description: new FormControl('', {
       nonNullable: true,
-      validators: [requiredTrimmed, Validators.maxLength(200)],
+      validators: [Validators.maxLength(200)],
     }),
     categoryId: new FormControl<string | null>(null),
     personId: new FormControl<string | null>(null),
@@ -149,7 +148,7 @@ export class CashEntryFormComponent extends TransactionFormBase {
     });
     // Ligou o empréstimo: pede as pessoas; a pessoa passa a ser obrigatória e a descrição, opcional.
     this.loan.valueChanges.subscribe((on) => {
-      const { personId, description, categoryId } = this.form.controls;
+      const { personId, categoryId } = this.form.controls;
       if (on) {
         this.peopleNeeded.emit();
         this.split.setValue(false);
@@ -161,11 +160,7 @@ export class CashEntryFormComponent extends TransactionFormBase {
         categoryId.enable({ emitEvent: false });
       }
       personId.setValidators(on ? [Validators.required] : []);
-      description.setValidators(
-        on ? [Validators.maxLength(200)] : [requiredTrimmed, Validators.maxLength(200)],
-      );
       personId.updateValueAndValidity();
-      description.updateValueAndValidity();
     });
     // Ligou a divisão: pede as pessoas e abre a primeira parte; desligou: descarta as partes.
     this.split.valueChanges.subscribe((on) => {
@@ -236,7 +231,10 @@ export class CashEntryFormComponent extends TransactionFormBase {
       notes: this.initial()?.notes ?? null,
       accountId: value.accountId ?? '',
       categoryId: value.categoryId ?? '',
-      method: (this.fixedMethod() ?? value.method ?? 'OTHER') as PaymentMethod,
+      // Pix/débito levam o método fixo; na despesa/receita genérica sem escolha, omite (o servidor usa OTHER).
+      ...((this.fixedMethod() ?? value.method)
+        ? { method: (this.fixedMethod() ?? value.method) as PaymentMethod }
+        : {}),
       ...(shares.length > 0 && this.type() === 'EXPENSE' ? { shares } : {}),
     } as TransactionInput;
   }

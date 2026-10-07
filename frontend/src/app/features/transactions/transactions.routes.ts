@@ -6,13 +6,19 @@ import { TransactionEditPage } from '~/app/features/transactions/pages/transacti
 import { TransactionsPage } from '~/app/features/transactions/pages/transactions.page';
 
 const routes: Routes = [
-  { path: ':id/edit', component: TransactionEditPage, title: pageTitle('transactions') },
   {
     path: '',
     component: TransactionsPage,
     title: pageTitle('transactions'),
     // Detalhe: painel lateral sobre a lista no desktop, página no celular.
-    children: [{ path: ':id', component: TransactionDetailPage }],
+    // Editar abre em modal sobre o detalhe (`TransactionDetailPage` tem o `<router-outlet>`).
+    children: [
+      {
+        path: ':id',
+        component: TransactionDetailPage,
+        children: [{ path: 'edit', component: TransactionEditPage }],
+      },
+    ],
   },
 ];
 

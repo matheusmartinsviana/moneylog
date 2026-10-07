@@ -106,7 +106,9 @@ describe('TransactionEditPage', () => {
     expect(screen.getByTestId('entry-account')).toHaveTextContent('Nubank');
     expect(screen.getByTestId('entry-method')).toHaveTextContent('Pix');
     expect(field('entry-date').value).toBe('04/10/2026');
-    expect(screen.getByTestId('form-cancel')).toHaveAttribute('href', '/transactions/tx-1');
+    expect(
+      screen.getByRole('dialog', { name: pt.transactions.detail.editPage.title }),
+    ).toBeVisible();
   });
 
   it('Dado a edição do valor, quando salvo, então o PUT leva a version e as notas, e volta para o detalhe com toast', async () => {

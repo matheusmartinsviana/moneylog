@@ -41,7 +41,7 @@ const input = (id: string) => screen.getByTestId(id) as HTMLInputElement;
 
 describe('AccountFormPage', () => {
   describe('criar', () => {
-    it('Dado o formulário novo, então pede nome, tipo, instituição (opcional), saldo inicial (0,00) e data (hoje)', async () => {
+    it('Dado o formulário novo, então pede nome, tipo, instituição (opcional); saldo inicial e data ficam recolhidos e vazios', async () => {
       await setup();
 
       expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(
@@ -50,8 +50,9 @@ describe('AccountFormPage', () => {
       expect(input('account-name')).toBeInTheDocument();
       expect(screen.getByTestId('account-type')).toBeInTheDocument();
       expect(screen.getByTestId('account-institution')).toBeInTheDocument();
-      expect(input('account-opening-balance').value).toBe('0,00');
-      expect(input('account-opening-date').value).toMatch(/^\d{2}\/\d{2}\/\d{4}$/);
+      expect(screen.getByTestId('account-more-toggle')).toHaveAttribute('aria-expanded', 'false');
+      expect(input('account-opening-balance').value).toBe('');
+      expect(input('account-opening-date').value).toBe('');
     });
 
     it('Dado os dados, quando salvo, então cria com os valores, mostra o toast e volta para a lista', async () => {
@@ -67,6 +68,17 @@ describe('AccountFormPage', () => {
       expect(gateway.calls).toEqual(['create:Nubank']);
       expect(toast.toasts()[0]?.message).toBe('Nubank adicionada.');
       expect(router.url).toBe('/accounts');
+    });
+
+    it('Dado só o nome, quando salvo, então saldo inicial e data de abertura não vão no envio', async () => {
+      const { gateway, fixture } = await setup();
+
+      await userEvent.type(input('account-name'), 'Carteira');
+      await userEvent.click(screen.getByTestId('account-form-save'));
+      await fixture.whenStable();
+
+      expect(gateway.created[0]).not.toHaveProperty('openingBalance');
+      expect(gateway.created[0]).not.toHaveProperty('openingDate');
     });
 
     it('Dado o formulário limpo, quando cancelo, então volta para a lista sem pedir confirmação', async () => {

@@ -62,7 +62,8 @@ export interface GoalInput {
   readonly name: string;
   readonly target: string;
   readonly deadline: string | null;
-  readonly priority: GoalPriority;
+  /** Omitida = o servidor usa a padrão. */
+  readonly priority?: GoalPriority;
   readonly description: string | null;
 }
 

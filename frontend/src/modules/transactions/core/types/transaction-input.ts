@@ -10,6 +10,7 @@ interface BaseInput {
   readonly amount: string;
   /** `YYYY-MM-DD`. */
   readonly date: string;
+  /** Opcional: vazio não vai no corpo (o servidor guarda nulo). */
   readonly description: string;
   readonly notes: string | null;
 }
@@ -38,8 +39,10 @@ export interface ExpenseShareInput {
 export interface ExpenseInput extends BaseInput {
   readonly type: 'EXPENSE';
   readonly accountId: string;
+  /** Vazio = omitido: o servidor usa "Outros". */
   readonly categoryId: string;
-  readonly method: PaymentMethod;
+  /** Omitido = o servidor usa `OTHER`. */
+  readonly method?: PaymentMethod;
   /** Divisão da despesa (só na criação): cada parte vira uma dívida `RECEIVABLE` (S-137). */
   readonly shares?: readonly ExpenseShareInput[];
 }
@@ -72,8 +75,10 @@ export interface DebtPaymentInput extends BaseInput {
 export interface IncomeInput extends BaseInput {
   readonly type: 'INCOME';
   readonly accountId: string;
+  /** Vazio = omitido: o servidor usa "Outras receitas". */
   readonly categoryId: string;
-  readonly method: PaymentMethod;
+  /** Omitido = o servidor usa `OTHER`. */
+  readonly method?: PaymentMethod;
 }
 
 export interface TransferInput extends BaseInput {

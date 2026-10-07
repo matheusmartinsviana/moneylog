@@ -43,8 +43,10 @@ export function toCreateRequest(input: AccountInput): AccountCreateRequest {
     name: input.name,
     type: input.type,
     institution: input.institution,
-    openingBalance: { amount: input.openingBalance, currency: ACCOUNT_CURRENCY },
-    openingDate: input.openingDate,
+    ...(input.openingBalance !== undefined
+      ? { openingBalance: { amount: input.openingBalance, currency: ACCOUNT_CURRENCY } }
+      : {}),
+    ...(input.openingDate !== undefined ? { openingDate: input.openingDate } : {}),
   };
 }
 

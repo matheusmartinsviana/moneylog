@@ -844,3 +844,23 @@ Feedback do dono: o azul com cinza não agradava. Sem commit, sem E2E. Fora de `
 - **Alternador:** botão cíclico (Sistema, Claro, Escuro) no `workspace-header`, ícones sol/lua/monitor, `aria-label` com estado atual e próximo; usa o `ThemeService` que já existia (Configurações usa o mesmo). Script mínimo no `index.html` aplica `data-theme` antes do bootstrap (sem CSP no projeto).
 - **Em Sistema** o CSS segue `prefers-color-scheme` ao vivo, sem listener em JS.
 - **Pergunta:** a ordem do ciclo e o ícone do estado Sistema (monitor) estão bons?
+
+### Registro de execução: menos burocracia, campos opcionais (frontend, contrato 2.11, modo rápido)
+
+Pedido do dono. Sem commit, sem E2E. Vazio = omitido no envio (`toRequestBody` e mappers de dívida, recorrência, conta e meta); o front não grava rótulo nenhum.
+
+- **Descrição opcional** em despesa/Pix/débito/receita, transferência, crédito, dívida (criar e editar), recorrência e Quick Capture (`requiredTrimmed` removido, dica "Opcional."). Na listagem, vazia mostra rótulo só de exibição (`transactionLabel`: categoria, pessoa/conta/cartão, tipo traduzido), usado em item, tabela, detalhe e toasts.
+- **Categoria opcional** (despesa, receita, crédito, recorrência e Quick Capture): opção vazia "Sem categoria (outros)"; omitida no envio. **Método** da despesa/receita genérica e da recorrência: vazio omite (Pix/débito seguem fixos). **Parcelas** = 1 não vai no envio.
+- **Conta:** saldo inicial e data de abertura em "Mais opções" (recolhido, omitidos se vazios). **Meta:** prioridade em "Mais opções", omitida se não escolhida. Edição abre as seções já expandidas.
+- Mappers tolerantes a `description`/`category`/`method` nulos na resposta (edição de lançamento sem categoria deixa de dar "não editável"). Demo: não validava obrigatoriedade, nada a mudar.
+- **Perguntas:** (1) no `PUT`, descrição vazia omitida mantém a anterior ou limpa? (2) a opção vazia de categoria deve dizer "Outras receitas" na receita? (3) o `PUT` da meta tem `target`/`priority` diferentes do `POST` no schema (ficou um `@ts-expect-error` em `goals-response.mapper.ts`).
+
+### Registro de execução: Novo registro e edição em modal, tipo em um seletor só (frontend, modo rápido)
+
+Pedido do dono (feedback sobre `/quick-add`). Sem commit, sem E2E completo (specs e2e ajustados, não rodados).
+
+- **Tipo de registro:** os segmented controls e grupos recolhíveis viraram um `app-select` com grupos (`role=group`): Gastos, Entradas, Entre contas, Pessoas, Outros. O `Select` ganhou `ChoiceOption.group` (genérico); `?mode=` continua mandando e é atualizado ao trocar. `data-cy`: `quick-add-mode` e `quick-add-mode-option-<modo>`.
+- **Modal:** `/quick-add` abre em `app-form-modal` pela rota auxiliar `(modal:quick-add)`; o guard converte `/quick-add?...` em `<origem>(modal:quick-add)?...` (origem = tela anterior, ou o Início no link direto). Esc/fechar confirma se sujo. Ao salvar o modal fecha e o toast mantém "Ver ..." e "Novo registro" (reabre no mesmo tipo).
+- **Edição:** `/transactions/:id/edit` virou filha do detalhe (modal sobre ele); o detalhe relê ao voltar e ignora Esc com modal aberto.
+- **Ruído:** formulário sem cartão interno (um bloco, gap menor); dicas removidas do interruptor de empréstimo no Pix e da divisão; título muda com o tipo (`quickAdd.modes.titles`); "Dinheiro recebido" virou "Recebi".
+- **Pergunta:** ao salvar, fechar o modal (feito) ou manter aberto para registrar em sequência?

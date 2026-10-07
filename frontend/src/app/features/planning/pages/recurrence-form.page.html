@@ -92,12 +92,16 @@
         fieldId="recurrence-description"
         autocomplete="off"
         [maxlength]="200"
+        [mandatory]="false"
+        [hint]="t().entryForm.optionalHint"
         [label]="t().recurrences.form.description"
       />
       <app-select
         formControlName="categoryId"
         fieldId="recurrence-category"
         [options]="categoryOptions()"
+        [mandatory]="editing()"
+        [emptyLabel]="editing() ? undefined : t().entryForm.noCategory"
         [label]="t().recurrences.form.category"
       />
 
@@ -120,6 +124,8 @@
           formControlName="method"
           fieldId="recurrence-method"
           [options]="methodOptions()"
+          [mandatory]="false"
+          [emptyLabel]="t().transactions.methods.OTHER"
           [label]="t().recurrences.form.method"
         />
       }

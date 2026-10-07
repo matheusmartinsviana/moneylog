@@ -12,6 +12,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 
+import { DisclosureComponent } from '~/app/common/components/disclosure/disclosure.component';
 import { EmptyStateComponent } from '~/app/common/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '~/app/common/components/error-state/error-state.component';
 import { FormModalComponent } from '~/app/common/components/form-modal/form-modal.component';
@@ -61,6 +62,7 @@ const CODE_TO_FIELD: Readonly<Record<string, string>> = {
     MoneyInputComponent,
     DatePickerComponent,
     SegmentedControlComponent,
+    DisclosureComponent,
   ],
   providers: [GoalFormFacade],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -79,6 +81,8 @@ export class GoalFormPage {
   readonly id = input<string>();
 
   protected readonly editing = computed(() => this.id() !== undefined);
+  /** Prioridade fica recolhida em "Mais opções" (e omitida se não escolhida). */
+  protected readonly moreOpen = signal(false);
   protected readonly goal = this.facade.goal;
   protected readonly archived = computed(() => this.goal()?.status === 'ARCHIVED');
 
@@ -89,7 +93,7 @@ export class GoalFormPage {
     }),
     target: new FormControl<string | null>(null),
     deadline: new FormControl<string | null>(null),
-    priority: new FormControl<string | null>('MEDIUM'),
+    priority: new FormControl<string | null>(null),
     description: new FormControl('', {
       nonNullable: true,
       validators: [Validators.maxLength(500)],
@@ -135,6 +139,7 @@ export class GoalFormPage {
         return;
       }
       untracked(() => {
+        this.moreOpen.set(true);
         const keep = this.keepTyped;
         this.keepTyped = false;
         if (!keep)
@@ -183,7 +188,7 @@ export class GoalFormPage {
       name: value.name.trim(),
       target: value.target ?? '',
       deadline: value.deadline,
-      priority: (value.priority ?? 'MEDIUM') as GoalPriority,
+      ...(value.priority ? { priority: value.priority as GoalPriority } : {}),
       description: value.description.trim() === '' ? null : value.description.trim(),
     };
     const id = this.id();

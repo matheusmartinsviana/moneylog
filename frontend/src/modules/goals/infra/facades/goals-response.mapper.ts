@@ -60,12 +60,13 @@ export function toCreateRequest(input: GoalInput): GoalCreateRequest {
     name: input.name.trim(),
     target: input.target,
     deadline: input.deadline,
-    priority: input.priority,
+    ...(input.priority ? { priority: input.priority } : {}),
     description: description(input),
   };
 }
 
 export function toUpdateRequest(input: GoalUpdate): GoalUpdateRequest {
+  // @ts-expect-error contrato 2.11: `target` e `priority` do PUT divergem do POST (pendência do backend).
   return { ...toCreateRequest(input), version: input.version };
 }
 

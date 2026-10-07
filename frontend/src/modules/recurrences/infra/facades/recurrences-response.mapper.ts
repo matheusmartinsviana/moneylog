@@ -98,6 +98,12 @@ export function toRealized(response: RealizedTransactionResponse): RealizedTrans
   };
 }
 
+/** Descrição opcional (contrato 2.11): vazia é omitida e o servidor guarda nulo. */
+function optionalText(text: string): { description?: string } {
+  const value = text.trim();
+  return value !== '' ? { description: value } : {};
+}
+
 /** Só o destino do tipo vai no corpo: conta + meio de pagamento **ou** cartão (nunca os dois). */
 function destination(input: {
   readonly accountId: string | null;
@@ -106,7 +112,7 @@ function destination(input: {
 }) {
   return input.cardId !== null
     ? { cardId: input.cardId }
-    : { accountId: input.accountId, method: input.method };
+    : { accountId: input.accountId, ...(input.method ? { method: input.method } : {}) };
 }
 
 export function toCreateRequest(input: RecurrenceInput): RecurrenceCreateRequest {
@@ -114,8 +120,8 @@ export function toCreateRequest(input: RecurrenceInput): RecurrenceCreateRequest
   return {
     type: input.type,
     amount: input.amount,
-    description: input.description.trim(),
-    categoryId: input.categoryId,
+    ...optionalText(input.description),
+    ...(input.categoryId !== '' ? { categoryId: input.categoryId } : {}),
     ...destination(input),
     frequency: input.frequency,
     // `interval` e `unit` só existem em CUSTOM.
@@ -129,7 +135,7 @@ export function toCreateRequest(input: RecurrenceInput): RecurrenceCreateRequest
 export function toUpdateRequest(input: RecurrenceUpdate): RecurrenceUpdateRequest {
   return {
     amount: input.amount,
-    description: input.description.trim(),
+    ...optionalText(input.description),
     categoryId: input.categoryId,
     ...destination(input),
     endDate: input.endDate,

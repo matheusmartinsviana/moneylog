@@ -22,7 +22,7 @@ export function newMockGoal(id: string, body: GoalCreateRequest): GoalResponse {
     remaining: { amount: body.target, currency: 'BRL' },
     status: 'ACTIVE',
     deadline: body.deadline ?? null,
-    priority: body.priority,
+    priority: body.priority ?? 'MEDIUM',
     description: body.description ?? null,
     monthlyNeeded: null,
     uncovered: false,

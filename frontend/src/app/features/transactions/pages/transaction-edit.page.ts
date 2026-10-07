@@ -17,7 +17,7 @@ import {
   EmptyStateComponent,
 } from '~/app/common/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '~/app/common/components/error-state/error-state.component';
-import { PageLayoutComponent } from '~/app/common/components/page-layout/page-layout.component';
+import { FormModalComponent } from '~/app/common/components/form-modal/form-modal.component';
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { ToastService } from '~/app/common/services/toast.service';
 import { AdjustmentFormComponent } from '~/app/features/quick-add/components/adjustment-form/adjustment-form.component';
@@ -30,6 +30,7 @@ import {
 } from '~/app/features/quick-add/components/refund-form/refund-form.component';
 import { TransferFormComponent } from '~/app/features/quick-add/components/transfer-form/transfer-form.component';
 import { FormOptions, loadFormOptions } from '~/app/features/quick-add/form-options';
+import { transactionLabel } from '~/app/features/transactions/transaction-label';
 import { AccountsListFacade } from '~/modules/accounts/core/facades/accounts-list.facade';
 import { CategoriesFacade } from '~/modules/categories/core/facades/categories.facade';
 import { RefundOriginSearchFacade } from '~/modules/transactions/core/facades/refund-origin-search.facade';
@@ -59,7 +60,7 @@ import { Problem, problemOf } from '~/util/api/problem';
 @Component({
   selector: 'app-transaction-edit-page',
   imports: [
-    PageLayoutComponent,
+    FormModalComponent,
     EmptyStateComponent,
     ErrorStateComponent,
     CashEntryFormComponent,
@@ -75,6 +76,11 @@ import { Problem, problemOf } from '~/util/api/problem';
     AccountsListFacade,
     RefundOriginSearchFacade,
   ],
+  host: {
+    '(input)': 'markDirty($event)',
+    '(change)': 'markDirty($event)',
+    '(click)': 'markDirty($event)',
+  },
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './transaction-edit.page.html',
 })
@@ -85,6 +91,10 @@ export class TransactionEditPage {
   private readonly accountsFacade = inject(AccountsListFacade);
   private readonly categoriesFacade = inject(CategoriesFacade);
   protected readonly t = inject(I18nService).t;
+
+  protected titleOf(tx: Transaction): string {
+    return transactionLabel(tx, this.t().transactions.types);
+  }
   protected readonly detail = inject(TransactionDetailFacade);
   protected readonly form = inject(TransactionFormFacade);
   protected readonly originSearch = inject(RefundOriginSearchFacade);
@@ -106,6 +116,8 @@ export class TransactionEditPage {
     const tx = this.transaction();
     return tx !== null && tx.status === 'ACTIVE' && tx.editable && tx.formValue !== null;
   });
+  /** Algo foi digitado ou escolhido e não salvo: fechar pede confirmação. */
+  protected readonly dirty = signal(false);
   protected readonly backLink = computed(() => `/transactions/${this.id()}`);
   protected readonly backActions = computed<readonly EmptyStateAction[]>(() => [
     {
@@ -182,6 +194,21 @@ export class TransactionEditPage {
         next: (options) => this.options.set(options),
         error: (error: unknown) => this.optionsProblem.set(problemOf(error)),
       });
+  }
+
+  /** Fechar sem salvar (já confirmado, se havia alterações): volta ao detalhe. */
+  protected close(): void {
+    void this.router.navigate(['/transactions', this.id()], { queryParamsHandling: 'preserve' });
+  }
+
+  /** Marca como sujo por digitação ou escolha dentro do formulário (eventos que sobem). */
+  protected markDirty(event: Event): void {
+    if (event.type === 'click') {
+      const target = event.target as HTMLElement | null;
+      if (!target?.closest('[role="option"], [role="radio"], [role="switch"], [role="checkbox"]'))
+        return;
+    }
+    this.dirty.set(true);
   }
 
   protected retry(): void {

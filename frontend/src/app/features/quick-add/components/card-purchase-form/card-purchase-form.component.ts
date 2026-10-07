@@ -20,7 +20,6 @@ import { TextFieldComponent } from '~/app/common/components/forms/text-field/tex
 import { interpolate } from '~/app/common/i18n/interpolate';
 import { FormActionsComponent } from '~/app/features/quick-add/components/form-actions.component';
 import { PurchasePreviewComponent } from '~/app/features/quick-add/components/purchase-preview/purchase-preview.component';
-import { requiredTrimmed } from '~/app/features/quick-add/components/requirements';
 import { TransactionFormBase } from '~/app/features/quick-add/components/transaction-form.base';
 import type { Card } from '~/modules/cards/core/types/card';
 import { CARD_CURRENCY } from '~/modules/cards/core/types/card';
@@ -88,7 +87,7 @@ export class CardPurchaseFormComponent extends TransactionFormBase {
     amount: new FormControl<string | null>(null),
     description: new FormControl('', {
       nonNullable: true,
-      validators: [requiredTrimmed, Validators.maxLength(200)],
+      validators: [Validators.maxLength(200)],
     }),
     categoryId: new FormControl<string | null>(null),
     date: new FormControl<string | null>(todayIso()),

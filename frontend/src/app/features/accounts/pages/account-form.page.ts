@@ -12,6 +12,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 
+import { DisclosureComponent } from '~/app/common/components/disclosure/disclosure.component';
 import { EmptyStateComponent } from '~/app/common/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '~/app/common/components/error-state/error-state.component';
 import { FormModalComponent } from '~/app/common/components/form-modal/form-modal.component';
@@ -51,6 +52,7 @@ const CODE_TO_FIELD = { ACCOUNT_OPENING_LOCKED: 'type' } as const;
     SelectComponent,
     MoneyInputComponent,
     DatePickerComponent,
+    DisclosureComponent,
   ],
   providers: [AccountFormFacade],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -69,6 +71,8 @@ export class AccountFormPage {
   readonly id = input<string>();
 
   protected readonly editing = computed(() => this.id() !== undefined);
+  /** Saldo inicial e data de abertura ficam recolhidos ao criar (omitidos se vazios). */
+  protected readonly moreOpen = signal(false);
   protected readonly account = this.facade.account;
   protected readonly locked = computed(() => {
     const account = this.account();
@@ -85,8 +89,8 @@ export class AccountFormPage {
       nonNullable: true,
       validators: [Validators.maxLength(100)],
     }),
-    openingBalance: new FormControl<string | null>('0.00'),
-    openingDate: new FormControl<string | null>(todayIso()),
+    openingBalance: new FormControl<string | null>(null),
+    openingDate: new FormControl<string | null>(null),
   });
 
   /** Alterações digitadas e não salvas: fechar pede confirmação. */
@@ -126,6 +130,7 @@ export class AccountFormPage {
       const account = this.account();
       if (!account) return;
       untracked(() => {
+        this.moreOpen.set(true);
         this.form.setValue({
           name: account.name,
           type: account.type,
@@ -206,8 +211,9 @@ export class AccountFormPage {
         name: value.name.trim(),
         type: value.type as AccountType,
         institution,
-        openingBalance: value.openingBalance ?? '0.00',
-        openingDate: value.openingDate ?? todayIso(),
+        // Vazios são omitidos: o servidor usa saldo zero e a data de hoje.
+        ...(value.openingBalance ? { openingBalance: value.openingBalance } : {}),
+        ...(value.openingDate ? { openingDate: value.openingDate } : {}),
       },
     });
   }

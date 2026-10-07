@@ -56,7 +56,6 @@ describe('Compra no cartão no módulo de movimentações (T63)', () => {
 
   it.each([
     ['sem cartão', { card: null }],
-    ['sem categoria', { category: null }],
     ['sem parcelas', { installments: [] }],
   ])('Dado CARD_PURCHASE %s, então não há valor de edição (null)', (_, overrides) => {
     expect(toFormValue({ ...purchase(), ...overrides })).toBeNull();

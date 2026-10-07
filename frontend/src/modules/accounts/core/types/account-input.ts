@@ -5,8 +5,9 @@ export interface AccountInput {
   readonly name: string;
   readonly type: AccountType;
   readonly institution: string | null;
-  readonly openingBalance: string;
-  readonly openingDate: string;
+  /** Omitidos = o servidor usa saldo zero e a data de hoje. */
+  readonly openingBalance?: string;
+  readonly openingDate?: string;
 }
 
 /**

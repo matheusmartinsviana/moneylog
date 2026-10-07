@@ -31,7 +31,8 @@ export class OccurrenceRowComponent {
     () => `${this.occurrence().recurrenceId}-${this.occurrence().date}`,
   );
   protected readonly title = computed(
-    () => this.occurrence().description ?? this.t().recurrences.types[this.occurrence().type],
+    () =>
+      this.occurrence().description?.trim() || this.t().recurrences.types[this.occurrence().type],
   );
   protected readonly dateText = computed(() =>
     formatIsoDate(this.occurrence().date, HTML_LANG[this.i18n.language()]),

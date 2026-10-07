@@ -26,7 +26,6 @@ import { I18nService } from '~/app/common/i18n/i18n.service';
 import { problemMessage } from '~/app/common/i18n/problem-message';
 import { PersonFieldComponent } from '~/app/features/people/components/person-field/person-field.component';
 import { FormActionsComponent } from '~/app/features/quick-add/components/form-actions.component';
-import { requiredTrimmed } from '~/app/features/quick-add/components/requirements';
 import type { Category } from '~/modules/categories/core/types/category';
 import { DEBT_CURRENCY, DebtInput } from '~/modules/debts/core/types/debt';
 import type { Problem } from '~/util/api/problem';
@@ -96,7 +95,7 @@ export class DebtFormComponent {
     expectedDate: new FormControl<string | null>(null),
     description: new FormControl('', {
       nonNullable: true,
-      validators: [requiredTrimmed, Validators.maxLength(200)],
+      validators: [Validators.maxLength(200)],
     }),
     categoryId: new FormControl<string | null>(null),
   });

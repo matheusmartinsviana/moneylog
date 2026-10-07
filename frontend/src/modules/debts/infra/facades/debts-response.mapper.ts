@@ -51,14 +51,14 @@ export function toCreateRequest(input: DebtInput): DebtCreateRequest {
     principal: input.principal,
     date: input.date,
     expectedDate: input.expectedDate,
-    description: input.description.trim(),
+    ...(input.description.trim() !== '' ? { description: input.description.trim() } : {}),
     ...(input.direction === 'PAYABLE' && input.categoryId ? { categoryId: input.categoryId } : {}),
   };
 }
 
 export function toUpdateRequest(input: DebtUpdate): DebtUpdateRequest {
   return {
-    description: input.description.trim(),
+    ...(input.description.trim() !== '' ? { description: input.description.trim() } : {}),
     expectedDate: input.expectedDate,
     version: input.version,
   };

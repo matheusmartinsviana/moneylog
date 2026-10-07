@@ -1,4 +1,9 @@
-<app-page-layout [heading]="t().transactions.detail.editPage.title">
+<app-form-modal
+  [heading]="t().transactions.detail.editPage.title"
+  [dirty]="dirty()"
+  [busy]="form.saving()"
+  (closed)="close()"
+>
   @if (notFound()) {
     <app-empty-state
       [heading]="t().transactions.detail.notFound.title"
@@ -12,7 +17,7 @@
     @if (!editable()) {
       <app-empty-state
         [heading]="t().transactions.detail.editPage.notEditable"
-        [description]="tx.description"
+        [description]="titleOf(tx)"
         [actions]="backActions()"
         illustration="document"
       />
@@ -24,7 +29,6 @@
               [accounts]="options()?.accounts ?? []"
               [initial]="transferInitial()"
               [autofocus]="false"
-              [cancelLink]="backLink()"
               [saving]="form.saving()"
               [problem]="form.problem()"
               [canRetry]="form.canRetry()"
@@ -38,7 +42,6 @@
               [investmentAccounts]="investmentAccounts()"
               [initial]="investmentInitial()"
               [autofocus]="false"
-              [cancelLink]="backLink()"
               [saving]="form.saving()"
               [problem]="form.problem()"
               [canRetry]="form.canRetry()"
@@ -51,7 +54,6 @@
               [accounts]="options()?.accounts ?? []"
               [initial]="adjustmentInitial()"
               [autofocus]="false"
-              [cancelLink]="backLink()"
               [saving]="form.saving()"
               [problem]="form.problem()"
               [canRetry]="form.canRetry()"
@@ -69,7 +71,6 @@
               [originSearching]="originSearch.searching()"
               (originSearch)="originSearch.search($event)"
               [autofocus]="false"
-              [cancelLink]="backLink()"
               [saving]="form.saving()"
               [problem]="form.problem()"
               [canRetry]="form.canRetry()"
@@ -84,7 +85,6 @@
               [initial]="cardPurchaseInitial()"
               [initialCardName]="tx.card?.name ?? null"
               [autofocus]="false"
-              [cancelLink]="backLink()"
               [saving]="form.saving()"
               [problem]="form.problem()"
               [canRetry]="form.canRetry()"
@@ -99,7 +99,6 @@
               [categories]="options()?.incomeCategories ?? []"
               [initial]="cashInitial()"
               [autofocus]="false"
-              [cancelLink]="backLink()"
               [saving]="form.saving()"
               [problem]="form.problem()"
               [canRetry]="form.canRetry()"
@@ -114,7 +113,6 @@
               [categories]="options()?.expenseCategories ?? []"
               [initial]="cashInitial()"
               [autofocus]="false"
-              [cancelLink]="backLink()"
               [saving]="form.saving()"
               [problem]="form.problem()"
               [canRetry]="form.canRetry()"
@@ -134,4 +132,4 @@
       </div>
     </div>
   }
-</app-page-layout>
+</app-form-modal>

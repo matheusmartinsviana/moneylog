@@ -121,8 +121,6 @@ describe('toFormValue (mapa resposta → entrada de S-90)', () => {
   it.each([
     ['tipo de outra etapa', aResponse({ type: 'CARD_PURCHASE' })],
     ['despesa sem conta', aResponse({ account: null })],
-    ['despesa sem categoria', aResponse({ category: null })],
-    ['despesa sem método', aResponse({ method: null })],
     ['transferência sem destino', aResponse({ type: 'TRANSFER' })],
     [
       'aplicação com direção de ajuste',
@@ -132,9 +130,51 @@ describe('toFormValue (mapa resposta → entrada de S-90)', () => {
       'ajuste com direção de aplicação',
       aResponse({ type: 'ADJUSTMENT', direction: 'CONTRIBUTION' }),
     ],
-    ['reembolso sem categoria', aResponse({ type: 'REFUND', category: null })],
   ])('Dado %s, então não há valor de edição (null)', (_, response) => {
     expect(toFormValue(response)).toBeNull();
+  });
+});
+
+describe('toFormValue com opcionais omitidos (contrato 2.11)', () => {
+  it('Dado despesa sem categoria e sem método, então o valor de edição segue com categoria vazia e método OTHER', () => {
+    expect(toFormValue(aResponse({ category: null, method: null }))).toMatchObject({
+      type: 'EXPENSE',
+      categoryId: '',
+      method: 'OTHER',
+    });
+  });
+});
+
+describe('toRequestBody com opcionais vazios (contrato 2.11)', () => {
+  it('Dado despesa sem descrição, categoria e método, então os três ficam fora do corpo', () => {
+    const body = toRequestBody({
+      type: 'EXPENSE',
+      amount: '10.00',
+      date: '2026-10-05',
+      description: '  ',
+      notes: null,
+      accountId: 'acc-1',
+      categoryId: '',
+    });
+    expect(body).not.toHaveProperty('description');
+    expect(body).not.toHaveProperty('categoryId');
+    expect(body).not.toHaveProperty('method');
+  });
+
+  it('Dado compra no cartão à vista sem categoria, então installments e categoryId ficam fora do corpo', () => {
+    const body = toRequestBody({
+      type: 'CARD_PURCHASE',
+      amount: '10.00',
+      date: '2026-10-05',
+      description: 'Livro',
+      notes: null,
+      cardId: 'card-1',
+      categoryId: '',
+      installments: 1,
+    });
+    expect(body).toMatchObject({ description: 'Livro' });
+    expect(body).not.toHaveProperty('installments');
+    expect(body).not.toHaveProperty('categoryId');
   });
 });
 

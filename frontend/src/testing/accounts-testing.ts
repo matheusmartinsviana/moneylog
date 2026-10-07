@@ -48,6 +48,7 @@ export class AccountsGatewayStub extends AccountsGateway {
   accounts: Account[] = [];
   readonly queries: AccountsQuery[] = [];
   readonly calls: string[] = [];
+  readonly created: AccountInput[] = [];
   next: Observable<Account> | null = null;
   /** Resultado do `get` (separado de `next`, que vale para as escritas). */
   getResult: Observable<Account> | null = null;
@@ -69,6 +70,7 @@ export class AccountsGatewayStub extends AccountsGateway {
 
   create(input: AccountInput): Observable<Account> {
     this.calls.push(`create:${input.name}`);
+    this.created.push(input);
     return this.next ?? of(anAccount({ name: input.name, type: input.type }));
   }
 
