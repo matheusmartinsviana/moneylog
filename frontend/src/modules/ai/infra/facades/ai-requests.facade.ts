@@ -33,7 +33,7 @@ import type {
 import { DEFAULT_AI_SETTINGS, OFF_STATUS } from '~/modules/ai/mock-data/empty-ai';
 import { Problem, ProblemError, toProblem } from '~/util/api/problem';
 import type { Slice } from '~/util/api/slice';
-import { API_MOCKS } from '~/util/api-mocks';
+import { API_MOCKS, mockResponse } from '~/util/api-mocks';
 
 function fail(error: unknown): Observable<never> {
   return throwError(() => new ProblemError(toProblem(error)));
@@ -101,7 +101,12 @@ export class AiRequestsFacade extends AiGateway {
   }
 
   insights(month: string | null): Observable<Slice<Insight>> {
-    if (this.useMocks) return of({ items: [], hasNext: false });
+    // Mock: lista vazia, ou o JSON que o E2E deixou em `window.__MONEYLOG_MOCK_RESPONSES__['/v1/insights']`.
+    if (this.useMocks) {
+      return of(
+        toInsights(mockResponse<InsightSliceResponse>(E.insights, { items: [], hasNext: false })),
+      );
+    }
     let params = new HttpParams().set('pageSize', 20);
     if (month !== null) params = params.set('month', month);
     return this.http

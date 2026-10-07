@@ -112,6 +112,16 @@ module.exports = defineConfig([
     },
   },
   {
+    // Playwright (e2e/): os testes importam o suporte compartilhado por caminho relativo (`../support`),
+    // pois a pasta fica fora de `src` e não tem o alias `~/*`; e a API de fixtures exige desestruturar o
+    // 1º parâmetro (`({}, testInfo) =>`), então o padrão vazio é permitido só aqui.
+    files: ['e2e/**/*.ts'],
+    rules: {
+      'import/no-relative-parent-imports': 'off',
+      'no-empty-pattern': ['error', { allowObjectPatternsAsParameters: true }],
+    },
+  },
+  {
     files: ['**/*.spec.ts', 'src/test-setup.ts', 'src/testing/**/*.ts'],
     rules: {
       '@typescript-eslint/no-non-null-assertion': 'off',
