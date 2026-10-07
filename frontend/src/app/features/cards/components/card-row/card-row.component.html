@@ -1,0 +1,65 @@
+@let c = card();
+<div class="row__main">
+  <a class="row__name" [routerLink]="['/cards', c.id]" [attr.data-cy]="'card-open-' + c.id">
+    {{ c.name }}
+  </a>
+  <span class="row__institution" [attr.data-cy]="'card-institution-' + c.id">{{
+    c.institution
+  }}</span>
+</div>
+<div class="row__limit">
+  <app-limit-meter [card]="c" [hideLabel]="true" />
+  @if (c.overLimit) {
+    <p class="row__over" [attr.data-cy]="'card-over-limit-' + c.id">
+      {{ t().cards.limit.overLimit }}
+    </p>
+  }
+  @if (hasCredit()) {
+    <p class="row__credit" [attr.data-cy]="'card-credit-' + c.id">
+      {{ t().cards.limit.creditBalance }} <app-money [value]="c.creditBalance" />
+    </p>
+  }
+</div>
+<p class="row__invoice" [attr.data-cy]="'card-invoice-' + c.id">
+  <span class="row__invoice-label">{{ t().cards.columns.invoice }}</span>
+  @if (c.currentInvoice; as invoice) {
+    <span> {{ invoiceLine() }} · <app-money [value]="invoice.outstanding" /> </span>
+  } @else {
+    <span>{{ t().cards.noInvoice }}</span>
+  }
+</p>
+<div class="row__actions">
+  <a class="button" [routerLink]="['/cards', c.id, 'edit']" [attr.data-cy]="'card-edit-' + c.id">
+    {{ t().cards.edit }}
+  </a>
+  @if (c.status === 'ACTIVE') {
+    <button
+      type="button"
+      class="button"
+      [attr.data-cy]="'card-archive-' + c.id"
+      [attr.aria-disabled]="c.archivable ? null : true"
+      [attr.aria-describedby]="c.archivable ? null : 'card-archive-hint-' + c.id"
+      (click)="c.archivable && archive.emit(c)"
+    >
+      {{ t().cards.archive }}
+    </button>
+    @if (!c.archivable) {
+      <span
+        class="row__hint"
+        [id]="'card-archive-hint-' + c.id"
+        [attr.data-cy]="'card-archive-hint-' + c.id"
+      >
+        {{ t().cards.archiveHint }}
+      </span>
+    }
+  } @else {
+    <button
+      type="button"
+      class="button"
+      [attr.data-cy]="'card-unarchive-' + c.id"
+      (click)="unarchive.emit(c)"
+    >
+      {{ t().cards.unarchive }}
+    </button>
+  }
+</div>

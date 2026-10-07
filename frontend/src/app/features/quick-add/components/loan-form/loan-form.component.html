@@ -1,0 +1,53 @@
+<form
+  class="form surface"
+  [formGroup]="form"
+  (ngSubmit)="onSubmit()"
+  novalidate
+  data-cy="loan-form"
+>
+  <p class="form__help" data-cy="loan-help">{{ t().lending.loan.help }}</p>
+  <app-money-input
+    formControlName="amount"
+    fieldId="loan-amount"
+    [currency]="currency"
+    [label]="t().entryForm.amount"
+  />
+  <app-person-field
+    [control]="form.controls.personId"
+    fieldId="loan-person"
+    [people]="people()"
+    [createPerson]="createPerson()"
+  />
+  <app-select
+    formControlName="accountId"
+    fieldId="loan-account"
+    [options]="accountOptions()"
+    [label]="t().entryForm.account"
+  />
+  <app-date-picker formControlName="date" fieldId="loan-date" [label]="t().entryForm.date" />
+  <app-date-picker
+    formControlName="expectedDate"
+    fieldId="loan-expected-date"
+    [mandatory]="false"
+    [label]="t().lending.expectedDate"
+    [hint]="t().lending.expectedDateHint"
+  />
+  <app-text-field
+    formControlName="description"
+    fieldId="loan-description"
+    autocomplete="off"
+    [maxlength]="200"
+    [mandatory]="false"
+    [label]="t().lending.loan.description"
+    [hint]="descriptionHint()"
+  />
+
+  <app-form-actions
+    [banner]="banner()"
+    [canRetry]="canRetry()"
+    [saving]="saving()"
+    [submitLabel]="submitLabel()"
+    [cancelLink]="cancelLink()"
+    (retry)="retry.emit()"
+  />
+</form>

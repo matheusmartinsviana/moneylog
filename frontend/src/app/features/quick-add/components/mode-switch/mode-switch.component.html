@@ -1,0 +1,48 @@
+<app-segmented-control
+  [formControl]="main"
+  fieldId="quick-add-mode"
+  [hideLabel]="true"
+  [mandatory]="false"
+  [options]="mainOptions()"
+  [label]="t().quickAdd.modes.label"
+/>
+<button
+  type="button"
+  class="more-toggle"
+  data-cy="quick-add-more"
+  aria-controls="quick-add-more-modes"
+  [attr.aria-expanded]="moreOpen()"
+  (click)="toggleMore()"
+>
+  {{ t().quickAdd.modes.more }}
+</button>
+<div id="quick-add-more-modes" [hidden]="!moreOpen()">
+  <app-segmented-control
+    [formControl]="more"
+    fieldId="quick-add-more-mode"
+    [hideLabel]="true"
+    [mandatory]="false"
+    [options]="moreOptions()"
+    [label]="t().quickAdd.modes.moreLabel"
+  />
+</div>
+<button
+  type="button"
+  class="more-toggle"
+  data-cy="quick-add-people"
+  aria-controls="quick-add-people-modes"
+  [attr.aria-expanded]="peopleOpen()"
+  (click)="togglePeople()"
+>
+  {{ t().quickAdd.modes.people }}
+</button>
+<div id="quick-add-people-modes" [hidden]="!peopleOpen()">
+  <app-segmented-control
+    [formControl]="people"
+    fieldId="quick-add-people-mode"
+    [hideLabel]="true"
+    [mandatory]="false"
+    [options]="peopleOptions()"
+    [label]="t().quickAdd.modes.peopleLabel"
+  />
+</div>

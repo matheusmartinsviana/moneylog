@@ -1,0 +1,136 @@
+<aside class="detail" aria-labelledby="detail-title" data-cy="transaction-detail">
+  <header class="detail__header">
+    <h1 class="detail__title" id="detail-title" #heading tabindex="-1" data-cy="detail-title">
+      {{ transaction()?.description ?? t().nav.transactions }}
+    </h1>
+    <button
+      type="button"
+      class="detail__close"
+      data-cy="detail-close"
+      [attr.aria-label]="t().transactions.detail.close"
+      (click)="close()"
+    >
+      <app-icon name="close" [size]="20" />
+    </button>
+  </header>
+
+  @switch (state().status) {
+    @case ('notFound') {
+      <app-empty-state
+        [heading]="t().transactions.detail.notFound.title"
+        [description]="t().transactions.detail.notFound.description"
+        [actions]="notFoundActions()"
+        illustration="grid"
+      />
+    }
+    @case ('error') {
+      <app-error-state [problem]="loadProblem()" (retry)="retry()" />
+    }
+    @case ('ready') {
+      @if (transaction(); as tx) {
+        <div class="detail__body">
+          <p
+            class="detail__amount"
+            [class.is-voided]="tx.status === 'VOIDED'"
+            data-cy="detail-amount"
+          >
+            {{ amountSign() }}<app-money [value]="tx.amount" />
+          </p>
+
+          @if (tx.status === 'VOIDED') {
+            <section class="voided" data-cy="detail-voided">
+              <p class="voided__title">{{ t().transactions.voided }}</p>
+              @if (voidedOn(); as text) {
+                <p data-cy="detail-voided-at">{{ text }}</p>
+              }
+              @if (tx.voidReason) {
+                <p>
+                  <span class="voided__label">{{ t().transactions.detail.voided.reason }}:</span>
+                  <span data-cy="detail-void-reason">{{ tx.voidReason }}</span>
+                </p>
+              }
+            </section>
+          }
+
+          <dl class="fields">
+            @for (field of fields(); track field.key) {
+              <div class="fields__row" [attr.data-cy]="'detail-field-' + field.key">
+                <dt>{{ field.label }}</dt>
+                <dd>
+                  @if (field.link) {
+                    <a
+                      [routerLink]="field.link"
+                      queryParamsHandling="preserve"
+                      [attr.data-cy]="field.linkCy"
+                      >{{ field.text }}</a
+                    >
+                  } @else {
+                    {{ field.text }}
+                  }
+                </dd>
+              </div>
+            }
+          </dl>
+
+          @if (tx.installments.length > 0) {
+            <app-installments-list
+              [installments]="tx.installments"
+              [cardId]="tx.card?.id ?? null"
+            />
+          }
+
+          @if (tx.status === 'ACTIVE') {
+            <app-impact-panel [impact]="tx.impact" />
+          }
+
+          <app-linked-notes
+            type="TRANSACTION"
+            cy="detail-notes"
+            [entityId]="tx.id"
+            [label]="tx.description"
+            [status]="tx.status === 'VOIDED' ? 'VOIDED' : null"
+          />
+
+          <div class="actions">
+            @if (canEdit()) {
+              <a
+                class="button"
+                [routerLink]="['/transactions', tx.id, 'edit']"
+                queryParamsHandling="preserve"
+                data-cy="detail-edit"
+              >
+                {{ t().transactions.detail.edit }}
+              </a>
+            }
+            @if (tx.status === 'ACTIVE') {
+              <app-void-action
+                [voidable]="tx.voidable"
+                [blockedBy]="tx.voidBlockedBy"
+                [busy]="facade.voiding()"
+                [problem]="facade.voidProblem()"
+                (voided)="confirmVoid($event)"
+              />
+            }
+            @if (facade.canCancelInstallments()) {
+              <app-cancel-installments-action
+                [busy]="facade.canceling()"
+                [problem]="facade.cancelProblem()"
+                [doneToken]="cancelDone()"
+                (canceled)="confirmCancel($event)"
+              />
+            }
+          </div>
+        </div>
+      }
+    }
+    @default {
+      <div data-cy="detail-loading">
+        <p class="visually-hidden" role="status">{{ t().transactions.detail.loading }}</p>
+        <div class="list-skeleton" aria-hidden="true">
+          <div class="list-skeleton__row"></div>
+          <div class="list-skeleton__row"></div>
+        </div>
+      </div>
+    }
+  }
+</aside>

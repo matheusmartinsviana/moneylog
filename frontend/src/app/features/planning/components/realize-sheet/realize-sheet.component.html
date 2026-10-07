@@ -1,0 +1,59 @@
+<app-sheet
+  cy="realize-sheet"
+  [open]="open()"
+  [heading]="heading()"
+  [description]="t().recurrences.realize.description"
+  [dismissable]="!facade.saving()"
+  (closed)="close()"
+>
+  @if (open()) {
+    <form class="form" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate data-cy="realize-form">
+      <p class="form__date" data-cy="realize-date">
+        <span class="form__label">{{ t().recurrences.realize.date }}</span>
+        {{ dateText() }}
+      </p>
+      <app-money-input
+        formControlName="amount"
+        fieldId="realize-amount"
+        [currency]="target().amount.currency"
+        [label]="t().recurrences.realize.amount"
+        [hint]="t().recurrences.realize.amountHint"
+      />
+      @if (target().viaCard === true) {
+        <p class="form__note" data-cy="realize-card-note">{{ t().recurrences.realize.cardNote }}</p>
+      }
+
+      @if (banner(); as message) {
+        <p class="banner" role="alert" data-cy="realize-error">{{ message }}</p>
+      }
+
+      <div class="actions">
+        @if (facade.canRetry()) {
+          <button type="button" class="button" data-cy="realize-retry" (click)="facade.retry()">
+            {{ t().recurrences.realize.retry }}
+          </button>
+        }
+        <button
+          type="button"
+          class="button"
+          data-cy="realize-cancel"
+          [disabled]="facade.saving()"
+          (click)="close()"
+        >
+          {{ t().recurrences.realize.cancel }}
+        </button>
+        <button
+          type="submit"
+          class="button button--primary"
+          data-cy="realize-submit"
+          [disabled]="facade.saving()"
+          [attr.aria-busy]="facade.saving()"
+        >
+          {{
+            facade.saving() ? t().recurrences.realize.submitting : t().recurrences.realize.submit
+          }}
+        </button>
+      </div>
+    </form>
+  }
+</app-sheet>

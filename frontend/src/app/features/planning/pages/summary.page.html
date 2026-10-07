@@ -1,0 +1,212 @@
+<app-page-layout [heading]="title()">
+  <app-planning-nav current="summary" />
+
+  <div class="picker">
+    <app-month-picker
+      [formControl]="picker"
+      fieldId="summary-month"
+      [label]="t().summary.monthPicker"
+      [min]="minMonth"
+      [max]="maxMonth"
+    />
+    <span class="picker__note" data-cy="summary-analyze-note">
+      {{ t().summary.analyzeOff }}
+    </span>
+  </div>
+
+  @if (!validMonth()) {
+    <app-empty-state
+      [heading]="t().summary.invalidMonth.title"
+      [description]="t().summary.invalidMonth.description"
+      [actions]="invalidActions()"
+      (action)="goToCurrentMonth()"
+      illustration="timeline"
+    />
+  } @else {
+    @switch (summary.state().status) {
+      @case ('loading') {
+        <div data-cy="summary-loading">
+          <p class="visually-hidden" role="status">{{ t().summary.loading }}</p>
+          <div class="list-skeleton" aria-hidden="true">
+            <div class="list-skeleton__row"></div>
+            <div class="list-skeleton__row"></div>
+            <div class="list-skeleton__row"></div>
+          </div>
+        </div>
+      }
+      @case ('error') {
+        <app-error-state [problem]="summary.error()" (retry)="retry()" />
+      }
+      @case ('ready') {
+        @if (data(); as s) {
+          @if (s.partial) {
+            <p class="banner" role="status" data-cy="summary-partial">
+              <strong>{{ t().summary.partial }}.</strong> {{ t().summary.partialNote }}
+            </p>
+          }
+          @if (s.isProjection) {
+            <p class="banner" role="status" data-cy="summary-projection">
+              {{ t().summary.projection }}
+            </p>
+          }
+
+          <app-section-container [heading]="monthLabel()">
+            <dl class="grid" data-cy="summary-main">
+              <div
+                app-summary-block
+                cy="summary-income"
+                [label]="t().summary.income"
+                [value]="s.income"
+              ></div>
+              <div
+                app-summary-block
+                cy="summary-expenses"
+                [label]="t().summary.expenses"
+                [value]="s.expenses"
+                [note]="t().summary.expensesNote"
+              ></div>
+              <div
+                app-summary-block
+                cy="summary-investments"
+                [label]="t().summary.investments"
+                [value]="s.investments"
+                [note]="t().summary.investmentsNote"
+              ></div>
+              <div
+                app-summary-block
+                cy="summary-net"
+                [label]="t().summary.net"
+                [value]="s.net"
+              ></div>
+              @if (savingsRate(); as rate) {
+                <div
+                  app-summary-block
+                  cy="summary-savings"
+                  [label]="t().summary.savingsRate"
+                  [text]="rate"
+                ></div>
+              } @else {
+                <div
+                  app-summary-block
+                  cy="summary-savings"
+                  [label]="t().summary.savingsRate"
+                  text="—"
+                  [note]="t().summary.savingsRateEmpty"
+                ></div>
+              }
+            </dl>
+          </app-section-container>
+
+          <app-section-container [heading]="t().summary.largestExpense">
+            <dl class="grid">
+              <div class="block" data-cy="summary-largest-category">
+                <dt class="block__label">{{ t().summary.largestCategory }}</dt>
+                @if (s.largestCategory; as category) {
+                  <dd class="block__value">
+                    <span data-cy="summary-largest-category-name">{{
+                      category.category.name
+                    }}</span>
+                    <app-money [value]="category.amount" />
+                  </dd>
+                } @else {
+                  <dd class="block__note" data-cy="summary-largest-category-none">
+                    {{ t().summary.none }}
+                  </dd>
+                }
+              </div>
+              <div class="block" data-cy="summary-largest-expense">
+                <dt class="block__label">{{ t().summary.largestExpense }}</dt>
+                @if (s.largestExpense; as expense) {
+                  <dd class="block__value">
+                    @if (largestExpenseLink(); as link) {
+                      <a
+                        [routerLink]="link"
+                        [attr.aria-label]="openLabel()"
+                        data-cy="summary-largest-expense-link"
+                      >
+                        {{ largestExpenseText() }}
+                      </a>
+                    } @else {
+                      <span>{{ largestExpenseText() }}</span>
+                    }
+                    <app-money [value]="expense.amount" />
+                  </dd>
+                } @else {
+                  <dd class="block__note" data-cy="summary-largest-expense-none">
+                    {{ t().summary.none }}
+                  </dd>
+                }
+              </div>
+            </dl>
+          </app-section-container>
+
+          <app-section-container [heading]="t().summary.card">
+            <dl class="grid" data-cy="summary-card">
+              <div
+                app-summary-block
+                cy="summary-card-consumption"
+                [label]="t().summary.cardConsumption"
+                [value]="s.card.consumption"
+              ></div>
+              <div
+                app-summary-block
+                cy="summary-card-outstanding"
+                [label]="t().summary.cardOutstanding"
+                [value]="s.card.outstanding"
+              ></div>
+              <div
+                app-summary-block
+                cy="summary-future-installments"
+                [label]="t().summary.futureInstallments"
+                [value]="s.futureInstallments"
+                [note]="t().summary.futureInstallmentsNote"
+              ></div>
+            </dl>
+          </app-section-container>
+
+          <app-linked-notes
+            type="MONTHLY_SUMMARY"
+            cy="summary-notes"
+            [monthly]="true"
+            [entityKey]="current()"
+            [label]="monthLabel()"
+          />
+
+          <app-section-container [heading]="comparisonTitle()">
+            @if (s.partial) {
+              <p class="note" data-cy="summary-comparison-partial">
+                {{ t().summary.comparison.partialNote }}
+              </p>
+            }
+            <dl class="comparison" data-cy="summary-comparison">
+              <div
+                app-comparison-row
+                cy="summary-delta-income"
+                [label]="t().summary.income"
+                [delta]="s.comparison.incomeDelta"
+              ></div>
+              <div
+                app-comparison-row
+                cy="summary-delta-expenses"
+                [label]="t().summary.expenses"
+                [delta]="s.comparison.expensesDelta"
+              ></div>
+              <div
+                app-comparison-row
+                cy="summary-delta-investments"
+                [label]="t().summary.investments"
+                [delta]="s.comparison.investmentsDelta"
+              ></div>
+              <div
+                app-comparison-row
+                cy="summary-delta-net"
+                [label]="t().summary.net"
+                [delta]="s.comparison.netDelta"
+              ></div>
+            </dl>
+          </app-section-container>
+        }
+      }
+    }
+  }
+</app-page-layout>

@@ -1,0 +1,206 @@
+<app-page-layout
+  [heading]="goal()?.name ?? t().nav.goals"
+  [description]="goal()?.description ?? undefined"
+>
+  @if (goal(); as g) {
+    <a pageActions class="button" routerLink="/goals" data-cy="goal-back">
+      {{ t().goals.detail.back }}
+    </a>
+  }
+
+  @switch (detail.state().status) {
+    @case ('loading') {
+      <div data-cy="goal-loading">
+        <p class="visually-hidden" role="status">{{ t().goals.loading }}</p>
+        <div class="list-skeleton" aria-hidden="true">
+          <div class="list-skeleton__row"></div>
+          <div class="list-skeleton__row"></div>
+        </div>
+      </div>
+    }
+    @case ('error') {
+      @if (notFound()) {
+        <app-empty-state
+          [heading]="t().goals.detail.notFound.title"
+          [description]="t().goals.detail.notFound.description"
+          [actions]="[
+            {
+              id: 'back',
+              label: t().goals.detail.notFound.back,
+              available: true,
+              primary: true,
+              link: '/goals',
+            },
+          ]"
+          illustration="timeline"
+        />
+      } @else {
+        <app-error-state [problem]="detail.error()" (retry)="retry()" />
+      }
+    }
+    @case ('ready') {
+      @if (goal(); as g) {
+        <section class="summary surface" data-cy="goal-summary">
+          <p class="summary__tags">
+            <span class="tag" data-cy="goal-priority">{{ priority() }}</span>
+            <span class="tag" [class.tag--done]="g.status === 'ACHIEVED'" data-cy="goal-status">
+              {{ t().goals.status[g.status] }}
+            </span>
+          </p>
+
+          <app-progress-bar
+            fieldId="goal-progress"
+            [label]="progressLabel()"
+            [value]="bar()"
+            [valueText]="progressText()"
+            [hideLabel]="true"
+          />
+
+          <dl class="facts">
+            <div class="fact">
+              <dt class="fact__label">{{ t().goals.card.percentLabel }}</dt>
+              <dd class="fact__value num" data-cy="goal-percent">{{ percent() }}</dd>
+            </div>
+            <div class="fact">
+              <dt class="fact__label">{{ t().goals.form.target }}</dt>
+              <dd class="fact__value" data-cy="goal-target"><app-money [value]="g.target" /></dd>
+            </div>
+            <div class="fact">
+              <dt class="fact__label">{{ t().goals.card.currentLabel }}</dt>
+              <dd class="fact__value" data-cy="goal-current"><app-money [value]="g.current" /></dd>
+            </div>
+            <div class="fact">
+              <dt class="fact__label">{{ t().goals.card.remainingLabel }}</dt>
+              <dd class="fact__value" data-cy="goal-remaining">
+                <app-money [value]="g.remaining" />
+              </dd>
+            </div>
+          </dl>
+
+          <p class="summary__meta" data-cy="goal-deadline">{{ deadline() }}</p>
+          @if (g.monthlyNeeded; as monthly) {
+            <p class="summary__meta" data-cy="goal-monthly">
+              <span class="tag tag--estimate">{{ t().goals.card.estimate }}</span>
+              <span>{{ t().goals.card.monthlyLabel }}</span>
+              <app-money [value]="monthly" />
+            </p>
+            <p class="summary__note" data-cy="goal-monthly-note">
+              {{ t().goals.card.estimateNote }}
+            </p>
+          }
+        </section>
+
+        @if (g.uncovered) {
+          <div class="alert" role="status" data-cy="goal-uncovered">
+            <p class="alert__title">{{ t().goals.uncovered.title }}</p>
+            <p>{{ t().goals.uncovered.description }}</p>
+          </div>
+        }
+
+        @if (g.status === 'ACHIEVED') {
+          <div class="note" data-cy="goal-achieved">
+            <p class="note__title">{{ t().goals.detail.achievedTitle }}</p>
+            <p>{{ t().goals.detail.achievedDescription }}</p>
+          </div>
+        }
+
+        @if (g.status === 'ARCHIVED') {
+          <p class="banner" role="status" data-cy="goal-archived-note">
+            {{ t().goals.detail.archivedNote }}
+          </p>
+        } @else {
+          <p class="summary__note" data-cy="goal-not-money">{{ t().goals.detail.notMoney }}</p>
+        }
+
+        @if (actionError(); as message) {
+          <p class="banner" role="alert" data-cy="goal-action-error">{{ message }}</p>
+        }
+
+        <div class="actions">
+          @if (g.status !== 'ARCHIVED') {
+            <button
+              type="button"
+              class="button button--primary"
+              data-cy="goal-reserve"
+              (click)="openReserve(false)"
+            >
+              {{ t().goals.detail.reserve }}
+            </button>
+            <button
+              type="button"
+              class="button"
+              data-cy="goal-release"
+              [disabled]="!canRelease()"
+              (click)="openReserve(true)"
+            >
+              {{ t().goals.detail.release }}
+            </button>
+            <a class="button" [routerLink]="['/goals', g.id, 'edit']" data-cy="goal-edit">
+              {{ t().goals.detail.edit }}
+            </a>
+            <button
+              type="button"
+              class="button"
+              data-cy="goal-archive"
+              [disabled]="detail.busy()"
+              (click)="askArchive()"
+            >
+              {{ t().goals.detail.archive }}
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="button button--primary"
+              data-cy="goal-unarchive"
+              [disabled]="detail.busy()"
+              (click)="unarchive()"
+            >
+              {{ t().goals.detail.unarchive }}
+            </button>
+          }
+        </div>
+
+        <app-section-container [heading]="t().goals.detail.reservations">
+          @if (g.reservations.length === 0) {
+            <p class="empty-note" data-cy="goal-no-reservations">
+              {{ t().goals.detail.noReservations }}
+            </p>
+          } @else {
+            <ul class="list" data-cy="goal-reservations">
+              @for (reservation of g.reservations; track reservation.id) {
+                <li app-reservation-row [reservation]="reservation"></li>
+              }
+            </ul>
+          }
+        </app-section-container>
+
+        <app-linked-notes
+          type="GOAL"
+          cy="goal-notes"
+          [entityId]="g.id"
+          [label]="g.name"
+          [status]="g.status === 'ARCHIVED' ? 'ARCHIVED' : null"
+        />
+
+        <app-reserve-sheet
+          [open]="reserveOpen()"
+          [goals]="[g]"
+          [goalId]="g.id"
+          [releasing]="releasing()"
+          (closed)="reserveOpen.set(false)"
+          (reserved)="afterReserve($event)"
+          (stale)="retry()"
+        />
+        <app-confirm-dialog
+          [open]="confirmingArchive()"
+          [heading]="archiveTitle()"
+          [description]="t().goals.archiveConfirm.description"
+          [confirmLabel]="t().goals.archiveConfirm.confirm"
+          [busy]="detail.busy()"
+          (confirmed)="confirmArchive()"
+          (cancelled)="cancelArchive()"
+        />
+      }
+    }
+  }
+</app-page-layout>

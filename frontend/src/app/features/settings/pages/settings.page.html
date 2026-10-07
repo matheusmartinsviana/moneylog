@@ -1,0 +1,79 @@
+<app-page-layout [heading]="t().nav.settings">
+  <app-section-container
+    [heading]="t().settings.preferences"
+    [description]="t().settings.preferencesDescription"
+  >
+    <div class="preferences">
+      <app-select
+        [formControl]="languageControl"
+        fieldId="settings-language"
+        [label]="t().settings.language"
+        [options]="languageOptions()"
+      />
+      <app-select
+        [formControl]="themeControl"
+        fieldId="settings-theme"
+        [label]="t().settings.theme"
+        [options]="themeOptions()"
+      />
+    </div>
+  </app-section-container>
+
+  <app-section-container
+    [heading]="t().categories.title"
+    [description]="t().categories.description"
+  >
+    <div>
+      <a class="button" routerLink="/settings/categories" data-cy="settings-categories-link">
+        {{ t().categories.settingsLink }}
+      </a>
+    </div>
+  </app-section-container>
+
+  <app-section-container
+    [heading]="t().notifications.settings.title"
+    [description]="t().notifications.settings.description"
+  >
+    <div>
+      <a class="button" routerLink="/settings/notifications" data-cy="settings-notifications-link">
+        {{ t().notifications.settings.title }}
+      </a>
+    </div>
+  </app-section-container>
+
+  <app-section-container [heading]="t().nav.ai" [description]="t().workspacePages.ai.subtitle">
+    <div>
+      <a class="button" routerLink="/ai" data-cy="settings-ai-link">{{ t().nav.ai }}</a>
+    </div>
+  </app-section-container>
+
+  <app-export-section />
+  <app-vault-section />
+  <div>
+    <a class="button" routerLink="/vault" data-cy="settings-vault-link">
+      {{ t().workspacePages.vault.cardTitle }}
+    </a>
+  </div>
+
+  <app-section-container
+    [heading]="t().auth.session.title"
+    [description]="t().auth.session.description"
+  >
+    <button
+      type="button"
+      class="button"
+      data-cy="settings-sign-out"
+      [disabled]="signingOut()"
+      (click)="signOut()"
+    >
+      {{ signingOut() ? t().auth.session.signingOut : t().auth.session.signOut }}
+    </button>
+  </app-section-container>
+
+  <app-empty-state
+    [heading]="t().emptyState.settings.title"
+    [description]="t().emptyState.settings.description"
+    [actions]="actions()"
+    illustration="document"
+  />
+</app-page-layout>

@@ -1,0 +1,316 @@
+/* Utilitários globais pequenos e estáveis. */
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.surface {
+  background-color: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-1);
+}
+
+/*
+ * Cartão interativo (DS 02): sobe até 2px e ganha sombra no hover, só em aparelho com mouse e com
+ * movimento permitido. Em toque não há hover; com `prefers-reduced-motion` não há `transform`.
+ */
+.lift {
+  transition:
+    transform var(--duration-base) var(--ease-standard),
+    box-shadow var(--duration-base) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .lift:hover {
+    box-shadow: var(--shadow-2);
+  }
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .lift:hover {
+    transform: translateY(-2px);
+  }
+}
+
+/* Linha de lista que destaca suave no hover (DS 02: "linhas de transação destacam suavemente"). */
+.row-hover {
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .row-hover:hover {
+    background-color: var(--color-surface-muted);
+  }
+}
+
+/* Controles: botões calmos, cantos de 12px, sem gradiente. */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 2.5rem;
+  padding: 0 var(--space-4);
+  border: var(--border-width) solid var(--color-control-border);
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  text-decoration: none;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    transform var(--duration-fast) var(--ease-standard);
+}
+
+.button:hover:not(:disabled, [aria-disabled='true']) {
+  background-color: var(--color-surface-muted);
+}
+
+/* Pressão sutil (DS 02). Só com movimento permitido: `prefers-reduced-motion` não aplica `transform`. */
+@media (prefers-reduced-motion: no-preference) {
+  .button:active:not(:disabled, [aria-disabled='true']) {
+    transform: scale(0.98);
+  }
+}
+
+.button--primary {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.button--primary:hover:not(:disabled, [aria-disabled='true']) {
+  background-color: var(--color-accent);
+  opacity: 0.92;
+}
+
+/* Botão secundário em tinta de acento (ações rápidas do cabeçalho). */
+.button--soft {
+  border-color: transparent;
+  background-color: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+/* Cor sólida (par conferido por `check-contrast`): `opacity` derrubava o contraste do texto no hover. */
+.button--soft:hover:not(:disabled, [aria-disabled='true']) {
+  background-color: var(--color-accent-soft-hover);
+}
+
+.button:disabled,
+.button[aria-disabled='true'] {
+  opacity: 0.55;
+}
+
+.field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+}
+
+.field__label {
+  color: var(--color-text);
+  font-weight: var(--weight-medium);
+}
+
+.field__hint {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+/*
+ * Caixa de texto dos campos de formulário (T32). Fonte de 16px no campo: abaixo disso o Safari do
+ * iPhone dá zoom na página ao focar.
+ */
+.input {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0 var(--space-3);
+  border: var(--border-width) solid var(--color-control-border);
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-size: 1rem;
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+.input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.input[aria-invalid='true'] {
+  border-color: var(--color-risk);
+}
+
+.input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/*
+ * Ledger: lista de valores no estilo planilha (DS 00 §5): rótulo à esquerda, valor tabular à
+ * direita, divisores sutis e linha de total. Uso: <dl class="ledger"><div class="ledger__row">…
+ */
+.ledger {
+  display: grid;
+  margin: 0;
+}
+
+.ledger__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.ledger__row:last-child {
+  border-bottom: 0;
+}
+
+.ledger__label {
+  min-width: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.ledger__value {
+  margin: 0;
+  text-align: right;
+}
+
+.ledger__row--nested {
+  padding-block: var(--space-1);
+  border-bottom-style: dashed;
+}
+
+.ledger__row--nested .ledger__label {
+  padding-left: var(--space-4);
+  font-size: var(--text-xs);
+}
+
+.ledger__row--nested .ledger__value {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.ledger__row--total {
+  font-weight: var(--weight-semibold);
+}
+
+.ledger__row--total .ledger__label {
+  color: var(--color-text);
+  font-size: var(--text-md);
+}
+
+/* Valor negativo ou em risco: cor discreta e sempre acompanhada de texto ou sinal (DS 00 §3). */
+.is-negative {
+  color: var(--color-risk);
+}
+
+/* Abas de filtro (links com `aria-current`), usadas nas listas (contas, categorias, movimentações). */
+.tabs {
+  display: inline-flex;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border: var(--border-width) solid var(--color-control-border);
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface-muted);
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.25rem;
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: calc(var(--radius-control) - 4px);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  text-decoration: none;
+}
+
+.tab[aria-current='page'],
+.tab[aria-selected='true'] {
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-1);
+}
+
+/* Aviso inline de erro de formulário ou ação (sempre com texto, nunca só cor). */
+.banner {
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-width) solid var(--color-risk);
+  border-radius: var(--radius-control);
+  color: var(--color-risk);
+  font-size: var(--text-sm);
+}
+
+/* Esqueleto de carregamento de listas. */
+.list-skeleton {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.list-skeleton__row {
+  height: 3.5rem;
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface-muted);
+  animation: skeleton-pulse 1.4s var(--ease-standard) infinite alternate;
+}
+
+@keyframes skeleton-pulse {
+  to {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .list-skeleton__row {
+    animation: none;
+  }
+}
+
+/* Tooltip próprio (appTooltip): criado no `body`, fora de qualquer componente. */
+.tooltip {
+  position: fixed;
+  z-index: var(--z-tooltip);
+  max-width: min(20rem, calc(100vw - var(--space-4) * 2));
+  padding: var(--space-2) var(--space-3);
+  border-radius: 10px;
+  background-color: var(--color-text);
+  color: var(--color-canvas);
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+  animation: tooltip-in var(--duration-fast) var(--ease-standard);
+}
+
+@keyframes tooltip-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Alvos de toque de pelo menos 44 px no celular e em ponteiro grosso (revisão de UX, FE-S-116). */
+@media (width <= 640px), (pointer: coarse) {
+  .button,
+  .tab {
+    min-height: 2.75rem;
+  }
+}

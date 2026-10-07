@@ -1,0 +1,128 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.gs {
+  position: relative;
+  min-width: 0;
+}
+
+.gs__panel {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  right: 0;
+  left: 0;
+  z-index: var(--z-popover);
+  max-height: min(30rem, 70dvh);
+  overflow-y: auto;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-popover);
+}
+
+.gs__sheet {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.gs__results {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-2);
+}
+
+.gs__note,
+.gs__error {
+  padding: var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.gs__error {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+}
+
+.gs__note--partial {
+  padding-top: var(--space-2);
+  font-size: var(--text-xs);
+}
+
+.gs__group {
+  display: grid;
+}
+
+.gs__group-title {
+  padding: var(--space-2) var(--space-3) var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+}
+
+.gs__option {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+
+/* A opção ativa do combobox: o foco real fica no campo, então a opção precisa de um sinal próprio. */
+.gs__option.is-active {
+  background-color: var(--color-accent-soft);
+  box-shadow: inset 0 0 0 2px var(--color-focus);
+}
+
+.gs__main {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.gs__title {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  overflow-wrap: anywhere;
+}
+
+.gs__meta,
+.gs__snippet {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+
+.gs__amount {
+  flex: none;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
+}
+
+.gs__open {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: var(--border-width) solid var(--color-control-border);
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.gs__open:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+@media (forced-colors: active) {
+  .gs__option.is-active {
+    outline: 2px solid Highlight;
+  }
+}

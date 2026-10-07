@@ -1,0 +1,26 @@
+:host {
+  display: block;
+}
+
+.list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+}
+
+.create {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 32rem;
+  padding: var(--space-4);
+}
+
+.create__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.archived__list {
+  margin-top: var(--space-2);
+}

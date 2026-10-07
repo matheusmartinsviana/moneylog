@@ -1,0 +1,117 @@
+:host {
+  display: block;
+}
+
+.skip-link {
+  position: fixed;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: 100;
+  padding: var(--space-2) var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  transform: translateY(-200%);
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.skip-link:focus-visible {
+  transform: none;
+}
+
+/* Fundo da página (canvas, pintado no `body`) e margem ao redor da janela. */
+.shell {
+  min-height: 100dvh;
+}
+
+/*
+ * Mobile (< 768 px): sem janela flutuante. `surface` de ponta a ponta, sem raio de moldura e sem sombra;
+ * a barra inferior e a safe-area seguem como antes.
+ */
+.shell__window {
+  min-height: 100dvh;
+  padding-top: env(safe-area-inset-top);
+  background-color: var(--color-surface);
+}
+
+.shell__aside {
+  display: none;
+}
+
+.shell__content {
+  min-width: 0;
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
+  padding-left: env(safe-area-inset-left);
+}
+
+/* Tablet (768 a 1023 px): sem janela, tela cheia, sidebar recolhida, sem barra inferior. */
+@media (width >= 768px) {
+  .shell__window {
+    display: grid;
+    grid-template-columns: var(--sidebar-collapsed-width) minmax(0, 1fr);
+    padding-top: 0;
+  }
+
+  .shell__aside {
+    display: block;
+    padding-left: env(safe-area-inset-left);
+    border-right: var(--border-width) solid var(--color-border);
+    background-color: var(--color-surface-muted);
+  }
+
+  /* A coluna cobre a altura toda da janela; a sidebar acompanha a rolagem (sticky) dentro dela. */
+  .shell__sidebar {
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+  }
+
+  .shell__content {
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: 0;
+  }
+
+  .shell__bottom-nav {
+    display: none;
+  }
+}
+
+/*
+ * Janela flutuante (>= 1024 px, FE-S-209): a janela cresce com o conteúdo e a página rola normalmente (nada
+ * de rolagem interna: quebraria o roteador, o travamento de rolagem dos overlays, o skip-link e o WebKit).
+ * Entre 1024 e 1199 px a janela leva a sidebar recolhida.
+ */
+@media (width >= 1024px) {
+  .shell {
+    padding: var(--space-6);
+  }
+
+  .shell__window {
+    min-height: calc(100dvh - var(--space-6) * 2);
+    max-width: var(--window-max-width);
+    margin-inline: auto;
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-window);
+    box-shadow: var(--shadow-window);
+  }
+
+  .shell__aside {
+    padding-left: 0;
+    border-radius: calc(var(--radius-window) - var(--border-width)) 0 0
+      calc(var(--radius-window) - var(--border-width));
+  }
+
+  .shell__sidebar {
+    top: var(--space-6);
+    height: calc(100dvh - var(--space-6) * 2);
+  }
+}
+
+/* Desktop: sidebar expandida. */
+@media (width >= 1200px) {
+  .shell__window {
+    grid-template-columns: var(--sidebar-expanded-width) minmax(0, 1fr);
+  }
+}

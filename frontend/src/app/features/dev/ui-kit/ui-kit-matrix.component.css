@@ -1,0 +1,74 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.kit {
+  display: grid;
+  gap: var(--space-6);
+  padding: var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-panel);
+  background-color: var(--color-canvas);
+  color: var(--color-text);
+}
+
+.kit__title {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+}
+
+.kit__group {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.kit__group-title {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+}
+
+.kit__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: var(--space-4);
+}
+
+.kit__cell {
+  display: grid;
+  /* minmax(0, 1fr): um filho que rola na horizontal (abas, segmentado) não estica a coluna. */
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-3);
+  border: var(--border-width) dashed var(--color-border);
+  border-radius: var(--radius-control);
+}
+
+.kit__state {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+/* Foco simulado com o anel do token: `:focus-visible` não pode ficar ligado em vários campos. */
+.kit__cell--focus
+  :is(
+    input,
+    textarea,
+    button,
+    [role='combobox'],
+    [role='checkbox'],
+    [role='switch'],
+    [role='radio']
+  ) {
+  box-shadow: var(--focus-ring);
+}
+
+.kit__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}

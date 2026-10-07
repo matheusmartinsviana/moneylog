@@ -1,0 +1,57 @@
+<div class="wide">
+  <table class="table" data-cy="records-table">
+    <thead>
+      <tr>
+        <th scope="col">{{ t().transactions.columns.date }}</th>
+        <th scope="col">{{ t().transactions.columns.description }}</th>
+        <th scope="col">{{ t().transactions.columns.type }}</th>
+        <th scope="col">{{ t().transactions.columns.category }}</th>
+        <th scope="col">{{ t().transactions.columns.account }}</th>
+        <th scope="col">{{ t().transactions.columns.method }}</th>
+        <th scope="col" class="table__amount">{{ t().transactions.columns.amount }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (tx of items(); track tx.id; let first = $first) {
+        <tr
+          class="row"
+          [class.is-voided]="tx.status === 'VOIDED'"
+          [attr.data-cy]="'transaction-row-' + tx.id"
+          [attr.tabindex]="first ? 0 : -1"
+          [attr.aria-label]="openLabel(tx)"
+          (click)="open.emit(tx)"
+          (keydown)="onKeydown($event, tx)"
+        >
+          <td class="num">{{ date(tx) }}</td>
+          <td class="row__description">
+            {{ tx.description }}
+            @if (tx.status === 'VOIDED') {
+              <span class="row__tag">{{ t().transactions.voided }}</span>
+            }
+          </td>
+          <td>{{ typeLabel(tx) }}</td>
+          <td>{{ tx.category?.name ?? '' }}</td>
+          <td>{{ accountLabel(tx) }}</td>
+          <td>{{ tx.method ? t().transactions.methods[tx.method] : '' }}</td>
+          <td
+            class="table__amount num"
+            [class.is-in]="flow(tx) === 'in'"
+            [attr.data-cy]="'transaction-amount-' + tx.id"
+          >
+            {{ sign(tx) }}<app-money [value]="tx.amount" />
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
+<ul class="narrow" data-cy="records-list">
+  @for (tx of items(); track tx.id) {
+    <li
+      app-transaction-list-item
+      [transaction]="tx"
+      [accountId]="accountId()"
+      (open)="open.emit($event)"
+    ></li>
+  }
+</ul>

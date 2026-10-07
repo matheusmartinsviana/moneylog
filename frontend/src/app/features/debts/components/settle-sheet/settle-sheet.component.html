@@ -1,0 +1,84 @@
+<app-sheet
+  cy="settle-sheet"
+  [open]="open()"
+  [heading]="heading()"
+  [description]="t().debts.settle.description"
+  [dismissable]="!facade.saving()"
+  (closed)="close()"
+>
+  @if (open()) {
+    @if (accounts().length === 0) {
+      <div class="empty" data-cy="settle-no-accounts">
+        <p>{{ t().debts.settle.noAccounts }}</p>
+        <a class="button" routerLink="/accounts/new" data-cy="settle-add-account">
+          {{ t().debts.settle.addAccount }}
+        </a>
+      </div>
+    } @else {
+      <form
+        class="form"
+        [formGroup]="form"
+        (ngSubmit)="onSubmit()"
+        novalidate
+        data-cy="settle-form"
+      >
+        <app-select
+          formControlName="accountId"
+          fieldId="settle-account"
+          [options]="accountOptions()"
+          [label]="t().debts.settle.account"
+        />
+        <app-money-input
+          formControlName="amount"
+          fieldId="settle-amount"
+          [currency]="currency"
+          [label]="t().debts.settle.amount"
+          [hint]="amountHint()"
+        />
+        <app-date-picker
+          formControlName="date"
+          fieldId="settle-date"
+          [label]="t().debts.settle.date"
+        />
+        <app-text-field
+          formControlName="description"
+          fieldId="settle-description"
+          autocomplete="off"
+          [maxlength]="200"
+          [mandatory]="false"
+          [label]="t().debts.settle.note"
+        />
+
+        @if (banner(); as message) {
+          <p class="banner" role="alert" data-cy="settle-error">{{ message }}</p>
+        }
+
+        <div class="actions">
+          @if (facade.canRetry()) {
+            <button type="button" class="button" data-cy="settle-retry" (click)="facade.retry()">
+              {{ t().debts.settle.retry }}
+            </button>
+          }
+          <button
+            type="button"
+            class="button"
+            data-cy="settle-cancel"
+            [disabled]="facade.saving()"
+            (click)="close()"
+          >
+            {{ t().debts.settle.cancel }}
+          </button>
+          <button
+            type="submit"
+            class="button button--primary"
+            data-cy="settle-submit"
+            [disabled]="facade.saving()"
+            [attr.aria-busy]="facade.saving()"
+          >
+            {{ facade.saving() ? t().debts.settle.submitting : t().debts.settle.submit }}
+          </button>
+        </div>
+      </form>
+    }
+  }
+</app-sheet>

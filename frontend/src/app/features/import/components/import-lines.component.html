@@ -1,0 +1,178 @@
+<div class="lines" data-cy="import-lines">
+  <div class="head" aria-hidden="true">
+    <span>{{ t().imports.review.date }}</span>
+    <span>{{ t().imports.review.description }}</span>
+    <span class="head__amount">{{ t().imports.review.amount }}</span>
+    <span>{{ t().imports.review.category }}</span>
+    <span>{{ t().imports.review.method }}</span>
+    <span>{{ t().imports.review.status }}</span>
+    <span>{{ t().imports.review.actions }}</span>
+  </div>
+  <ul class="list" [attr.aria-label]="t().imports.review.tableLabel">
+    @for (line of lines(); track line.id; let i = $index) {
+      <li
+        class="line"
+        data-line-row
+        data-cy="import-line"
+        [attr.data-index]="i"
+        [attr.data-status]="line.status"
+        [attr.aria-label]="rowLabel(line)"
+        [attr.tabindex]="i === active() ? 0 : -1"
+        (focus)="active.set(i)"
+        (keydown)="onKeydown($event, i)"
+      >
+        <span class="cell cell--date num">{{ date(line) }}</span>
+        <span class="cell cell--desc">
+          <span class="desc" data-cy="import-line-description">{{ line.description }}</span>
+          @if (line.flags.length > 0) {
+            <span class="flags">
+              @for (flag of line.flags; track flag) {
+                <span class="flag" [attr.data-cy]="'import-flag-' + flag">{{
+                  t().imports.flags[flag]
+                }}</span>
+              }
+            </span>
+            @for (flag of line.flags; track flag) {
+              <span class="help">{{ t().imports.flagHelp[flag] }}</span>
+            }
+          }
+          @if (line.matches.length > 0) {
+            <span class="help" data-cy="import-line-similar">
+              {{ t().imports.review.similar }}:
+              @for (match of line.matches; track match; let n = $index) {
+                @if (n < 3) {
+                  <a [routerLink]="['/transactions', match]" data-cy="import-line-similar-link">{{
+                    t().imports.review.viewSimilar
+                  }}</a>
+                }
+              }
+            </span>
+          }
+        </span>
+        <span class="cell cell--amount">
+          <span class="label">{{ t().imports.review.amount }}</span>
+          <app-money [value]="line.amount" />
+          <span class="dir">{{
+            line.direction === 'IN' ? t().imports.review.in : t().imports.review.out
+          }}</span>
+        </span>
+        <span class="cell cell--cat">
+          <span class="label">{{ t().imports.review.category }}</span>
+          @if (categoryText(line); as name) {
+            <span data-cy="import-line-category">{{ name }}</span>
+            @if (confidence(line); as text) {
+              <span class="help" data-cy="import-line-confidence"
+                >{{ t().imports.review.suggested }}, {{ text }}</span
+              >
+            }
+          } @else {
+            <span class="muted">{{ t().imports.review.noCategory }}</span>
+          }
+        </span>
+        <span class="cell cell--method">
+          <span class="label">{{ t().imports.review.method }}</span>
+          {{ methodText(line) }}
+        </span>
+        <span class="cell cell--status">
+          <span class="label">{{ t().imports.review.status }}</span>
+          <span class="status" data-cy="import-line-status">{{
+            t().imports.lineStatus[line.status]
+          }}</span>
+        </span>
+        @if (editable()) {
+          <span class="cell cell--actions">
+            @switch (line.status) {
+              @case ('POSSIBLE_DUPLICATE') {
+                <button
+                  type="button"
+                  class="button"
+                  data-cy="import-line-other"
+                  [disabled]="busy()"
+                  (click)="accept.emit(line)"
+                >
+                  {{ t().imports.review.otherLaunch }}
+                </button>
+                <button
+                  type="button"
+                  class="button"
+                  data-cy="import-line-same"
+                  [disabled]="busy()"
+                  (click)="reject.emit(line)"
+                >
+                  {{ t().imports.review.sameLaunch }}
+                </button>
+              }
+              @case ('DUPLICATE') {
+                <button
+                  type="button"
+                  class="button"
+                  data-cy="import-line-force"
+                  [disabled]="busy()"
+                  (click)="edit.emit(line)"
+                >
+                  {{ t().imports.review.force }}
+                </button>
+              }
+              @default {
+                @if (line.requiresDecision && line.status === 'PENDING') {
+                  <button
+                    type="button"
+                    class="button button--soft"
+                    data-cy="import-line-decide"
+                    [disabled]="busy()"
+                    (click)="edit.emit(line)"
+                  >
+                    {{ t().imports.review.decide }}
+                  </button>
+                } @else {
+                  @if (line.status !== 'ACCEPTED') {
+                    <button
+                      type="button"
+                      class="button"
+                      data-cy="import-line-accept"
+                      [disabled]="busy()"
+                      (click)="accept.emit(line)"
+                    >
+                      {{ t().imports.review.accept }}
+                    </button>
+                  }
+                  <button
+                    type="button"
+                    class="button"
+                    data-cy="import-line-edit"
+                    [disabled]="busy()"
+                    (click)="edit.emit(line)"
+                  >
+                    {{ t().imports.review.edit }}
+                  </button>
+                }
+                @if (line.status === 'ACCEPTED') {
+                  <button
+                    type="button"
+                    class="button"
+                    data-cy="import-line-reopen"
+                    [disabled]="busy()"
+                    (click)="reopen.emit(line)"
+                  >
+                    {{ t().imports.review.reopen }}
+                  </button>
+                }
+                @if (line.status !== 'REJECTED') {
+                  <button
+                    type="button"
+                    class="button"
+                    data-cy="import-line-reject"
+                    [disabled]="busy()"
+                    (click)="reject.emit(line)"
+                  >
+                    {{ t().imports.review.reject }}
+                  </button>
+                }
+              }
+            }
+          </span>
+        }
+      </li>
+    }
+  </ul>
+</div>

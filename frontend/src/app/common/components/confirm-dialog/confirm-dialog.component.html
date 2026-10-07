@@ -1,0 +1,56 @@
+<app-dialog
+  cy="confirm-dialog"
+  panelCy="confirm-dialog"
+  [open]="open()"
+  [heading]="heading()"
+  [description]="description()"
+  [showClose]="false"
+  [dismissable]="!busy()"
+  (closed)="cancel()"
+>
+  @if (open()) {
+    @if (requireReason()) {
+      <div class="field">
+        <label class="field__label" [for]="reasonId">{{
+          reasonLabel() ?? t().form.dialog.reason
+        }}</label>
+        <textarea
+          class="input dialog__reason"
+          rows="3"
+          required
+          data-autofocus
+          data-cy="confirm-dialog-reason"
+          [id]="reasonId"
+          [attr.maxlength]="reasonMaxLength()"
+          [attr.aria-describedby]="reasonHintId"
+          [value]="reason()"
+          (input)="onReasonInput($event)"
+        ></textarea>
+        <p class="field__hint" [id]="reasonHintId">{{ t().form.dialog.reasonHint }}</p>
+      </div>
+    }
+
+    <div class="dialog__actions">
+      <button
+        type="button"
+        class="button"
+        data-cy="confirm-dialog-cancel"
+        [disabled]="busy()"
+        (click)="cancel()"
+      >
+        {{ cancelLabel() ?? t().form.dialog.cancel }}
+      </button>
+      <button
+        type="button"
+        class="button button--primary"
+        data-cy="confirm-dialog-confirm"
+        [class.dialog__confirm--risk]="tone() === 'risk'"
+        [disabled]="!canConfirm()"
+        [attr.aria-busy]="busy() || null"
+        (click)="confirm()"
+      >
+        {{ confirmLabel() }}
+      </button>
+    </div>
+  }
+</app-dialog>

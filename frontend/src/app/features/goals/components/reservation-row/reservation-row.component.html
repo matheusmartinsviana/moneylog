@@ -1,0 +1,16 @@
+@let r = reservation();
+<div class="row__main">
+  <p class="row__title">
+    <span class="tag" [attr.data-cy]="'reservation-kind-' + r.id">
+      {{ release() ? t().goals.detail.releaseTag : t().goals.detail.reservationTag }}
+    </span>
+    <span [attr.data-cy]="'reservation-account-' + r.id">{{ account() }}</span>
+  </p>
+  <p class="row__meta" [attr.data-cy]="'reservation-date-' + r.id">{{ date() }}</p>
+  @if (r.note) {
+    <p class="row__meta" [attr.data-cy]="'reservation-note-' + r.id">{{ r.note }}</p>
+  }
+</div>
+<p class="row__amount" [attr.data-cy]="'reservation-amount-' + r.id">
+  <app-money [value]="amount()" />
+</p>

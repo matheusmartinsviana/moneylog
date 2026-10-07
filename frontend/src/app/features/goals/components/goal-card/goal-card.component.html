@@ -1,0 +1,66 @@
+@let g = goal();
+<div class="card__head">
+  <a
+    class="card__title"
+    [routerLink]="['/goals', g.id]"
+    [attr.aria-label]="openLabel()"
+    [attr.data-cy]="'goal-open-' + g.id"
+  >
+    {{ g.name }}
+  </a>
+  <p class="card__tags">
+    <span class="tag" [attr.data-cy]="'goal-priority-' + g.id">{{ priority() }}</span>
+    @if (g.status !== 'ACTIVE') {
+      <span
+        class="tag"
+        [class.tag--done]="g.status === 'ACHIEVED'"
+        [attr.data-cy]="'goal-status-' + g.id"
+      >
+        {{ t().goals.status[g.status] }}
+      </span>
+    }
+  </p>
+</div>
+
+<app-progress-bar
+  [fieldId]="'goal-progress-' + g.id"
+  [label]="progressLabel()"
+  [value]="bar()"
+  [valueText]="progressText()"
+  [hideLabel]="true"
+/>
+
+<dl class="card__facts">
+  <div class="fact">
+    <dt class="fact__label">{{ t().goals.card.percentLabel }}</dt>
+    <dd class="fact__value num" [attr.data-cy]="'goal-percent-' + g.id">{{ percent() }}</dd>
+  </div>
+  <div class="fact">
+    <dt class="fact__label">{{ t().goals.card.remainingLabel }}</dt>
+    <dd class="fact__value" [attr.data-cy]="'goal-remaining-' + g.id">
+      <app-money [value]="g.remaining" />
+    </dd>
+  </div>
+</dl>
+
+<p class="card__meta" [attr.data-cy]="'goal-deadline-' + g.id">{{ deadline() }}</p>
+
+@if (g.monthlyNeeded; as monthly) {
+  <p class="card__meta" [attr.data-cy]="'goal-monthly-' + g.id">
+    <span class="tag tag--estimate">{{ t().goals.card.estimate }}</span>
+    <span>{{ t().goals.card.monthlyLabel }}</span>
+    <app-money [value]="monthly" />
+  </p>
+}
+@if (g.status === 'ACHIEVED') {
+  <p class="card__done" [attr.data-cy]="'goal-achieved-' + g.id">{{ t().goals.card.achieved }}</p>
+}
+@if (g.uncovered) {
+  <p class="card__warning" [attr.data-cy]="'goal-uncovered-' + g.id">
+    {{ t().goals.uncovered.title }}
+  </p>
+}
+
+<div class="card__actions">
+  <ng-content />
+</div>

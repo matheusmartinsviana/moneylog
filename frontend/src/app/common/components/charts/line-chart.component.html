@@ -1,0 +1,193 @@
+<!--
+  Posições (top, left) saem das coordenadas do backend convertidas só para desenhar: valor dinâmico, não cabe
+  em classe CSS. O resto do estilo vem do CSS do componente.
+-->
+<!-- eslint-disable @angular-eslint/template/no-inline-styles -->
+<figure class="lc" [attr.data-cy]="cy()">
+  @if (empty()) {
+    <p class="lc__empty" [attr.data-cy]="cy() + '-empty'">{{ t().charts.empty }}</p>
+  } @else {
+    <div
+      class="lc__plot"
+      [class.lc__plot--single]="count() === 1"
+      [class.lc__plot--dense]="count() > 20"
+      role="group"
+      tabindex="0"
+      [attr.aria-label]="label()"
+      [attr.aria-describedby]="hintId"
+      [attr.data-cy]="cy() + '-plot'"
+      (pointermove)="onPointer($event)"
+      (pointerdown)="onPointer($event)"
+      (pointerleave)="onPointerLeave($event)"
+      (pointercancel)="onPointerCancel()"
+      (keydown)="onKeydown($event)"
+      (blur)="onBlur()"
+    >
+      <svg
+        class="lc__svg"
+        [class.is-pending]="pending()"
+        [attr.viewBox]="'0 0 ' + width + ' ' + height"
+        preserveAspectRatio="none"
+        role="img"
+        [attr.aria-label]="summary()"
+        focusable="false"
+      >
+        @for (y of gridY(); track y) {
+          <line class="lc__grid" x1="0" [attr.x2]="width" [attr.y1]="y" [attr.y2]="y" />
+        }
+        @for (item of drawn(); track item.series.id) {
+          @if (item.area) {
+            <path
+              class="lc__area"
+              [attr.d]="item.area"
+              [attr.data-cy]="cy() + '-area-' + item.series.id"
+            />
+          }
+          @if (item.line) {
+            <path
+              class="lc__line"
+              [class.lc__line--secondary]="item.series.tone === 'secondary'"
+              [attr.d]="item.line"
+              [attr.data-cy]="cy() + '-line-' + item.series.id"
+            />
+          }
+        }
+        @if (tip(); as tip) {
+          <line
+            class="lc__guide"
+            [attr.x1]="tip.leftPct * 10"
+            [attr.x2]="tip.leftPct * 10"
+            y1="0"
+            [attr.y2]="height"
+          />
+        }
+      </svg>
+
+      @if (maxLabel(); as max) {
+        <span class="lc__y" [style.top.%]="max.topPct" [attr.data-cy]="cy() + '-y-max'">{{
+          max.text
+        }}</span>
+      }
+      @if (minLabel(); as min) {
+        <span class="lc__y" [style.top.%]="min.topPct" [attr.data-cy]="cy() + '-y-min'">{{
+          min.text
+        }}</span>
+      }
+      <span class="lc__y lc__y--zero" [style.top.%]="zeroTopPct()" [attr.data-cy]="cy() + '-y-zero'"
+        >0</span
+      >
+
+      @if (count() === 1) {
+        @for (item of drawn(); track item.series.id) {
+          <span
+            class="lc__dot"
+            [class.lc__dot--secondary]="item.series.tone === 'secondary'"
+            [style.left.%]="item.dots[0]?.leftPct"
+            [style.top.%]="item.dots[0]?.topPct"
+          ></span>
+        }
+      }
+
+      @if (tip(); as tip) {
+        @for (row of tip.rows; track row.id) {
+          <span
+            class="lc__dot"
+            [class.lc__dot--secondary]="row.tone === 'secondary'"
+            [style.left.%]="tip.leftPct"
+            [style.top.%]="row.topPct"
+          ></span>
+        }
+        <div
+          class="lc__tip"
+          [class.lc__tip--flip]="tip.flip"
+          [style.left.%]="tip.leftPct"
+          aria-hidden="true"
+          [attr.data-cy]="cy() + '-tooltip'"
+        >
+          <strong class="lc__tip-title">{{ tip.label }}</strong>
+          @for (row of tip.rows; track row.id) {
+            <span class="lc__tip-row">
+              <span
+                class="lc__swatch"
+                [class.lc__swatch--secondary]="row.tone === 'secondary'"
+              ></span>
+              <span class="lc__tip-label">{{ row.label }}</span>
+              <span class="num">{{ row.value }}</span>
+            </span>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="lc__axis" aria-hidden="true">
+      @for (tick of axisLabels(); track tick.leftPct) {
+        <span
+          class="lc__tick"
+          [attr.data-edge]="tick.edge"
+          [style.left.%]="tick.leftPct"
+          [style.max-width.%]="tick.maxPct"
+          >{{ tick.text }}</span
+        >
+      }
+    </div>
+    <p class="visually-hidden" [id]="hintId">{{ t().charts.keyboardHint }}</p>
+
+    <ul class="lc__legend" [attr.data-cy]="cy() + '-legend'">
+      @for (item of series(); track item.id) {
+        <li class="lc__legend-item">
+          <span
+            class="lc__swatch"
+            [class.lc__swatch--secondary]="item.tone === 'secondary'"
+            aria-hidden="true"
+          ></span>
+          {{ item.label }}
+        </li>
+      }
+    </ul>
+
+    <button
+      type="button"
+      class="button lc__toggle"
+      [attr.aria-expanded]="tableOpen()"
+      [attr.aria-controls]="tableId"
+      [attr.data-cy]="cy() + '-table-toggle'"
+      (click)="toggleTable()"
+    >
+      {{ tableOpen() ? t().charts.hideTable : t().charts.viewAsTable }}
+    </button>
+    <!-- A tabela equivalente existe sempre no DOM: escondida para quem vê, aberta pelo botão. -->
+    <div
+      class="lc__table"
+      [id]="tableId"
+      [class.visually-hidden]="!tableOpen()"
+      [attr.data-cy]="cy() + '-table'"
+    >
+      <table>
+        <caption>
+          {{
+            label()
+          }}
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">{{ t().charts.periodColumn }}</th>
+            @for (item of series(); track item.id) {
+              <th scope="col">{{ item.label }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track $index) {
+            <tr>
+              <th scope="row">{{ row.label }}</th>
+              @for (cell of row.cells; track $index) {
+                <td class="num">{{ cell }}</td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</figure>
+<!-- eslint-enable @angular-eslint/template/no-inline-styles -->

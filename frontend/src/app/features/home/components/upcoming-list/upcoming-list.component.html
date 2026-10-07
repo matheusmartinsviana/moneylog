@@ -1,0 +1,115 @@
+@if (upcoming().overdueTruncated) {
+  <p class="truncated" role="status" data-cy="home-upcoming-truncated">
+    {{ t().home.upcoming.overdueTruncated }}
+  </p>
+}
+@if (hasItems()) {
+  @for (group of groups(); track group.key) {
+    <section class="group" [attr.data-cy]="'home-upcoming-group-' + group.key">
+      <h3 class="group__title" [class.is-negative]="group.key === 'OVERDUE'">{{ group.label }}</h3>
+      <ul class="items">
+        @for (view of group.items; track $index) {
+          <li
+            class="item"
+            [class.item--incoming]="view.incoming"
+            data-cy="home-upcoming-item"
+            [attr.data-kind]="view.item.kind"
+          >
+            <div class="item__row">
+              <div class="item__main">
+                @if (view.debtLink; as link) {
+                  <a
+                    class="item__label item__link"
+                    [routerLink]="link"
+                    [attr.data-cy]="
+                      view.item.refType === 'TRANSACTION'
+                        ? 'home-upcoming-transaction-link'
+                        : 'home-upcoming-debt-link'
+                    "
+                    >{{ view.item.label }}</a
+                  >
+                } @else {
+                  <span class="item__label">{{ view.item.label }}</span>
+                }
+                <span class="item__meta">
+                  <span data-cy="home-upcoming-kind">{{ view.kind }}</span>
+                  @if (view.incoming && view.item.kind !== 'DEBT_RECEIVABLE') {
+                    <span data-cy="home-upcoming-incoming">{{ t().home.upcoming.incoming }}</span>
+                  }
+                  @if (view.due) {
+                    <span>{{ view.due }}</span>
+                  }
+                </span>
+              </div>
+              <span class="item__amount" data-cy="home-upcoming-amount">
+                <app-money [value]="view.item.amount" />
+              </span>
+            </div>
+            @if (view.realizable) {
+              <div class="item__actions">
+                <button
+                  type="button"
+                  class="button"
+                  data-cy="home-upcoming-realize"
+                  [attr.aria-label]="view.realizeLabel"
+                  (click)="realize.emit(view.item)"
+                >
+                  {{ t().home.upcoming.realize }}
+                </button>
+              </div>
+            }
+            @if (view.item.items.length > 0) {
+              <app-disclosure
+                class="nested"
+                [fieldId]="'home-upcoming-installments-' + group.key + '-' + $index"
+                [heading]="t().home.upcoming.installments"
+                [summary]="'' + view.item.items.length"
+                [headingLevel]="4"
+                [lazy]="true"
+              >
+                <ul class="installments" [attr.aria-label]="t().home.upcoming.installments">
+                  @for (installment of view.item.items; track $index) {
+                    <li class="installment" data-cy="home-upcoming-installment">
+                      <span>
+                        {{ installment.label }}
+                        <span class="num"
+                          >{{ installment.installment.number }}/{{
+                            installment.installment.total
+                          }}</span
+                        >
+                      </span>
+                      <app-money [value]="installment.amount" />
+                    </li>
+                  }
+                </ul>
+              </app-disclosure>
+            }
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  <dl class="ledger totals">
+    <div class="ledger__row ledger__row--total">
+      <dt class="ledger__label">{{ t().home.upcoming.totalOut }}</dt>
+      <dd class="ledger__value" data-cy="home-upcoming-total-out">
+        <app-money [value]="upcoming().totals.out" />
+      </dd>
+    </div>
+    <div class="ledger__row">
+      <dt class="ledger__label">{{ t().home.upcoming.totalIn }}</dt>
+      <dd class="ledger__value" data-cy="home-upcoming-total-in">
+        <app-money [value]="upcoming().totals.in" />
+      </dd>
+    </div>
+  </dl>
+  <p class="note" data-cy="home-upcoming-in-note">{{ t().home.upcoming.totalInNote }}</p>
+  @if (hasRecurrence()) {
+    <a class="link" routerLink="/planning/occurrences" data-cy="home-upcoming-pending">
+      {{ t().home.upcoming.openPending }}
+    </a>
+  }
+} @else {
+  <p class="empty" data-cy="home-upcoming-empty">{{ t().home.upcoming.empty }}</p>
+}

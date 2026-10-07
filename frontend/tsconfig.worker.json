@@ -1,0 +1,10 @@
+/* Web Workers (Markdown, F1): o mesmo projeto, mas com a biblioteca `webworker` no lugar de `DOM`. */
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2023", "webworker"],
+    "types": []
+  },
+  "include": ["src/**/*.worker.ts"],
+  "exclude": ["src/**/*.spec.ts"]
+}

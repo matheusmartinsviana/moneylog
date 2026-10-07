@@ -1,0 +1,91 @@
+<div class="wide">
+  <table class="table" data-cy="entries-table">
+    <thead>
+      <tr>
+        <th scope="col">{{ t().transactions.columns.competence }}</th>
+        <th scope="col">{{ t().transactions.columns.date }}</th>
+        <th scope="col">{{ t().transactions.columns.description }}</th>
+        <th scope="col">{{ t().transactions.columns.category }}</th>
+        <th scope="col">{{ t().transactions.columns.method }}</th>
+        <th scope="col" class="table__amount">{{ t().transactions.columns.amount }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (entry of items(); track $index; let first = $first) {
+        <tr
+          class="row"
+          [attr.data-cy]="'entry-row-' + $index"
+          [attr.tabindex]="first ? 0 : -1"
+          [attr.aria-label]="openLabel(entry)"
+          (click)="open.emit(entry)"
+          (keydown)="onKeydown($event, entry)"
+        >
+          <td>{{ competence(entry) }}</td>
+          <td class="num">{{ date(entry) }}</td>
+          <td>{{ description(entry) }}</td>
+          <td>{{ entry.category.name }}</td>
+          <td>{{ entry.method ? t().transactions.methods[entry.method] : '' }}</td>
+          <td class="table__amount num" [class.is-negative]="negative(entry.amount)">
+            <app-money [value]="entry.amount" />
+          </td>
+        </tr>
+      }
+      @for (debt of debtItems(); track debt.debtId; let i = $index) {
+        <tr
+          class="row"
+          tabindex="-1"
+          [attr.data-cy]="'debt-entry-row-' + i"
+          [attr.aria-label]="debtLabel(debt)"
+          (click)="openDebt.emit(debt)"
+          (keydown.enter)="openDebt.emit(debt)"
+        >
+          <td>{{ debtCompetence(debt) }}</td>
+          <td class="num">{{ date(debt) }}</td>
+          <td>{{ debt.description }}</td>
+          <td>{{ debt.category.name }}</td>
+          <td>{{ t().transactions.debtEntry }}</td>
+          <td class="table__amount num"><app-money [value]="debt.amount" /></td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
+<ul class="narrow" data-cy="entries-list">
+  @for (entry of items(); track $index) {
+    <li
+      class="item"
+      tabindex="0"
+      [attr.data-cy]="'entry-item-' + $index"
+      [attr.aria-label]="openLabel(entry)"
+      (click)="open.emit(entry)"
+      (keydown.enter)="open.emit(entry)"
+    >
+      <div class="item__main">
+        <span class="item__description">{{ description(entry) }}</span>
+        <span class="item__meta">{{ entry.category.name }} · {{ competence(entry) }}</span>
+      </div>
+      <span class="item__amount" [class.is-negative]="negative(entry.amount)"
+        ><app-money [value]="entry.amount"
+      /></span>
+    </li>
+  }
+  @for (debt of debtItems(); track debt.debtId; let i = $index) {
+    <li
+      class="item"
+      tabindex="0"
+      [attr.data-cy]="'debt-entry-item-' + i"
+      [attr.aria-label]="debtLabel(debt)"
+      (click)="openDebt.emit(debt)"
+      (keydown.enter)="openDebt.emit(debt)"
+    >
+      <div class="item__main">
+        <span class="item__description">{{ debt.description }}</span>
+        <span class="item__meta"
+          >{{ t().transactions.debtEntry }} · {{ debt.category.name }} ·
+          {{ debtCompetence(debt) }}</span
+        >
+      </div>
+      <span class="item__amount"><app-money [value]="debt.amount" /></span>
+    </li>
+  }
+</ul>

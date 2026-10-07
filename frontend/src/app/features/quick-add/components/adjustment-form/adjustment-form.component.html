@@ -1,0 +1,59 @@
+<form
+  class="form surface"
+  [formGroup]="form"
+  (ngSubmit)="onSubmit()"
+  novalidate
+  data-cy="adjustment-form"
+>
+  <p class="form__help" data-cy="adjustment-help">{{ t().entryForm.adjustment.help }}</p>
+  <app-money-input
+    formControlName="amount"
+    fieldId="entry-amount"
+    [currency]="currency"
+    [label]="t().entryForm.amount"
+  />
+  <app-select
+    formControlName="accountId"
+    fieldId="entry-account"
+    [options]="accountOptions()"
+    [label]="t().entryForm.account"
+  />
+  <app-segmented-control
+    formControlName="direction"
+    fieldId="entry-direction"
+    [options]="directionOptions()"
+    [label]="t().entryForm.adjustment.direction"
+  />
+  <app-segmented-control
+    formControlName="kind"
+    fieldId="entry-kind"
+    [options]="kindOptions()"
+    [label]="t().entryForm.adjustment.kind"
+  />
+  <app-text-field
+    formControlName="reason"
+    fieldId="entry-reason"
+    autocomplete="off"
+    [maxlength]="500"
+    [label]="t().entryForm.adjustment.reason"
+  />
+  <app-date-picker formControlName="date" fieldId="entry-date" [label]="t().entryForm.date" />
+  <app-text-field
+    formControlName="description"
+    fieldId="entry-description"
+    autocomplete="off"
+    [maxlength]="200"
+    [mandatory]="false"
+    [label]="t().entryForm.description"
+    [hint]="descriptionHint()"
+  />
+
+  <app-form-actions
+    [banner]="banner()"
+    [canRetry]="canRetry()"
+    [saving]="saving()"
+    [submitLabel]="submitLabel()"
+    [cancelLink]="cancelLink()"
+    (retry)="retry.emit()"
+  />
+</form>

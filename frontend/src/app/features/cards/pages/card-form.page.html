@@ -1,0 +1,136 @@
+<app-page-layout [heading]="editing() ? t().cards.form.editTitle : t().cards.form.createTitle">
+  @if (editing() && !card() && facade.loadStatus().status === 'loading') {
+    <div data-cy="card-form-loading">
+      <p class="visually-hidden" role="status">{{ t().cards.loading }}</p>
+      <div class="list-skeleton" aria-hidden="true">
+        <div class="list-skeleton__row"></div>
+        <div class="list-skeleton__row"></div>
+      </div>
+    </div>
+  } @else if (notFound()) {
+    <app-empty-state
+      [heading]="t().cards.form.notFound.title"
+      [description]="t().cards.form.notFound.description"
+      [actions]="[
+        {
+          id: 'back',
+          label: t().cards.form.notFound.back,
+          available: true,
+          primary: true,
+          link: '/cards',
+        },
+      ]"
+      illustration="grid"
+    />
+  } @else if (loadProblem()) {
+    <app-error-state [problem]="loadProblem()" (retry)="retryLoad()" />
+  } @else if (!editing() || card()) {
+    <form
+      class="form surface"
+      [formGroup]="form"
+      (ngSubmit)="onSubmit()"
+      novalidate
+      data-cy="card-form"
+    >
+      @if (conflict()) {
+        <p class="banner" role="alert" data-cy="card-form-conflict">
+          {{ t().cards.form.conflict }}
+        </p>
+      }
+      @if (banner(); as message) {
+        <p class="banner" role="alert" data-cy="card-form-error">{{ message }}</p>
+      }
+
+      <app-text-field
+        formControlName="name"
+        fieldId="card-name"
+        autocomplete="off"
+        [maxlength]="100"
+        [label]="t().cards.form.name"
+      />
+      <app-text-field
+        formControlName="institution"
+        fieldId="card-institution"
+        autocomplete="off"
+        [maxlength]="100"
+        [mandatory]="false"
+        [label]="t().cards.form.institution"
+        [hint]="t().cards.form.optional"
+      />
+      <app-money-input
+        formControlName="limit"
+        fieldId="card-limit"
+        [currency]="currency"
+        [label]="t().cards.form.limit"
+      />
+      <div class="form__days">
+        <app-number-stepper
+          formControlName="closingDay"
+          fieldId="card-closing-day"
+          [min]="1"
+          [max]="maxDay"
+          [valueText]="dayText()"
+          [label]="t().cards.form.closingDay"
+        />
+        <app-number-stepper
+          formControlName="dueDay"
+          fieldId="card-due-day"
+          [min]="1"
+          [max]="maxDay"
+          [valueText]="dayText()"
+          [label]="t().cards.form.dueDay"
+        />
+      </div>
+      <p class="form__hint">{{ t().cards.form.daysHint }}</p>
+
+      @if (daysChanged()) {
+        <app-billing-change-notice
+          [preview]="billing.data()"
+          [loading]="billing.loading()"
+          [problem]="billing.problem()"
+          [stale]="staleBilling()"
+          (retry)="retryBillingPreview()"
+        />
+      }
+
+      <app-select
+        formControlName="defaultPaymentAccountId"
+        fieldId="card-default-account"
+        [options]="accountOptions()"
+        [mandatory]="false"
+        [emptyLabel]="t().cards.form.noDefaultAccount"
+        [label]="t().cards.form.defaultAccount"
+        [hint]="
+          accountOptions().length === 0
+            ? t().cards.form.noAccounts
+            : t().cards.form.defaultAccountHint
+        "
+      />
+
+      <p class="form__hint" data-cy="card-form-privacy">{{ t().cards.form.privacy }}</p>
+
+      @if (waitingPreview() && !billing.loading() && !billing.problem()) {
+        <p class="form__hint" data-cy="card-form-waiting">{{ t().cards.billingChange.waiting }}</p>
+      }
+
+      <div class="form__actions">
+        <a
+          class="button"
+          [routerLink]="editing() ? ['/cards', id()] : ['/cards']"
+          data-cy="card-form-cancel"
+        >
+          {{ t().cards.form.cancel }}
+        </a>
+        <button
+          type="submit"
+          class="button button--primary"
+          data-cy="card-form-save"
+          [disabled]="facade.saving() || waitingPreview()"
+          [attr.aria-busy]="facade.saving()"
+        >
+          {{ facade.saving() ? t().cards.form.saving : t().cards.form.save }}
+        </button>
+      </div>
+    </form>
+  }
+</app-page-layout>

@@ -1,0 +1,83 @@
+<app-sheet
+  cy="pay-sheet"
+  [open]="open()"
+  [heading]="heading()"
+  [description]="t().cards.pay.description"
+  [dismissable]="!facade.saving()"
+  (closed)="close()"
+>
+  @if (open()) {
+    @if (accounts().length === 0) {
+      <div class="empty" data-cy="pay-no-accounts">
+        <p>{{ t().cards.pay.noAccounts }}</p>
+        <a class="button" routerLink="/accounts/new" data-cy="pay-add-account">
+          {{ t().cards.pay.addAccount }}
+        </a>
+      </div>
+    } @else {
+      <form class="form" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate data-cy="pay-form">
+        <app-select
+          formControlName="accountId"
+          fieldId="pay-account"
+          [options]="accountOptions()"
+          [label]="t().cards.pay.account"
+        />
+        <app-money-input
+          formControlName="amount"
+          fieldId="pay-amount"
+          [currency]="currency"
+          [label]="t().cards.pay.amount"
+          [hint]="t().cards.pay.amountHint"
+        />
+        <app-date-picker formControlName="date" fieldId="pay-date" [label]="t().cards.pay.date" />
+
+        <div class="preview" role="status" aria-live="polite" data-cy="pay-preview">
+          @if (facade.previewLoading()) {
+            <p data-cy="pay-preview-loading">{{ t().cards.pay.preview.loading }}</p>
+          } @else if (facade.previewState().status === 'error') {
+            <p data-cy="pay-preview-unavailable">{{ t().cards.pay.preview.unavailable }}</p>
+          } @else if (previewText(); as text) {
+            <p data-cy="pay-preview-text" [attr.data-kind]="facade.previewData()?.kind">
+              {{ text }}
+            </p>
+          }
+          @if (scheduled()) {
+            <p class="preview__scheduled" data-cy="pay-scheduled">
+              {{ t().cards.pay.scheduled }}
+            </p>
+          }
+        </div>
+
+        @if (banner(); as message) {
+          <p class="banner" role="alert" data-cy="pay-error">{{ message }}</p>
+        }
+
+        <div class="actions">
+          @if (facade.canRetry()) {
+            <button type="button" class="button" data-cy="pay-retry" (click)="facade.retry()">
+              {{ t().cards.pay.retry }}
+            </button>
+          }
+          <button
+            type="button"
+            class="button"
+            data-cy="pay-cancel"
+            [disabled]="facade.saving()"
+            (click)="close()"
+          >
+            {{ t().cards.pay.cancel }}
+          </button>
+          <button
+            type="submit"
+            class="button button--primary"
+            data-cy="pay-submit"
+            [disabled]="facade.saving()"
+            [attr.aria-busy]="facade.saving()"
+          >
+            {{ facade.saving() ? t().cards.pay.submitting : t().cards.pay.submit }}
+          </button>
+        </div>
+      </form>
+    }
+  }
+</app-sheet>

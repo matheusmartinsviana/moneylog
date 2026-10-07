@@ -1,0 +1,98 @@
+<app-page-layout [heading]="t().nav.people">
+  <a pageActions class="button button--primary" routerLink="/people/new" data-cy="people-add">
+    {{ t().people.add }}
+  </a>
+
+  <nav class="tabs" [attr.aria-label]="t().people.tabsLabel" data-cy="people-tabs">
+    <a
+      class="tab"
+      routerLink="/people"
+      data-cy="people-tab-active"
+      [attr.aria-current]="filter() === 'ACTIVE' ? 'page' : null"
+    >
+      {{ t().people.active }}
+    </a>
+    <a
+      class="tab"
+      routerLink="/people"
+      [queryParams]="{ status: 'ARCHIVED' }"
+      data-cy="people-tab-archived"
+      [attr.aria-current]="filter() === 'ARCHIVED' ? 'page' : null"
+    >
+      {{ t().people.archivedTab }}
+    </a>
+  </nav>
+
+  <div class="search">
+    <app-text-field
+      [formControl]="search"
+      fieldId="people-search"
+      autocomplete="off"
+      [maxlength]="100"
+      [mandatory]="false"
+      [label]="t().people.searchLabel"
+    />
+  </div>
+
+  @switch (people.state().status) {
+    @case ('loading') {
+      <div data-cy="people-loading">
+        <p class="visually-hidden" role="status">{{ t().people.loading }}</p>
+        <div class="list-skeleton" aria-hidden="true">
+          <div class="list-skeleton__row"></div>
+          <div class="list-skeleton__row"></div>
+          <div class="list-skeleton__row"></div>
+        </div>
+      </div>
+    }
+    @case ('empty') {
+      @if (people.query() !== '') {
+        <p class="empty-note" role="status" data-cy="people-empty-search">
+          {{ t().people.emptySearch }}
+        </p>
+      } @else if (filter() === 'ACTIVE') {
+        <app-empty-state
+          [heading]="t().emptyState.people.title"
+          [description]="t().emptyState.people.description"
+          [actions]="emptyActions()"
+          illustration="grid"
+        />
+      } @else {
+        <p class="empty-note" data-cy="people-empty-archived">{{ t().people.emptyArchived }}</p>
+      }
+    }
+    @case ('error') {
+      <app-error-state [problem]="people.error()" (retry)="retry()" />
+    }
+    @case ('ready') {
+      @if (people.data(); as data) {
+        <div class="table-head" aria-hidden="true">
+          <span>{{ t().people.columns.name }}</span>
+          <span>{{ t().people.columns.balance }}</span>
+          <span>{{ t().people.columns.nextDue }}</span>
+          <span class="table-head__actions">{{ t().people.columns.actions }}</span>
+        </div>
+        <ul class="list" data-cy="people-list">
+          @for (person of data; track person.id) {
+            <li
+              app-person-row
+              [person]="person"
+              (archive)="askArchive($event)"
+              (unarchive)="unarchive($event)"
+            ></li>
+          }
+        </ul>
+      }
+    }
+  }
+
+  <app-confirm-dialog
+    [open]="pendingArchive() !== null"
+    [heading]="confirmTitle()"
+    [description]="t().people.archiveConfirm.description"
+    [confirmLabel]="t().people.archiveConfirm.confirm"
+    [busy]="busy()"
+    (confirmed)="confirmArchive()"
+    (cancelled)="cancelArchive()"
+  />
+</app-page-layout>

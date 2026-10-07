@@ -1,0 +1,260 @@
+<app-page-layout [heading]="heading()">
+  <a pageActions class="button" routerLink="/notes" data-cy="note-back">
+    {{ t().notes.editor.back }}
+  </a>
+
+  @switch (loadStatus().status) {
+    @case ('error') {
+      @if (notFound()) {
+        <app-empty-state
+          [heading]="t().notes.editor.notFound.title"
+          [description]="t().notes.editor.notFound.description"
+          [actions]="[
+            {
+              id: 'back',
+              label: t().notes.editor.notFound.back,
+              available: true,
+              primary: true,
+              link: '/notes',
+            },
+          ]"
+          illustration="document"
+        />
+      } @else {
+        <app-error-state [problem]="loadProblem()" (retry)="retry()" />
+      }
+    }
+    @case ('ready') {
+      @if (note(); as n) {
+        <div class="meta" data-cy="note-meta">
+          <span class="meta__path" data-cy="note-path"
+            ><bdi>{{ n.path | displayText }}</bdi></span
+          >
+          <span class="meta__updated" data-cy="note-updated">{{ updated() }}</span>
+        </div>
+        <p class="storage" data-cy="note-storage">{{ t().notes.editorStorage }}</p>
+
+        @if (trashed()) {
+          <div class="banner banner--info" role="status" data-cy="note-trashed">
+            <p>{{ t().notes.editor.trashed }}</p>
+            <button
+              type="button"
+              class="button button--primary"
+              data-cy="note-restore"
+              [disabled]="facade.busy()"
+              (click)="facade.restore()"
+            >
+              {{ t().notes.editor.restore }}
+            </button>
+          </div>
+        }
+
+        @if (draftRecovered()) {
+          <div class="banner banner--info" role="status" data-cy="note-draft-recovered">
+            <p>{{ t().notes.editor.draftRecovered }}</p>
+            <button
+              type="button"
+              class="button"
+              data-cy="note-draft-discard"
+              (click)="discardDraft()"
+            >
+              {{ t().notes.editor.draftDiscard }}
+            </button>
+          </div>
+        }
+
+        <div class="bar">
+          <p class="bar__status" role="status" data-cy="note-status" [class.is-dirty]="dirty()">
+            {{ statusText() }}
+          </p>
+          <div class="bar__actions">
+            @if (!trashed()) {
+              <button
+                type="button"
+                class="button button--primary"
+                data-cy="note-save"
+                [attr.aria-disabled]="!canSave() || null"
+                [attr.aria-busy]="facade.saving() || null"
+                (click)="save()"
+              >
+                {{ facade.saving() ? t().notes.editor.saving : t().notes.editor.save }}
+              </button>
+              <app-menu
+                fieldId="note-menu"
+                [label]="t().notes.editor.moreActions"
+                [items]="menuItems()"
+                (selected)="onMenu($event)"
+              />
+            }
+          </div>
+        </div>
+
+        @if (problemText(); as message) {
+          <p class="banner" role="alert" data-cy="note-error">{{ message }}</p>
+        }
+
+        @if (conflict(); as c) {
+          <app-conflict-panel
+            [remote]="c.remote.body"
+            [mine]="draft()"
+            [during]="c.during"
+            [canKeepMine]="canKeepMine()"
+            [busy]="facade.busy()"
+            (keepMine)="keepMine()"
+            (useRemote)="facade.acceptRemote()"
+          />
+        }
+
+        @if (lastMove(); as moved) {
+          <div class="note-box" role="status" data-cy="note-moved">
+            <p>
+              @if (moved.length === 0) {
+                {{ t().notes.editor.move.rewrittenNone }}
+              } @else if (moved.length === 1) {
+                {{ t().notes.editor.move.rewrittenOne }}
+              } @else {
+                {{ countText(moved.length) }}
+              }
+            </p>
+            @if (moved.length > 0) {
+              <ul class="note-box__list" data-cy="note-moved-list">
+                @for (ref of moved; track ref.id) {
+                  <li>
+                    <a [routerLink]="['/notes', ref.id]" [attr.data-cy]="'note-moved-' + ref.id">{{
+                      ref.title
+                    }}</a>
+                  </li>
+                }
+              </ul>
+            }
+            <button
+              type="button"
+              class="button"
+              data-cy="note-moved-dismiss"
+              (click)="lastMove.set(null)"
+            >
+              {{ t().notes.editor.move.dismiss }}
+            </button>
+          </div>
+        }
+
+        <div class="tags" data-cy="note-tags">
+          @for (tag of n.tags; track tag) {
+            <app-chip [label]="'#' + tag" [cy]="'note-tag-' + tag" />
+          } @empty {
+            <span class="tags__none">{{ t().notes.editor.tagsEmpty }}</span>
+          }
+        </div>
+
+        <ng-template #editorTpl>
+          <app-markdown-editor [control]="text" [readonly]="trashed()" (saveRequested)="save()" />
+        </ng-template>
+        <ng-template #previewTpl>
+          <section
+            class="preview"
+            [attr.aria-label]="t().notes.editor.previewLabel"
+            data-cy="note-preview"
+          >
+            <app-markdown-view
+              [source]="previewText()"
+              [links]="n.links"
+              (createNote)="askCreate($event)"
+            />
+          </section>
+        </ng-template>
+
+        @if (viewport.compact()) {
+          <app-tabs
+            fieldId="note-mode"
+            [tabs]="modeTabs()"
+            [label]="t().notes.editor.modeLabel"
+            [(active)]="mode"
+          >
+            <ng-template appTabPanel="write">
+              <ng-container [ngTemplateOutlet]="editorTpl" />
+            </ng-template>
+            <ng-template appTabPanel="read">
+              <ng-container [ngTemplateOutlet]="previewTpl" />
+            </ng-template>
+          </app-tabs>
+        } @else {
+          <div class="split" data-cy="note-split">
+            <ng-container [ngTemplateOutlet]="editorTpl" />
+            <ng-container [ngTemplateOutlet]="previewTpl" />
+          </div>
+        }
+
+        <app-note-links-panel
+          [note]="n"
+          [backlinks]="facade.backlinks()"
+          [readonly]="trashed()"
+          [busy]="facade.busy()"
+          (addLink)="openPicker()"
+          (removeLink)="removeLink($event)"
+          (createNote)="askCreate($event)"
+          (retryBacklinks)="facade.reloadBacklinks()"
+        />
+
+        <app-link-picker-sheet
+          [open]="pickerOpen()"
+          [existing]="explicitRefs()"
+          [busy]="facade.busy()"
+          [problem]="pickerProblem()"
+          (closed)="closePicker()"
+          (chosen)="addLink($event)"
+        />
+        <app-move-note-sheet
+          [open]="moveOpen()"
+          [currentPath]="n.path"
+          [dirty]="dirty()"
+          [busy]="facade.busy()"
+          [problem]="moveProblem()"
+          (closed)="closeMove()"
+          (submitted)="facade.move($event)"
+        />
+        <app-new-note-sheet
+          [open]="createFromLink() !== null"
+          [suggestedName]="createFromLink() ? noteName(createFromLink()!) : ''"
+          [suggestedFolder]="createFromLink() ? noteFolder(createFromLink()!) : ''"
+          (closed)="createFromLink.set(null)"
+          (created)="createdFromLink()"
+        />
+        <app-confirm-dialog
+          [open]="confirmingTrash()"
+          [heading]="t().notes.editor.trashConfirm.title"
+          [description]="
+            dirty()
+              ? t().notes.editor.trashConfirm.description +
+                ' ' +
+                t().notes.editor.trashConfirm.dirty
+              : t().notes.editor.trashConfirm.description
+          "
+          [confirmLabel]="t().notes.editor.trashConfirm.confirm"
+          [busy]="facade.busy()"
+          (confirmed)="facade.trash()"
+          (cancelled)="cancelTrash()"
+        />
+      }
+    }
+    @default {
+      <div data-cy="note-loading">
+        <p class="visually-hidden" role="status">{{ t().notes.editor.loading }}</p>
+        <div class="list-skeleton" aria-hidden="true">
+          <div class="list-skeleton__row"></div>
+          <div class="list-skeleton__row"></div>
+        </div>
+      </div>
+    }
+  }
+
+  <app-confirm-dialog
+    [open]="leaving()"
+    [heading]="t().notes.editor.leave.title"
+    [description]="t().notes.editor.leave.description"
+    [confirmLabel]="t().notes.editor.leave.confirm"
+    [cancelLabel]="t().notes.editor.leave.stay"
+    tone="risk"
+    (confirmed)="answerLeave(true)"
+    (cancelled)="answerLeave(false)"
+  />
+</app-page-layout>

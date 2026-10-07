@@ -1,0 +1,43 @@
+{
+  "$schema": "./node_modules/@angular/service-worker/config/schema.json",
+  "index": "/index.html",
+  "assetGroups": [
+    {
+      "name": "app-shell",
+      "installMode": "prefetch",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": ["/index.html", "/manifest.webmanifest", "/*.css", "/*.js"]
+      }
+    },
+    {
+      "name": "fonts",
+      "installMode": "prefetch",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": [
+          "/media/geist-latin-*.woff2",
+          "/media/geist-latin-ext-*.woff2",
+          "/media/geist-mono-latin-*.woff2",
+          "/media/geist-mono-latin-ext-*.woff2"
+        ]
+      }
+    },
+    {
+      "name": "fonts-other-scripts",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": ["/media/*.woff2"]
+      }
+    },
+    {
+      "name": "images",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": ["/assets/**/*.(svg|png|ico|webp|avif)"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+@let c = category();
+@if (editing()) {
+  <div class="row__edit">
+    <app-text-field
+      class="row__field"
+      [formControl]="name"
+      [fieldId]="'category-rename-input-' + c.id"
+      [label]="t().categories.renameLabel"
+      [hint]="t().categories.renameHint"
+      [maxlength]="maxLength"
+      autocomplete="off"
+    />
+    <div class="row__actions">
+      <button
+        type="button"
+        class="button"
+        [attr.data-cy]="'category-rename-cancel-' + c.id"
+        (click)="renameCancel.emit()"
+      >
+        {{ t().categories.cancel }}
+      </button>
+      <button
+        type="button"
+        class="button button--primary"
+        [attr.data-cy]="'category-rename-save-' + c.id"
+        [disabled]="busy()"
+        (click)="submit()"
+      >
+        {{ t().categories.save }}
+      </button>
+    </div>
+  </div>
+} @else {
+  <div class="row__main">
+    <span class="row__name" [attr.data-cy]="'category-name-' + c.id">{{ c.name }}</span>
+    @if (c.system) {
+      <span class="row__tag" [attr.data-cy]="'category-system-' + c.id">{{
+        t().categories.system
+      }}</span>
+    }
+  </div>
+  <div class="row__actions">
+    @if (!c.archived) {
+      <button
+        type="button"
+        class="button"
+        [attr.data-cy]="'category-rename-' + c.id"
+        (click)="renameStart.emit(c)"
+      >
+        {{ t().categories.rename }}
+      </button>
+      <button
+        type="button"
+        class="button"
+        [attr.data-cy]="'category-archive-' + c.id"
+        (click)="archive.emit(c)"
+      >
+        {{ t().categories.archive }}
+      </button>
+    } @else {
+      <button
+        type="button"
+        class="button"
+        [attr.data-cy]="'category-unarchive-' + c.id"
+        [disabled]="busy()"
+        (click)="unarchive.emit(c)"
+      >
+        {{ t().categories.unarchive }}
+      </button>
+    }
+  </div>
+}

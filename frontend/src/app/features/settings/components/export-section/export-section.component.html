@@ -1,0 +1,108 @@
+<app-section-container [heading]="t().exports.title" [description]="t().exports.description">
+  <section class="export" aria-labelledby="export-csv-title" data-cy="export-csv">
+    <h3 id="export-csv-title" class="export__title">{{ t().exports.csv.title }}</h3>
+    <p class="export__text">{{ t().exports.csv.description }}</p>
+    <form class="export__range" [formGroup]="range" (ngSubmit)="exportCsv()" novalidate>
+      <app-date-picker
+        formControlName="from"
+        fieldId="export-from"
+        [mandatory]="false"
+        [label]="t().exports.csv.from"
+      />
+      <app-date-picker
+        formControlName="to"
+        fieldId="export-to"
+        [mandatory]="false"
+        [label]="t().exports.csv.to"
+      />
+      <p class="export__text export__range-hint">{{ t().exports.csv.rangeHint }}</p>
+      @if (csvHeaderFallback()) {
+        <p class="export__text" data-cy="export-csv-header-note">
+          {{ t().exports.csv.headerFallback }}
+        </p>
+      }
+      @if (rangeInvalid()) {
+        <p class="banner" role="alert" data-cy="export-range-invalid">
+          {{ t().exports.csv.rangeInvalid }}
+        </p>
+      }
+      <button
+        type="submit"
+        class="button"
+        data-cy="export-csv-action"
+        [disabled]="exports.busy()"
+        [attr.aria-busy]="exports.running() === 'csv'"
+      >
+        {{ exports.running() === 'csv' ? t().exports.csv.running : t().exports.csv.action }}
+      </button>
+    </form>
+  </section>
+
+  <section class="export" aria-labelledby="export-backup-title" data-cy="export-backup">
+    <h3 id="export-backup-title" class="export__title">{{ t().exports.backup.title }}</h3>
+    <p class="export__text">{{ t().exports.backup.description }}</p>
+    <p class="export__privacy" data-cy="export-backup-privacy">{{ t().exports.backup.privacy }}</p>
+    <div>
+      <button
+        type="button"
+        class="button"
+        data-cy="export-backup-action"
+        [disabled]="exports.busy()"
+        [attr.aria-busy]="exports.running() === 'backup'"
+        (click)="exportBackup()"
+      >
+        {{
+          exports.running() === 'backup' ? t().exports.backup.running : t().exports.backup.action
+        }}
+      </button>
+    </div>
+  </section>
+
+  @if (exports.busy()) {
+    <div class="export__progress" role="status" data-cy="export-progress">
+      <span class="export__bar" aria-hidden="true"></span>
+      <span>
+        {{ exports.running() === 'csv' ? t().exports.csv.running : t().exports.backup.running }}
+      </span>
+    </div>
+  }
+
+  @if (failureMessage(); as message) {
+    <p class="banner" role="alert" data-cy="export-error">
+      {{ message }}
+      @if (canRetry()) {
+        <button
+          type="button"
+          class="button"
+          data-cy="export-retry"
+          [disabled]="waitSeconds() > 0"
+          (click)="retry()"
+        >
+          {{ retryLabel() }}
+        </button>
+      }
+    </p>
+  }
+
+  @if (ready()) {
+    <section class="export__ready" aria-labelledby="export-ready-title" data-cy="export-ready">
+      <h3 id="export-ready-title" class="export__title">{{ t().exports.ready.title }}</h3>
+      <p class="export__text" role="status" data-cy="export-ready-name">
+        {{ readyHint() }}
+      </p>
+      <div class="export__actions">
+        <button type="button" class="button" data-cy="export-save" (click)="save()">
+          {{ t().exports.ready.save }}
+        </button>
+        @if (canShare()) {
+          <button type="button" class="button" data-cy="export-share" (click)="share()">
+            {{ t().exports.share }}
+          </button>
+        }
+        <button type="button" class="button" data-cy="export-dismiss" (click)="dismiss()">
+          {{ t().exports.ready.dismiss }}
+        </button>
+      </div>
+    </section>
+  }
+</app-section-container>

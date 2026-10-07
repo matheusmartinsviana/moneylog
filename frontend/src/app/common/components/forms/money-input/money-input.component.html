@@ -1,0 +1,29 @@
+<div class="field">
+  <label class="field__label" [id]="labelId()" [for]="controlId()">{{ label() }}</label>
+  <div class="money" [class.is-disabled]="disabled()">
+    <span class="money__symbol" aria-hidden="true">{{ symbol() }}</span>
+    <input
+      class="input money__input num"
+      type="text"
+      inputmode="decimal"
+      autocomplete="off"
+      autocorrect="off"
+      spellcheck="false"
+      [id]="controlId()"
+      [attr.data-cy]="fieldId()"
+      [value]="text()"
+      [placeholder]="placeholder()"
+      [disabled]="disabled()"
+      [attr.aria-required]="mandatory()"
+      [attr.aria-invalid]="showError()"
+      [attr.aria-describedby]="inputDescribedBy()"
+      (input)="onInput($event)"
+      (blur)="onBlur()"
+    />
+  </div>
+  <span class="visually-hidden" [id]="currencyId()">{{ currencyText() }}</span>
+  @if (hint(); as text) {
+    <p class="field__hint" [id]="hintId()">{{ text }}</p>
+  }
+  <app-field-error [control]="control()" [errorId]="errorId()" />
+</div>

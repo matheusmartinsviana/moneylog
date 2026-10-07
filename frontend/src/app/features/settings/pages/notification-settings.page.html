@@ -1,0 +1,162 @@
+<app-page-layout
+  [heading]="t().notifications.settings.title"
+  [description]="t().notifications.settings.description"
+>
+  <a pageActions class="button" routerLink="/settings" data-cy="notification-settings-back">
+    {{ t().notifications.settings.back }}
+  </a>
+
+  @switch (facade.state().status) {
+    @case ('loading') {
+      <div data-cy="notification-settings-loading">
+        <p class="visually-hidden" role="status">{{ t().notifications.settings.loading }}</p>
+        <div class="list-skeleton" aria-hidden="true">
+          <div class="list-skeleton__row"></div>
+          <div class="list-skeleton__row"></div>
+        </div>
+      </div>
+    }
+    @case ('error') {
+      <app-error-state [problem]="loadProblem()" (retry)="facade.load()" />
+    }
+    @case ('ready') {
+      <form
+        class="form"
+        [formGroup]="form"
+        (ngSubmit)="save()"
+        data-cy="notification-settings-form"
+      >
+        <app-section-container [heading]="t().notifications.settings.dailyTitle">
+          <div class="grid">
+            <app-switch
+              formControlName="dailyEnabled"
+              fieldId="settings-daily-enabled"
+              [label]="t().notifications.settings.dailyEnabled"
+            />
+            <app-text-field
+              formControlName="dailyTime"
+              fieldId="settings-daily-time"
+              [label]="t().notifications.settings.dailyTime"
+              [hint]="t().notifications.settings.timeHint"
+              inputmode="numeric"
+              [maxlength]="5"
+            />
+            <app-select
+              formControlName="frequency"
+              fieldId="settings-frequency"
+              [label]="t().notifications.settings.frequency"
+              [options]="frequencyOptions()"
+            />
+          </div>
+        </app-section-container>
+
+        <app-section-container [heading]="t().notifications.settings.kindsTitle">
+          <div class="grid" formGroupName="kinds">
+            @for (kind of kinds; track kind) {
+              <app-switch
+                [formControlName]="kind"
+                [fieldId]="'settings-kind-' + kind"
+                [label]="t().notifications.settings.kindsLabels[kind]"
+              />
+            }
+          </div>
+        </app-section-container>
+
+        <app-section-container [heading]="t().notifications.settings.quietTitle">
+          <div class="grid grid--two">
+            <app-text-field
+              formControlName="quietFrom"
+              fieldId="settings-quiet-from"
+              [label]="t().notifications.settings.quietFrom"
+              [hint]="t().notifications.settings.timeHint"
+              inputmode="numeric"
+              [maxlength]="5"
+            />
+            <app-text-field
+              formControlName="quietTo"
+              fieldId="settings-quiet-to"
+              [label]="t().notifications.settings.quietTo"
+              [hint]="t().notifications.settings.timeHint"
+              inputmode="numeric"
+              [maxlength]="5"
+            />
+          </div>
+        </app-section-container>
+
+        <app-section-container [heading]="t().notifications.settings.displayName">
+          <app-text-field
+            formControlName="displayName"
+            fieldId="settings-display-name"
+            [label]="t().notifications.settings.displayName"
+            [hint]="t().notifications.settings.displayNameHint"
+            [mandatory]="false"
+            [maxlength]="60"
+            autocomplete="given-name"
+          />
+        </app-section-container>
+
+        @if (saveError(); as message) {
+          <p class="banner" role="alert" data-cy="notification-settings-error">{{ message }}</p>
+        }
+        @if (facade.saved()) {
+          <p class="banner" role="status" data-cy="notification-settings-saved">
+            {{ t().notifications.settings.saved }}
+          </p>
+        }
+        <div>
+          <button
+            type="submit"
+            class="button button--primary"
+            data-cy="notification-settings-save"
+            [disabled]="facade.saving()"
+          >
+            {{
+              facade.saving() ? t().notifications.settings.saving : t().notifications.settings.save
+            }}
+          </button>
+        </div>
+      </form>
+    }
+  }
+
+  <app-section-container [heading]="t().notifications.settings.push.title">
+    <p data-cy="push-status">{{ pushText() }}</p>
+    @if (pushError(); as message) {
+      <p class="banner" role="alert" data-cy="push-error">{{ message }}</p>
+    }
+    @if (push.status() === 'ready') {
+      <div>
+        <button
+          type="button"
+          class="button"
+          data-cy="push-enable"
+          [disabled]="push.busy()"
+          (click)="push.enable()"
+        >
+          {{
+            push.busy()
+              ? t().notifications.settings.push.working
+              : t().notifications.settings.push.enable
+          }}
+        </button>
+      </div>
+    }
+    @if (push.status() === 'subscribed') {
+      <div>
+        <button
+          type="button"
+          class="button"
+          data-cy="push-disable"
+          [disabled]="push.busy()"
+          (click)="push.disable()"
+        >
+          {{
+            push.busy()
+              ? t().notifications.settings.push.working
+              : t().notifications.settings.push.disable
+          }}
+        </button>
+      </div>
+    }
+  </app-section-container>
+</app-page-layout>

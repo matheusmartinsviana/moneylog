@@ -1,0 +1,115 @@
+<app-sheet
+  [open]="line() !== null"
+  [heading]="title()"
+  [description]="line()?.description"
+  cy="import-decision"
+  (closed)="cancelled.emit()"
+>
+  @if (line(); as current) {
+    <form class="form" [formGroup]="form" (ngSubmit)="confirm()" data-cy="import-decision-form">
+      <p class="amount">
+        <app-money [value]="current.amount" />
+      </p>
+
+      @switch (mode()) {
+        @case ('transfer') {
+          <p class="help">{{ t().imports.decision.transferHelp }}</p>
+        }
+        @case ('installment') {
+          <p class="help">{{ t().imports.decision.installmentHelp }}</p>
+        }
+        @case ('force') {
+          <p class="help" data-cy="import-decision-force-help">
+            {{ t().imports.decision.forceHelp }}
+          </p>
+        }
+      }
+
+      @if (mode() === 'transfer' || mode() === 'installment') {
+        <app-segmented-control
+          formControlName="choice"
+          fieldId="decision-choice"
+          [label]="title()"
+          [hideLabel]="true"
+          [options]="choiceOptions()"
+        />
+      }
+
+      @if (showCounterpart()) {
+        <app-select
+          formControlName="counterpart"
+          fieldId="decision-counterpart"
+          [label]="t().imports.decision.counterpartAccount"
+          [options]="accountOptions()"
+          [mandatory]="false"
+        />
+        @if (missingCounterpart()) {
+          <p class="error" role="alert" data-cy="decision-counterpart-required">
+            {{ t().imports.decision.counterpartRequired }}
+          </p>
+        }
+      }
+
+      @if (showCategory()) {
+        <app-select
+          formControlName="categoryId"
+          fieldId="decision-category"
+          [label]="t().imports.decision.category"
+          [options]="categoryOptions()"
+          [mandatory]="false"
+        />
+        @if (missingCategory()) {
+          <p class="error" role="alert" data-cy="decision-category-required">
+            {{ t().imports.decision.categoryRequired }}
+          </p>
+        }
+        <app-select
+          formControlName="method"
+          fieldId="decision-method"
+          [label]="t().imports.decision.method"
+          [options]="methodOptions()"
+          [emptyLabel]="t().imports.decision.noMethod"
+          [mandatory]="false"
+        />
+      }
+
+      @if (choice() !== 'ignore') {
+        <app-text-field
+          formControlName="description"
+          fieldId="decision-description"
+          [label]="t().imports.decision.editedDescription"
+          [mandatory]="false"
+          [maxlength]="200"
+        />
+      }
+
+      @if (showCategory()) {
+        <app-switch
+          formControlName="learn"
+          fieldId="decision-learn"
+          [label]="t().imports.decision.learn"
+          [hint]="t().imports.decision.learnHint"
+        />
+      }
+
+      <div class="actions">
+        <button
+          type="submit"
+          class="button button--primary"
+          data-cy="import-decision-confirm"
+          [disabled]="busy()"
+        >
+          {{ confirmLabel() }}
+        </button>
+        <button
+          type="button"
+          class="button"
+          data-cy="import-decision-cancel"
+          (click)="cancelled.emit()"
+        >
+          {{ t().imports.decision.cancel }}
+        </button>
+      </div>
+    </form>
+  }
+</app-sheet>

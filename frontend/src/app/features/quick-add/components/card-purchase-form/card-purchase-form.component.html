@@ -1,0 +1,68 @@
+<form
+  class="form surface"
+  [formGroup]="form"
+  (ngSubmit)="onSubmit()"
+  novalidate
+  data-cy="credit-form"
+>
+  <app-select
+    formControlName="cardId"
+    fieldId="entry-card"
+    [options]="cardOptions()"
+    [label]="t().cards.purchase.card"
+  />
+  <app-money-input
+    formControlName="amount"
+    fieldId="entry-amount"
+    [currency]="currency"
+    [label]="t().cards.purchase.amount"
+  />
+  <app-text-field
+    formControlName="description"
+    fieldId="entry-description"
+    autocomplete="off"
+    [maxlength]="200"
+    [label]="t().cards.purchase.description"
+  />
+  <app-select
+    formControlName="categoryId"
+    fieldId="entry-category"
+    [options]="categoryOptions()"
+    [label]="t().cards.purchase.category"
+  />
+  <app-date-picker formControlName="date" fieldId="entry-date" [label]="t().cards.purchase.date" />
+  <app-number-stepper
+    formControlName="installments"
+    fieldId="entry-installments"
+    [min]="1"
+    [max]="maxInstallments"
+    [valueText]="installmentsText()"
+    [label]="t().cards.purchase.installments"
+  />
+  @if (editing()) {
+    <app-text-field
+      formControlName="notes"
+      fieldId="entry-notes"
+      autocomplete="off"
+      [maxlength]="2000"
+      [mandatory]="false"
+      [label]="t().cards.purchase.notes"
+    />
+    <p class="form__help" data-cy="credit-locked-hint">{{ t().cards.purchase.lockedHint }}</p>
+  } @else if (previewLoading() || preview() || previewProblem()) {
+    <app-purchase-preview
+      [preview]="preview()"
+      [loading]="previewLoading()"
+      [problem]="previewProblem()"
+    />
+  }
+
+  <app-form-actions
+    [banner]="banner()"
+    [canRetry]="canRetry()"
+    [saving]="saving()"
+    [submitLabel]="submitLabel()"
+    [cancelLink]="cancelLink()"
+    (retry)="retry.emit()"
+  />
+</form>

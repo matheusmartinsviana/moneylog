@@ -1,0 +1,109 @@
+<app-page-layout [heading]="editing() ? t().goals.form.editTitle : t().goals.form.createTitle">
+  @if (editing() && !goal() && facade.loadStatus().status !== 'error') {
+    <div data-cy="goal-form-loading">
+      <p class="visually-hidden" role="status">{{ t().goals.loading }}</p>
+      <div class="list-skeleton" aria-hidden="true">
+        <div class="list-skeleton__row"></div>
+        <div class="list-skeleton__row"></div>
+      </div>
+    </div>
+  } @else if (notFound()) {
+    <app-empty-state
+      [heading]="t().goals.detail.notFound.title"
+      [description]="t().goals.detail.notFound.description"
+      [actions]="[
+        {
+          id: 'back',
+          label: t().goals.detail.notFound.back,
+          available: true,
+          primary: true,
+          link: '/goals',
+        },
+      ]"
+      illustration="timeline"
+    />
+  } @else if (loadProblem()) {
+    <app-error-state [problem]="loadProblem()" (retry)="retryLoad()" />
+  } @else {
+    <form
+      class="form surface"
+      [formGroup]="form"
+      (ngSubmit)="onSubmit()"
+      novalidate
+      data-cy="goal-form"
+    >
+      @if (archived()) {
+        <p class="banner" role="status" data-cy="goal-form-archived">
+          {{ t().goals.detail.archivedNote }}
+        </p>
+      }
+      @if (conflict()) {
+        <p class="banner" role="alert" data-cy="goal-form-conflict">
+          {{ t().goals.form.conflict }}
+          <button type="button" class="button" (click)="keepMine()" data-cy="goal-form-keep">
+            {{ t().goals.form.keepTyped }}
+          </button>
+          <button type="button" class="button" (click)="reloadLatest()" data-cy="goal-form-reload">
+            {{ t().goals.form.reloadLatest }}
+          </button>
+        </p>
+      }
+      @if (banner(); as message) {
+        <p class="banner" role="alert" data-cy="goal-form-error">{{ message }}</p>
+      }
+
+      <app-text-field
+        formControlName="name"
+        fieldId="goal-name"
+        autocomplete="off"
+        [maxlength]="100"
+        [label]="t().goals.form.name"
+      />
+      <app-money-input
+        formControlName="target"
+        fieldId="goal-target"
+        [currency]="currency"
+        [label]="t().goals.form.target"
+      />
+      <app-date-picker
+        formControlName="deadline"
+        fieldId="goal-deadline"
+        [mandatory]="false"
+        [label]="t().goals.form.deadline"
+      />
+      <app-segmented-control
+        formControlName="priority"
+        fieldId="goal-priority"
+        [options]="priorityOptions()"
+        [label]="t().goals.form.priority"
+      />
+      <app-text-field
+        formControlName="description"
+        fieldId="goal-description"
+        autocomplete="off"
+        [maxlength]="500"
+        [mandatory]="false"
+        [label]="t().goals.form.description"
+      />
+
+      <div class="form__actions">
+        <a
+          class="button"
+          [routerLink]="editing() ? ['/goals', id()] : ['/goals']"
+          data-cy="goal-form-cancel"
+        >
+          {{ t().goals.form.cancel }}
+        </a>
+        <button
+          type="submit"
+          class="button button--primary"
+          data-cy="goal-form-save"
+          [disabled]="facade.saving() || archived()"
+          [attr.aria-busy]="facade.saving()"
+        >
+          {{ facade.saving() ? t().goals.form.saving : t().goals.form.save }}
+        </button>
+      </div>
+    </form>
+  }
+</app-page-layout>

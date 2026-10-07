@@ -1,0 +1,10 @@
+.preferences {
+  display: grid;
+  gap: var(--space-4);
+}
+
+@media (width >= 768px) {
+  .preferences {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

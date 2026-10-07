@@ -1,0 +1,94 @@
+<app-page-layout [heading]="editing() ? t().people.form.editTitle : t().people.form.createTitle">
+  @if (editing() && !person() && facade.loadStatus().status === 'loading') {
+    <div data-cy="person-form-loading">
+      <p class="visually-hidden" role="status">{{ t().people.loading }}</p>
+      <div class="list-skeleton" aria-hidden="true">
+        <div class="list-skeleton__row"></div>
+        <div class="list-skeleton__row"></div>
+      </div>
+    </div>
+  } @else if (notFound()) {
+    <app-empty-state
+      [heading]="t().people.form.notFound.title"
+      [description]="t().people.form.notFound.description"
+      [actions]="[
+        {
+          id: 'back',
+          label: t().people.form.notFound.back,
+          available: true,
+          primary: true,
+          link: '/people',
+        },
+      ]"
+      illustration="grid"
+    />
+  } @else if (loadProblem()) {
+    <app-error-state [problem]="loadProblem()" (retry)="retryLoad()" />
+  } @else if (!editing() || person()) {
+    <form
+      class="form surface"
+      [formGroup]="form"
+      (ngSubmit)="onSubmit()"
+      novalidate
+      data-cy="person-form"
+    >
+      @if (conflict()) {
+        <p class="banner" role="alert" data-cy="person-form-conflict">
+          {{ t().people.form.conflict }}
+          <button
+            type="button"
+            class="button"
+            (click)="reloadLatest()"
+            data-cy="person-form-reload"
+          >
+            {{ t().people.form.reloadLatest }}
+          </button>
+        </p>
+      }
+      @if (banner(); as message) {
+        <p class="banner" role="alert" data-cy="person-form-error">{{ message }}</p>
+      }
+
+      <app-text-field
+        formControlName="name"
+        fieldId="person-name"
+        autocomplete="off"
+        [maxlength]="100"
+        [label]="t().people.form.name"
+      />
+      @if (facade.homonym()) {
+        <p class="form__warning" role="status" data-cy="person-homonym">
+          {{ t().people.form.homonym }}
+        </p>
+      }
+      <app-text-field
+        formControlName="notes"
+        fieldId="person-notes"
+        autocomplete="off"
+        [maxlength]="2000"
+        [mandatory]="false"
+        [label]="t().people.form.notes"
+        [hint]="t().people.form.optional"
+      />
+
+      <div class="form__actions">
+        <a
+          class="button"
+          [routerLink]="editing() ? ['/people', id()] : ['/people']"
+          data-cy="person-form-cancel"
+        >
+          {{ t().people.form.cancel }}
+        </a>
+        <button
+          type="submit"
+          class="button button--primary"
+          data-cy="person-form-save"
+          [disabled]="facade.saving()"
+          [attr.aria-busy]="facade.saving()"
+        >
+          {{ facade.saving() ? t().people.form.saving : t().people.form.save }}
+        </button>
+      </div>
+    </form>
+  }
+</app-page-layout>

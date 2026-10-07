@@ -1,0 +1,50 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.cs__total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.cs__total-label {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.cs__total-value {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.cs__skeleton {
+  height: 10rem;
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface-muted);
+  animation: cs-pulse 1.4s var(--ease-standard) infinite alternate;
+}
+
+@keyframes cs-pulse {
+  to {
+    opacity: 0.55;
+  }
+}
+
+.cs__state {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+  padding: var(--space-4) 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cs__skeleton {
+    animation: none;
+  }
+}

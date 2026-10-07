@@ -1,0 +1,4 @@
+# Conventional Commits obrigatório (commitlint). O caminho da mensagem é relativo à raiz do repositório.
+MSG_FILE="$(pwd)/$1"
+cd frontend || exit 1
+npx --no -- commitlint --edit "$MSG_FILE"

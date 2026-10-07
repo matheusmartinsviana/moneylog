@@ -1,0 +1,52 @@
+<app-select
+  [formControl]="control()"
+  [fieldId]="fieldId()"
+  [options]="options()"
+  [label]="label() ?? t().lending.person"
+  [placeholder]="t().people.picker.placeholder"
+/>
+@if (creating()) {
+  <div
+    class="new"
+    role="group"
+    [attr.data-cy]="fieldId() + '-new'"
+    (keydown.enter)="onEnter($event)"
+  >
+    <app-text-field
+      [formControl]="newName"
+      [fieldId]="fieldId() + '-new-name'"
+      autocomplete="off"
+      [maxlength]="100"
+      [label]="t().people.picker.newName"
+    />
+    @if (homonym()) {
+      <p class="new__warning" role="status" [attr.data-cy]="fieldId() + '-homonym'">
+        {{ t().people.picker.homonym }}
+      </p>
+    }
+    @if (failure(); as message) {
+      <p class="new__error" role="alert" [attr.data-cy]="fieldId() + '-new-error'">{{ message }}</p>
+    }
+    <div class="new__actions">
+      <button
+        type="button"
+        class="button"
+        [attr.data-cy]="fieldId() + '-new-cancel'"
+        [disabled]="saving()"
+        (click)="cancelNew()"
+      >
+        {{ t().people.picker.cancelNew }}
+      </button>
+      <button
+        type="button"
+        class="button button--primary"
+        [attr.data-cy]="fieldId() + '-new-create'"
+        [disabled]="saving()"
+        [attr.aria-busy]="saving()"
+        (click)="create()"
+      >
+        {{ saving() ? t().people.picker.creating : t().people.picker.create }}
+      </button>
+    </div>
+  </div>
+}

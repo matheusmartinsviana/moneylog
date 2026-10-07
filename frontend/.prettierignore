@@ -1,0 +1,8 @@
+dist
+coverage
+.angular
+node_modules
+package-lock.json
+e2e/.results
+playwright-report
+src/util/api/schema.gen.ts

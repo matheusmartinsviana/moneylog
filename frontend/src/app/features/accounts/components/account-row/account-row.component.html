@@ -1,0 +1,71 @@
+@let a = account();
+<div class="row__main">
+  <a
+    class="row__name"
+    [routerLink]="['/accounts', a.id, 'edit']"
+    [attr.data-cy]="'account-edit-' + a.id"
+  >
+    {{ a.name }}
+  </a>
+  <span class="row__type"><app-account-type-label [type]="a.type" /></span>
+  @if (a.uncovered) {
+    <span class="row__uncovered" [attr.data-cy]="'account-uncovered-' + a.id">
+      {{ t().accounts.uncovered }}
+    </span>
+  }
+</div>
+<span class="row__institution" [attr.data-cy]="'account-institution-' + a.id">{{
+  a.institution
+}}</span>
+<div class="row__balance">
+  <span class="row__balance-label">{{ t().accounts.columns.balance }}</span>
+  <span
+    class="row__balance-value"
+    [class.is-negative]="negative(a)"
+    [attr.data-cy]="'account-balance-' + a.id"
+  >
+    <app-money [value]="a.currentBalance" />
+  </span>
+  @if (negative(a)) {
+    <span class="visually-hidden">{{ t().accounts.negativeBalance }}</span>
+  }
+</div>
+<div class="row__actions">
+  <a
+    class="button"
+    [routerLink]="['/accounts', a.id, 'edit']"
+    [attr.data-cy]="'account-edit-button-' + a.id"
+  >
+    {{ t().accounts.edit }}
+  </a>
+  @if (a.status === 'ACTIVE') {
+    <button
+      type="button"
+      class="button"
+      [attr.data-cy]="'account-archive-' + a.id"
+      [disabled]="!a.archivable"
+      [attr.aria-describedby]="a.archivable ? null : 'archive-hint-' + a.id"
+      (click)="archive.emit(a)"
+    >
+      {{ t().accounts.archive }}
+    </button>
+    @if (!a.archivable) {
+      <span
+        class="row__hint"
+        [id]="'archive-hint-' + a.id"
+        [attr.data-cy]="'account-archive-hint-' + a.id"
+      >
+        {{ t().accounts.archiveHint }}
+      </span>
+    }
+  } @else {
+    <button
+      type="button"
+      class="button"
+      [attr.data-cy]="'account-unarchive-' + a.id"
+      (click)="unarchive.emit(a)"
+    >
+      {{ t().accounts.unarchive }}
+    </button>
+  }
+</div>

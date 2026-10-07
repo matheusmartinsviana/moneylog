@@ -1,0 +1,319 @@
+<app-page-layout [heading]="t().nav.home" [description]="asOf()" [wide]="true">
+  @if (dashboard.data()?.summary?.isProjection) {
+    <span pageActions class="tag" data-cy="home-projection">{{ t().home.projection }}</span>
+  }
+
+  @switch (dashboard.state().status) {
+    @case ('loading') {
+      <div data-cy="home-loading">
+        <p class="visually-hidden" role="status">{{ t().home.loading }}</p>
+        <div class="skeleton" aria-hidden="true">
+          <div class="skeleton__block skeleton__block--hero"></div>
+          <div class="skeleton__block"></div>
+          <div class="skeleton__block"></div>
+        </div>
+      </div>
+    }
+    @case ('empty') {
+      <app-empty-state
+        [heading]="t().emptyState.home.title"
+        [description]="t().emptyState.home.description"
+        [actions]="emptyActions()"
+        illustration="log"
+      />
+    }
+    @case ('error') {
+      <div role="alert" data-cy="home-error">
+        @if (dashboard.error() === 'forbidden') {
+          <app-empty-state
+            [heading]="t().home.forbidden.title"
+            [description]="t().home.forbidden.description"
+            illustration="document"
+          />
+        } @else {
+          <app-empty-state
+            [heading]="t().home.error.title"
+            [description]="t().home.error.description"
+            [actions]="retryActions()"
+            (action)="onErrorAction($event)"
+            illustration="document"
+          />
+        }
+      </div>
+    }
+    @case ('ready') {
+      @if (dashboard.refreshFailed()) {
+        <p class="banner" role="status" data-cy="home-refresh-failed">
+          {{ t().home.refreshFailed }}
+          <button
+            type="button"
+            class="button"
+            data-cy="home-refresh-retry"
+            (click)="dashboard.reload()"
+          >
+            {{ t().home.error.retry }}
+          </button>
+        </p>
+      }
+      @if (daily(); as message) {
+        <p class="daily text-muted" data-cy="home-daily-message">{{ message }}</p>
+      }
+      @if (dashboard.data(); as data) {
+        <div class="home" data-cy="home-dashboard">
+          <app-quick-capture
+            class="home__capture"
+            [type]="captureType()"
+            [asOf]="data.summary.asOf"
+            (saved)="afterCaptured()"
+          />
+
+          <app-kpi-cards
+            class="home__kpis"
+            [summary]="data.summary"
+            [monthly]="monthly.data()"
+            [monthlyStatus]="monthlyStatus()"
+            (retry)="monthly.load(data.summary.month.competence)"
+          />
+
+          <section
+            class="home__accounts"
+            aria-labelledby="home-accounts-title"
+            data-cy="home-accounts-section"
+          >
+            <header class="home__heading">
+              <div>
+                <h2 class="home__title" id="home-accounts-title">
+                  {{ t().dashboard.accounts.title }}
+                </h2>
+                <p class="home__subtitle">{{ t().dashboard.accounts.description }}</p>
+              </div>
+              <a class="home__link" routerLink="/accounts" data-cy="home-accounts-all">
+                {{ t().dashboard.accounts.viewAll }}
+              </a>
+            </header>
+            @switch (accounts.state().status) {
+              @case ('loading') {
+                <div data-cy="home-accounts-loading">
+                  <p class="visually-hidden" role="status">{{ t().dashboard.accounts.loading }}</p>
+                  <div class="strip-skeleton" aria-hidden="true"></div>
+                </div>
+              }
+              @case ('empty') {
+                <div class="block-state" data-cy="home-accounts-empty">
+                  <p>
+                    {{ t().dashboard.accounts.empty.title }}
+                    {{ t().dashboard.accounts.empty.description }}
+                  </p>
+                  <a class="button" routerLink="/accounts/new" data-cy="home-accounts-create">
+                    {{ t().dashboard.accounts.create }}
+                  </a>
+                </div>
+              }
+              @case ('error') {
+                <div class="block-state" role="alert" data-cy="home-accounts-error">
+                  <p>{{ t().dashboard.accounts.error }}</p>
+                  <button
+                    type="button"
+                    class="button"
+                    data-cy="home-accounts-retry"
+                    (click)="retryAccounts()"
+                  >
+                    {{ t().dashboard.accounts.retry }}
+                  </button>
+                </div>
+              }
+              @case ('ready') {
+                @if (accounts.data(); as list) {
+                  <app-accounts-strip [accounts]="list" [cards]="stripCards()" />
+                }
+              }
+            }
+          </section>
+
+          <app-spending-overview
+            class="home__overview"
+            [state]="overview.state()"
+            [period]="overview.period()"
+            (periodChange)="changePeriod($event)"
+            (retry)="overview.retry()"
+          />
+
+          <app-category-spending
+            class="home__categories"
+            [state]="categories.state()"
+            [month]="data.summary.month.competence"
+            (retry)="categories.retry()"
+          />
+
+          <app-recent-transactions
+            class="home__recent"
+            [state]="recent.state()"
+            [asOf]="data.summary.asOf"
+            (retry)="recent.retry()"
+          />
+
+          <app-budget-card class="home__budget" />
+
+          @if (insightVisible()) {
+            <app-insight-card
+              class="home__insight"
+              [insights]="insights.items()"
+              [aiEnabled]="aiStatus.enabled()"
+              (askAi)="askOpen.set(true)"
+            />
+          }
+          <app-ai-ask-dialog
+            [open]="askOpen()"
+            purpose="INSIGHTS"
+            [month]="data.summary.month.competence"
+            (closed)="askOpen.set(false)"
+          />
+
+          <!-- O que já existia no Início continua aqui, com os mesmos data-cy. -->
+          <section class="home__legacy" aria-labelledby="home-legacy-title" data-cy="home-legacy">
+            <header class="home__heading">
+              <div>
+                <h2 class="home__title" id="home-legacy-title">{{ t().dashboard.legacyTitle }}</h2>
+                <p class="home__subtitle">{{ t().dashboard.legacyDescription }}</p>
+              </div>
+            </header>
+            <div class="dashboard">
+              <app-available-balance class="area-available" [balances]="data.summary.balances" />
+
+              <app-section-container
+                class="area-committed"
+                [heading]="t().home.committed.title"
+                [description]="t().home.committed.description"
+              >
+                <app-commitments
+                  [committed]="data.summary.committed"
+                  [projected]="data.summary.projected"
+                />
+              </app-section-container>
+
+              <app-section-container
+                class="area-upcoming"
+                [heading]="t().home.upcoming.title"
+                [description]="t().home.upcoming.description"
+              >
+                <app-upcoming-list [upcoming]="data.upcoming" (realize)="openRealize($event)" />
+              </app-section-container>
+
+              <app-section-container
+                class="area-month"
+                [heading]="t().home.month.title"
+                [description]="competence()"
+              >
+                <app-month-summary [month]="data.summary.month" />
+              </app-section-container>
+
+              <app-section-container class="area-net-worth" [heading]="t().home.netWorth.title">
+                <app-net-worth [netWorth]="data.summary.netWorth" />
+              </app-section-container>
+
+              <app-section-container
+                class="area-cards"
+                [heading]="t().home.cards.title"
+                [description]="t().home.cards.description"
+              >
+                @switch (cards.state().status) {
+                  @case ('loading') {
+                    <p class="note" role="status" data-cy="home-cards-loading">
+                      {{ t().home.cards.loading }}
+                    </p>
+                  }
+                  @case ('empty') {
+                    <p class="note" data-cy="home-cards-empty">{{ t().home.cards.empty }}</p>
+                    <a class="button" routerLink="/cards/new" data-cy="home-cards-add">
+                      {{ t().home.cards.add }}
+                    </a>
+                  }
+                  @case ('error') {
+                    <p class="note" role="alert" data-cy="home-cards-error">
+                      {{ t().home.cards.error }}
+                    </p>
+                    <button
+                      type="button"
+                      class="button"
+                      data-cy="home-cards-retry"
+                      (click)="retryCards()"
+                    >
+                      {{ t().home.cards.retry }}
+                    </button>
+                  }
+                  @case ('ready') {
+                    @if (cards.data(); as list) {
+                      <app-cards-summary [cards]="list" />
+                    }
+                  }
+                }
+              </app-section-container>
+
+              <div class="area-actions actions">
+                <a class="button" routerLink="/quick-add" data-cy="home-action-quick-add">
+                  {{ t().nav.quickAdd }}
+                </a>
+                <a
+                  class="button"
+                  routerLink="/quick-add"
+                  [queryParams]="{ mode: 'credit' }"
+                  data-cy="home-action-credit"
+                >
+                  {{ t().quickAdd.modes.credit }}
+                </a>
+                <button
+                  type="button"
+                  class="button"
+                  data-cy="home-action-goal"
+                  (click)="openGoalQuick()"
+                >
+                  {{ t().home.actions.goalQuick }}
+                </button>
+                <a class="button" routerLink="/transactions" data-cy="home-action-transactions">
+                  {{ t().home.actions.transactions }}
+                </a>
+                <a class="button" routerLink="/goals" data-cy="home-action-goals">
+                  {{ t().home.actions.goals }}
+                </a>
+                <a
+                  class="button"
+                  [routerLink]="['/planning/summary', data.summary.month.competence]"
+                  data-cy="home-action-summary"
+                >
+                  {{ t().home.actions.summary }}
+                </a>
+                <a
+                  class="button"
+                  routerLink="/planning/projections"
+                  data-cy="home-action-projections"
+                >
+                  {{ t().home.actions.projections }}
+                </a>
+              </div>
+            </div>
+          </section>
+        </div>
+      }
+    }
+  }
+
+  <!-- Fora de qualquer @if: a folha (e a chave de idempotência pendente) não é destruída por uma recarga. -->
+  <app-reserve-sheet
+    [open]="goalSheetOpen() && goals.data() !== null"
+    [goals]="goals.data() ?? []"
+    [goalId]="goals.data()?.[0]?.id"
+    (closed)="goalSheetOpen.set(false)"
+    (reserved)="afterGoalReserve()"
+    (stale)="afterGoalReserve()"
+  />
+
+  @if (realizing(); as target) {
+    <app-realize-sheet
+      [open]="realizeOpen()"
+      [target]="target"
+      (closed)="realizeOpen.set(false)"
+      (realized)="afterRealized()"
+      (stale)="dashboard.reload()"
+    />
+  }
+</app-page-layout>

@@ -1,0 +1,173 @@
+/*
+ * Design tokens do moneylog (DS 00, refinado pelo DS 02: docs/adrs/ADR-011-redesign-workspace.md).
+ * Única fonte de cores do frontend: nenhum outro arquivo de estilo usa hex/rgb/hsl (scripts/check-styles.mjs).
+ * Tema: :root = claro; sistema escuro sem escolha manual = escuro; [data-theme] força a escolha do usuário.
+ * Contraste conferido por scripts/check-contrast.mjs (tabela em src/styles/README.md).
+ */
+
+/* `[data-theme-scope]`: mostra um tema dentro da página, independente do tema ativo (só o UI Kit usa). */
+[data-theme-scope='light'],
+:root {
+  /* Cores: tema claro. `canvas` = fundo atrás da janela; `surface` = janela e cartões. */
+  --color-canvas: #f2f2f5;
+  --color-surface: #fdfcfa;
+  --color-surface-muted: #f6f4f1;
+  --color-border: #e7e4df;
+  /* Borda de campos e controles interativos: >= 3:1 (WCAG 1.4.11). `--color-border` fica para cartões. */
+  --color-control-border: #8a8a8e;
+  --color-text: #1d1d1f;
+  --color-text-muted: #66666b;
+  --color-accent: #0066cc;
+  --color-on-accent: #ffffff;
+  --color-positive: #2e7048;
+  --color-warning: #9a5b00;
+  --color-risk: #b3402f;
+  /* Tintas sólidas (10% do tom sobre `surface`): hex porque o `check-contrast` só lê #rrggbb. */
+  --color-accent-soft: #e4edf5;
+  --color-accent-soft-hover: #e0eaf4;
+  --color-positive-soft: #e8eee8;
+  --color-warning-soft: #f3ece1;
+  --color-risk-soft: #f6e9e6;
+  /* Gráficos: série 1 (entradas) = acento; série 2 (saídas) = neutro quente, sempre tracejada. */
+  --color-chart-1: #0066cc;
+  --color-chart-2: #8a7f72;
+  --color-focus: #0066cc;
+  --color-shadow: rgb(29 29 31 / 6%);
+  --color-shadow-strong: rgb(29 29 31 / 11%);
+  --color-scrim: rgb(242 242 245 / 88%);
+
+  color-scheme: light;
+
+  /* Tipografia */
+  /* SF primeiro em aparelho Apple; o Geist (empacotado) só aparece onde a SF não existe. */
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Geist Variable', 'Geist',
+    'Inter', system-ui, sans-serif;
+  --font-mono: 'Geist Mono Variable', 'Geist Mono', 'SF Mono', ui-monospace, monospace;
+  --text-tab: 0.625rem; /* 10px: só o rótulo da barra inferior, como a tab bar do iOS (S-56) */
+  --text-xs: 0.75rem; /* 12px */
+  --text-sm: 0.8125rem; /* 13px */
+  --text-md: 0.9375rem; /* 15px */
+  --text-lg: 1.0625rem; /* 17px */
+  --text-xl: 1.25rem; /* 20px */
+  --text-2xl: 1.5rem; /* 24px */
+  --text-3xl: 2rem; /* 32px */
+  --text-kpi: 1.75rem; /* 28px: número grande de cartão de KPI */
+  --text-display: 2rem; /* 32px: número dominante */
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  /* Raios (DS 02): janela 24 a 32, cartão 16 a 24, controle pequeno arredondado */
+  --radius-window: 28px;
+  --radius-card: 20px;
+  --radius-panel: 24px;
+  --radius-control: 12px;
+  --radius-pill: 999px;
+
+  /* Bordas e sombras suaves */
+  --border-width: 1px;
+  --shadow-1: 0 1px 2px var(--color-shadow);
+  --shadow-2: 0 6px 20px -6px var(--color-shadow-strong);
+  --shadow-window: 0 24px 64px -28px var(--color-shadow-strong), 0 2px 8px var(--color-shadow);
+
+  /* Espaçamento: base 4px */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  /* Movimento: 180 a 300ms. `prefers-reduced-motion` zera as três durações (no fim do arquivo). */
+  --duration-fast: 180ms;
+  --duration-base: 240ms;
+  --duration-slow: 300ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* Layout do shell */
+  --bottom-nav-height: 4rem;
+  --sidebar-collapsed-width: 4.5rem;
+  --sidebar-expanded-width: 15.5rem;
+  --content-max-width: 60rem;
+  --content-wide-max-width: 72rem; /* Início: grade densa de KPIs, gráficos e listas */
+  --window-max-width: 90rem;
+  /* Camadas: diálogo, toast, popover/folha (por cima de tudo, inclusive do diálogo) */
+  --z-dialog: 50;
+  --z-toast: 80;
+  --z-popover: 60;
+  --z-tooltip: 70;
+  --shadow-popover: 0 8px 28px var(--color-shadow-strong);
+  --focus-ring: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-focus);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --color-canvas: #0e0e10;
+    --color-surface: #1c1c1e;
+    --color-surface-muted: #2a2a2d;
+    --color-border: #38383b;
+    --color-control-border: #78787d;
+    --color-text: #f5f5f7;
+    --color-text-muted: #a1a1a6;
+    --color-accent: #2997ff;
+    --color-on-accent: #00111f;
+    --color-positive: #7daf90;
+    --color-warning: #cda765;
+    --color-risk: #d08a7f;
+    --color-accent-soft: #1e2d3e;
+    --color-accent-soft-hover: #1a2736;
+    --color-positive-soft: #2a312e;
+    --color-warning-soft: #352f28;
+    --color-risk-soft: #352b2c;
+    --color-chart-1: #2997ff;
+    --color-chart-2: #a89c8c;
+    --color-focus: #2997ff;
+    --color-shadow: rgb(0 0 0 / 28%);
+    --color-shadow-strong: rgb(0 0 0 / 42%);
+    --color-scrim: rgb(14 14 16 / 88%);
+    color-scheme: dark;
+  }
+}
+
+[data-theme-scope='dark'],
+:root[data-theme='dark'] {
+  --color-canvas: #0e0e10;
+  --color-surface: #1c1c1e;
+  --color-surface-muted: #2a2a2d;
+  --color-border: #38383b;
+  --color-control-border: #78787d;
+  --color-text: #f5f5f7;
+  --color-text-muted: #a1a1a6;
+  --color-accent: #2997ff;
+  --color-on-accent: #00111f;
+  --color-positive: #7daf90;
+  --color-warning: #cda765;
+  --color-risk: #d08a7f;
+  --color-accent-soft: #1e2d3e;
+  --color-accent-soft-hover: #1a2736;
+  --color-positive-soft: #2a312e;
+  --color-warning-soft: #352f28;
+  --color-risk-soft: #352b2c;
+  --color-chart-1: #2997ff;
+  --color-chart-2: #a89c8c;
+  --color-focus: #2997ff;
+  --color-shadow: rgb(0 0 0 / 28%);
+  --color-shadow-strong: rgb(0 0 0 / 42%);
+  --color-scrim: rgb(14 14 16 / 88%);
+  color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-base: 0ms;
+    --duration-slow: 0ms;
+  }
+}

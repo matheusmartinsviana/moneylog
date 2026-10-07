@@ -1,0 +1,173 @@
+<app-page-layout
+  [heading]="card()?.name ?? t().nav.cards"
+  [description]="card()?.institution ?? undefined"
+>
+  @if (card(); as c) {
+    <div pageActions class="actions" data-cy="card-actions">
+      @if (compact()) {
+        <app-menu
+          fieldId="card-actions-menu"
+          [label]="t().cards.detail.actionsLabel"
+          [items]="menuItems()"
+          (selected)="run($event)"
+        />
+      } @else {
+        <button
+          type="button"
+          class="button button--primary"
+          data-cy="card-pay"
+          [attr.aria-disabled]="payTarget() === null ? true : null"
+          [attr.aria-describedby]="payTarget() === null ? 'card-pay-hint' : null"
+          (click)="openPay()"
+        >
+          {{ t().cards.detail.payInvoice }}
+        </button>
+        <a
+          class="button"
+          routerLink="/quick-add"
+          [queryParams]="{ mode: 'credit', cardId: c.id }"
+          data-cy="card-new-purchase"
+        >
+          {{ t().cards.detail.newPurchase }}
+        </a>
+        <a class="button" [routerLink]="['/cards', c.id, 'edit']" data-cy="card-edit">
+          {{ t().cards.detail.edit }}
+        </a>
+      }
+    </div>
+  }
+
+  @switch (state().status) {
+    @case ('loading') {
+      <div data-cy="card-loading">
+        <p class="visually-hidden" role="status">{{ t().cards.detail.loading }}</p>
+        <div class="list-skeleton" aria-hidden="true">
+          <div class="list-skeleton__row"></div>
+          <div class="list-skeleton__row"></div>
+          <div class="list-skeleton__row"></div>
+        </div>
+      </div>
+    }
+    @case ('notFound') {
+      <app-empty-state
+        [heading]="t().cards.detail.notFound.title"
+        [description]="t().cards.detail.notFound.description"
+        [actions]="notFoundActions()"
+        illustration="grid"
+      />
+    }
+    @case ('error') {
+      <app-error-state [problem]="loadProblem()" (retry)="retry()" />
+    }
+    @case ('ready') {
+      @if (card(); as c) {
+        <app-card-header [card]="c" />
+        @if (payHint(); as hint) {
+          @if (!compact()) {
+            <p class="hint" id="card-pay-hint" data-cy="card-pay-hint" [attr.data-reason]="hint">
+              @switch (hint) {
+                @case ('loading') {
+                  {{ t().cards.detail.payInvoicesLoading }}
+                }
+                @case ('error') {
+                  {{ t().cards.detail.payInvoicesError }}
+                  <button
+                    type="button"
+                    class="button"
+                    data-cy="card-pay-hint-retry"
+                    (click)="retryInvoices()"
+                  >
+                    {{ t().cards.pay.retry }}
+                  </button>
+                }
+                @default {
+                  {{ t().cards.detail.nothingToPay }}
+                }
+              }
+            </p>
+          }
+        }
+
+        <app-tabs
+          fieldId="card-tabs"
+          [label]="t().cards.detail.tabs.label"
+          [tabs]="tabs()"
+          [active]="activeTab()"
+          (activeChange)="setTab($event)"
+        >
+          <ng-template appTabPanel="invoices">
+            @let list = invoices();
+            @switch (list.status) {
+              @case ('error') {
+                <app-error-state [problem]="list.problem" (retry)="retryInvoices()" />
+              }
+              @case ('ready') {
+                @if (list.data.length === 0) {
+                  <p class="empty" data-cy="invoices-empty">{{ t().cards.detail.invoicesEmpty }}</p>
+                } @else {
+                  <ul class="list" data-cy="invoices-list">
+                    @for (invoice of list.data; track invoice.id) {
+                      <li app-invoice-summary-row [invoice]="invoice"></li>
+                    }
+                  </ul>
+                }
+              }
+              @default {
+                <div data-cy="invoices-loading">
+                  <p class="visually-hidden" role="status">
+                    {{ t().cards.detail.invoicesLoading }}
+                  </p>
+                  <div class="list-skeleton" aria-hidden="true">
+                    <div class="list-skeleton__row"></div>
+                    <div class="list-skeleton__row"></div>
+                  </div>
+                </div>
+              }
+            }
+          </ng-template>
+          <ng-template appTabPanel="future">
+            @let installments = future();
+            @switch (installments.status) {
+              @case ('error') {
+                <app-error-state [problem]="installments.problem" (retry)="retryFuture()" />
+              }
+              @case ('ready') {
+                @if (installments.data.byInvoice.length === 0) {
+                  <p class="empty" data-cy="future-empty">{{ t().cards.detail.futureEmpty }}</p>
+                } @else {
+                  <app-future-installments-list [future]="installments.data" />
+                }
+              }
+              @default {
+                <div data-cy="future-loading">
+                  <p class="visually-hidden" role="status">{{ t().cards.detail.futureLoading }}</p>
+                  <div class="list-skeleton" aria-hidden="true">
+                    <div class="list-skeleton__row"></div>
+                    <div class="list-skeleton__row"></div>
+                  </div>
+                </div>
+              }
+            }
+          </ng-template>
+        </app-tabs>
+
+        <app-linked-notes
+          type="CARD"
+          cy="card-notes"
+          [entityId]="c.id"
+          [label]="c.name"
+          [status]="c.status === 'ARCHIVED' ? 'ARCHIVED' : null"
+        />
+
+        <app-pay-invoice-sheet
+          [open]="paying()"
+          [invoice]="payTarget()"
+          [accounts]="cashAccounts()"
+          [defaultAccountId]="c.defaultPaymentAccountId"
+          (paid)="onPaid()"
+          (closed)="closePay()"
+        />
+      }
+    }
+  }
+</app-page-layout>

@@ -1,0 +1,60 @@
+:host {
+  display: grid;
+  list-style: none;
+}
+
+:host(.row) {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+  background-color: var(--color-surface);
+  list-style: none;
+}
+
+.row__main {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.row__title {
+  font-weight: var(--weight-semibold);
+  overflow-wrap: anywhere;
+}
+
+.row__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.row__overdue {
+  color: var(--color-risk);
+  font-weight: var(--weight-medium);
+}
+
+.row__amount {
+  font-weight: var(--weight-semibold);
+}
+
+.row__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+@media (width >= 768px) {
+  :host(.row) {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 1.5fr) minmax(0, 2fr);
+    align-items: center;
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .row__actions {
+    justify-content: flex-end;
+  }
+}

@@ -1,0 +1,65 @@
+<section
+  class="available surface"
+  [attr.aria-labelledby]="headingId"
+  data-cy="home-available-section"
+>
+  <h2 class="available__title" [id]="headingId">{{ t().home.available.title }}</h2>
+  <p class="available__value" [class.is-negative]="negative()" data-cy="home-available">
+    <app-money [value]="balances().available" />
+  </p>
+  @if (negative()) {
+    <p class="available__warning" data-cy="home-available-negative">
+      {{ t().home.available.negative }}
+    </p>
+  }
+  <p class="available__description">{{ t().home.available.description }}</p>
+
+  <dl class="ledger formula">
+    <div class="ledger__row">
+      <dt class="ledger__label">{{ t().home.available.inAccounts }}</dt>
+      <dd class="ledger__value" data-cy="home-in-accounts">
+        <app-money [value]="balances().inAccounts" />
+      </dd>
+    </div>
+    <div class="ledger__row">
+      <dt class="ledger__label">
+        <span class="formula__op" aria-hidden="true">−</span>
+        {{ t().home.available.committed30d }}
+      </dt>
+      <dd class="ledger__value" data-cy="home-committed-30d">
+        <app-money [value]="balances().committed30d" />
+      </dd>
+    </div>
+    <div class="ledger__row">
+      <dt class="ledger__label">
+        <span class="formula__op" aria-hidden="true">−</span>
+        <button
+          type="button"
+          class="formula__term"
+          data-cy="home-reserved-hint"
+          [appTooltip]="t().home.reservedNote.formula"
+        >
+          {{ t().home.available.reserved }}
+        </button>
+      </dt>
+      <dd class="ledger__value" data-cy="home-reserved">
+        <app-money [value]="balances().reserved" />
+      </dd>
+    </div>
+  </dl>
+
+  @if (hasReserved()) {
+    <a class="available__link" routerLink="/goals" data-cy="home-reserved-goals">
+      {{ t().home.reservedNote.goalsLink }}
+    </a>
+  }
+
+  <dl class="ledger aside">
+    <div class="ledger__row">
+      <dt class="ledger__label">{{ t().home.available.investments }}</dt>
+      <dd class="ledger__value" data-cy="home-investments">
+        <app-money [value]="balances().investments" />
+      </dd>
+    </div>
+  </dl>
+</section>

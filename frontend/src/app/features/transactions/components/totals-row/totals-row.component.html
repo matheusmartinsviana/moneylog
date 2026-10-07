@@ -1,0 +1,64 @@
+<div
+  class="totals"
+  [class.totals--summary]="variant() === 'summary'"
+  role="group"
+  [attr.aria-label]="t().transactions.totals.label"
+  [attr.data-cy]="cy()"
+>
+  @if (recordTotals(); as totals) {
+    <dl class="totals__list">
+      <div class="totals__item">
+        <dt>{{ t().transactions.totals.count }}</dt>
+        <dd class="num" [attr.data-cy]="cy() + '-count'">{{ totals.count }}</dd>
+      </div>
+      <div class="totals__item">
+        <dt>{{ t().transactions.totals.in }}</dt>
+        <dd [attr.data-cy]="cy() + '-in'"><app-money [value]="totals.cashFlow.in" /></dd>
+      </div>
+      <div class="totals__item">
+        <dt>{{ t().transactions.totals.out }}</dt>
+        <dd [attr.data-cy]="cy() + '-out'"><app-money [value]="totals.cashFlow.out" /></dd>
+      </div>
+      <div class="totals__item totals__item--net">
+        <dt>{{ netLabel() }}</dt>
+        <dd [class.is-negative]="negative(totals.cashFlow.net)" [attr.data-cy]="cy() + '-net'">
+          <app-money [value]="totals.cashFlow.net" />
+        </dd>
+      </div>
+    </dl>
+    @if (voidedOnly()) {
+      <p class="totals__note" [attr.data-cy]="cy() + '-voided-note'">
+        {{ t().transactions.totals.voidedNote }}
+      </p>
+    }
+  }
+  @if (entryTotals(); as totals) {
+    <dl class="totals__list">
+      <div class="totals__item totals__item--net">
+        <dt>{{ t().transactions.totals.total }}</dt>
+        <dd [class.is-negative]="negative(totals.total)" [attr.data-cy]="cy() + '-total'">
+          <app-money [value]="totals.total" />
+        </dd>
+      </div>
+    </dl>
+    @if (totals.byCategory.length > 0) {
+      <ul
+        class="totals__categories"
+        [attr.aria-label]="t().transactions.totals.byCategory"
+        [attr.data-cy]="cy() + '-by-category'"
+      >
+        @for (item of totals.byCategory; track item.category.id) {
+          <li class="totals__category">
+            <span>{{ item.category.name }}</span>
+            <span
+              [class.is-negative]="negative(item.amount)"
+              [attr.data-cy]="cy() + '-category-' + item.category.id"
+            >
+              <app-money [value]="item.amount" />
+            </span>
+          </li>
+        }
+      </ul>
+    }
+  }
+</div>

@@ -1,0 +1,41 @@
+@let o = occurrence();
+<div class="row__main">
+  <p class="row__title" [attr.data-cy]="'occurrence-title-' + key()">{{ title() }}</p>
+  <p class="row__meta">
+    <span class="num" [attr.data-cy]="'occurrence-date-' + key()">{{ dateText() }}</span>
+    <span [attr.data-cy]="'occurrence-via-' + key()">
+      {{ o.cardId ? t().recurrences.occurrences.viaCard : t().recurrences.occurrences.viaAccount }}
+    </span>
+    @if (o.direction === 'IN') {
+      <span>{{ t().recurrences.occurrences.incoming }}</span>
+    }
+    @if (o.overdue) {
+      <span class="row__overdue" [attr.data-cy]="'occurrence-overdue-' + key()">
+        {{ t().recurrences.occurrences.overdue }}
+      </span>
+    }
+  </p>
+</div>
+<p class="row__amount" [attr.data-cy]="'occurrence-amount-' + key()">
+  <app-money [value]="o.amount" />
+</p>
+<div class="row__actions">
+  <button
+    type="button"
+    class="button button--primary"
+    [attr.data-cy]="'occurrence-realize-' + key()"
+    [attr.aria-label]="realizeLabel()"
+    (click)="realize.emit(o)"
+  >
+    {{ t().recurrences.occurrences.realize }}
+  </button>
+  <button
+    type="button"
+    class="button"
+    [attr.data-cy]="'occurrence-skip-' + key()"
+    [attr.aria-label]="skipLabel()"
+    (click)="skip.emit(o)"
+  >
+    {{ t().recurrences.occurrences.skip }}
+  </button>
+</div>

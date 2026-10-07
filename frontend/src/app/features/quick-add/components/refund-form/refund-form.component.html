@@ -1,0 +1,131 @@
+<form
+  class="form surface"
+  [formGroup]="form"
+  (ngSubmit)="onSubmit()"
+  novalidate
+  data-cy="refund-form"
+>
+  <app-money-input
+    formControlName="amount"
+    fieldId="entry-amount"
+    [currency]="currency"
+    [label]="t().entryForm.amount"
+  />
+  <app-text-field
+    formControlName="description"
+    fieldId="entry-description"
+    autocomplete="off"
+    [maxlength]="200"
+    [mandatory]="false"
+    [label]="t().entryForm.description"
+    [hint]="descriptionHint()"
+  />
+
+  @if (origin(); as selected) {
+    <div class="origin" data-cy="entry-original">
+      <p class="origin__label">{{ t().entryForm.refund.original }}</p>
+      <div class="origin__chosen">
+        <span class="origin__name" data-cy="entry-original-chosen">{{ selected.description }}</span>
+        <button
+          type="button"
+          class="button"
+          data-cy="entry-original-remove"
+          (click)="removeOrigin()"
+        >
+          {{ t().entryForm.refund.remove }}
+        </button>
+      </div>
+    </div>
+  } @else {
+    <div class="origin" data-cy="entry-original">
+      <app-text-field
+        formControlName="originalSearch"
+        fieldId="entry-original-search"
+        [role]="'searchbox'"
+        inputmode="search"
+        enterkeyhint="search"
+        autocomplete="off"
+        [maxlength]="100"
+        [mandatory]="false"
+        [label]="t().entryForm.refund.original"
+        [hint]="t().entryForm.refund.originalHint"
+      />
+      @if (originSearching()) {
+        <p class="origin__status" role="status" data-cy="entry-original-searching">
+          {{ t().entryForm.refund.searching }}
+        </p>
+      } @else if (originResults(); as results) {
+        @if (results.length === 0) {
+          <p class="origin__status" role="status" data-cy="entry-original-empty">
+            {{ t().entryForm.refund.noResults }}
+          </p>
+        } @else {
+          <ul
+            class="origin__results"
+            data-cy="entry-original-results"
+            [attr.aria-label]="t().entryForm.refund.resultsLabel"
+          >
+            @for (result of results; track result.id) {
+              <li>
+                <button
+                  type="button"
+                  class="origin__option"
+                  [attr.data-cy]="'entry-original-option-' + result.id"
+                  (click)="choose(result)"
+                >
+                  <span class="origin__name">{{ result.description }}</span>
+                  <span class="origin__meta">
+                    {{ dateOf(result) }}
+                    ·
+                    <app-money [value]="result.amount" />
+                  </span>
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      }
+    </div>
+  }
+
+  <app-select
+    formControlName="categoryId"
+    fieldId="entry-category"
+    [options]="categoryOptions()"
+    [label]="t().entryForm.category"
+    [hint]="origin() ? t().entryForm.refund.categoryLocked : undefined"
+  />
+  @if (showTarget()) {
+    <app-segmented-control
+      formControlName="target"
+      fieldId="entry-refund-target"
+      [options]="targetOptions()"
+      [label]="t().entryForm.refund.target"
+    />
+  }
+  @if (target() === 'card') {
+    <app-select
+      formControlName="cardId"
+      fieldId="entry-card"
+      [options]="cardOptions()"
+      [label]="t().entryForm.refund.card"
+    />
+  } @else {
+    <app-select
+      formControlName="accountId"
+      fieldId="entry-account"
+      [options]="accountOptions()"
+      [label]="t().entryForm.account"
+    />
+  }
+  <app-date-picker formControlName="date" fieldId="entry-date" [label]="t().entryForm.date" />
+
+  <app-form-actions
+    [banner]="banner()"
+    [canRetry]="canRetry()"
+    [saving]="saving()"
+    [submitLabel]="submitLabel()"
+    [cancelLink]="cancelLink()"
+    (retry)="retry.emit()"
+  />
+</form>

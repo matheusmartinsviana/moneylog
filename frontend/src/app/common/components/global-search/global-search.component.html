@@ -1,0 +1,129 @@
+<ng-template #field>
+  <app-text-field
+    [formControl]="control"
+    fieldId="global-search-input"
+    [label]="t().search.label"
+    [hideLabel]="true"
+    [mandatory]="false"
+    [placeholder]="t().search.placeholder"
+    [maxlength]="maxLength"
+    [autofocus]="sheetOpen()"
+    [autocomplete]="'off'"
+    [enterkeyhint]="'search'"
+    [role]="'combobox'"
+    [ariaControls]="listId"
+    [ariaExpanded]="expanded()"
+    [ariaActivedescendant]="activeId() ?? undefined"
+    (focusin)="onFocus()"
+    (keydown)="onKeydown($event)"
+  />
+</ng-template>
+
+<ng-template #results>
+  <!-- O foco fica no campo (aria-activedescendant): apertar o mouse numa opção não pode tirá-lo de lá. -->
+  <div class="gs__results" data-cy="global-search-panel" (mousedown)="$event.preventDefault()">
+    @switch (status()) {
+      @case ('idle') {
+        <p class="gs__note" data-cy="global-search-hint">{{ t().search.hint }}</p>
+      }
+      @case ('loading') {
+        <p class="gs__note" role="status" data-cy="global-search-loading">
+          {{ t().search.loading }}
+        </p>
+      }
+      @case ('empty') {
+        <p class="gs__note" data-cy="global-search-empty">{{ emptyMessage() }}</p>
+      }
+      @case ('error') {
+        <div class="gs__error" data-cy="global-search-error">
+          <p>{{ errorMessage() }}</p>
+          <button type="button" class="button" data-cy="global-search-retry" (click)="retry()">
+            {{ t().search.retry }}
+          </button>
+        </div>
+      }
+      @default {
+        <div
+          class="gs__list"
+          role="listbox"
+          [id]="listId"
+          [attr.aria-label]="t().search.listLabel"
+          data-cy="global-search-results"
+        >
+          @for (section of sections(); track section.group) {
+            <div class="gs__group" role="group" [attr.aria-labelledby]="section.titleId">
+              <div class="gs__group-title" role="presentation" [id]="section.titleId">
+                {{ section.title }}
+              </div>
+              @for (option of section.options; track option.domId) {
+                <div
+                  class="gs__option row-hover"
+                  role="option"
+                  [id]="option.domId"
+                  [class.is-active]="option.domId === activeId()"
+                  [attr.aria-selected]="option.domId === activeId()"
+                  [attr.data-cy]="'global-search-option-' + option.group"
+                  tabindex="-1"
+                  (click)="choose(option)"
+                  (keydown.enter)="choose(option)"
+                >
+                  <span class="gs__main">
+                    <span class="gs__title">{{ option.title }}</span>
+                    @if (option.meta) {
+                      <span class="gs__meta">{{ option.meta }}</span>
+                    }
+                    @if (option.snippet) {
+                      <span class="gs__snippet" data-cy="global-search-snippet">{{
+                        option.snippet
+                      }}</span>
+                    }
+                  </span>
+                  @if (option.amount) {
+                    <span class="gs__amount num">{{ option.amount }}</span>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+        @if (truncated()) {
+          <p class="gs__note gs__note--partial" data-cy="global-search-truncated">
+            {{ t().search.truncated }}
+          </p>
+        }
+      }
+    }
+  </div>
+</ng-template>
+
+@if (viewport.compact()) {
+  <button
+    type="button"
+    class="gs__open"
+    [attr.aria-label]="t().search.open"
+    data-cy="global-search-open"
+    (click)="openSheet()"
+  >
+    <app-icon name="search" [size]="20" />
+  </button>
+  <app-sheet
+    [open]="sheetOpen()"
+    [heading]="t().search.sheetTitle"
+    cy="global-search-sheet"
+    (closed)="closeSheet()"
+  >
+    <div class="gs__sheet">
+      <ng-container [ngTemplateOutlet]="field" />
+      <ng-container [ngTemplateOutlet]="results" />
+    </div>
+  </app-sheet>
+} @else {
+  <div class="gs" data-cy="global-search" (focusout)="onFocusOut($event)">
+    <ng-container [ngTemplateOutlet]="field" />
+    @if (panelVisible()) {
+      <div class="gs__panel">
+        <ng-container [ngTemplateOutlet]="results" />
+      </div>
+    }
+  </div>
+}

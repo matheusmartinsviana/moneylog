@@ -1,0 +1,194 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "cli": {
+    "packageManager": "npm",
+    "schematicCollections": ["angular-eslint"],
+    "analytics": false
+  },
+  "newProjectRoot": "projects",
+  "projects": {
+    "moneylog": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "standalone": true,
+          "changeDetection": "OnPush",
+          "style": "css"
+        },
+        "@schematics/angular:directive": {
+          "standalone": true
+        },
+        "@schematics/angular:pipe": {
+          "standalone": true
+        }
+      },
+      "root": "",
+      "sourceRoot": "src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "browser": "src/main.ts",
+            "tsConfig": "tsconfig.app.json",
+            "webWorkerTsConfig": "tsconfig.worker.json",
+            "assets": [
+              "src/manifest.webmanifest",
+              "src/sw-push.js",
+              {
+                "glob": "**/*",
+                "input": "src/assets",
+                "output": "assets",
+                "ignore": ["**/README.md"]
+              }
+            ],
+            "styles": [
+              "src/styles/tokens.css",
+              "node_modules/@fontsource-variable/geist/wght.css",
+              "node_modules/@fontsource-variable/geist-mono/wght.css",
+              "src/styles/typography.css",
+              "src/styles/base.css",
+              "src/styles/utilities.css"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kB",
+                  "maximumError": "1MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "4kB",
+                  "maximumError": "8kB"
+                }
+              ],
+              "outputHashing": "all",
+              "serviceWorker": "ngsw-config.json"
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/app/config/dev-routes.ts",
+                  "with": "src/app/config/dev-routes.dev.ts"
+                },
+                {
+                  "replace": "src/modules/reports/infra/reports.providers.ts",
+                  "with": "src/modules/reports/infra/reports.providers.dev.ts"
+                }
+              ]
+            },
+            "mock": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/app/config/environment.ts",
+                  "with": "src/app/config/environment.mock.ts"
+                },
+                {
+                  "replace": "src/app/config/dev-routes.ts",
+                  "with": "src/app/config/dev-routes.dev.ts"
+                },
+                {
+                  "replace": "src/modules/reports/infra/reports.providers.ts",
+                  "with": "src/modules/reports/infra/reports.providers.dev.ts"
+                }
+              ]
+            },
+            "demo": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/app/config/demo-mode.ts",
+                  "with": "src/app/config/demo-mode.demo.ts"
+                }
+              ]
+            },
+            "production-mock": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kB",
+                  "maximumError": "1MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "4kB",
+                  "maximumError": "8kB"
+                }
+              ],
+              "outputHashing": "all",
+              "serviceWorker": "ngsw-config.json",
+              "fileReplacements": [
+                {
+                  "replace": "src/app/config/environment.ts",
+                  "with": "src/app/config/environment.mock.ts"
+                }
+              ]
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular/build:dev-server",
+          "configurations": {
+            "production": {
+              "buildTarget": "moneylog:build:production"
+            },
+            "development": {
+              "buildTarget": "moneylog:build:development",
+              "proxyConfig": "proxy.conf.json"
+            },
+            "local": {
+              "buildTarget": "moneylog:build:development",
+              "proxyConfig": "proxy.conf.json"
+            },
+            "mock": {
+              "buildTarget": "moneylog:build:mock"
+            },
+            "demo": {
+              "buildTarget": "moneylog:build:demo"
+            }
+          },
+          "defaultConfiguration": "development"
+        },
+        "test": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "runnerConfig": "vitest-base.config.mts",
+            "setupFiles": ["src/test-setup.ts"],
+            "coverageInclude": ["src/**/*.ts"],
+            "coverageExclude": [
+              "src/**/*.spec.ts",
+              "src/**/*.d.ts",
+              "src/main.ts",
+              "src/test-setup.ts",
+              "src/testing/**",
+              "src/app/app.config.ts",
+              "src/app/**/*.routes.ts",
+              "src/app/config/**",
+              "src/modules/*/mock-data/**",
+              "src/util/api/schema.gen.ts"
+            ]
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": ["src/**/*.ts", "src/**/*.html"]
+          }
+        }
+      }
+    }
+  }
+}

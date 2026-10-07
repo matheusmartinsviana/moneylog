@@ -1,0 +1,50 @@
+<div
+  class="shares"
+  role="group"
+  [attr.aria-label]="t().lending.shares.legend"
+  data-cy="entry-shares"
+>
+  @for (group of rows(); track group; let i = $index) {
+    <div
+      class="share"
+      role="group"
+      [attr.aria-label]="rowLabel(i)"
+      [attr.data-cy]="'entry-share-' + i"
+    >
+      <app-person-field
+        [control]="group.controls.personId"
+        [fieldId]="'entry-share-person-' + i"
+        [label]="t().lending.shares.person"
+        [people]="people()"
+        [createPerson]="createPerson()"
+      />
+      <app-money-input
+        [formControl]="group.controls.amount"
+        [fieldId]="'entry-share-amount-' + i"
+        [currency]="currency()"
+        [label]="t().lending.shares.amount"
+      />
+      <button
+        type="button"
+        class="button share__remove"
+        [attr.data-cy]="'entry-share-remove-' + i"
+        [attr.aria-label]="removeLabel(group, i)"
+        (click)="remove(i)"
+      >
+        {{ t().lending.shares.removeShort }}
+      </button>
+    </div>
+  }
+  @if (serverMessage(); as message) {
+    <p class="shares__error" role="alert" data-cy="entry-shares-error">{{ message }}</p>
+  }
+  <button
+    type="button"
+    class="button"
+    data-cy="entry-share-add"
+    [attr.aria-disabled]="rows().length >= MAX_SHARES ? true : null"
+    (click)="add()"
+  >
+    {{ t().lending.shares.add }}
+  </button>
+</div>

@@ -1,0 +1,100 @@
+:host {
+  display: grid;
+  list-style: none;
+}
+
+/* Celular: card empilhado. */
+:host(.row) {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+  background-color: var(--color-surface);
+  list-style: none;
+}
+
+.row__main {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.row__name {
+  color: var(--color-text);
+  font-weight: var(--weight-semibold);
+  overflow-wrap: anywhere;
+  text-decoration: none;
+}
+
+.row__type,
+.row__institution {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.row__institution:empty {
+  display: none;
+}
+
+.row__balance {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.row__balance-label {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.row__balance-value {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  text-align: right;
+}
+
+.row__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.row__hint {
+  flex-basis: 100%;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+/* Desktop: linha de tabela (nome/tipo · instituição · saldo · ações), valor à direita. */
+@media (width >= 768px) {
+  :host(.row) {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1.5fr) minmax(8rem, 1fr) minmax(0, 2fr);
+    align-items: center;
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .row__balance-label {
+    display: none;
+  }
+
+  .row__balance {
+    justify-content: flex-end;
+  }
+
+  .row__balance-value {
+    font-size: var(--text-md);
+  }
+
+  .row__actions {
+    justify-content: flex-end;
+  }
+}
+
+.row__uncovered {
+  color: var(--color-warning);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}

@@ -1,0 +1,275 @@
+:host {
+  display: block;
+}
+
+.lc {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.lc__empty {
+  display: grid;
+  place-items: center;
+  min-height: 8rem;
+  border: var(--border-width) dashed var(--color-border);
+  border-radius: var(--radius-control);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.lc__plot {
+  position: relative;
+  height: 14rem;
+  border-radius: var(--radius-control);
+  touch-action: pan-y;
+  user-select: none;
+  /* Para o tooltip se ajustar à largura do próprio gráfico (`@container` abaixo), não à da página. */
+  container-type: inline-size;
+}
+
+/* Um ponto não precisa de altura de gráfico; 30 pontos ganham um pouco mais de respiro vertical. */
+.lc__plot--single {
+  height: 7rem;
+}
+
+.lc__plot--dense {
+  height: 16rem;
+}
+
+.lc__svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  clip-path: inset(-6px -6px -6px -6px);
+  transition: clip-path var(--duration-slow) var(--ease-emphasized);
+}
+
+/* Revela o traço (o estado final já está no DOM): só até o gráfico entrar na viewport. */
+.lc__svg.is-pending {
+  clip-path: inset(-6px 100% -6px -6px);
+}
+
+.lc__grid {
+  stroke: var(--color-border);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.lc__guide {
+  stroke: var(--color-text-muted);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.lc__line {
+  fill: none;
+  stroke: var(--color-chart-1);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.lc__line--secondary {
+  stroke: var(--color-chart-2);
+  stroke-dasharray: 6 4;
+}
+
+.lc__area {
+  fill: var(--color-chart-1);
+  fill-opacity: 0.12;
+  stroke: none;
+}
+
+.lc__y {
+  position: absolute;
+  left: 0;
+  padding-right: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  pointer-events: none;
+  transform: translateY(calc(-100% - 2px));
+}
+
+.lc__dot {
+  position: absolute;
+  width: 0.625rem;
+  height: 0.625rem;
+  border: 2px solid var(--color-chart-1);
+  border-radius: var(--radius-pill);
+  background-color: var(--color-surface);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.lc__dot--secondary {
+  border-color: var(--color-chart-2);
+  border-radius: 2px;
+}
+
+.lc__axis {
+  position: relative;
+  height: 1.25rem;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.lc__tick {
+  position: absolute;
+  top: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+.lc__tick[data-edge='start'] {
+  transform: none;
+}
+
+.lc__tick[data-edge='end'] {
+  transform: translateX(-100%);
+}
+
+.lc__tip {
+  position: absolute;
+  top: var(--space-1);
+  z-index: 2;
+  display: grid;
+  gap: 2px;
+  min-width: 9rem;
+  margin-left: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-popover);
+  font-size: var(--text-xs);
+  pointer-events: none;
+}
+
+.lc__tip--flip {
+  margin-left: 0;
+  transform: translateX(calc(-100% - var(--space-3)));
+}
+
+/*
+ * Gráfico estreito (celular): não cabe um balão de ~150 px de cada lado do ponto. O balão encosta na borda
+ * do gráfico oposta ao ponto, sempre inteiro dentro dele e da tela (BUG-QA-05, WCAG 1.4.10).
+ */
+@container (width < 26rem) {
+  .lc__tip {
+    right: 0;
+    left: auto !important;
+    max-width: 100%;
+    margin-left: 0;
+    transform: none;
+  }
+
+  .lc__tip--flip {
+    right: auto;
+    left: 0 !important;
+  }
+}
+
+.lc__tip-title {
+  font-weight: var(--weight-semibold);
+}
+
+.lc__tip-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.lc__tip-label {
+  flex: 1;
+  color: var(--color-text-muted);
+}
+
+.lc__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.lc__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* O traço do swatch repete a diferença do gráfico: cheio com círculo × tracejado com quadrado. */
+.lc__swatch {
+  flex: none;
+  width: 0.75rem;
+  height: 0.75rem;
+  border: 2px solid var(--color-chart-1);
+  border-radius: var(--radius-pill);
+}
+
+.lc__swatch--secondary {
+  border-color: var(--color-chart-2);
+  border-style: dashed;
+  border-radius: 2px;
+}
+
+.lc__toggle {
+  justify-self: start;
+  min-height: 2rem;
+  padding: 0 var(--space-3);
+  font-size: var(--text-xs);
+}
+
+/* Alvo de toque de 44 px: o seletor do componente vence a regra global de `.button` (revisão A4). */
+@media (width <= 640px), (pointer: coarse) {
+  .lc__toggle {
+    min-height: 2.75rem;
+  }
+}
+
+.lc__table {
+  overflow-x: auto;
+}
+
+.lc__table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.lc__table caption {
+  padding-bottom: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  text-align: left;
+}
+
+.lc__table th,
+.lc__table td {
+  padding: var(--space-1) var(--space-2);
+  border-bottom: var(--border-width) solid var(--color-border);
+  text-align: right;
+}
+
+.lc__table th:first-child {
+  text-align: left;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lc__svg,
+  .lc__svg.is-pending {
+    clip-path: inset(-6px);
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .lc__line {
+    stroke: CanvasText;
+  }
+}

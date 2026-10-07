@@ -1,0 +1,66 @@
+:host {
+  display: grid;
+  list-style: none;
+}
+
+:host(.row) {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+  background-color: var(--color-surface);
+  list-style: none;
+}
+
+.row__main {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.row__title {
+  color: var(--color-text);
+  font-weight: var(--weight-semibold);
+  overflow-wrap: anywhere;
+  text-decoration: none;
+}
+
+.row__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.row__status {
+  color: var(--color-text);
+  font-weight: var(--weight-medium);
+}
+
+.row__overdue {
+  color: var(--color-risk);
+  font-weight: var(--weight-medium);
+}
+
+.row__values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin: 0;
+}
+
+.row__values dt {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.row__values dd {
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+.row__outstanding {
+  font-weight: var(--weight-semibold);
+}

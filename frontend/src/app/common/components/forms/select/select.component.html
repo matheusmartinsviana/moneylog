@@ -1,0 +1,116 @@
+<div class="field">
+  <span class="field__label" [id]="labelId()">{{ label() }}</span>
+  <div
+    #trigger
+    class="input select__trigger"
+    [class.select__trigger--compact]="size() === 'compact'"
+    [class.is-disabled]="disabled()"
+    [class.is-open]="open()"
+    role="combobox"
+    aria-haspopup="listbox"
+    [id]="controlId()"
+    [attr.data-cy]="fieldId()"
+    [attr.tabindex]="disabled() ? -1 : 0"
+    [attr.aria-labelledby]="labelId()"
+    [attr.aria-controls]="open() ? listboxId() : null"
+    [attr.aria-expanded]="open()"
+    [attr.aria-activedescendant]="focusInPanel() ? null : activeId()"
+    [attr.aria-required]="mandatory()"
+    [attr.aria-invalid]="showError()"
+    [attr.aria-disabled]="disabled() || null"
+    [attr.aria-describedby]="describedBy()"
+    (click)="toggle()"
+    (keydown)="onKeydown($event)"
+    (blur)="onBlur()"
+  >
+    <span class="select__value" [class.is-placeholder]="!hasValue()">
+      {{ selected()?.label ?? placeholder() ?? t().form.selectPlaceholder }}
+    </span>
+    <app-icon class="select__chevron" name="chevronDown" [size]="18" />
+  </div>
+
+  <app-overlay-panel
+    [open]="open()"
+    [anchor]="trigger"
+    [label]="label()"
+    [matchWidth]="true"
+    [minWidth]="224"
+    [popoverRole]="null"
+    [cy]="fieldId() + '-panel'"
+    (closed)="close()"
+  >
+    @if (open()) {
+      @if (hasSearch()) {
+        <div class="select__search">
+          <app-icon name="search" [size]="18" />
+          <input
+            #search
+            class="select__search-input"
+            type="text"
+            role="combobox"
+            aria-expanded="true"
+            aria-autocomplete="list"
+            autocomplete="off"
+            autocapitalize="off"
+            spellcheck="false"
+            enterkeyhint="search"
+            data-autofocus
+            [attr.aria-label]="t().form.ui.search"
+            [attr.aria-controls]="listboxId()"
+            [attr.aria-activedescendant]="activeId()"
+            [attr.data-cy]="fieldId() + '-search'"
+            [value]="query()"
+            (input)="onSearch($event)"
+            (keydown)="onKeydown($event)"
+          />
+        </div>
+      }
+      <ul
+        class="select__listbox"
+        role="listbox"
+        [id]="listboxId()"
+        [attr.aria-labelledby]="labelId()"
+        [attr.aria-busy]="visible().length === 0 ? 'true' : null"
+        [attr.tabindex]="hasSearch() ? null : -1"
+        [attr.data-autofocus]="!hasSearch() && focusInPanel() ? '' : null"
+        [attr.aria-activedescendant]="!hasSearch() && focusInPanel() ? activeId() : null"
+        [attr.data-cy]="fieldId() + '-listbox'"
+        (keydown)="onKeydown($event)"
+      >
+        @for (option of visible(); track option.value; let i = $index) {
+          <li
+            role="option"
+            class="select__option"
+            [id]="optionId(i)"
+            [class.is-active]="i === active()"
+            [attr.aria-selected]="option.value === selectedValue()"
+            [attr.aria-disabled]="option.disabled || null"
+            [attr.lang]="option.lang ?? null"
+            [attr.data-cy]="optionCy(option)"
+            tabindex="-1"
+            (mousedown)="$event.preventDefault()"
+            (click)="choose(i)"
+            (keydown.enter)="choose(i)"
+          >
+            <span class="select__label">{{ option.label }}</span>
+            @if (option.hint) {
+              <span class="select__hint">{{ option.hint }}</span>
+            }
+            <app-icon class="select__check" name="check" [size]="16" />
+          </li>
+        }
+      </ul>
+      @if (visible().length === 0) {
+        <!-- Fora do listbox: uma lista só tem opções; a mensagem é um aviso de status. -->
+        <p class="select__empty" role="status" [attr.data-cy]="fieldId() + '-empty'">
+          {{ query() ? t().form.ui.noResults : t().form.noOptions }}
+        </p>
+      }
+    }
+  </app-overlay-panel>
+
+  @if (hint(); as text) {
+    <p class="field__hint" [id]="hintId()">{{ text }}</p>
+  }
+  <app-field-error [control]="control()" [errorId]="errorId()" />
+</div>

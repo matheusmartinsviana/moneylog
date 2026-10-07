@@ -1,0 +1,9 @@
+:host {
+  display: block;
+}
+
+.quick-add {
+  display: grid;
+  gap: var(--space-4);
+  max-width: 32rem;
+}

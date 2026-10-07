@@ -1,0 +1,95 @@
+:host {
+  display: grid;
+  list-style: none;
+}
+
+/* Celular: card empilhado. */
+:host(.row) {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+  background-color: var(--color-surface);
+  list-style: none;
+}
+
+.row__main {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.row__name {
+  color: var(--color-text);
+  font-weight: var(--weight-semibold);
+  overflow-wrap: anywhere;
+  text-decoration: none;
+}
+
+.row__institution {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.row__institution:empty {
+  display: none;
+}
+
+.row__limit {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.row__over {
+  color: var(--color-risk);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.row__credit {
+  color: var(--color-positive);
+  font-size: var(--text-sm);
+}
+
+.row__invoice {
+  display: grid;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+}
+
+.row__invoice-label {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.row__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.row__hint {
+  flex-basis: 100%;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+/* Desktop: linha de tabela (nome · limite · fatura atual · ações). */
+@media (width >= 768px) {
+  :host(.row) {
+    grid-template-columns: minmax(0, 1.5fr) minmax(12rem, 2fr) minmax(0, 2fr) minmax(0, 1.5fr);
+    align-items: center;
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .row__invoice-label {
+    display: none;
+  }
+
+  .row__actions {
+    justify-content: flex-end;
+  }
+}

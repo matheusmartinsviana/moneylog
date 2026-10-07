@@ -1,0 +1,50 @@
+@let p = person();
+<div class="row__main">
+  <a
+    class="row__name"
+    [routerLink]="['/people', p.id]"
+    [attr.aria-label]="openLabel()"
+    [attr.data-cy]="'person-open-' + p.id"
+  >
+    {{ p.name }}
+  </a>
+  <span class="row__debts" [attr.data-cy]="'person-debts-' + p.id">{{ debts() }}</span>
+</div>
+<p
+  class="row__balance"
+  [class.is-receivable]="p.direction === 'RECEIVABLE'"
+  [class.is-payable]="p.direction === 'PAYABLE'"
+  [attr.data-cy]="'person-balance-' + p.id"
+  [attr.data-direction]="p.direction"
+>
+  <span class="row__label">{{ t().people.columns.balance }}</span>
+  <span class="num">{{ balance() }}</span>
+</p>
+<p class="row__due" [attr.data-cy]="'person-next-due-' + p.id">
+  <span class="row__label">{{ t().people.columns.nextDue }}</span>
+  <span>{{ nextDue() }}</span>
+</p>
+<div class="row__actions">
+  <a class="button" [routerLink]="['/people', p.id, 'edit']" [attr.data-cy]="'person-edit-' + p.id">
+    {{ t().people.row.edit }}
+  </a>
+  @if (p.archived) {
+    <button
+      type="button"
+      class="button"
+      [attr.data-cy]="'person-unarchive-' + p.id"
+      (click)="unarchive.emit(p)"
+    >
+      {{ t().people.row.unarchive }}
+    </button>
+  } @else {
+    <button
+      type="button"
+      class="button"
+      [attr.data-cy]="'person-archive-' + p.id"
+      (click)="archive.emit(p)"
+    >
+      {{ t().people.row.archive }}
+    </button>
+  }
+</div>

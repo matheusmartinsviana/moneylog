@@ -1,0 +1,294 @@
+<app-page-layout [heading]="title()" [description]="debt()?.person?.name">
+  @if (debt(); as d) {
+    @if (isOpen()) {
+      <div pageActions class="actions" data-cy="debt-actions">
+        <button
+          type="button"
+          class="button button--primary"
+          data-cy="debt-settle"
+          (click)="openSettle()"
+        >
+          {{ settleLabel() }}
+        </button>
+      </div>
+    }
+  }
+
+  @switch (state().status) {
+    @case ('loading') {
+      <div data-cy="debt-loading">
+        <p class="visually-hidden" role="status">{{ t().debts.detail.loading }}</p>
+        <div class="list-skeleton" aria-hidden="true">
+          <div class="list-skeleton__row"></div>
+          <div class="list-skeleton__row"></div>
+          <div class="list-skeleton__row"></div>
+        </div>
+      </div>
+    }
+    @case ('notFound') {
+      <app-empty-state
+        [heading]="t().debts.detail.notFound.title"
+        [description]="t().debts.detail.notFound.description"
+        [actions]="notFoundActions()"
+        illustration="grid"
+      />
+    }
+    @case ('error') {
+      <app-error-state [problem]="loadProblem()" (retry)="retry()" />
+    }
+    @case ('ready') {
+      @if (debt(); as d) {
+        @if (facade.refreshProblem()) {
+          <p class="banner" role="status" data-cy="debt-refresh-failed">
+            {{ t().debts.detail.refreshFailed }}
+            <button
+              type="button"
+              class="button"
+              data-cy="debt-refresh-retry"
+              (click)="facade.retryRefresh()"
+            >
+              {{ t().debts.detail.refreshRetry }}
+            </button>
+          </p>
+        }
+        @if (actionError(); as message) {
+          <p class="banner" role="alert" data-cy="debt-action-error">{{ message }}</p>
+        }
+
+        <section class="summary surface" data-cy="debt-summary">
+          <p class="summary__status" data-cy="debt-status" [attr.data-status]="d.status">
+            {{ t().debts.status[d.status] }}
+            @if (d.overdue) {
+              <span class="summary__overdue" data-cy="debt-overdue">
+                {{ t().debts.detail.overdue }}
+              </span>
+            }
+          </p>
+          <dl class="figures">
+            <div>
+              <dt>{{ t().debts.detail.principal }}</dt>
+              <dd data-cy="debt-principal"><app-money [value]="d.principal" /></dd>
+            </div>
+            <div>
+              <dt>{{ t().debts.detail.settled }}</dt>
+              <dd data-cy="debt-settled"><app-money [value]="d.settled" /></dd>
+            </div>
+            <div>
+              <dt>{{ t().debts.detail.outstanding }}</dt>
+              <dd class="figures__outstanding" data-cy="debt-outstanding">
+                <app-money [value]="d.outstanding" />
+              </dd>
+            </div>
+          </dl>
+        </section>
+
+        <dl class="fields">
+          <div class="fields__row" data-cy="debt-field-person">
+            <dt>{{ t().debts.detail.person }}</dt>
+            <dd>
+              <a [routerLink]="['/people', d.person.id]" data-cy="debt-person-link">{{
+                d.person.name
+              }}</a>
+            </dd>
+          </div>
+          <div class="fields__row" data-cy="debt-field-direction">
+            <dt>{{ t().debts.detail.directionLabel }}</dt>
+            <dd>{{ t().debts.direction[d.direction] }}</dd>
+          </div>
+          <div class="fields__row" data-cy="debt-field-date">
+            <dt>{{ t().debts.detail.date }}</dt>
+            <dd>{{ dates().date }}</dd>
+          </div>
+          <div class="fields__row" data-cy="debt-field-expected">
+            <dt>{{ t().debts.detail.expectedDate }}</dt>
+            <dd>{{ dates().expected ?? t().debts.detail.noExpectedDate }}</dd>
+          </div>
+          @if (d.category) {
+            <div class="fields__row" data-cy="debt-field-category">
+              <dt>{{ t().debts.detail.category }}</dt>
+              <dd>{{ d.category.name }}</dd>
+            </div>
+          }
+          <div class="fields__row" data-cy="debt-field-origin">
+            <dt>{{ t().debts.detail.origin }}</dt>
+            <dd>
+              {{ t().debts.detail.originValues[d.origin] }}
+              @if (d.originTransactionId; as originId) {
+                <a [routerLink]="['/transactions', originId]" data-cy="debt-origin-link">{{
+                  t().debts.detail.viewOrigin
+                }}</a>
+              }
+            </dd>
+          </div>
+          @if (closed()) {
+            <div class="fields__row" data-cy="debt-field-closure">
+              <dt>{{ t().debts.detail.closure }}</dt>
+              <dd>
+                <span data-cy="debt-closed-on">{{ dates().closure }}</span>
+                @if (d.closureReason) {
+                  <span data-cy="debt-closure-reason">
+                    {{ t().debts.detail.closureReason }}: {{ d.closureReason }}
+                  </span>
+                }
+              </dd>
+            </div>
+          }
+        </dl>
+
+        <section class="settlements" aria-labelledby="debt-settlements-title">
+          <h2 id="debt-settlements-title" class="section-title">
+            {{ t().debts.detail.settlements.title }}
+          </h2>
+          @if (reverseError(); as message) {
+            <p class="banner" role="alert" data-cy="debt-reverse-error">{{ message }}</p>
+          }
+          @if (d.settlements.length === 0) {
+            <p class="empty" data-cy="debt-settlements-empty">
+              {{ t().debts.detail.settlements.empty }}
+            </p>
+          } @else {
+            <ul class="list" data-cy="debt-settlements">
+              @for (settlement of d.settlements; track settlement.transactionId) {
+                <li
+                  class="settlement"
+                  [attr.data-cy]="'debt-settlement-' + settlement.transactionId"
+                >
+                  <span class="settlement__amount">
+                    <app-money [value]="settlement.amount" />
+                  </span>
+                  <span class="settlement__date num">{{ formatDate(settlement.date) }}</span>
+                  @if (!settlement.active) {
+                    <span class="settlement__tag">{{ t().debts.detail.settlements.reversed }}</span>
+                  }
+                  <a
+                    class="settlement__link"
+                    [routerLink]="['/transactions', settlement.transactionId]"
+                    [attr.data-cy]="'debt-settlement-view-' + settlement.transactionId"
+                  >
+                    {{ t().debts.detail.settlements.view }}
+                  </a>
+                  @if (settlement.active) {
+                    <button
+                      type="button"
+                      class="button"
+                      [attr.data-cy]="'debt-settlement-reverse-' + settlement.transactionId"
+                      (click)="askReverse(settlement.transactionId)"
+                    >
+                      {{ t().debts.detail.settlements.reverse }}
+                    </button>
+                  }
+                </li>
+              }
+            </ul>
+          }
+        </section>
+
+        <div class="actions actions--secondary" data-cy="debt-secondary-actions">
+          @if (isOpen()) {
+            <button type="button" class="button" data-cy="debt-edit" (click)="openEdit()">
+              {{ t().debts.detail.actions.edit }}
+            </button>
+          }
+          @if (d.cancelable) {
+            <button
+              type="button"
+              class="button"
+              data-cy="debt-forgive"
+              (click)="openDialog('forgive')"
+            >
+              {{ t().debts.detail.actions.forgive }}
+            </button>
+          }
+          @if (d.voidable) {
+            <button type="button" class="button" data-cy="debt-void" (click)="openDialog('void')">
+              {{ t().debts.detail.actions.void }}
+            </button>
+          } @else if (voidBlocked(); as hint) {
+            <button
+              type="button"
+              class="button"
+              data-cy="debt-void"
+              aria-disabled="true"
+              aria-describedby="debt-void-hint"
+              (click)="$event.preventDefault()"
+            >
+              {{ t().debts.detail.actions.void }}
+            </button>
+            <p
+              class="hint"
+              id="debt-void-hint"
+              data-cy="debt-void-blocked"
+              [attr.data-reason]="d.voidBlockedBy"
+            >
+              {{ hint }}
+            </p>
+          }
+        </div>
+
+        <app-linked-notes
+          type="DEBT"
+          cy="debt-notes"
+          [entityId]="d.id"
+          [label]="d.description ?? d.person.name"
+          [status]="d.status === 'CANCELED' ? 'CANCELED' : d.status === 'VOIDED' ? 'VOIDED' : null"
+        />
+
+        <app-settle-sheet
+          [open]="settling()"
+          [debt]="d"
+          [accounts]="cashAccounts()"
+          (closed)="settling.set(false)"
+          (settled)="afterSettled()"
+        />
+        <app-debt-edit-sheet
+          [open]="editing()"
+          [debt]="d"
+          [busy]="facade.busy()"
+          [problem]="editProblem()"
+          (closed)="editing.set(false)"
+          (saved)="saveEdit($event)"
+        />
+      }
+    }
+  }
+
+  <app-confirm-dialog
+    [open]="dialog() === 'forgive'"
+    [heading]="t().debts.forgive.title"
+    [description]="t().debts.forgive.description"
+    [confirmLabel]="t().debts.forgive.confirm"
+    [requireReason]="true"
+    [reasonLabel]="t().debts.forgive.reasonLabel"
+    [reasonMaxLength]="500"
+    tone="risk"
+    [busy]="facade.busy()"
+    (confirmed)="confirmDialog($event)"
+    (cancelled)="closeDialog()"
+  />
+  <app-confirm-dialog
+    [open]="dialog() === 'void'"
+    [heading]="t().debts.void.title"
+    [description]="t().debts.void.description"
+    [confirmLabel]="t().debts.void.confirm"
+    [requireReason]="true"
+    [reasonLabel]="t().debts.void.reasonLabel"
+    [reasonMaxLength]="500"
+    tone="risk"
+    [busy]="facade.busy()"
+    (confirmed)="confirmDialog($event)"
+    (cancelled)="closeDialog()"
+  />
+  <app-confirm-dialog
+    [open]="reversing() !== null"
+    [heading]="t().debts.detail.settlements.reverseTitle"
+    [description]="t().debts.detail.settlements.reverseDescription"
+    [confirmLabel]="t().debts.detail.settlements.reverseConfirm"
+    [requireReason]="true"
+    [reasonLabel]="t().debts.detail.settlements.reverseReason"
+    [reasonMaxLength]="500"
+    tone="risk"
+    [busy]="transactions.voiding()"
+    (confirmed)="confirmReverse($event)"
+    (cancelled)="reversing.set(null)"
+  />
+</app-page-layout>

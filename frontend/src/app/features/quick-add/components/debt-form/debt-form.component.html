@@ -1,0 +1,62 @@
+<form
+  class="form surface"
+  [formGroup]="form"
+  (ngSubmit)="onSubmit()"
+  novalidate
+  data-cy="debt-form"
+>
+  <p class="form__help" data-cy="debt-help">{{ t().lending.debt.help }}</p>
+  <p class="form__notice" data-cy="debt-no-movement">{{ t().lending.debt.noMovement }}</p>
+  <app-segmented-control
+    formControlName="direction"
+    fieldId="debt-direction"
+    [options]="directionOptions()"
+    [label]="t().lending.debt.direction"
+  />
+  <app-money-input
+    formControlName="principal"
+    fieldId="debt-principal"
+    [currency]="currency"
+    [label]="t().lending.debt.amount"
+  />
+  <app-person-field
+    [control]="form.controls.personId"
+    fieldId="debt-person"
+    [people]="people()"
+    [createPerson]="createPerson()"
+  />
+  <app-date-picker formControlName="date" fieldId="debt-date" [label]="t().lending.debt.date" />
+  <app-date-picker
+    formControlName="expectedDate"
+    fieldId="debt-expected-date"
+    [mandatory]="false"
+    [label]="t().lending.expectedDate"
+    [hint]="t().lending.expectedDateHint"
+  />
+  <app-text-field
+    formControlName="description"
+    fieldId="debt-description"
+    autocomplete="off"
+    [maxlength]="200"
+    [label]="t().lending.debt.description"
+  />
+  @if (payable()) {
+    <app-select
+      formControlName="categoryId"
+      fieldId="debt-category"
+      [options]="categoryOptions()"
+      [mandatory]="false"
+      [emptyLabel]="t().lending.debt.categoryNone"
+      [label]="t().lending.debt.category"
+      [hint]="t().lending.debt.categoryHint"
+    />
+  }
+
+  <app-form-actions
+    [banner]="banner()"
+    [canRetry]="canRetry()"
+    [saving]="saving()"
+    [submitLabel]="t().lending.debt.save"
+    (retry)="retry.emit()"
+  />
+</form>

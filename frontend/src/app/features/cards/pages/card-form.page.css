@@ -1,0 +1,29 @@
+:host {
+  display: block;
+}
+
+.form {
+  display: grid;
+  gap: var(--space-4);
+  max-width: 32rem;
+  padding: var(--space-5);
+}
+
+/* Fechamento e vencimento lado a lado quando cabe; empilhados no celular estreito. */
+.form__days {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--space-4);
+}
+
+.form__hint {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}

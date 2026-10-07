@@ -1,0 +1,19 @@
+:host {
+  display: block;
+}
+
+.form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.grid {
+  display: grid;
+  gap: var(--space-3);
+}
+
+@media (width >= 768px) {
+  .grid--two {
+    grid-template-columns: 1fr 1fr;
+  }
+}

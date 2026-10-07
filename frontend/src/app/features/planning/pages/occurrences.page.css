@@ -1,0 +1,21 @@
+:host {
+  display: block;
+}
+
+.section-title {
+  margin: var(--space-5) 0 var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.section-title--overdue {
+  color: var(--color-risk);
+}
+
+.list {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+}

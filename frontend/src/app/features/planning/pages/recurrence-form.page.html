@@ -1,0 +1,201 @@
+<app-page-layout
+  [heading]="editing() ? t().recurrences.form.editTitle : t().recurrences.form.createTitle"
+>
+  @if (
+    optionsLoading() || (editing() && !recurrence() && facade.loadStatus().status === 'loading')
+  ) {
+    <div data-cy="recurrence-form-loading">
+      <p class="visually-hidden" role="status">{{ t().recurrences.loading }}</p>
+      <div class="list-skeleton" aria-hidden="true">
+        <div class="list-skeleton__row"></div>
+        <div class="list-skeleton__row"></div>
+      </div>
+    </div>
+  } @else if (notFound()) {
+    <app-empty-state
+      [heading]="t().recurrences.form.notFound.title"
+      [description]="t().recurrences.form.notFound.description"
+      [actions]="[
+        {
+          id: 'back',
+          label: t().recurrences.form.notFound.back,
+          available: true,
+          primary: true,
+          link: '/planning/recurrences',
+        },
+      ]"
+      illustration="timeline"
+    />
+  } @else if (loadProblem()) {
+    <app-error-state [problem]="loadProblem()" (retry)="retryLoad()" />
+  } @else if (noDestination() && !editing()) {
+    <app-empty-state
+      [heading]="t().recurrences.form.noAccounts.title"
+      [description]="t().recurrences.form.noAccounts.description"
+      [actions]="[
+        {
+          id: 'add-account',
+          label: t().recurrences.form.noAccounts.action,
+          available: true,
+          primary: true,
+          link: '/accounts/new',
+        },
+      ]"
+      illustration="timeline"
+    />
+  } @else if (!editing() || recurrence()) {
+    <form
+      class="form surface"
+      [formGroup]="form"
+      (ngSubmit)="onSubmit()"
+      novalidate
+      data-cy="recurrence-form"
+    >
+      @if (conflict()) {
+        <p class="banner" role="alert" data-cy="recurrence-form-conflict">
+          {{ t().recurrences.form.conflict }}
+          <button
+            type="button"
+            class="button"
+            (click)="reloadLatest()"
+            data-cy="recurrence-form-reload"
+          >
+            {{ t().recurrences.form.reloadLatest }}
+          </button>
+        </p>
+      }
+      @if (banner(); as message) {
+        <p class="banner" role="alert" data-cy="recurrence-form-error">{{ message }}</p>
+      }
+      @if (editing()) {
+        <p class="form__hint" data-cy="recurrence-locked">{{ t().recurrences.form.locked }}</p>
+      }
+
+      <app-segmented-control
+        formControlName="type"
+        fieldId="recurrence-type"
+        [options]="typeOptions()"
+        [label]="t().recurrences.form.type"
+      />
+      <app-money-input
+        formControlName="amount"
+        fieldId="recurrence-amount"
+        [currency]="currency"
+        [label]="t().recurrences.form.amount"
+      />
+      <app-text-field
+        formControlName="description"
+        fieldId="recurrence-description"
+        autocomplete="off"
+        [maxlength]="200"
+        [label]="t().recurrences.form.description"
+      />
+      <app-select
+        formControlName="categoryId"
+        fieldId="recurrence-category"
+        [options]="categoryOptions()"
+        [label]="t().recurrences.form.category"
+      />
+
+      @if (isCard()) {
+        <app-select
+          formControlName="cardId"
+          fieldId="recurrence-card"
+          [options]="cardOptions()"
+          [label]="t().recurrences.form.card"
+          [hint]="t().recurrences.form.cardNote"
+        />
+      } @else {
+        <app-select
+          formControlName="accountId"
+          fieldId="recurrence-account"
+          [options]="accountOptions()"
+          [label]="t().recurrences.form.account"
+        />
+        <app-select
+          formControlName="method"
+          fieldId="recurrence-method"
+          [options]="methodOptions()"
+          [label]="t().recurrences.form.method"
+        />
+      }
+
+      <app-select
+        formControlName="frequency"
+        fieldId="recurrence-frequency"
+        [options]="frequencyOptions()"
+        [label]="t().recurrences.form.frequency"
+      />
+      @if (isCustom()) {
+        <div class="form__pair">
+          <app-number-stepper
+            formControlName="interval"
+            fieldId="recurrence-interval"
+            [min]="1"
+            [max]="1000"
+            [valueText]="intervalText()"
+            [label]="t().recurrences.form.interval"
+          />
+          <app-select
+            formControlName="unit"
+            fieldId="recurrence-unit"
+            [options]="unitOptions()"
+            [label]="t().recurrences.form.unit"
+          />
+        </div>
+      }
+      <app-date-picker
+        formControlName="startDate"
+        fieldId="recurrence-start"
+        [label]="t().recurrences.form.startDate"
+      />
+
+      @if (!editing()) {
+        <app-segmented-control
+          formControlName="endMode"
+          fieldId="recurrence-end-mode"
+          [options]="endModeOptions()"
+          [label]="t().recurrences.form.endMode"
+        />
+      }
+      @if (editing() || endMode() === 'date') {
+        <app-date-picker
+          formControlName="endDate"
+          fieldId="recurrence-end-date"
+          [mandatory]="!editing()"
+          [label]="t().recurrences.form.endDateField"
+        />
+        @if (editing() && recurrence()?.ended) {
+          <p class="form__hint" data-cy="recurrence-ended-hint">
+            {{ t().recurrences.form.endedHint }}
+          </p>
+        }
+      }
+      @if (!editing() && endMode() === 'max') {
+        <app-number-stepper
+          formControlName="maxOccurrences"
+          fieldId="recurrence-max"
+          [min]="1"
+          [max]="10000"
+          [valueText]="maxText()"
+          [label]="t().recurrences.form.maxOccurrences"
+        />
+      }
+
+      <div class="form__actions">
+        <a class="button" routerLink="/planning/recurrences" data-cy="recurrence-form-cancel">
+          {{ t().recurrences.form.cancel }}
+        </a>
+        <button
+          type="submit"
+          class="button button--primary"
+          data-cy="recurrence-form-save"
+          [disabled]="facade.saving()"
+          [attr.aria-busy]="facade.saving()"
+        >
+          {{ facade.saving() ? t().recurrences.form.saving : t().recurrences.form.save }}
+        </button>
+      </div>
+    </form>
+  }
+</app-page-layout>

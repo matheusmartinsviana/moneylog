@@ -1,0 +1,40 @@
+@let d = debt();
+<div class="row__main">
+  <a
+    class="row__title"
+    [routerLink]="['/debts', d.id]"
+    [attr.aria-label]="openLabel()"
+    [attr.data-cy]="'debt-open-' + d.id"
+  >
+    {{ title() }}
+  </a>
+  <p class="row__meta">
+    <span class="row__status" [attr.data-cy]="'debt-status-' + d.id" [attr.data-status]="d.status">
+      {{ t().debts.status[d.status] }}
+    </span>
+    @if (d.overdue) {
+      <span class="row__overdue" [attr.data-cy]="'debt-overdue-' + d.id">
+        {{ t().debts.row.overdue }}
+      </span>
+    }
+    <span [attr.data-cy]="'debt-expected-' + d.id">{{ expected() }}</span>
+  </p>
+</div>
+<dl class="row__values">
+  <div>
+    <dt>{{ t().debts.row.principal }}</dt>
+    <dd [attr.data-cy]="'debt-principal-' + d.id"><app-money [value]="d.principal" /></dd>
+  </div>
+  <div>
+    <dt>{{ t().debts.row.settled }}</dt>
+    <dd [attr.data-cy]="'debt-settled-' + d.id"><app-money [value]="d.settled" /></dd>
+  </div>
+  @if (isOpen()) {
+    <div>
+      <dt>{{ t().debts.row.outstanding }}</dt>
+      <dd class="row__outstanding" [attr.data-cy]="'debt-outstanding-' + d.id">
+        <app-money [value]="d.outstanding" />
+      </dd>
+    </div>
+  }
+</dl>

@@ -1,0 +1,26 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.money {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.money__symbol {
+  position: absolute;
+  left: var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  pointer-events: none;
+}
+
+/* Valor alinhado à direita, com números tabulares, como uma célula de planilha (DS 00 §5). */
+.money__input {
+  padding-left: var(--space-10);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+  text-align: right;
+}

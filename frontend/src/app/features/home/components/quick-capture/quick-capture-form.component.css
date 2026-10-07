@@ -1,0 +1,86 @@
+:host {
+  display: block;
+}
+
+.qc {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.qc__main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: end;
+  gap: var(--space-3);
+}
+
+.qc__save {
+  justify-self: stretch;
+  min-height: 2.75rem;
+}
+
+/* Expande em 180 a 300 ms: a altura anima por `grid-template-rows` (sem medir nada no JS). */
+.qc__more {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--duration-base) var(--ease-emphasized);
+}
+
+.qc__more.is-expanded {
+  grid-template-rows: 1fr;
+}
+
+.qc__more-inner {
+  display: grid;
+  gap: var(--space-3);
+  min-height: 0;
+  overflow: hidden;
+  /* Folga para o anel de foco dos campos não ser cortado pelo overflow. */
+  margin: calc(var(--space-1) * -1);
+  padding: var(--space-1);
+}
+
+.qc__fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+.qc__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.qc__banner {
+  flex: 1 1 100%;
+  color: var(--color-risk);
+  font-size: var(--text-sm);
+}
+
+@container (width >= 40rem) {
+  .qc__main {
+    grid-template-columns: minmax(8rem, 12rem) minmax(0, 1fr) auto;
+  }
+
+  .qc__save {
+    justify-self: end;
+    min-width: 6rem;
+  }
+
+  .qc__fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .qc__type {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qc__more {
+    transition: none;
+  }
+}

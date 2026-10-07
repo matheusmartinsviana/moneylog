@@ -1,0 +1,41 @@
+<main id="main-content" class="login" tabindex="-1" data-cy="login-page">
+  <form class="login__card surface" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+    <header class="login__header">
+      <!-- Espaço reservado para o logo (ainda não definido). -->
+      <span class="login__logo-slot" aria-hidden="true"></span>
+      <p class="login__brand" data-cy="login-brand">{{ t().shell.brand }}</p>
+      <h1 class="login__title" data-cy="page-title">{{ t().auth.login.title }}</h1>
+      <p class="login__description">{{ t().auth.login.description }}</p>
+    </header>
+
+    <app-text-field
+      formControlName="email"
+      fieldId="login-email"
+      type="email"
+      autocomplete="username"
+      inputmode="email"
+      [label]="t().auth.login.email"
+    />
+    <app-text-field
+      formControlName="password"
+      fieldId="login-password"
+      type="password"
+      autocomplete="current-password"
+      [label]="t().auth.login.password"
+    />
+
+    @if (errorMessage(); as message) {
+      <p class="login__error" role="alert" data-cy="login-error">{{ message }}</p>
+    }
+
+    <button
+      type="submit"
+      class="button button--primary login__submit"
+      data-cy="login-submit"
+      [disabled]="submitting()"
+      [attr.aria-busy]="submitting()"
+    >
+      {{ submitting() ? t().auth.login.submitting : t().auth.login.submit }}
+    </button>
+  </form>
+</main>

@@ -1,0 +1,51 @@
+<form
+  class="form surface"
+  [formGroup]="form"
+  (ngSubmit)="onSubmit()"
+  novalidate
+  data-cy="investment-form"
+>
+  <app-money-input
+    formControlName="amount"
+    fieldId="entry-amount"
+    [currency]="currency"
+    [label]="t().entryForm.amount"
+  />
+  <app-select
+    formControlName="cashAccountId"
+    fieldId="entry-cash-account"
+    [options]="cashOptions()"
+    [label]="t().entryForm.investment.cashAccount"
+  />
+  <app-select
+    formControlName="investmentAccountId"
+    fieldId="entry-investment-account"
+    [options]="investmentOptions()"
+    [label]="t().entryForm.investment.investmentAccount"
+  />
+  <app-segmented-control
+    formControlName="direction"
+    fieldId="entry-direction"
+    [options]="directionOptions()"
+    [label]="t().entryForm.investment.direction"
+  />
+  <app-date-picker formControlName="date" fieldId="entry-date" [label]="t().entryForm.date" />
+  <app-text-field
+    formControlName="description"
+    fieldId="entry-description"
+    autocomplete="off"
+    [maxlength]="200"
+    [mandatory]="false"
+    [label]="t().entryForm.description"
+    [hint]="descriptionHint()"
+  />
+
+  <app-form-actions
+    [banner]="banner()"
+    [canRetry]="canRetry()"
+    [saving]="saving()"
+    [submitLabel]="submitLabel()"
+    [cancelLink]="cancelLink()"
+    (retry)="retry.emit()"
+  />
+</form>

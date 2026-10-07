@@ -1,0 +1,62 @@
+@let r = recurrence();
+<div class="row__main">
+  <a
+    class="row__title"
+    [routerLink]="['/planning/recurrences', r.id, 'edit']"
+    [attr.data-cy]="'recurrence-open-' + r.id"
+  >
+    {{ title() }}
+  </a>
+  <p class="row__meta">
+    <span data-cy="recurrence-type">{{ t().recurrences.types[r.type] }}</span>
+    <span [attr.data-cy]="'recurrence-frequency-' + r.id">{{ frequency() }}</span>
+    @if (destination(); as text) {
+      <span>{{ text }}</span>
+    }
+  </p>
+</div>
+<div class="row__values">
+  <p class="row__amount" [attr.data-cy]="'recurrence-amount-' + r.id">
+    <app-money [value]="r.amount" />
+  </p>
+  @if (!r.ended) {
+    <p class="row__meta" [attr.data-cy]="'recurrence-monthly-' + r.id">
+      <span>{{ t().recurrences.row.monthly }}</span>
+      <app-money [value]="r.monthlyEstimate" />
+    </p>
+  }
+</div>
+<div class="row__when">
+  @if (r.active) {
+    @if (r.ended) {
+      <p class="row__inactive" [attr.data-cy]="'recurrence-ended-' + r.id">
+        {{ t().recurrences.row.ended }}
+      </p>
+    }
+    @if (!r.ended || r.nextOccurrence !== null) {
+      <p [attr.data-cy]="'recurrence-next-' + r.id">{{ next() }}</p>
+    }
+  } @else {
+    <p class="row__inactive" [attr.data-cy]="'recurrence-inactive-' + r.id">
+      {{ t().recurrences.row.inactive }}
+    </p>
+  }
+  @if (endsOn(); as text) {
+    <p class="row__meta" [attr.data-cy]="'recurrence-ends-' + r.id">{{ text }}</p>
+  }
+</div>
+<div class="row__actions">
+  <a
+    class="button"
+    [routerLink]="['/planning/recurrences', r.id, 'edit']"
+    [attr.data-cy]="'recurrence-edit-' + r.id"
+  >
+    {{ t().recurrences.row.edit }}
+  </a>
+  <app-menu
+    [fieldId]="'recurrence-menu-' + r.id"
+    [label]="t().recurrences.row.actionsLabel"
+    [items]="menuItems()"
+    (selected)="run($event)"
+  />
+</div>

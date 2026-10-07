@@ -1,0 +1,79 @@
+<section class="empty" [attr.aria-labelledby]="headingId" data-cy="empty-state">
+  <div class="empty__illustration" aria-hidden="true">
+    <svg
+      viewBox="0 0 120 88"
+      width="120"
+      height="88"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.25"
+      stroke-linecap="round"
+      focusable="false"
+    >
+      @switch (illustration()) {
+        @case ('grid') {
+          <rect x="10" y="10" width="100" height="68" rx="10" class="panel" />
+          <path d="M10 32h100M10 55h100M43 10v68M77 10v68" class="grid" />
+          <rect x="45" y="34.5" width="30" height="18.5" rx="3" class="accent" />
+        }
+        @case ('timeline') {
+          <path d="M28 12v64" class="grid" />
+          <circle cx="28" cy="22" r="3.5" class="accent" />
+          <circle cx="28" cy="44" r="3" />
+          <circle cx="28" cy="66" r="3" />
+          <path d="M40 22h52M40 44h38M40 66h46" />
+        }
+        @case ('document') {
+          <rect x="26" y="8" width="62" height="74" rx="10" class="panel" />
+          <rect x="34" y="4" width="62" height="74" rx="10" class="panel panel--front" />
+          <path d="M46 24h38M46 36h38M46 48h24" />
+          <path d="M46 62h14" class="accent" />
+        }
+        @default {
+          <rect x="14" y="10" width="92" height="68" rx="10" class="panel" />
+          <path d="M14 28h92" class="grid" />
+          <path d="M26 41h40M26 53h52M26 65h30" />
+          <path d="M84 41h10M84 53h10M84 65h10" class="accent" />
+        }
+      }
+    </svg>
+  </div>
+
+  <h2 class="empty__title" [id]="headingId" data-cy="empty-state-title">{{ heading() }}</h2>
+  <p class="empty__text" data-cy="empty-state-description">{{ description() }}</p>
+
+  @if (actions().length > 0) {
+    <div class="empty__actions">
+      @for (item of actions(); track item.id) {
+        @if (item.link) {
+          <a
+            class="button"
+            [class.button--primary]="item.primary"
+            [routerLink]="item.link"
+            [attr.data-cy]="'empty-state-action-' + item.id"
+          >
+            {{ item.label }}
+          </a>
+        } @else {
+          <button
+            type="button"
+            class="button"
+            [class.button--primary]="item.primary"
+            [disabled]="!item.available"
+            [attr.aria-disabled]="item.available ? null : 'true'"
+            [attr.aria-describedby]="item.available ? null : hintId"
+            [attr.data-cy]="'empty-state-action-' + item.id"
+            (click)="trigger(item)"
+          >
+            {{ item.label }}
+          </button>
+        }
+      }
+    </div>
+    @if (hasUnavailable()) {
+      <p class="empty__hint" [id]="hintId" data-cy="empty-state-coming-soon">
+        {{ t().emptyState.comingSoon }}
+      </p>
+    }
+  }
+</section>

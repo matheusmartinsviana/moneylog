@@ -1,0 +1,40 @@
+:host {
+  display: block;
+}
+
+.more {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+}
+
+/* Celular: resumo fixo acima da lista; a linha de rodapé só existe no desktop. */
+.summary {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.footer {
+  display: none;
+}
+
+@media (width >= 768px) {
+  .summary {
+    display: none;
+  }
+
+  .footer {
+    display: block;
+    position: sticky;
+    bottom: var(--space-3);
+    z-index: 2;
+  }
+}
+
+/* Detalhe aberto: no celular ele é a página (a lista some); no desktop é um painel sobre a lista. */
+@media (width < 1280px) {
+  :host(.has-detail) .list {
+    display: none;
+  }
+}

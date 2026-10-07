@@ -1,0 +1,142 @@
+<app-page-layout [heading]="t().categories.title" [description]="t().categories.description">
+  <a pageActions class="button" routerLink="/settings" data-cy="categories-back">
+    {{ t().categories.backToSettings }}
+  </a>
+
+  <nav class="tabs" [attr.aria-label]="t().categories.tabsLabel" data-cy="categories-tabs">
+    <a
+      class="tab"
+      routerLink="/settings/categories"
+      data-cy="categories-tab-expense"
+      [attr.aria-current]="activeKind() === 'EXPENSE' ? 'page' : null"
+    >
+      {{ t().categories.kinds.EXPENSE }}
+    </a>
+    <a
+      class="tab"
+      routerLink="/settings/categories"
+      [queryParams]="{ kind: 'INCOME' }"
+      data-cy="categories-tab-income"
+      [attr.aria-current]="activeKind() === 'INCOME' ? 'page' : null"
+    >
+      {{ t().categories.kinds.INCOME }}
+    </a>
+  </nav>
+
+  @if (!creating()) {
+    <div>
+      <button
+        type="button"
+        class="button button--primary"
+        data-cy="categories-add"
+        (click)="startCreate()"
+      >
+        {{ t().categories.add }}
+      </button>
+    </div>
+  } @else {
+    <form
+      class="create surface"
+      (submit)="$event.preventDefault(); submitCreate()"
+      novalidate
+      data-cy="categories-create-form"
+    >
+      <app-text-field
+        class="create__field"
+        [formControl]="newName"
+        fieldId="category-new-name"
+        [label]="t().categories.newName"
+        [maxlength]="maxLength"
+        autocomplete="off"
+      />
+      <div class="create__actions">
+        <button
+          type="button"
+          class="button"
+          data-cy="categories-create-cancel"
+          (click)="cancelCreate()"
+        >
+          {{ t().categories.cancel }}
+        </button>
+        <button
+          type="submit"
+          class="button button--primary"
+          data-cy="categories-create-save"
+          [disabled]="busy()"
+        >
+          {{ t().categories.create }}
+        </button>
+      </div>
+    </form>
+  }
+
+  @switch (categories.state().status) {
+    @case ('loading') {
+      <div data-cy="categories-loading">
+        <p class="visually-hidden" role="status">{{ t().categories.loading }}</p>
+        <div class="list-skeleton" aria-hidden="true">
+          <div class="list-skeleton__row"></div>
+          <div class="list-skeleton__row"></div>
+          <div class="list-skeleton__row"></div>
+        </div>
+      </div>
+    }
+    @case ('empty') {
+      <app-empty-state
+        [heading]="t().categories.empty.title"
+        [description]="t().categories.empty.description"
+        illustration="log"
+      />
+    }
+    @case ('error') {
+      <app-error-state [problem]="categories.error()" (retry)="retry()" />
+    }
+    @case ('ready') {
+      <ul class="list surface" data-cy="categories-list">
+        @for (category of categories.active(); track category.id) {
+          <li
+            app-category-row
+            [category]="category"
+            [editing]="renamingId() === category.id"
+            [serverCode]="renamingId() === category.id ? renameCode() : null"
+            [busy]="busy()"
+            (renameStart)="startRename($event)"
+            (renameCancel)="cancelRename()"
+            (renameSubmit)="rename($event)"
+            (archive)="askArchive($event)"
+          ></li>
+        }
+      </ul>
+
+      @if (categories.archived().length > 0) {
+        <app-disclosure
+          class="archived"
+          fieldId="categories-archived"
+          [heading]="archivedLabel()"
+          [(open)]="archivedOpen"
+        >
+          <ul class="list surface archived__list">
+            @for (category of categories.archived(); track category.id) {
+              <li
+                app-category-row
+                [category]="category"
+                [busy]="busy()"
+                (unarchive)="unarchive($event)"
+              ></li>
+            }
+          </ul>
+        </app-disclosure>
+      }
+    }
+  }
+
+  <app-confirm-dialog
+    [open]="pendingArchive() !== null"
+    [heading]="confirmTitle()"
+    [description]="t().categories.archiveConfirm.description"
+    [confirmLabel]="t().categories.archiveConfirm.confirm"
+    [busy]="busy()"
+    (confirmed)="confirmArchive()"
+    (cancelled)="cancelArchive()"
+  />
+</app-page-layout>

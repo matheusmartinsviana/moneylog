@@ -1,0 +1,22 @@
+:host {
+  display: contents;
+}
+
+.dialog__reason {
+  min-height: 5rem;
+  padding-block: var(--space-2);
+  resize: none;
+}
+
+.dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+/* Ação que muda saldo: vermelho discreto (DS 00, risco), sempre com o texto da ação. */
+.dialog__confirm--risk {
+  border-color: var(--color-risk);
+  background-color: var(--color-risk);
+}

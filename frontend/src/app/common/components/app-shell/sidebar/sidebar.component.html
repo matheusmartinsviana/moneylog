@@ -1,0 +1,70 @@
+<div class="sidebar" data-cy="sidebar">
+  <!-- Marca, "Novo registro", grupos e perfil ficam dentro do único landmark da sidebar (axe `region`). -->
+  <nav class="sidebar__nav" [attr.aria-label]="t().shell.primaryNavigation">
+    <a
+      class="sidebar__brand"
+      routerLink="/"
+      [appTooltip]="collapsed() ? t().shell.brand : null"
+      appTooltipSide="end"
+      [appTooltipDescribes]="false"
+      data-cy="sidebar-brand"
+    >
+      <!-- Espaço reservado para o logo (ainda não definido). Não colocar marca aqui sem decisão do dono. -->
+      <span class="sidebar__logo-slot" aria-hidden="true"></span>
+      <span class="sidebar__label sidebar__brand-name">{{ t().shell.brand }}</span>
+    </a>
+
+    <a
+      class="sidebar__link sidebar__quick-add"
+      [routerLink]="quickAdd.path"
+      routerLinkActive="is-active"
+      ariaCurrentWhenActive="page"
+      [appTooltip]="collapsed() ? t().nav[quickAdd.key] : null"
+      appTooltipSide="end"
+      [appTooltipDescribes]="false"
+      data-cy="sidebar-quickAdd"
+    >
+      <app-icon [name]="quickAdd.icon" />
+      <span class="sidebar__label">{{ t().nav[quickAdd.key] }}</span>
+    </a>
+
+    @for (group of groups; track group.key) {
+      <!-- O título do grupo não é focável nem link: nomeia o grupo (role=group + aria-labelledby). -->
+      <div
+        class="sidebar__group"
+        role="group"
+        [attr.aria-labelledby]="'sidebar-group-' + group.key"
+        [attr.data-cy]="'sidebar-group-' + group.key"
+      >
+        <p class="sidebar__group-title" [id]="'sidebar-group-' + group.key">
+          {{ t().nav.groups[group.key] }}
+        </p>
+        <ul class="sidebar__list">
+          @for (item of group.items; track item.key) {
+            <li>
+              <a
+                class="sidebar__link"
+                [routerLink]="item.path"
+                routerLinkActive="is-active"
+                [routerLinkActiveOptions]="item.activeOptions"
+                ariaCurrentWhenActive="page"
+                [appTooltip]="collapsed() ? t().nav[item.key] : null"
+                appTooltipSide="end"
+                [appTooltipDescribes]="false"
+                [attr.data-cy]="'sidebar-' + item.key"
+              >
+                <app-icon [name]="item.icon" />
+                <span class="sidebar__label">{{ t().nav[item.key] }}</span>
+              </a>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+
+    <!-- Rodapé: só avatar genérico + menu (Configurações, Sair). Sem seletor de workspace e sem nome (M12, D4). -->
+    <div class="sidebar__footer">
+      <app-profile-menu cy="sidebar-profile" align="start" />
+    </div>
+  </nav>
+</div>

@@ -1,0 +1,87 @@
+<header class="wh" [class.wh--home]="onHome()" data-cy="workspace-header">
+  @if (onHome()) {
+    <div class="wh__greeting">
+      <p class="wh__hello" data-cy="workspace-greeting">{{ greeting() }}</p>
+      <p class="wh__subtitle" data-cy="workspace-subtitle">{{ t().header.subtitle }}</p>
+    </div>
+  }
+
+  <app-global-search class="wh__search" />
+
+  <div class="wh__status">
+    <a
+      class="wh__bell"
+      routerLink="/notifications"
+      data-cy="header-bell"
+      [attr.aria-label]="bellLabel()"
+    >
+      <app-icon name="bell" [size]="20" />
+      @if ((unreadCount() ?? 0) > 0) {
+        <span class="wh__bell-count num" aria-hidden="true" data-cy="header-bell-count">{{
+          unreadCount()
+        }}</span>
+      }
+    </a>
+    <app-chip
+      [label]="aiStatus.enabled() ? t().header.aiOn : t().header.aiOff"
+      cy="header-ai-status"
+    />
+    <app-profile-menu class="wh__profile" cy="header-profile" />
+  </div>
+
+  <div
+    class="wh__actions"
+    role="group"
+    [attr.aria-label]="t().header.actions.label"
+    data-cy="header-actions"
+  >
+    <!-- Um único botão primário por tela (M6): no Início ele é o "Novo registro" do atalho do Quick Capture. -->
+    <a
+      class="button"
+      [class.button--primary]="!onHome()"
+      [class.button--soft]="onHome()"
+      routerLink="/quick-add"
+      [queryParams]="{ mode: 'expense' }"
+      data-cy="header-action-expense"
+      (click)="quickAction($event, 'EXPENSE')"
+    >
+      <app-icon name="plus" [size]="16" />
+      {{ t().header.actions.addExpense }}
+    </a>
+    <a
+      class="button button--soft"
+      routerLink="/quick-add"
+      [queryParams]="{ mode: 'income' }"
+      data-cy="header-action-income"
+      (click)="quickAction($event, 'INCOME')"
+    >
+      <app-icon name="plus" [size]="16" />
+      {{ t().header.actions.addIncome }}
+    </a>
+    <a
+      class="button"
+      routerLink="/quick-add"
+      [queryParams]="{ mode: 'transfer' }"
+      data-cy="header-action-transfer"
+    >
+      {{ t().header.actions.transfer }}
+    </a>
+    @if (aiStatus.enabled()) {
+      <a class="button" routerLink="/ai" data-cy="header-action-askAi">
+        <app-icon name="sparkle" [size]="16" />
+        {{ t().header.actions.askAi }}
+      </a>
+    } @else {
+      <button
+        type="button"
+        class="button"
+        aria-disabled="true"
+        [appTooltip]="t().header.actions.askAiHint"
+        data-cy="header-action-askAi"
+      >
+        <app-icon name="sparkle" [size]="16" />
+        {{ t().header.actions.askAi }}
+      </button>
+    }
+  </div>
+</header>

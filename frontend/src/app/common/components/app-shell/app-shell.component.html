@@ -1,0 +1,19 @@
+<button type="button" class="skip-link" data-cy="skip-to-content" (click)="skipToContent()">
+  {{ t().shell.skipToContent }}
+</button>
+
+<div class="shell">
+  <!-- A "janela" (DS 02): a partir de 1024 px é flutuante; abaixo disso é tela cheia (ADR-011). -->
+  <div class="shell__window" data-cy="shell-window">
+    <div class="shell__aside">
+      <app-sidebar class="shell__sidebar" />
+    </div>
+    <div class="shell__content">
+      <app-workspace-header />
+      <router-outlet />
+    </div>
+    <app-bottom-nav class="shell__bottom-nav" />
+  </div>
+</div>
+
+<app-toast-region />

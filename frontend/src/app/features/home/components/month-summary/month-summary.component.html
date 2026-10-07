@@ -1,0 +1,105 @@
+<dl class="key-figures">
+  <div class="figure">
+    <dt>{{ t().home.month.income }}</dt>
+    <dd data-cy="home-month-income"><app-money [value]="month().income" /></dd>
+  </div>
+  <div class="figure">
+    <dt>{{ t().home.month.consumption }}</dt>
+    <dd data-cy="home-month-consumption"><app-money [value]="month().consumption" /></dd>
+  </div>
+  <div class="figure">
+    <dt>{{ t().home.month.net }}</dt>
+    <dd [class.is-negative]="netNegative()" data-cy="home-month-net">
+      <app-money [value]="month().net" />
+    </dd>
+  </div>
+</dl>
+
+<div class="columns">
+  <div class="block">
+    <h3 class="block__title">{{ t().home.month.consumption }}</h3>
+    <dl class="ledger">
+      <div class="ledger__row">
+        <dt class="ledger__label">{{ t().home.month.expensesPaid }}</dt>
+        <dd class="ledger__value" data-cy="home-month-expenses-paid">
+          <app-money [value]="month().expensesPaid.total" />
+        </dd>
+      </div>
+      @for (method of methods; track method) {
+        <div class="ledger__row ledger__row--nested">
+          <dt class="ledger__label">{{ t().home.month.methods[method] }}</dt>
+          <dd class="ledger__value" [attr.data-cy]="'home-month-method-' + method">
+            <app-money [value]="month().expensesPaid.byMethod[method]" />
+          </dd>
+        </div>
+      }
+      <div class="ledger__row">
+        <dt class="ledger__label">{{ t().home.month.credit }}</dt>
+        <dd class="ledger__value" data-cy="home-month-credit">
+          <app-money [value]="month().credit" />
+        </dd>
+      </div>
+      @if (hasDebtConsumption()) {
+        <div class="ledger__row">
+          <dt class="ledger__label">{{ t().home.month.debtConsumption }}</dt>
+          <dd class="ledger__value" data-cy="home-month-debt-consumption">
+            <app-money [value]="month().debtConsumption!" />
+          </dd>
+        </div>
+      }
+      <div class="ledger__row">
+        <dt class="ledger__label">{{ t().home.month.refunds }}</dt>
+        <dd class="ledger__value" data-cy="home-month-refunds">
+          <app-money [value]="month().refunds" />
+        </dd>
+      </div>
+      <div class="ledger__row ledger__row--total">
+        <dt class="ledger__label">{{ t().home.month.consumption }}</dt>
+        <dd class="ledger__value"><app-money [value]="month().consumption" /></dd>
+      </div>
+    </dl>
+    <p class="note">{{ t().home.month.consumptionNote }}</p>
+  </div>
+
+  <div class="block">
+    <h3 class="block__title">{{ t().home.month.cashFlow }}</h3>
+    <dl class="ledger">
+      <div class="ledger__row">
+        <dt class="ledger__label">{{ t().home.month.cashIn }}</dt>
+        <dd class="ledger__value" data-cy="home-month-cash-in">
+          <app-money [value]="month().cashFlow.in" />
+        </dd>
+      </div>
+      <div class="ledger__row">
+        <dt class="ledger__label">{{ t().home.month.cashOut }}</dt>
+        <dd class="ledger__value" data-cy="home-month-cash-out">
+          <app-money [value]="month().cashFlow.out" />
+        </dd>
+      </div>
+      <div class="ledger__row ledger__row--total">
+        <dt class="ledger__label">{{ t().home.month.cashNet }}</dt>
+        <dd class="ledger__value" data-cy="home-month-cash-net">
+          <app-money [value]="month().cashFlow.net" />
+        </dd>
+      </div>
+      <div class="ledger__row">
+        <dt class="ledger__label">{{ t().home.month.investedNet }}</dt>
+        <dd class="ledger__value" data-cy="home-month-invested-net">
+          <app-money [value]="month().investedNet" />
+        </dd>
+      </div>
+      <div class="ledger__row">
+        <dt class="ledger__label">{{ t().home.month.lent }}</dt>
+        <dd class="ledger__value" data-cy="home-month-lent">
+          <app-money [value]="month().lent" />
+        </dd>
+      </div>
+      <div class="ledger__row">
+        <dt class="ledger__label">{{ t().home.month.received }}</dt>
+        <dd class="ledger__value" data-cy="home-month-received">
+          <app-money [value]="month().received" />
+        </dd>
+      </div>
+    </dl>
+  </div>
+</div>

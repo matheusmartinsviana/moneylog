@@ -1,0 +1,96 @@
+:host {
+  display: block;
+}
+
+.bottom-nav {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 10;
+  padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  border-top: var(--border-width) solid var(--color-border);
+  background-color: var(--color-scrim);
+  backdrop-filter: saturate(1.4) blur(16px);
+}
+
+.bottom-nav__list {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: center;
+  height: var(--bottom-nav-height);
+}
+
+.bottom-nav__item {
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+
+.bottom-nav__link {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  width: 100%;
+  max-width: 5.5rem;
+  padding: var(--space-2) 0;
+  border-radius: var(--radius-control);
+  color: var(--color-text-muted);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-standard);
+}
+
+/*
+ * Tipografia de tab bar (S-56, BUG-02): 10px, peso médio, sem padding lateral e sem reticências.
+ * O rótulo é o nome inteiro da seção, igual ao nome acessível (WCAG 2.5.3); não existe rótulo curto.
+ */
+.bottom-nav__label {
+  max-width: 100%;
+  font-size: var(--text-tab);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-tight);
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.bottom-nav__link.is-active {
+  color: var(--color-text);
+}
+
+.bottom-nav__link.is-active app-icon {
+  color: var(--color-accent);
+}
+
+/* Alto contraste: o item ativo se distingue por borda, sublinhado e peso, não só por cor (BUG-QA-06b). */
+@media (forced-colors: active) {
+  .bottom-nav__link {
+    border: 2px solid transparent;
+  }
+
+  .bottom-nav__link.is-active {
+    border-color: Highlight;
+    font-weight: var(--weight-semibold);
+    text-decoration: underline;
+  }
+}
+
+.bottom-nav__add {
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  text-decoration: none;
+}
+
+.bottom-nav__add-circle {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--radius-card);
+  background-color: var(--color-accent);
+  color: var(--color-on-accent);
+  box-shadow: var(--shadow-2);
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.bottom-nav__add:active .bottom-nav__add-circle {
+  transform: scale(0.96);
+}

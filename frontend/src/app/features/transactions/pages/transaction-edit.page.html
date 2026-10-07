@@ -1,0 +1,137 @@
+<app-page-layout [heading]="t().transactions.detail.editPage.title">
+  @if (notFound()) {
+    <app-empty-state
+      [heading]="t().transactions.detail.notFound.title"
+      [description]="t().transactions.detail.notFound.description"
+      [actions]="backActions()"
+      illustration="grid"
+    />
+  } @else if (loadProblem(); as problem) {
+    <app-error-state [problem]="problem" (retry)="retry()" />
+  } @else if (transaction(); as tx) {
+    @if (!editable()) {
+      <app-empty-state
+        [heading]="t().transactions.detail.editPage.notEditable"
+        [description]="tx.description"
+        [actions]="backActions()"
+        illustration="document"
+      />
+    } @else if (options()) {
+      <div class="edit" data-cy="transaction-edit">
+        @switch (tx.type) {
+          @case ('TRANSFER') {
+            <app-transfer-form
+              [accounts]="options()?.accounts ?? []"
+              [initial]="transferInitial()"
+              [autofocus]="false"
+              [cancelLink]="backLink()"
+              [saving]="form.saving()"
+              [problem]="form.problem()"
+              [canRetry]="form.canRetry()"
+              (submitted)="submit($event)"
+              (retry)="form.retry()"
+            />
+          }
+          @case ('INVESTMENT') {
+            <app-investment-form
+              [cashAccounts]="cashAccounts()"
+              [investmentAccounts]="investmentAccounts()"
+              [initial]="investmentInitial()"
+              [autofocus]="false"
+              [cancelLink]="backLink()"
+              [saving]="form.saving()"
+              [problem]="form.problem()"
+              [canRetry]="form.canRetry()"
+              (submitted)="submit($event)"
+              (retry)="form.retry()"
+            />
+          }
+          @case ('ADJUSTMENT') {
+            <app-adjustment-form
+              [accounts]="options()?.accounts ?? []"
+              [initial]="adjustmentInitial()"
+              [autofocus]="false"
+              [cancelLink]="backLink()"
+              [saving]="form.saving()"
+              [problem]="form.problem()"
+              [canRetry]="form.canRetry()"
+              (submitted)="submit($event)"
+              (retry)="form.retry()"
+            />
+          }
+          @case ('REFUND') {
+            <app-refund-form
+              [accounts]="cashAccounts()"
+              [categories]="options()?.expenseCategories ?? []"
+              [initial]="refundInitial()"
+              [initialOrigin]="refundOrigin()"
+              [originResults]="originSearch.results()"
+              [originSearching]="originSearch.searching()"
+              (originSearch)="originSearch.search($event)"
+              [autofocus]="false"
+              [cancelLink]="backLink()"
+              [saving]="form.saving()"
+              [problem]="form.problem()"
+              [canRetry]="form.canRetry()"
+              (submitted)="submit($event)"
+              (retry)="form.retry()"
+            />
+          }
+          @case ('CARD_PURCHASE') {
+            <app-card-purchase-form
+              [cards]="[]"
+              [categories]="options()?.expenseCategories ?? []"
+              [initial]="cardPurchaseInitial()"
+              [initialCardName]="tx.card?.name ?? null"
+              [autofocus]="false"
+              [cancelLink]="backLink()"
+              [saving]="form.saving()"
+              [problem]="form.problem()"
+              [canRetry]="form.canRetry()"
+              (submitted)="submit($event)"
+              (retry)="form.retry()"
+            />
+          }
+          @case ('INCOME') {
+            <app-cash-entry-form
+              type="INCOME"
+              [accounts]="cashAccounts()"
+              [categories]="options()?.incomeCategories ?? []"
+              [initial]="cashInitial()"
+              [autofocus]="false"
+              [cancelLink]="backLink()"
+              [saving]="form.saving()"
+              [problem]="form.problem()"
+              [canRetry]="form.canRetry()"
+              (submitted)="submit($event)"
+              (retry)="form.retry()"
+            />
+          }
+          @case ('EXPENSE') {
+            <app-cash-entry-form
+              type="EXPENSE"
+              [accounts]="cashAccounts()"
+              [categories]="options()?.expenseCategories ?? []"
+              [initial]="cashInitial()"
+              [autofocus]="false"
+              [cancelLink]="backLink()"
+              [saving]="form.saving()"
+              [problem]="form.problem()"
+              [canRetry]="form.canRetry()"
+              (submitted)="submit($event)"
+              (retry)="form.retry()"
+            />
+          }
+        }
+      </div>
+    }
+  } @else {
+    <div data-cy="transaction-edit-loading">
+      <p class="visually-hidden" role="status">{{ t().transactions.detail.loading }}</p>
+      <div class="list-skeleton" aria-hidden="true">
+        <div class="list-skeleton__row"></div>
+        <div class="list-skeleton__row"></div>
+      </div>
+    </div>
+  }
+</app-page-layout>

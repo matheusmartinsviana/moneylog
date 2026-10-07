@@ -1,0 +1,75 @@
+:host {
+  display: block;
+}
+
+.totals {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-2);
+}
+
+.totals__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
+  margin: 0;
+}
+
+.totals__item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.totals__item dt {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.totals__item dd {
+  margin: 0;
+  font-weight: var(--weight-medium);
+  text-align: right;
+}
+
+.totals__item--net dd {
+  font-weight: var(--weight-semibold);
+}
+
+.totals__note {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.totals__categories {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.totals__category {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+}
+
+/* Resumo no celular: fixo no topo, compacto. */
+.totals--summary {
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+}
+
+.totals--summary .totals__list {
+  gap: var(--space-1) var(--space-4);
+}
+
+.totals--summary .totals__item {
+  font-size: var(--text-sm);
+}

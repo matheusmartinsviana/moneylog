@@ -1,0 +1,32 @@
+:host {
+  display: block;
+}
+
+.filters {
+  padding: var(--space-1) var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-card);
+  background-color: var(--color-surface);
+}
+
+.filters__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--space-3);
+  padding: var(--space-2) 0 var(--space-3);
+}
+
+.filters__wide {
+  grid-column: 1 / -1;
+}
+
+.filters__actions {
+  display: flex;
+  align-items: end;
+}
+
+@media (width <= 640px) {
+  .filters__actions .button {
+    min-height: 2.75rem;
+  }
+}

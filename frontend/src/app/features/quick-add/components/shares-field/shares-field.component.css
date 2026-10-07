@@ -1,0 +1,29 @@
+:host {
+  display: block;
+}
+
+.shares {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.share {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-control);
+}
+
+.share__remove {
+  justify-self: start;
+}
+
+.shares__error {
+  color: var(--color-risk);
+  font-size: var(--text-sm);
+}
+
+.shares > .button {
+  justify-self: start;
+}

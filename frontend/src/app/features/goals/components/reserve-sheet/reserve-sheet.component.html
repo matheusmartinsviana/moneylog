@@ -1,0 +1,114 @@
+<app-sheet
+  cy="reserve-sheet"
+  [open]="open()"
+  [heading]="heading()"
+  [description]="t().goals.reserve.description"
+  [dismissable]="!facade.saving()"
+  (closed)="close()"
+>
+  @if (open()) {
+    <form class="form" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate data-cy="reserve-form">
+      <p class="form__note" data-cy="reserve-not-money">{{ t().goals.detail.notMoney }}</p>
+
+      <app-segmented-control
+        formControlName="kind"
+        fieldId="reserve-kind"
+        [options]="kindOptions()"
+        [label]="t().goals.reserve.kind"
+      />
+      @if (manyGoals()) {
+        <app-select
+          formControlName="goalId"
+          fieldId="reserve-goal"
+          [options]="goalOptions()"
+          [label]="t().goals.reserve.pickGoal"
+        />
+      }
+
+      @if (accountsLoading()) {
+        <p class="form__note" role="status" data-cy="reserve-accounts-loading">
+          {{ t().goals.loading }}
+        </p>
+      } @else if (accountsFailed()) {
+        <p class="banner" role="alert" data-cy="reserve-accounts-error">
+          {{ t().goals.reserve.accountsError }}
+          <button
+            type="button"
+            class="button"
+            data-cy="reserve-accounts-retry"
+            (click)="retryAccounts()"
+          >
+            {{ t().goals.reserve.retry }}
+          </button>
+        </p>
+      } @else if (noAccounts()) {
+        <p class="form__note" data-cy="reserve-no-accounts">{{ t().goals.reserve.noAccounts }}</p>
+        <a class="button" routerLink="/accounts/new" data-cy="reserve-add-account">
+          {{ t().goals.reserve.addAccount }}
+        </a>
+      } @else {
+        <app-select
+          formControlName="accountId"
+          fieldId="reserve-account"
+          [options]="accountOptions()"
+          [label]="t().goals.reserve.account"
+        />
+        <app-money-input
+          formControlName="amount"
+          fieldId="reserve-amount"
+          [currency]="currency"
+          [label]="t().goals.reserve.amount"
+        />
+        <app-date-picker
+          formControlName="date"
+          fieldId="reserve-date"
+          [label]="t().goals.reserve.date"
+        />
+        <app-text-field
+          formControlName="note"
+          fieldId="reserve-note"
+          autocomplete="off"
+          [maxlength]="200"
+          [mandatory]="false"
+          [label]="t().goals.reserve.note"
+        />
+      }
+
+      @if (banner(); as message) {
+        <p class="banner" role="alert" data-cy="reserve-error">{{ message }}</p>
+      }
+
+      <div class="actions">
+        @if (facade.canRetry()) {
+          <button type="button" class="button" data-cy="reserve-retry" (click)="facade.retry()">
+            {{ t().goals.reserve.retry }}
+          </button>
+        }
+        <button
+          type="button"
+          class="button"
+          data-cy="reserve-cancel"
+          [disabled]="facade.saving()"
+          (click)="close()"
+        >
+          {{ t().goals.reserve.cancel }}
+        </button>
+        <button
+          type="submit"
+          class="button button--primary"
+          data-cy="reserve-submit"
+          [disabled]="facade.saving() || accountsLoading() || accountsFailed() || noAccounts()"
+          [attr.aria-busy]="facade.saving()"
+        >
+          @if (facade.saving()) {
+            {{ t().goals.reserve.submitting }}
+          } @else if (isRelease()) {
+            {{ t().goals.reserve.submitRelease }}
+          } @else {
+            {{ t().goals.reserve.submitReserve }}
+          }
+        </button>
+      </div>
+    </form>
+  }
+</app-sheet>

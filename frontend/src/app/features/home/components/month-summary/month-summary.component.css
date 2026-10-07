@@ -1,0 +1,59 @@
+:host {
+  display: grid;
+  container-type: inline-size;
+  gap: var(--space-5);
+}
+
+.key-figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.figure {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface-muted);
+}
+
+.figure dt {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.figure dd {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+}
+
+.columns {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.block {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+}
+
+.block__title {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+}
+
+.note {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+@container (width >= 30rem) {
+  .columns {
+    grid-template-columns: 1fr 1fr;
+  }
+}

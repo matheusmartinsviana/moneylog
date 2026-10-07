@@ -1,0 +1,73 @@
+<app-page-layout [heading]="t().nav.planning">
+  <a
+    pageActions
+    class="button button--primary"
+    routerLink="/planning/recurrences/new"
+    data-cy="recurrences-add"
+  >
+    {{ t().recurrences.add }}
+  </a>
+
+  <app-planning-nav current="recurrences" />
+
+  <app-fixed-costs-summary [state]="recurrences.summary()" (retry)="recurrences.loadSummary()" />
+
+  @if (actionError(); as message) {
+    <p class="banner" role="alert" data-cy="recurrences-action-error">{{ message }}</p>
+  }
+
+  @switch (recurrences.state().status) {
+    @case ('loading') {
+      <div data-cy="recurrences-loading">
+        <p class="visually-hidden" role="status">{{ t().recurrences.loading }}</p>
+        <div class="list-skeleton" aria-hidden="true">
+          <div class="list-skeleton__row"></div>
+          <div class="list-skeleton__row"></div>
+          <div class="list-skeleton__row"></div>
+        </div>
+      </div>
+    }
+    @case ('empty') {
+      <app-empty-state
+        [heading]="t().emptyState.planning.title"
+        [description]="t().emptyState.planning.description"
+        [actions]="emptyActions()"
+        illustration="timeline"
+      />
+    }
+    @case ('error') {
+      <app-error-state [problem]="recurrences.error()" (retry)="retry()" />
+    }
+    @case ('ready') {
+      @if (recurrences.data(); as data) {
+        <ul class="list" data-cy="recurrences-list">
+          @for (recurrence of data; track recurrence.id) {
+            <li
+              app-recurrence-row
+              [recurrence]="recurrence"
+              (end)="askEnd($event)"
+              (deactivate)="askDeactivate($event)"
+            ></li>
+          }
+        </ul>
+      }
+    }
+  }
+
+  <app-end-recurrence-sheet
+    [open]="ending() !== null"
+    [busy]="recurrences.busy()"
+    [problem]="recurrences.problem()"
+    (closed)="ending.set(null)"
+    (confirmed)="confirmEnd($event)"
+  />
+  <app-confirm-dialog
+    [open]="deactivating() !== null"
+    [heading]="deactivateTitle()"
+    [description]="t().recurrences.deactivateConfirm.description"
+    [confirmLabel]="t().recurrences.deactivateConfirm.confirm"
+    [busy]="recurrences.busy()"
+    (confirmed)="confirmDeactivate()"
+    (cancelled)="cancelDeactivate()"
+  />
+</app-page-layout>

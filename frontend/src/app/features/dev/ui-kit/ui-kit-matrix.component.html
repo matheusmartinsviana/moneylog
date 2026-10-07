@@ -1,0 +1,1167 @@
+<div class="kit" [attr.data-theme-scope]="scope()" [attr.data-cy]="'kit-' + scope()">
+  <h2 class="kit__title">Tema {{ scope() === 'light' ? 'claro' : 'escuro' }}</h2>
+
+  <section class="kit__group" [attr.data-cy]="scope() + '-select'">
+    <h3 class="kit__group-title">Select</h3>
+    <div class="kit__grid">
+      <div class="kit__cell">
+        <span class="kit__state">Padrão</span>
+        <app-select
+          [formControl]="selectDefault"
+          [fieldId]="scope() + '-select-default'"
+          label="Forma de pagamento"
+          [options]="few"
+          hint="Dica do campo"
+        />
+      </div>
+      <div class="kit__cell kit__cell--focus">
+        <span class="kit__state">Foco (anel do token)</span>
+        <app-select
+          [formControl]="selectDefault"
+          [fieldId]="scope() + '-select-focus'"
+          label="Forma de pagamento"
+          [options]="few"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Desabilitado</span>
+        <app-select
+          [formControl]="selectDisabled"
+          [fieldId]="scope() + '-select-disabled'"
+          label="Forma de pagamento"
+          [options]="few"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Erro</span>
+        <app-select
+          [formControl]="selectError"
+          [fieldId]="scope() + '-select-error'"
+          label="Forma de pagamento"
+          [options]="few"
+          hint="Dica do campo"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Cheio</span>
+        <app-select
+          [formControl]="selectFull"
+          [fieldId]="scope() + '-select-full'"
+          label="Forma de pagamento"
+          [options]="many"
+          placeholder="Escolha"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Vazio</span>
+        <app-select
+          [formControl]="selectEmpty"
+          [fieldId]="scope() + '-select-empty'"
+          label="Forma de pagamento"
+          [options]="few"
+          placeholder="Escolha uma opção"
+        />
+      </div>
+    </div>
+  </section>
+
+  <section class="kit__group" [attr.data-cy]="scope() + '-text'">
+    <h3 class="kit__group-title">TextField</h3>
+    <div class="kit__grid">
+      <div class="kit__cell">
+        <span class="kit__state">Padrão</span>
+        <app-text-field
+          [formControl]="textDefault"
+          [fieldId]="scope() + '-text-default'"
+          label="Descrição"
+          hint="Dica do campo"
+        />
+      </div>
+      <div class="kit__cell kit__cell--focus">
+        <span class="kit__state">Foco (anel do token)</span>
+        <app-text-field
+          [formControl]="textDefault"
+          [fieldId]="scope() + '-text-focus'"
+          label="Descrição"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Desabilitado</span>
+        <app-text-field
+          [formControl]="textDisabled"
+          [fieldId]="scope() + '-text-disabled'"
+          label="Descrição"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Erro</span>
+        <app-text-field
+          [formControl]="textError"
+          [fieldId]="scope() + '-text-error'"
+          label="Descrição"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Cheio</span>
+        <app-text-field
+          [formControl]="textFull"
+          [fieldId]="scope() + '-text-full'"
+          label="Descrição"
+          [maxlength]="200"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Vazio</span>
+        <app-text-field
+          [formControl]="textEmpty"
+          [fieldId]="scope() + '-text-empty'"
+          label="Descrição"
+          placeholder="Ex.: Mercado"
+        />
+      </div>
+    </div>
+  </section>
+
+  <section class="kit__group" [attr.data-cy]="scope() + '-textarea'">
+    <h3 class="kit__group-title">TextArea</h3>
+    <div class="kit__grid">
+      <div class="kit__cell">
+        <span class="kit__state">Padrão</span>
+        <app-text-area
+          [formControl]="areaDefault"
+          [fieldId]="scope() + '-textarea-default'"
+          label="Texto da nota"
+          hint="Markdown aceito"
+          [monospace]="true"
+        />
+      </div>
+      <div class="kit__cell kit__cell--focus">
+        <span class="kit__state">Foco (anel do token)</span>
+        <app-text-area
+          [formControl]="areaDefault"
+          [fieldId]="scope() + '-textarea-focus'"
+          label="Texto da nota"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Desabilitado</span>
+        <app-text-area
+          [formControl]="areaDisabled"
+          [fieldId]="scope() + '-textarea-disabled'"
+          label="Texto da nota"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Erro</span>
+        <app-text-area
+          [formControl]="areaError"
+          [fieldId]="scope() + '-textarea-error'"
+          label="Texto da nota"
+          [mandatory]="true"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Cheio</span>
+        <app-text-area
+          [formControl]="areaFull"
+          [fieldId]="scope() + '-textarea-full'"
+          label="Texto da nota"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Vazio</span>
+        <app-text-area
+          [formControl]="areaEmpty"
+          [fieldId]="scope() + '-textarea-empty'"
+          label="Texto da nota"
+          placeholder="Escreva em Markdown"
+        />
+      </div>
+    </div>
+  </section>
+
+  <section class="kit__group" [attr.data-cy]="scope() + '-filepicker'">
+    <h3 class="kit__group-title">FilePicker</h3>
+    <div class="kit__grid">
+      <div class="kit__cell">
+        <span class="kit__state">Vazio</span>
+        <app-file-picker
+          [formControl]="fileEmpty"
+          [fieldId]="scope() + '-filepicker-empty'"
+          label="Arquivo zip do vault"
+          hint="Até 20 MB"
+          accept=".zip"
+          [maxBytes]="20971520"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Com arquivo</span>
+        <app-file-picker
+          [formControl]="fileChosen"
+          [fieldId]="scope() + '-filepicker-chosen'"
+          label="Arquivo zip do vault"
+          accept=".zip"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Desabilitado</span>
+        <app-file-picker
+          [formControl]="fileDisabled"
+          [fieldId]="scope() + '-filepicker-disabled'"
+          label="Arquivo zip do vault"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Erro</span>
+        <app-file-picker
+          [formControl]="fileError"
+          [fieldId]="scope() + '-filepicker-error'"
+          label="Arquivo zip do vault"
+        />
+      </div>
+    </div>
+  </section>
+
+  <section class="kit__group" [attr.data-cy]="scope() + '-chip'">
+    <h3 class="kit__group-title">Chip</h3>
+    <div class="kit__grid">
+      <div class="kit__cell">
+        <span class="kit__state">Alternável desligado</span>
+        <app-chip
+          label="revisao"
+          [count]="3"
+          [pressed]="chipOff()"
+          [cy]="scope() + '-chip-off'"
+          (toggled)="chipOff.set($event)"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Alternável ligado</span>
+        <app-chip
+          label="trabalho"
+          [pressed]="chipOn()"
+          [cy]="scope() + '-chip-on'"
+          (toggled)="chipOn.set($event)"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Removível</span>
+        @if (!chipRemoved()) {
+          <app-chip
+            label="Alimentação"
+            removeLabel="Remover filtro: Alimentação"
+            [cy]="scope() + '-chip-removable'"
+            (removed)="chipRemoved.set(true)"
+          />
+        } @else {
+          <span class="kit__state">Removido</span>
+        }
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Estático</span>
+        <app-chip label="projetos/MG Tech" [cy]="scope() + '-chip-static'" />
+      </div>
+    </div>
+  </section>
+
+  <section class="kit__group" [attr.data-cy]="scope() + '-money'">
+    <h3 class="kit__group-title">MoneyInput</h3>
+    <div class="kit__grid">
+      <div class="kit__cell">
+        <span class="kit__state">Padrão</span>
+        <app-money-input
+          [formControl]="moneyDefault"
+          [fieldId]="scope() + '-money-default'"
+          label="Valor"
+        />
+      </div>
+      <div class="kit__cell kit__cell--focus">
+        <span class="kit__state">Foco (anel do token)</span>
+        <app-money-input
+          [formControl]="moneyDefault"
+          [fieldId]="scope() + '-money-focus'"
+          label="Valor"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Desabilitado</span>
+        <app-money-input
+          [formControl]="moneyDisabled"
+          [fieldId]="scope() + '-money-disabled'"
+          label="Valor"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Erro</span>
+        <app-money-input
+          [formControl]="moneyError"
+          [fieldId]="scope() + '-money-error'"
+          label="Valor"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Cheio</span>
+        <app-money-input
+          [formControl]="moneyFull"
+          [fieldId]="scope() + '-money-full'"
+          label="Valor"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Vazio</span>
+        <app-money-input
+          [formControl]="moneyEmpty"
+          [fieldId]="scope() + '-money-empty'"
+          label="Valor"
+        />
+      </div>
+    </div>
+  </section>
+
+  <section class="kit__group" [attr.data-cy]="scope() + '-date'">
+    <h3 class="kit__group-title">DatePicker</h3>
+    <div class="kit__grid">
+      <div class="kit__cell">
+        <span class="kit__state">Padrão</span>
+        <app-date-picker
+          [formControl]="dateDefault"
+          [fieldId]="scope() + '-date-default'"
+          label="Data"
+          hint="Dica do campo"
+        />
+      </div>
+      <div class="kit__cell kit__cell--focus">
+        <span class="kit__state">Foco (anel do token)</span>
+        <app-date-picker
+          [formControl]="dateDefault"
+          [fieldId]="scope() + '-date-focus'"
+          label="Data"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Desabilitado</span>
+        <app-date-picker
+          [formControl]="dateDisabled"
+          [fieldId]="scope() + '-date-disabled'"
+          label="Data"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Erro</span>
+        <app-date-picker
+          [formControl]="dateError"
+          [fieldId]="scope() + '-date-error'"
+          label="Data"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Cheio</span>
+        <app-date-picker [formControl]="dateFull" [fieldId]="scope() + '-date-full'" label="Data" />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Vazio</span>
+        <app-date-picker
+          [formControl]="dateEmpty"
+          [fieldId]="scope() + '-date-empty'"
+          label="Data"
+          [mandatory]="false"
+        />
+      </div>
+    </div>
+  </section>
+
+  <section class="kit__group" [attr.data-cy]="scope() + '-month'">
+    <h3 class="kit__group-title">MonthPicker</h3>
+    <div class="kit__grid">
+      <div class="kit__cell">
+        <span class="kit__state">Padrão</span>
+        <app-month-picker
+          [formControl]="monthDefault"
+          [fieldId]="scope() + '-month-default'"
+          label="Competência"
+        />
+      </div>
+      <div class="kit__cell kit__cell--focus">
+        <span class="kit__state">Foco (anel do token)</span>
+        <app-month-picker
+          [formControl]="monthDefault"
+          [fieldId]="scope() + '-month-focus'"
+          label="Competência"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Desabilitado</span>
+        <app-month-picker
+          [formControl]="monthDisabled"
+          [fieldId]="scope() + '-month-disabled'"
+          label="Competência"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Erro</span>
+        <app-month-picker
+          [formControl]="monthError"
+          [fieldId]="scope() + '-month-error'"
+          label="Competência"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Cheio</span>
+        <app-month-picker
+          [formControl]="monthFull"
+          [fieldId]="scope() + '-month-full'"
+          label="Competência"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Vazio</span>
+        <app-month-picker
+          [formControl]="monthEmpty"
+          [fieldId]="scope() + '-month-empty'"
+          label="Competência"
+          [mandatory]="false"
+        />
+      </div>
+    </div>
+  </section>
+
+  <section class="kit__group" [attr.data-cy]="scope() + '-seg'">
+    <h3 class="kit__group-title">SegmentedControl</h3>
+    <div class="kit__grid">
+      <div class="kit__cell">
+        <span class="kit__state">Padrão</span>
+        <app-segmented-control
+          [formControl]="segDefault"
+          [fieldId]="scope() + '-seg-default'"
+          label="Tipo"
+          [options]="segments"
+        />
+      </div>
+      <div class="kit__cell kit__cell--focus">
+        <span class="kit__state">Foco (anel do token)</span>
+        <app-segmented-control
+          [formControl]="segDefault"
+          [fieldId]="scope() + '-seg-focus'"
+          label="Tipo"
+          [options]="segments"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Desabilitado</span>
+        <app-segmented-control
+          [formControl]="segDisabled"
+          [fieldId]="scope() + '-seg-disabled'"
+          label="Tipo"
+          [options]="segments"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Erro</span>
+        <app-segmented-control
+          [formControl]="segError"
+          [fieldId]="scope() + '-seg-error'"
+          label="Tipo"
+          [options]="segments"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Cheio</span>
+        <app-segmented-control
+          [formControl]="segDefault"
+          [fieldId]="scope() + '-seg-full'"
+          label="Tipo"
+          [options]="segments"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Vazio</span>
+        <app-segmented-control
+          [formControl]="segEmpty"
+          [fieldId]="scope() + '-seg-empty'"
+          label="Tipo"
+          [options]="segments"
+        />
+      </div>
+    </div>
+  </section>
+
+  <section class="kit__group" [attr.data-cy]="scope() + '-radio'">
+    <h3 class="kit__group-title">RadioGroup</h3>
+    <div class="kit__grid">
+      <div class="kit__cell">
+        <span class="kit__state">Padrão (lista)</span>
+        <app-radio-group
+          [formControl]="radioDefault"
+          [fieldId]="scope() + '-radio-default'"
+          label="Como pagar"
+          [options]="payments"
+        />
+      </div>
+      <div class="kit__cell kit__cell--focus">
+        <span class="kit__state">Foco (anel do token)</span>
+        <app-radio-group
+          [formControl]="radioDefault"
+          [fieldId]="scope() + '-radio-focus'"
+          label="Como pagar"
+          [options]="payments"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Desabilitado</span>
+        <app-radio-group
+          [formControl]="radioDisabled"
+          [fieldId]="scope() + '-radio-disabled'"
+          label="Como pagar"
+          [options]="payments"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Erro (obrigatório)</span>
+        <app-radio-group
+          [formControl]="radioError"
+          [fieldId]="scope() + '-radio-error'"
+          label="Como pagar"
+          [options]="payments"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Cheio (cartões, descrições)</span>
+        <app-radio-group
+          [formControl]="radioDefault"
+          [fieldId]="scope() + '-radio-full'"
+          label="Como pagar"
+          layout="cards"
+          [options]="payments"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Vazio (horizontal)</span>
+        <app-radio-group
+          [formControl]="radioEmpty"
+          [fieldId]="scope() + '-radio-empty'"
+          label="Como pagar"
+          layout="horizontal"
+          [mandatory]="false"
+          [options]="segments"
+        />
+      </div>
+    </div>
+  </section>
+
+  <section class="kit__group" [attr.data-cy]="scope() + '-stepper'">
+    <h3 class="kit__group-title">NumberStepper</h3>
+    <div class="kit__grid">
+      <div class="kit__cell">
+        <span class="kit__state">Padrão (parcelas, 1 a 36)</span>
+        <app-number-stepper
+          [formControl]="stepDefault"
+          [fieldId]="scope() + '-stepper-default'"
+          label="Parcelas"
+          [min]="1"
+          [max]="36"
+          [valueText]="installmentsText"
+        />
+      </div>
+      <div class="kit__cell kit__cell--focus">
+        <span class="kit__state">Foco (anel do token)</span>
+        <app-number-stepper
+          [formControl]="stepDefault"
+          [fieldId]="scope() + '-stepper-focus'"
+          label="Parcelas"
+          [min]="1"
+          [max]="36"
+          [valueText]="installmentsText"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Desabilitado</span>
+        <app-number-stepper
+          [formControl]="stepDisabled"
+          [fieldId]="scope() + '-stepper-disabled'"
+          label="Parcelas"
+          [min]="1"
+          [max]="36"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Erro (obrigatório e vazio)</span>
+        <app-number-stepper
+          [formControl]="stepError"
+          [fieldId]="scope() + '-stepper-error'"
+          label="Parcelas"
+          [min]="1"
+          [max]="36"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Cheio (no máximo; dia do vencimento 31)</span>
+        <app-number-stepper
+          [formControl]="stepFull"
+          [fieldId]="scope() + '-stepper-full'"
+          label="Parcelas"
+          [min]="1"
+          [max]="36"
+          hint="No máximo 36 parcelas."
+          [valueText]="installmentsText"
+        />
+        <app-number-stepper
+          [formControl]="stepDay"
+          [fieldId]="scope() + '-stepper-day'"
+          label="Dia do vencimento"
+          [min]="1"
+          [max]="31"
+          [valueText]="dayText"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Vazio (opcional)</span>
+        <app-number-stepper
+          [formControl]="stepEmpty"
+          [fieldId]="scope() + '-stepper-empty'"
+          label="Intervalo em dias"
+          [min]="1"
+          [max]="365"
+          [mandatory]="false"
+        />
+      </div>
+    </div>
+  </section>
+
+  <section class="kit__group" [attr.data-cy]="scope() + '-tabs'">
+    <h3 class="kit__group-title">Tabs</h3>
+    <div class="kit__grid">
+      <div class="kit__cell">
+        <span class="kit__state">Padrão (uma desabilitada)</span>
+        <app-tabs
+          label="Visões do cartão"
+          [fieldId]="scope() + '-tabs-default'"
+          [tabs]="tabs"
+          [(active)]="tabsActive"
+        >
+          <ng-template appTabPanel="invoice"><p>Fatura aberta de outubro.</p></ng-template>
+          <ng-template appTabPanel="limit"
+            ><p>Limite disponível para novas compras.</p></ng-template
+          >
+          <ng-template appTabPanel="history"><p>Faturas anteriores.</p></ng-template>
+        </app-tabs>
+      </div>
+      <div class="kit__cell kit__cell--focus">
+        <span class="kit__state">Foco (anel do token)</span>
+        <app-tabs
+          label="Visões do cartão"
+          [fieldId]="scope() + '-tabs-focus'"
+          [tabs]="tabs"
+          [(active)]="tabsActive"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Cheio (rola na horizontal, com sombra nas bordas)</span>
+        <app-tabs
+          label="Cartões"
+          [fieldId]="scope() + '-tabs-full'"
+          [tabs]="manyTabs"
+          [(active)]="tabsManyActive"
+        />
+      </div>
+    </div>
+  </section>
+
+  <section class="kit__group" [attr.data-cy]="scope() + '-progress'">
+    <h3 class="kit__group-title">ProgressBar</h3>
+    <div class="kit__grid">
+      <div class="kit__cell">
+        <span class="kit__state">Padrão</span>
+        <app-progress-bar
+          label="Limite usado"
+          [fieldId]="scope() + '-progress-default'"
+          [value]="0.4"
+          valueText="R$ 800,00 de R$ 2.000,00"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Atenção</span>
+        <app-progress-bar
+          label="Limite usado"
+          [fieldId]="scope() + '-progress-warning'"
+          tone="warning"
+          [value]="0.85"
+          valueText="R$ 1.700,00 de R$ 2.000,00"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Risco (cheio)</span>
+        <app-progress-bar
+          label="Limite usado"
+          [fieldId]="scope() + '-progress-risk'"
+          tone="risk"
+          [value]="1"
+          valueText="R$ 2.000,00 de R$ 2.000,00"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Vazio</span>
+        <app-progress-bar
+          label="Meta da viagem"
+          [fieldId]="scope() + '-progress-empty'"
+          [value]="0"
+          valueText="R$ 0,00 de R$ 5.000,00"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Indeterminado (importação)</span>
+        <app-progress-bar
+          label="Importando"
+          [fieldId]="scope() + '-progress-busy'"
+          [value]="null"
+          valueText="Lendo o arquivo"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Rótulo escondido</span>
+        <app-progress-bar
+          label="Progresso da meta"
+          [fieldId]="scope() + '-progress-hidden'"
+          [hideLabel]="true"
+          [value]="0.62"
+          valueText="62%"
+        />
+      </div>
+    </div>
+  </section>
+
+  <section class="kit__group" [attr.data-cy]="scope() + '-menu'">
+    <h3 class="kit__group-title">Menu</h3>
+    <div class="kit__grid">
+      <div class="kit__cell">
+        <span class="kit__state">Padrão (ícone; item desabilitado e destrutivo)</span>
+        <app-menu
+          label="Ações do cartão"
+          [fieldId]="scope() + '-menu-default'"
+          [items]="menuItems"
+          (selected)="onMenu($event)"
+        />
+        <span class="kit__state" [attr.data-cy]="scope() + '-menu-last'"
+          >Último: {{ menuLast() }}</span
+        >
+      </div>
+      <div class="kit__cell kit__cell--focus">
+        <span class="kit__state">Foco (anel do token)</span>
+        <app-menu
+          label="Ações do cartão"
+          [fieldId]="scope() + '-menu-focus'"
+          [items]="menuItems"
+          (selected)="onMenu($event)"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Desabilitado</span>
+        <app-menu
+          label="Ações do cartão"
+          [fieldId]="scope() + '-menu-disabled'"
+          [items]="menuItems"
+          [disabled]="true"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Cheio (rótulo no botão, itens marcáveis)</span>
+        <app-menu
+          label="Filtrar faturas"
+          [fieldId]="scope() + '-menu-full'"
+          [showLabel]="true"
+          [items]="menuChecks()"
+          align="start"
+          (selected)="toggleCheck($event)"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Vazio (sem ação disponível)</span>
+        <app-menu
+          label="Sem ações"
+          [fieldId]="scope() + '-menu-empty'"
+          [items]="[]"
+          [disabled]="true"
+          [showLabel]="true"
+        />
+      </div>
+    </div>
+  </section>
+
+  <section class="kit__group" [attr.data-cy]="scope() + '-check'">
+    <h3 class="kit__group-title">Checkbox</h3>
+    <div class="kit__grid">
+      <div class="kit__cell">
+        <span class="kit__state">Padrão (ligado)</span>
+        <app-checkbox
+          [formControl]="checkOn"
+          [fieldId]="scope() + '-check-default'"
+          label="Receber avisos"
+        />
+      </div>
+      <div class="kit__cell kit__cell--focus">
+        <span class="kit__state">Foco (anel do token)</span>
+        <app-checkbox
+          [formControl]="checkOn"
+          [fieldId]="scope() + '-check-focus'"
+          label="Receber avisos"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Desabilitado (ligado)</span>
+        <app-checkbox
+          [formControl]="checkDisabled"
+          [fieldId]="scope() + '-check-disabled'"
+          label="Receber avisos"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Desabilitado (desligado)</span>
+        <app-checkbox
+          [formControl]="checkDisabledOff"
+          [fieldId]="scope() + '-check-disabled-off'"
+          label="Receber avisos"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Cheio (rótulo longo)</span>
+        <app-checkbox [formControl]="checkOn" [fieldId]="scope() + '-check-full'" [label]="long" />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Vazio (desligado)</span>
+        <app-checkbox
+          [formControl]="checkOff"
+          [fieldId]="scope() + '-check-empty'"
+          label="Receber avisos"
+        />
+      </div>
+    </div>
+  </section>
+
+  <section class="kit__group" [attr.data-cy]="scope() + '-switch'">
+    <h3 class="kit__group-title">Switch</h3>
+    <div class="kit__grid">
+      <div class="kit__cell">
+        <span class="kit__state">Padrão (ligado)</span>
+        <app-switch
+          [formControl]="switchOn"
+          [fieldId]="scope() + '-switch-default'"
+          label="Receber avisos"
+        />
+      </div>
+      <div class="kit__cell kit__cell--focus">
+        <span class="kit__state">Foco (anel do token)</span>
+        <app-switch
+          [formControl]="switchOn"
+          [fieldId]="scope() + '-switch-focus'"
+          label="Receber avisos"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Desabilitado (ligado)</span>
+        <app-switch
+          [formControl]="switchDisabled"
+          [fieldId]="scope() + '-switch-disabled'"
+          label="Receber avisos"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Desabilitado (desligado)</span>
+        <app-switch
+          [formControl]="switchDisabledOff"
+          [fieldId]="scope() + '-switch-disabled-off'"
+          label="Receber avisos"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Cheio (rótulo longo)</span>
+        <app-switch [formControl]="switchOn" [fieldId]="scope() + '-switch-full'" [label]="long" />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Vazio (desligado)</span>
+        <app-switch
+          [formControl]="switchOff"
+          [fieldId]="scope() + '-switch-empty'"
+          label="Receber avisos"
+        />
+      </div>
+    </div>
+  </section>
+
+  <section class="kit__group" [attr.data-cy]="scope() + '-disclosure'">
+    <h3 class="kit__group-title">Disclosure</h3>
+    <div class="kit__grid">
+      <div class="kit__cell">
+        <span class="kit__state">Aberto</span>
+        <app-disclosure
+          [fieldId]="scope() + '-disclosure-open'"
+          [heading]="'Contas arquivadas, aberto (' + scope() + ')'"
+          summary="2"
+          [(open)]="disclosureOpen"
+        >
+          <p>Conteúdo visível quando aberto.</p>
+        </app-disclosure>
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Fechado</span>
+        <app-disclosure
+          [fieldId]="scope() + '-disclosure-closed'"
+          [heading]="'Contas arquivadas, fechado (' + scope() + ')'"
+          summary="2"
+          [(open)]="disclosureClosed"
+        >
+          <p>Conteúdo visível quando aberto.</p>
+        </app-disclosure>
+      </div>
+    </div>
+  </section>
+
+  <section class="kit__group" [attr.data-cy]="scope() + '-tooltip'">
+    <h3 class="kit__group-title">Tooltip</h3>
+    <div class="kit__grid">
+      <div class="kit__cell">
+        <span class="kit__state">Padrão (passe o mouse ou foque)</span>
+        <button
+          type="button"
+          class="button"
+          appTooltip="Disponível em breve"
+          [attr.data-cy]="scope() + '-tooltip-default'"
+        >
+          Crédito
+        </button>
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Desabilitado, com dica</span>
+        <button
+          type="button"
+          class="button"
+          aria-disabled="true"
+          appTooltip="Disponível em breve"
+          [attr.data-cy]="scope() + '-tooltip-disabled'"
+        >
+          Importar
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section class="kit__group" [attr.data-cy]="scope() + '-overlays'">
+    <h3 class="kit__group-title">Dialog, Sheet e avisos</h3>
+    <div class="kit__row">
+      <button
+        type="button"
+        class="button"
+        [attr.data-cy]="scope() + '-open-dialog'"
+        (click)="dialogOpen.set(true)"
+      >
+        Abrir diálogo
+      </button>
+      <button
+        type="button"
+        class="button"
+        [attr.data-cy]="scope() + '-open-dialog-risk'"
+        (click)="dialogRiskOpen.set(true)"
+      >
+        Abrir diálogo de risco com motivo
+      </button>
+      <button
+        type="button"
+        class="button"
+        [attr.data-cy]="scope() + '-open-dialog-basic'"
+        (click)="dialogBasicOpen.set(true)"
+      >
+        Abrir Dialog
+      </button>
+      <button
+        type="button"
+        class="button"
+        [attr.data-cy]="scope() + '-open-dialog-alert'"
+        (click)="dialogAlertOpen.set(true)"
+      >
+        Abrir Dialog de alerta (sem fechar por fora)
+      </button>
+      <button
+        type="button"
+        class="button"
+        [attr.data-cy]="scope() + '-open-dialog-long'"
+        (click)="dialogLongOpen.set(true)"
+      >
+        Abrir Dialog com conteúdo longo
+      </button>
+      <button
+        type="button"
+        class="button"
+        [attr.data-cy]="scope() + '-open-sheet'"
+        (click)="sheetOpen.set(true)"
+      >
+        Abrir Sheet
+      </button>
+      <button
+        type="button"
+        class="button"
+        [attr.data-cy]="scope() + '-open-sheet-side'"
+        (click)="sheetSideOpen.set(true)"
+      >
+        Abrir Sheet lateral
+      </button>
+      <button
+        type="button"
+        class="button"
+        [attr.data-cy]="scope() + '-toast-info'"
+        (click)="showToast('info')"
+      >
+        Aviso
+      </button>
+      <button
+        type="button"
+        class="button"
+        [attr.data-cy]="scope() + '-toast-error'"
+        (click)="showToast('error')"
+      >
+        Aviso de erro
+      </button>
+    </div>
+    <app-confirm-dialog
+      [open]="dialogOpen()"
+      heading="Arquivar a conta?"
+      description="Ela some da lista, mas o histórico fica."
+      confirmLabel="Arquivar"
+      (confirmed)="dialogOpen.set(false)"
+      (cancelled)="dialogOpen.set(false)"
+    />
+    <app-confirm-dialog
+      [open]="dialogRiskOpen()"
+      heading="Estornar a movimentação?"
+      description="O saldo volta ao que era antes."
+      confirmLabel="Estornar"
+      tone="risk"
+      [requireReason]="true"
+      reasonLabel="Motivo"
+      [busy]="busy()"
+      (confirmed)="dialogRiskOpen.set(false)"
+      (cancelled)="dialogRiskOpen.set(false)"
+    />
+    <app-dialog
+      heading="Nova compra parcelada"
+      description="Escolha a forma de pagamento e o texto."
+      [open]="dialogBasicOpen()"
+      [cy]="scope() + '-dialog-basic'"
+      (closed)="dialogBasicOpen.set(false)"
+    >
+      <app-select
+        [formControl]="dialogSelect"
+        [fieldId]="scope() + '-dialog-select'"
+        label="Forma"
+        [options]="few"
+      />
+      <app-text-field
+        [formControl]="dialogText"
+        [fieldId]="scope() + '-dialog-text'"
+        label="Descrição"
+        [mandatory]="false"
+      />
+      <button
+        type="button"
+        class="button button--primary"
+        [attr.data-cy]="scope() + '-dialog-basic-ok'"
+        (click)="dialogBasicOpen.set(false)"
+      >
+        Salvar
+      </button>
+    </app-dialog>
+    <app-dialog
+      heading="Descartar as alterações?"
+      description="Você precisa responder: Esc e o toque fora não fecham."
+      dialogRole="alertdialog"
+      [dismissable]="false"
+      [open]="dialogAlertOpen()"
+      [cy]="scope() + '-dialog-alert'"
+      (closed)="dialogAlertOpen.set(false)"
+    >
+      <button
+        type="button"
+        class="button"
+        data-autofocus
+        [attr.data-cy]="scope() + '-dialog-alert-keep'"
+        (click)="dialogAlertOpen.set(false)"
+      >
+        Continuar editando
+      </button>
+      <button
+        type="button"
+        class="button"
+        [attr.data-cy]="scope() + '-dialog-alert-discard'"
+        (click)="dialogAlertOpen.set(false)"
+      >
+        Descartar
+      </button>
+    </app-dialog>
+    <app-dialog
+      heading="Detalhes da fatura"
+      [open]="dialogLongOpen()"
+      [cy]="scope() + '-dialog-long'"
+      (closed)="dialogLongOpen.set(false)"
+    >
+      @for (
+        line of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+        track line
+      ) {
+        <p>Linha {{ line }} de um conteúdo comprido que rola por dentro do diálogo.</p>
+      }
+    </app-dialog>
+    <app-sheet
+      heading="Filtros"
+      [open]="sheetOpen()"
+      [cy]="scope() + '-sheet'"
+      (closed)="sheetOpen.set(false)"
+    >
+      <app-segmented-control
+        [formControl]="segDefault"
+        [fieldId]="scope() + '-sheet-seg'"
+        label="Tipo"
+        [options]="segments"
+      />
+      <button
+        type="button"
+        class="button button--primary"
+        [attr.data-cy]="scope() + '-sheet-apply'"
+        (click)="sheetOpen.set(false)"
+      >
+        Aplicar
+      </button>
+    </app-sheet>
+    <app-sheet
+      heading="Detalhes"
+      desktop="side"
+      [open]="sheetSideOpen()"
+      [cy]="scope() + '-sheet-side'"
+      (closed)="sheetSideOpen.set(false)"
+    >
+      <p>Painel lateral em tela larga; folha inferior no celular.</p>
+    </app-sheet>
+  </section>
+
+  <section class="kit__group" [attr.data-cy]="scope() + '-states'">
+    <h3 class="kit__group-title">Estados de tela</h3>
+    <div class="kit__grid">
+      <div class="kit__cell">
+        <span class="kit__state">Vazio</span>
+        <app-empty-state
+          [heading]="'Nenhuma conta ainda (' + scope() + ')'"
+          description="Adicione a primeira para ver o saldo."
+          [actions]="[{ id: 'add', label: 'Adicionar conta', available: true, primary: true }]"
+        />
+      </div>
+      <div class="kit__cell">
+        <span class="kit__state">Erro</span>
+        @if (scope() === 'light') {
+          <app-error-state />
+        } @else {
+          <!-- O estado de erro traz um título fixo (i18n): duas cópias na mesma página repetiriam o
+               nome da região (axe landmark-unique). Ele aparece uma vez, na coluna do tema claro. -->
+          <p class="kit__state">Mostrado só na coluna do tema claro (nome de região único).</p>
+        }
+      </div>
+    </div>
+  </section>
+
+  <app-ui-kit-charts [scope]="scope()" />
+</div>

@@ -1,0 +1,50 @@
+:host {
+  display: block;
+}
+
+.login {
+  display: grid;
+  min-height: 100dvh;
+  place-items: center;
+  padding: var(--space-6) var(--space-4);
+}
+
+.login__card {
+  display: grid;
+  gap: var(--space-4);
+  width: 100%;
+  max-width: 24rem;
+  padding: var(--space-6);
+  border-radius: var(--radius-panel);
+}
+
+.login__header {
+  display: grid;
+  gap: var(--space-1);
+}
+
+/* Espaço reservado do logo: vazio de propósito até o dono definir a marca. */
+.login__logo-slot {
+  display: block;
+  width: 2rem;
+  height: 2rem;
+}
+
+.login__brand {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.login__description {
+  color: var(--color-text-muted);
+}
+
+.login__error {
+  color: var(--color-risk);
+  font-size: var(--text-sm);
+}
+
+.login__submit {
+  min-height: 2.75rem;
+}

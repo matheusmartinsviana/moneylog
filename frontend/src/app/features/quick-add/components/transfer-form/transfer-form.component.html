@@ -1,0 +1,43 @@
+<form
+  class="form surface"
+  [formGroup]="form"
+  (ngSubmit)="onSubmit()"
+  novalidate
+  data-cy="transfer-form"
+>
+  <app-money-input
+    formControlName="amount"
+    fieldId="entry-amount"
+    [currency]="currency"
+    [label]="t().entryForm.amount"
+  />
+  <app-select
+    formControlName="fromAccountId"
+    fieldId="entry-from"
+    [options]="fromOptions()"
+    [label]="t().entryForm.from"
+  />
+  <app-select
+    formControlName="toAccountId"
+    fieldId="entry-to"
+    [options]="toOptions()"
+    [label]="t().entryForm.to"
+  />
+  <app-date-picker formControlName="date" fieldId="entry-date" [label]="t().entryForm.date" />
+  <app-text-field
+    formControlName="description"
+    fieldId="entry-description"
+    autocomplete="off"
+    [maxlength]="200"
+    [label]="t().entryForm.description"
+  />
+
+  <app-form-actions
+    [banner]="banner()"
+    [canRetry]="canRetry()"
+    [saving]="saving()"
+    [submitLabel]="submitLabel()"
+    [cancelLink]="cancelLink()"
+    (retry)="retry.emit()"
+  />
+</form>

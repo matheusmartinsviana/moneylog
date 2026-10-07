@@ -1,0 +1,35 @@
+<nav class="bottom-nav" [attr.aria-label]="t().shell.bottomNavigation" data-cy="bottom-nav">
+  <ul class="bottom-nav__list">
+    @for (item of items; track item.key) {
+      <li class="bottom-nav__item">
+        @if (item.key === quickAddKey) {
+          <a
+            class="bottom-nav__add"
+            [routerLink]="item.path"
+            routerLinkActive="is-active"
+            [routerLinkActiveOptions]="item.activeOptions"
+            ariaCurrentWhenActive="page"
+            [attr.data-cy]="'bottom-nav-' + item.key"
+          >
+            <span class="bottom-nav__add-circle">
+              <app-icon [name]="item.icon" [size]="24" />
+            </span>
+            <span class="visually-hidden">{{ t().nav[item.key] }}</span>
+          </a>
+        } @else {
+          <a
+            class="bottom-nav__link"
+            [routerLink]="item.path"
+            routerLinkActive="is-active"
+            [routerLinkActiveOptions]="item.activeOptions"
+            ariaCurrentWhenActive="page"
+            [attr.data-cy]="'bottom-nav-' + item.key"
+          >
+            <app-icon [name]="item.icon" [size]="22" />
+            <span class="bottom-nav__label">{{ t().nav[item.key] }}</span>
+          </a>
+        }
+      </li>
+    }
+  </ul>
+</nav>

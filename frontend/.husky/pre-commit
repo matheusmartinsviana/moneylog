@@ -1,0 +1,7 @@
+# Hook do repositório moneylog (o husky roda na raiz do git).
+# Só valida o frontend quando há arquivos do frontend no commit.
+if git diff --cached --name-only --diff-filter=ACMR | grep -q '^frontend/'; then
+  cd frontend || exit 1
+  npx --no -- lint-staged
+  npm run lint:deps
+fi

@@ -1,0 +1,77 @@
+<form
+  class="form surface"
+  [formGroup]="form"
+  (ngSubmit)="onSubmit()"
+  novalidate
+  data-cy="received-form"
+>
+  <p class="form__help" data-cy="received-help">{{ t().lending.received.help }}</p>
+  <app-segmented-control
+    formControlName="kind"
+    fieldId="received-kind"
+    [mandatory]="true"
+    [options]="kindOptions()"
+    [label]="t().lending.received.kind"
+  />
+  @if (isRepayment()) {
+    @if (debts().length === 0) {
+      <p class="form__help" role="status" data-cy="received-no-debts">
+        {{ t().lending.received.noOpenDebts }}
+      </p>
+    }
+    <app-select
+      formControlName="debtId"
+      fieldId="received-debt"
+      [options]="debtOptions()"
+      [label]="t().lending.received.debt"
+      [placeholder]="t().lending.received.debtPlaceholder"
+    />
+  } @else {
+    <app-person-field
+      [control]="form.controls.personId"
+      fieldId="received-person"
+      [people]="people()"
+      [createPerson]="createPerson()"
+    />
+  }
+  <app-money-input
+    formControlName="amount"
+    fieldId="received-amount"
+    [currency]="currency"
+    [label]="t().entryForm.amount"
+    [hint]="amountHint()"
+  />
+  <app-select
+    formControlName="accountId"
+    fieldId="received-account"
+    [options]="accountOptions()"
+    [label]="t().entryForm.account"
+  />
+  <app-date-picker formControlName="date" fieldId="received-date" [label]="t().entryForm.date" />
+  @if (!isRepayment()) {
+    <app-date-picker
+      formControlName="expectedDate"
+      fieldId="received-expected-date"
+      [mandatory]="false"
+      [label]="t().lending.expectedDate"
+      [hint]="t().lending.expectedDateHint"
+    />
+  }
+  <app-text-field
+    formControlName="description"
+    fieldId="received-description"
+    autocomplete="off"
+    [maxlength]="200"
+    [mandatory]="false"
+    [label]="t().lending.received.description"
+  />
+
+  <app-form-actions
+    [banner]="banner()"
+    [canRetry]="canRetry()"
+    [saving]="saving()"
+    [submitLabel]="submitLabel()"
+    [cancelLink]="cancelLink()"
+    (retry)="retry.emit()"
+  />
+</form>

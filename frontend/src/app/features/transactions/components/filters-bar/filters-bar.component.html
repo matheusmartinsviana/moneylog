@@ -1,0 +1,100 @@
+@let f = filters();
+<div class="filters" data-cy="filters-bar">
+  <app-disclosure fieldId="filters" [heading]="t().transactions.filters.title" [(open)]="open">
+    <div class="filters__grid">
+      <div class="filters__wide">
+        <app-text-field
+          [formControl]="form.controls.search"
+          fieldId="filter-search"
+          [role]="'searchbox'"
+          inputmode="search"
+          enterkeyhint="search"
+          autocomplete="off"
+          [mandatory]="false"
+          [maxlength]="searchMax"
+          [label]="t().transactions.filters.search"
+        />
+      </div>
+
+      @if (f.view === 'records') {
+        <app-date-picker
+          [formControl]="form.controls.from"
+          fieldId="filter-from"
+          [mandatory]="false"
+          [label]="t().transactions.filters.from"
+        />
+        <app-date-picker
+          [formControl]="form.controls.to"
+          fieldId="filter-to"
+          [mandatory]="false"
+          [label]="t().transactions.filters.to"
+        />
+        <app-select
+          [formControl]="form.controls.type"
+          fieldId="filter-type"
+          size="compact"
+          [mandatory]="false"
+          [label]="t().transactions.filters.type"
+          [emptyLabel]="t().transactions.filters.allTypes"
+          [options]="typeOptions()"
+        />
+      } @else {
+        <app-month-picker
+          class="filters__wide"
+          [formControl]="form.controls.competence"
+          fieldId="filter-competence"
+          [label]="t().transactions.filters.competence"
+        />
+        <app-select
+          [formControl]="form.controls.lens"
+          fieldId="filter-lens"
+          size="compact"
+          [label]="t().transactions.filters.lens"
+          [options]="lensOptions()"
+        />
+      }
+
+      <app-select
+        [formControl]="form.controls.accountId"
+        fieldId="filter-account"
+        size="compact"
+        [mandatory]="false"
+        [label]="t().transactions.filters.account"
+        [emptyLabel]="t().transactions.filters.allAccounts"
+        [options]="accountOptions()"
+      />
+      <app-select
+        [formControl]="form.controls.categoryId"
+        fieldId="filter-category"
+        size="compact"
+        [mandatory]="false"
+        [label]="t().transactions.filters.category"
+        [emptyLabel]="t().transactions.filters.allCategories"
+        [options]="categoryOptions()"
+      />
+      <app-select
+        [formControl]="form.controls.method"
+        fieldId="filter-method"
+        size="compact"
+        [mandatory]="false"
+        [label]="t().transactions.filters.method"
+        [emptyLabel]="t().transactions.filters.allMethods"
+        [options]="methodOptions()"
+      />
+
+      @if (f.view === 'records') {
+        <app-checkbox
+          [formControl]="form.controls.voided"
+          fieldId="filter-voided"
+          [label]="t().transactions.filters.voidedOnly"
+        />
+      }
+
+      <div class="filters__actions">
+        <button type="button" class="button" data-cy="filters-clear" (click)="clear.emit()">
+          {{ t().transactions.filters.clear }}
+        </button>
+      </div>
+    </div>
+  </app-disclosure>
+</div>

@@ -1,0 +1,92 @@
+<app-page-layout [heading]="t().nav.cards">
+  <a pageActions class="button button--primary" routerLink="/cards/new" data-cy="cards-add">
+    {{ t().cards.add }}
+  </a>
+
+  <nav class="tabs" [attr.aria-label]="t().cards.tabsLabel" data-cy="cards-tabs">
+    <a
+      class="tab"
+      routerLink="/cards"
+      data-cy="cards-tab-active"
+      [attr.aria-current]="filter() === 'ACTIVE' ? 'page' : null"
+    >
+      {{ t().cards.active }}
+    </a>
+    <a
+      class="tab"
+      routerLink="/cards"
+      [queryParams]="{ status: 'ARCHIVED' }"
+      data-cy="cards-tab-archived"
+      [attr.aria-current]="filter() === 'ARCHIVED' ? 'page' : null"
+    >
+      {{ t().cards.archivedTab }}
+    </a>
+  </nav>
+
+  @if (pendingBalance(); as pending) {
+    <div class="banner" role="alert" data-cy="cards-pending-balance">
+      <p>{{ pendingMessage() }}</p>
+      <a [routerLink]="['/cards', pending.id]" data-cy="cards-pending-balance-link">
+        {{ t().cards.pendingBalance.link }}
+      </a>
+    </div>
+  }
+
+  @switch (cards.state().status) {
+    @case ('loading') {
+      <div data-cy="cards-loading">
+        <p class="visually-hidden" role="status">{{ t().cards.loading }}</p>
+        <div class="list-skeleton" aria-hidden="true">
+          <div class="list-skeleton__row"></div>
+          <div class="list-skeleton__row"></div>
+          <div class="list-skeleton__row"></div>
+        </div>
+      </div>
+    }
+    @case ('empty') {
+      @if (filter() === 'ACTIVE') {
+        <app-empty-state
+          [heading]="t().emptyState.cards.title"
+          [description]="t().emptyState.cards.description"
+          [actions]="emptyActions()"
+          illustration="grid"
+        />
+      } @else {
+        <p class="empty-note" data-cy="cards-empty-archived">{{ t().cards.emptyArchived }}</p>
+      }
+    }
+    @case ('error') {
+      <app-error-state [problem]="cards.error()" (retry)="retry()" />
+    }
+    @case ('ready') {
+      @if (cards.data(); as data) {
+        <div class="table-head" aria-hidden="true">
+          <span>{{ t().cards.columns.name }}</span>
+          <span>{{ t().cards.columns.limit }}</span>
+          <span>{{ t().cards.columns.invoice }}</span>
+          <span class="table-head__actions">{{ t().cards.columns.actions }}</span>
+        </div>
+        <ul class="list" data-cy="cards-list">
+          @for (card of data; track card.id) {
+            <li
+              app-card-row
+              [card]="card"
+              (archive)="askArchive($event)"
+              (unarchive)="unarchive($event)"
+            ></li>
+          }
+        </ul>
+      }
+    }
+  }
+
+  <app-confirm-dialog
+    [open]="pendingArchive() !== null"
+    [heading]="confirmTitle()"
+    [description]="t().cards.archiveConfirm.description"
+    [confirmLabel]="t().cards.archiveConfirm.confirm"
+    [busy]="busy()"
+    (confirmed)="confirmArchive()"
+    (cancelled)="cancelArchive()"
+  />
+</app-page-layout>

@@ -1,0 +1,26 @@
+<app-page-layout [heading]="t().nav.more" [description]="t().more.description">
+  <div class="more-groups" data-cy="more-list">
+    @for (group of groups; track group.key) {
+      <section class="more-group" [attr.aria-labelledby]="'more-group-' + group.key">
+        <h2 class="more-group__title" [id]="'more-group-' + group.key">
+          {{ t().nav.groups[group.key] }}
+        </h2>
+        <ul class="more-list" [attr.data-cy]="'more-group-' + group.key">
+          @for (item of group.items; track item.key) {
+            <li>
+              <a
+                class="more-list__link"
+                [routerLink]="item.path"
+                [attr.data-cy]="'more-' + item.key"
+              >
+                <span class="more-list__icon"><app-icon [name]="item.icon" /></span>
+                <span class="more-list__label">{{ t().nav[item.key] }}</span>
+                <app-icon class="more-list__chevron" name="chevronRight" [size]="16" />
+              </a>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  </div>
+</app-page-layout>

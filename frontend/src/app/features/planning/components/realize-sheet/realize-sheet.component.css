@@ -1,0 +1,30 @@
+:host {
+  display: contents;
+}
+
+.form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.form__date {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.form__label {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.form__note {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}

@@ -1,0 +1,97 @@
+<app-page-layout class="list" [heading]="t().nav.transactions">
+  <a pageActions class="button button--primary" routerLink="/quick-add" data-cy="transactions-add">
+    {{ t().nav.quickAdd }}
+  </a>
+
+  <app-view-switch [view]="filters().view" (viewChange)="setView($event)" />
+  <app-filters-bar
+    [filters]="filters()"
+    [accounts]="accountOptions()"
+    [categories]="categoryOptions()"
+    (patch)="patch($event)"
+    (searchChange)="list.search($event)"
+    (clear)="list.clearFilters()"
+  />
+
+  @switch (list.state().status) {
+    @case ('loading') {
+      <div data-cy="transactions-loading">
+        <p class="visually-hidden" role="status">{{ t().transactions.loading }}</p>
+        <div class="list-skeleton" aria-hidden="true">
+          <div class="list-skeleton__row"></div>
+          <div class="list-skeleton__row"></div>
+          <div class="list-skeleton__row"></div>
+        </div>
+      </div>
+    }
+    @case ('empty') {
+      <app-empty-state
+        [heading]="t().emptyState.transactions.title"
+        [description]="t().emptyState.transactions.description"
+        [actions]="emptyActions()"
+        illustration="log"
+      />
+    }
+    @case ('error') {
+      <app-error-state [problem]="list.error()" (retry)="list.reload()" />
+    }
+    @case ('ready') {
+      @if (list.data(); as data) {
+        <div class="summary">
+          <app-totals-row
+            variant="summary"
+            [recordTotals]="data.recordTotals"
+            [entryTotals]="data.entryTotals"
+            [accountScoped]="accountScoped()"
+            [voidedOnly]="voidedOnly()"
+          />
+        </div>
+        @if (data.view === 'records') {
+          <app-records-table
+            [items]="data.records"
+            [accountId]="filters().accountId"
+            (open)="openTransaction($event.id)"
+          />
+        } @else {
+          <app-entries-table
+            [items]="data.entries"
+            [debtItems]="data.debtItems"
+            (open)="openTransaction($event.transactionId)"
+            (openDebt)="openDebt($event.debtId)"
+          />
+        }
+
+        @if (data.hasNext) {
+          <div class="more">
+            <button
+              type="button"
+              class="button"
+              data-cy="transactions-load-more"
+              [disabled]="list.loadingMore()"
+              (click)="list.loadMore()"
+            >
+              {{ list.loadingMore() ? t().transactions.loadingMore : t().transactions.loadMore }}
+            </button>
+            @if (list.loadMoreFailed()) {
+              <p class="banner" role="alert" data-cy="transactions-load-more-error">
+                {{ t().transactions.loadMoreFailed }}
+              </p>
+            }
+          </div>
+        }
+
+        <div class="footer">
+          <app-totals-row
+            variant="footer"
+            [recordTotals]="data.recordTotals"
+            [entryTotals]="data.entryTotals"
+            [accountScoped]="accountScoped()"
+            [voidedOnly]="voidedOnly()"
+          />
+        </div>
+      }
+    }
+  }
+</app-page-layout>
+
+<router-outlet (activate)="detailOpen.set(true)" (deactivate)="detailOpen.set(false)" />

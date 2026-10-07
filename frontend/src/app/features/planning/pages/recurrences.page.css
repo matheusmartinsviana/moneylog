@@ -1,0 +1,14 @@
+:host {
+  display: block;
+}
+
+.list {
+  display: grid;
+  gap: var(--space-3);
+  margin: var(--space-4) 0 0;
+  padding: 0;
+}
+
+app-fixed-costs-summary {
+  margin-top: var(--space-4);
+}

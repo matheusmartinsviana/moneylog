@@ -1,0 +1,103 @@
+<app-page-layout
+  [heading]="editing() ? t().accounts.form.editTitle : t().accounts.form.createTitle"
+>
+  @if (editing() && !account() && facade.loadStatus().status === 'loading') {
+    <div data-cy="account-form-loading">
+      <p class="visually-hidden" role="status">{{ t().accounts.loading }}</p>
+      <div class="list-skeleton" aria-hidden="true">
+        <div class="list-skeleton__row"></div>
+        <div class="list-skeleton__row"></div>
+      </div>
+    </div>
+  } @else if (notFound()) {
+    <app-empty-state
+      [heading]="t().accounts.form.notFound.title"
+      [description]="t().accounts.form.notFound.description"
+      [actions]="[
+        {
+          id: 'back',
+          label: t().accounts.form.notFound.back,
+          available: true,
+          primary: true,
+          link: '/accounts',
+        },
+      ]"
+      illustration="grid"
+    />
+  } @else if (loadProblem()) {
+    <app-error-state [problem]="loadProblem()" (retry)="retryLoad()" />
+  } @else if (!editing() || account()) {
+    <form
+      class="form surface"
+      [formGroup]="form"
+      (ngSubmit)="onSubmit()"
+      novalidate
+      data-cy="account-form"
+    >
+      @if (conflict()) {
+        <p class="banner" role="alert" data-cy="account-form-conflict">
+          {{ t().accounts.form.conflict }}
+        </p>
+      }
+      @if (banner(); as message) {
+        <p class="banner" role="alert" data-cy="account-form-error">{{ message }}</p>
+      }
+
+      <app-text-field
+        formControlName="name"
+        fieldId="account-name"
+        autocomplete="off"
+        [maxlength]="100"
+        [label]="t().accounts.form.name"
+      />
+      <app-select
+        formControlName="type"
+        fieldId="account-type"
+        [options]="typeOptions()"
+        [label]="t().accounts.form.type"
+      />
+      <app-text-field
+        formControlName="institution"
+        fieldId="account-institution"
+        autocomplete="off"
+        [maxlength]="100"
+        [mandatory]="false"
+        [label]="t().accounts.form.institution"
+        [hint]="t().accounts.form.optional"
+      />
+      <app-money-input
+        formControlName="openingBalance"
+        fieldId="account-opening-balance"
+        [currency]="currency"
+        [allowNegative]="true"
+        [allowZero]="true"
+        [label]="t().accounts.form.openingBalance"
+      />
+      <app-date-picker
+        formControlName="openingDate"
+        fieldId="account-opening-date"
+        [label]="t().accounts.form.openingDate"
+      />
+      @if (locked()) {
+        <p class="form__locked" data-cy="account-opening-locked">
+          {{ t().accounts.form.lockedHint }}
+        </p>
+      }
+
+      <div class="form__actions">
+        <a class="button" routerLink="/accounts" data-cy="account-form-cancel">
+          {{ t().accounts.form.cancel }}
+        </a>
+        <button
+          type="submit"
+          class="button button--primary"
+          data-cy="account-form-save"
+          [disabled]="facade.saving()"
+          [attr.aria-busy]="facade.saving()"
+        >
+          {{ facade.saving() ? t().accounts.form.saving : t().accounts.form.save }}
+        </button>
+      </div>
+    </form>
+  }
+</app-page-layout>

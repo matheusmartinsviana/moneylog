@@ -1,0 +1,146 @@
+<app-page-layout [heading]="t().nav.import" [description]="t().imports.intro">
+  <p class="formats" data-cy="import-formats">
+    {{ t().imports.formats }} {{ t().imports.unsupported }}
+  </p>
+
+  <app-section-container [heading]="t().imports.upload.title">
+    <form class="form" (submit)="send($event)" data-cy="import-form">
+      <app-segmented-control
+        [formControl]="kindControl"
+        fieldId="import-kind"
+        [label]="t().imports.upload.sourceKind"
+        [options]="kindOptions()"
+      />
+
+      @if (noSources()) {
+        <p class="note" data-cy="import-no-sources">
+          {{ isCard() ? t().imports.upload.noCards : t().imports.upload.noAccounts }}
+        </p>
+      } @else {
+        <app-select
+          [formControl]="sourceControl"
+          fieldId="import-source"
+          [label]="isCard() ? t().imports.upload.card : t().imports.upload.account"
+          [options]="sourceOptions()"
+          [placeholder]="isCard() ? t().imports.upload.card : t().imports.upload.account"
+        />
+      }
+
+      <app-file-picker
+        [formControl]="fileControl"
+        fieldId="import-file"
+        [label]="t().imports.upload.file"
+        [hint]="t().imports.upload.fileHint"
+        accept=".csv,.ofx"
+        [maxBytes]="maxBytes"
+      />
+
+      @if (isCsv()) {
+        <app-section-container [heading]="t().imports.mapping.title">
+          <app-mapping-editor [saved]="upload.savedMapping()" (changed)="mapping.set($event)" />
+        </app-section-container>
+      } @else if (fileControl.value) {
+        <p class="note" data-cy="import-ofx-note">{{ t().imports.mapping.csvOnly }}</p>
+      }
+
+      <p class="note" data-cy="import-privacy">{{ t().imports.privacy }}</p>
+
+      @if (submitted() && !sourceControl.value) {
+        <p class="error" role="alert" data-cy="import-source-required">
+          {{ t().imports.upload.chooseSource }}
+        </p>
+      }
+      @if (submitted() && !fileControl.value) {
+        <p class="error" role="alert" data-cy="import-file-required">
+          {{ t().imports.upload.chooseFile }}
+        </p>
+      }
+
+      @if (upload.uploading()) {
+        <app-progress-bar
+          fieldId="import-progress"
+          [label]="t().imports.upload.sending"
+          [value]="ratio()"
+          [valueText]="progressText()"
+        />
+      }
+      @if (upload.cancelled()) {
+        <p class="note" role="status" data-cy="import-cancelled">
+          {{ t().imports.upload.cancelled }} {{ t().imports.upload.nothingCreated }}
+        </p>
+      }
+      @if (uploadError(); as message) {
+        <p class="error" role="alert" data-cy="import-error">
+          {{ message }} {{ t().imports.upload.nothingCreated }}
+        </p>
+      }
+
+      <div class="actions">
+        <button
+          type="submit"
+          class="button button--primary"
+          data-cy="import-send"
+          [disabled]="upload.uploading()"
+        >
+          {{ upload.uploading() ? t().imports.upload.sending : t().imports.upload.send }}
+        </button>
+        @if (upload.uploading()) {
+          <button type="button" class="button" data-cy="import-cancel" (click)="upload.cancel()">
+            {{ t().imports.upload.cancel }}
+          </button>
+        }
+        @if (upload.canRetry() && !upload.uploading()) {
+          <button type="button" class="button" data-cy="import-retry" (click)="upload.retry()">
+            {{ t().imports.upload.retry }}
+          </button>
+        }
+      </div>
+    </form>
+  </app-section-container>
+
+  <app-section-container [heading]="t().imports.recent.title">
+    @switch (recent.state().status) {
+      @case ('loading') {
+        <div data-cy="import-recent-loading">
+          <p class="visually-hidden" role="status">{{ t().imports.recent.loading }}</p>
+          <div class="list-skeleton" aria-hidden="true">
+            <div class="list-skeleton__row"></div>
+            <div class="list-skeleton__row"></div>
+          </div>
+        </div>
+      }
+      @case ('empty') {
+        <p class="note" data-cy="import-recent-empty">{{ t().imports.recent.empty }}</p>
+      }
+      @case ('error') {
+        <app-error-state [problem]="recent.error()" (retry)="recent.load()" />
+      }
+      @case ('ready') {
+        @if (recent.state(); as state) {
+          @if (state.status === 'ready') {
+            <ul class="list" data-cy="import-recent-list">
+              @for (batch of state.data; track batch.id) {
+                <li class="batch" data-cy="import-recent-row">
+                  <div class="batch__main">
+                    <p class="batch__status">{{ t().imports.batchStatus[batch.status] }}</p>
+                    <p class="batch__meta num">
+                      {{ createdText()(batch.createdAt) }}
+                      · {{ linesText()(batch.counts.total) }}
+                    </p>
+                  </div>
+                  <a
+                    class="button"
+                    [routerLink]="['/import', batch.id]"
+                    data-cy="import-recent-open"
+                  >
+                    {{ t().imports.recent.open }}
+                  </a>
+                </li>
+              }
+            </ul>
+          }
+        }
+      }
+    }
+  </app-section-container>
+</app-page-layout>

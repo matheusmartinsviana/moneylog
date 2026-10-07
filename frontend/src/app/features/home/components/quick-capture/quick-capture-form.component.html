@@ -1,0 +1,81 @@
+<form class="qc" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate data-cy="quick-capture-form">
+  <div class="qc__main">
+    <app-money-input
+      class="qc__amount"
+      formControlName="amount"
+      fieldId="capture-amount"
+      [currency]="currency"
+      [label]="t().entryForm.amount"
+      (focusin)="expand.emit()"
+    />
+    <app-text-field
+      class="qc__description"
+      formControlName="description"
+      fieldId="capture-description"
+      autocomplete="off"
+      enterkeyhint="done"
+      [maxlength]="200"
+      [placeholder]="t().dashboard.quickCapture.descriptionPlaceholder"
+      [label]="t().entryForm.description"
+      (focusin)="expand.emit()"
+    />
+    <button
+      type="submit"
+      class="button button--primary qc__save"
+      data-cy="quick-capture-save"
+      [disabled]="saving()"
+      [attr.aria-busy]="saving()"
+    >
+      {{ saving() ? t().entryForm.saving : t().entryForm.save }}
+    </button>
+  </div>
+
+  <div class="qc__more" [class.is-expanded]="expanded()">
+    <div class="qc__more-inner" [attr.inert]="expanded() ? null : ''">
+      <div class="qc__fields">
+        <app-segmented-control
+          class="qc__type"
+          formControlName="type"
+          fieldId="capture-type"
+          [options]="typeOptions()"
+          [label]="t().dashboard.quickCapture.typeLabel"
+        />
+        <app-select
+          formControlName="categoryId"
+          fieldId="capture-category"
+          [options]="categoryOptions()"
+          [label]="t().entryForm.category"
+        />
+        <app-select
+          formControlName="accountId"
+          fieldId="capture-account"
+          [options]="accountOptions()"
+          [label]="t().entryForm.account"
+        />
+        <app-date-picker
+          formControlName="date"
+          fieldId="capture-date"
+          [label]="t().entryForm.date"
+        />
+      </div>
+      <div class="qc__foot">
+        @if (banner(); as message) {
+          <p class="qc__banner" role="alert" data-cy="quick-capture-error">{{ message }}</p>
+        }
+        @if (canRetry()) {
+          <button type="button" class="button" data-cy="quick-capture-retry" (click)="retry.emit()">
+            {{ t().entryForm.retry }}
+          </button>
+        }
+        <a
+          class="button"
+          routerLink="/quick-add"
+          [queryParams]="moreParams()"
+          data-cy="home-quick-capture-link"
+        >
+          {{ t().dashboard.quickCapture.moreOptions }}
+        </a>
+      </div>
+    </div>
+  </div>
+</form>

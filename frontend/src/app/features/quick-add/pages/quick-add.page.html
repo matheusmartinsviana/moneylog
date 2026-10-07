@@ -1,0 +1,221 @@
+<app-page-layout [heading]="t().nav.quickAdd">
+  @switch (load().status) {
+    @case ('loading') {
+      <div data-cy="quick-add-loading">
+        <p class="visually-hidden" role="status">{{ t().quickAdd.loading }}</p>
+        <div class="list-skeleton" aria-hidden="true">
+          <div class="list-skeleton__row"></div>
+          <div class="list-skeleton__row"></div>
+        </div>
+      </div>
+    }
+    @case ('error') {
+      <app-error-state [problem]="loadProblem()" (retry)="reload()" />
+    }
+    @case ('ready') {
+      @if (accounts().length === 0 && mode() !== 'credit' && mode() !== 'debt') {
+        <app-empty-state
+          [heading]="t().quickAdd.empty.noAccount.title"
+          [description]="t().quickAdd.empty.noAccount.description"
+          [actions]="emptyActions()"
+          illustration="log"
+        />
+      } @else {
+        <div class="quick-add">
+          <app-mode-switch [mode]="mode()" (modeChange)="setMode($event)" />
+
+          @if (cardsLoading()) {
+            <div data-cy="quick-add-cards-loading">
+              <p class="visually-hidden" role="status">{{ t().quickAdd.loading }}</p>
+              <div class="list-skeleton" aria-hidden="true">
+                <div class="list-skeleton__row"></div>
+                <div class="list-skeleton__row"></div>
+              </div>
+            </div>
+          } @else if (cardsFailed()) {
+            <app-error-state [problem]="cardsProblem()" (retry)="loadCards()" />
+          } @else if (peopleLoading()) {
+            <div data-cy="quick-add-people-loading">
+              <p class="visually-hidden" role="status">{{ t().lending.noPeopleLoading }}</p>
+              <div class="list-skeleton" aria-hidden="true">
+                <div class="list-skeleton__row"></div>
+                <div class="list-skeleton__row"></div>
+              </div>
+            </div>
+          } @else if (peopleFailed()) {
+            <app-error-state [problem]="peopleProblem()" (retry)="retryPeople()" />
+          } @else if (blockedCopy(); as copy) {
+            <app-empty-state
+              [heading]="copy.title"
+              [description]="copy.description"
+              [actions]="emptyActions()"
+              illustration="log"
+            />
+          } @else {
+            @switch (mode()) {
+              @case ('credit') {
+                <app-card-purchase-form
+                  [cards]="cards()"
+                  [categories]="expenseCategories()"
+                  [defaultCardId]="cardDefault()"
+                  [preview]="purchasePreview.data()"
+                  [previewLoading]="purchasePreview.loading()"
+                  [previewProblem]="purchasePreview.problem()"
+                  [saving]="facade.saving()"
+                  [problem]="facade.problem()"
+                  [canRetry]="facade.canRetry()"
+                  [resetToken]="resetToken()"
+                  [focusToken]="focusToken()"
+                  (previewRequest)="
+                    purchasePreview.request($event?.cardId ?? '', $event?.request ?? null)
+                  "
+                  (submitted)="submit($event)"
+                  (retry)="facade.retry()"
+                />
+              }
+              @case ('loan') {
+                <app-loan-form
+                  [accounts]="cashAccounts()"
+                  [people]="people()"
+                  [createPerson]="createPerson"
+                  [defaultAccountId]="cashDefault()"
+                  [defaultPersonId]="requestedPerson()"
+                  [saving]="facade.saving()"
+                  [problem]="facade.problem()"
+                  [canRetry]="facade.canRetry()"
+                  [resetToken]="resetToken()"
+                  [focusToken]="focusToken()"
+                  (submitted)="submit($event)"
+                  (retry)="facade.retry()"
+                />
+              }
+              @case ('received') {
+                <app-received-form
+                  [accounts]="cashAccounts()"
+                  [people]="people()"
+                  [debts]="receivables()"
+                  [createPerson]="createPerson"
+                  [defaultAccountId]="cashDefault()"
+                  [defaultPersonId]="requestedPerson()"
+                  [saving]="facade.saving()"
+                  [problem]="facade.problem()"
+                  [canRetry]="facade.canRetry()"
+                  [resetToken]="resetToken()"
+                  [focusToken]="focusToken()"
+                  (submitted)="submit($event)"
+                  (retry)="facade.retry()"
+                />
+              }
+              @case ('debt') {
+                <app-debt-entry
+                  [people]="people()"
+                  [categories]="expenseCategories()"
+                  [createPerson]="createPerson"
+                  [defaultPersonId]="requestedPerson()"
+                  (saved)="onDebtSaved($event)"
+                />
+              }
+              @case ('transfer') {
+                <app-transfer-form
+                  [accounts]="accounts()"
+                  [defaultAccountId]="anyDefault()"
+                  [saving]="facade.saving()"
+                  [problem]="facade.problem()"
+                  [canRetry]="facade.canRetry()"
+                  [resetToken]="resetToken()"
+                  [focusToken]="focusToken()"
+                  (submitted)="submit($event)"
+                  (retry)="facade.retry()"
+                />
+              }
+              @case ('investment') {
+                <app-investment-form
+                  [cashAccounts]="cashAccounts()"
+                  [investmentAccounts]="investmentAccounts()"
+                  [defaultCashAccountId]="cashDefault()"
+                  [defaultInvestmentAccountId]="investmentDefault()"
+                  [saving]="facade.saving()"
+                  [problem]="facade.problem()"
+                  [canRetry]="facade.canRetry()"
+                  [resetToken]="resetToken()"
+                  [focusToken]="focusToken()"
+                  (submitted)="submit($event)"
+                  (retry)="facade.retry()"
+                />
+              }
+              @case ('adjustment') {
+                <app-adjustment-form
+                  [accounts]="accounts()"
+                  [defaultAccountId]="anyDefault()"
+                  [saving]="facade.saving()"
+                  [problem]="facade.problem()"
+                  [canRetry]="facade.canRetry()"
+                  [resetToken]="resetToken()"
+                  [focusToken]="focusToken()"
+                  (submitted)="submit($event)"
+                  (retry)="facade.retry()"
+                />
+              }
+              @case ('refund') {
+                <app-refund-form
+                  [accounts]="cashAccounts()"
+                  [cards]="cards()"
+                  [defaultCardId]="cardDefault()"
+                  [categories]="expenseCategories()"
+                  [defaultAccountId]="cashDefault()"
+                  [originResults]="originSearch.results()"
+                  [originSearching]="originSearch.searching()"
+                  [saving]="facade.saving()"
+                  [problem]="facade.problem()"
+                  [canRetry]="facade.canRetry()"
+                  [resetToken]="resetToken()"
+                  [focusToken]="focusToken()"
+                  (originSearch)="originSearch.search($event)"
+                  (submitted)="submit($event)"
+                  (retry)="facade.retry()"
+                />
+              }
+              @case ('income') {
+                <app-cash-entry-form
+                  type="INCOME"
+                  [prefill]="prefill()"
+                  [accounts]="cashAccounts()"
+                  [categories]="incomeCategories()"
+                  [defaultAccountId]="cashDefault()"
+                  [saving]="facade.saving()"
+                  [problem]="facade.problem()"
+                  [canRetry]="facade.canRetry()"
+                  [resetToken]="resetToken()"
+                  [focusToken]="focusToken()"
+                  (submitted)="submit($event)"
+                  (retry)="facade.retry()"
+                />
+              }
+              @default {
+                <app-cash-entry-form
+                  type="EXPENSE"
+                  [prefill]="prefill()"
+                  [accounts]="cashAccounts()"
+                  [categories]="expenseCategories()"
+                  [fixedMethod]="fixedMethod(mode())"
+                  [allowSplit]="true"
+                  [people]="people()"
+                  [createPerson]="createPerson"
+                  [defaultAccountId]="cashDefault()"
+                  [saving]="facade.saving()"
+                  [problem]="facade.problem()"
+                  [canRetry]="facade.canRetry()"
+                  [resetToken]="resetToken()"
+                  [focusToken]="focusToken()"
+                  (peopleNeeded)="ensurePeople()"
+                  (submitted)="submit($event)"
+                  (retry)="facade.retry()"
+                />
+              }
+            }
+          }
+        </div>
+      }
+    }
+  }
+</app-page-layout>

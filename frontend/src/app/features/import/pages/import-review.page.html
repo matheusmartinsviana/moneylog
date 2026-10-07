@@ -1,0 +1,330 @@
+<app-page-layout [heading]="t().imports.review.title" [wide]="true">
+  <a pageActions class="button" routerLink="/import" data-cy="import-review-back">
+    {{ t().imports.review.back }}
+  </a>
+
+  @switch (review.loadStatus().status) {
+    @case ('loading') {
+      <div data-cy="import-review-loading">
+        <p class="visually-hidden" role="status">{{ t().imports.review.loading }}</p>
+        <div class="list-skeleton" aria-hidden="true">
+          <div class="list-skeleton__row"></div>
+          <div class="list-skeleton__row"></div>
+          <div class="list-skeleton__row"></div>
+        </div>
+      </div>
+    }
+    @case ('error') {
+      @if (notFound()) {
+        <p class="note" role="alert" data-cy="import-review-not-found">
+          {{ t().imports.review.notFound }}
+        </p>
+      } @else {
+        <app-error-state [problem]="loadProblem()" (retry)="review.retry()" />
+      }
+    }
+    @case ('ready') {
+      @if (review.batch(); as batch) {
+        @if (review.editable()) {
+          <p class="review-first" data-cy="import-review-first">
+            {{ t().imports.review.reviewFirst }}
+          </p>
+        } @else {
+          <p class="note" data-cy="import-review-readonly">
+            {{ t().imports.review.readonlyNote }}
+          </p>
+        }
+
+        @for (warning of warningTexts(); track warning.code) {
+          <div class="banner" role="status" [attr.data-cy]="'import-warning-' + warning.code">
+            <p>{{ warning.text }}</p>
+            @if (warning.code === 'SAME_FILE_ALREADY_IMPORTED') {
+              <a routerLink="/import" data-cy="import-warning-link">{{
+                t().imports.warnings.seeImports
+              }}</a>
+            }
+          </div>
+        }
+
+        <section class="summary" data-cy="import-review-summary">
+          <p class="summary__status">{{ t().imports.batchStatus[batch.status] }}</p>
+          <p class="summary__counts num" data-cy="import-summary-text">{{ summary() }}</p>
+        </section>
+
+        @if (batch.skipped.length > 0) {
+          <section class="skipped" data-cy="import-skipped">
+            <h2 class="text-small">{{ t().imports.review.skippedLines }}</h2>
+            <ul>
+              @for (item of batch.skipped; track item) {
+                <li>{{ item }}</li>
+              }
+            </ul>
+          </section>
+        }
+
+        @if (review.created() !== null) {
+          <div class="banner" role="status" data-cy="import-applied">
+            <p>{{ appliedText() }}</p>
+            <a routerLink="/transactions" data-cy="import-applied-link">{{
+              t().imports.review.seeTransactions
+            }}</a>
+          </div>
+        }
+        @if (batch.status === 'UNDONE') {
+          <p class="banner" role="status" data-cy="import-undone">
+            {{ t().imports.review.undone }}
+          </p>
+        }
+        @if (batch.status === 'PARTIALLY_UNDONE') {
+          <div class="banner" role="alert" data-cy="import-partially-undone">
+            <p>
+              <strong>{{ t().imports.review.partiallyUndone }}</strong>
+              {{ t().imports.review.partiallyUndoneHelp }}
+            </p>
+            <h2 class="text-small">{{ t().imports.review.blockedTitle }}</h2>
+            <ul>
+              @for (item of blockedItems(); track item.id) {
+                <li data-cy="import-blocked-item">
+                  {{ item.text }}
+                  <a [routerLink]="['/transactions', item.id]" data-cy="import-blocked-link">{{
+                    t().imports.review.seeTransactions
+                  }}</a>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+
+        @if (actionError(); as message) {
+          <p class="banner" role="alert" data-cy="import-action-error">{{ message }}</p>
+        }
+        @if (legConflictLine(); as line) {
+          <div class="banner" role="alert" data-cy="import-leg-conflict">
+            <p>{{ t().imports.review.legConflict.message }}</p>
+            <div class="actions">
+              <button
+                type="button"
+                class="button"
+                data-cy="import-leg-conflict-accept"
+                [disabled]="review.busy() !== null"
+                (click)="accept(line)"
+              >
+                {{ t().imports.review.legConflict.acceptAsIs }}
+              </button>
+              <button
+                type="button"
+                class="button"
+                data-cy="import-leg-conflict-reject"
+                [disabled]="review.busy() !== null"
+                (click)="reject(line)"
+              >
+                {{ t().imports.review.legConflict.reject }}
+              </button>
+            </div>
+          </div>
+        }
+        @if (applyFailureText(); as failure) {
+          <div class="banner" role="alert" data-cy="import-apply-failed">
+            <p>{{ failure.text }}</p>
+            <div class="actions">
+              @if (failure.position !== null) {
+                <button
+                  type="button"
+                  class="button"
+                  data-cy="import-apply-failed-reject"
+                  [disabled]="review.busy() !== null"
+                  (click)="review.rejectAcceptedAt(failure.position)"
+                >
+                  {{ failure.rejectLabel }}
+                </button>
+              }
+              <button
+                type="button"
+                class="button"
+                data-cy="import-apply-failed-discard"
+                [disabled]="review.busy() !== null"
+                (click)="confirmDiscard.set(true)"
+              >
+                {{ t().imports.review.applyFailed.discardBatch }}
+              </button>
+            </div>
+          </div>
+        }
+        @if (bulkText(); as message) {
+          <div class="banner" role="status" data-cy="import-bulk-result">
+            <p>{{ message }}</p>
+            @if (bulkReasons().length > 0) {
+              <ul>
+                @for (item of bulkReasons(); track item.reason) {
+                  <li>
+                    {{ item.label }}: <span class="num">{{ item.count }}</span>
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        }
+
+        <div class="toolbar">
+          <div class="filters">
+            <app-select
+              [formControl]="statusControl"
+              fieldId="import-filter-status"
+              [label]="t().imports.review.filterStatus"
+              [options]="statusOptions()"
+              [emptyLabel]="t().imports.review.allStatuses"
+              [mandatory]="false"
+            />
+            <app-select
+              [formControl]="flagControl"
+              fieldId="import-filter-flag"
+              [label]="t().imports.review.filterFlag"
+              [options]="flagOptions()"
+              [emptyLabel]="t().imports.review.allFlags"
+              [mandatory]="false"
+            />
+          </div>
+          <div class="actions">
+            @if (review.editable()) {
+              <button
+                type="button"
+                class="button"
+                data-cy="import-accept-all"
+                [disabled]="review.busy() !== null"
+                (click)="review.acceptAllWithoutDecision()"
+              >
+                {{ t().imports.review.acceptAll }}
+              </button>
+              <button
+                type="button"
+                class="button"
+                data-cy="import-discard"
+                [disabled]="review.busy() !== null"
+                (click)="confirmDiscard.set(true)"
+              >
+                {{
+                  review.busy() === 'discard'
+                    ? t().imports.review.discarding
+                    : t().imports.review.discard
+                }}
+              </button>
+              <button
+                type="button"
+                class="button button--primary"
+                data-cy="import-apply"
+                [disabled]="!canApply()"
+                (click)="confirmApply.set(true)"
+              >
+                {{
+                  review.busy() === 'apply' ? t().imports.review.applying : t().imports.review.apply
+                }}
+              </button>
+            }
+            @if (canUndo()) {
+              <button
+                type="button"
+                class="button"
+                data-cy="import-undo"
+                [disabled]="review.busy() !== null"
+                (click)="confirmUndo.set(true)"
+              >
+                {{
+                  review.busy() === 'undo' ? t().imports.review.undoing : t().imports.review.undo
+                }}
+              </button>
+            }
+          </div>
+        </div>
+
+        @if (review.editable() && review.requireDecision() > 0) {
+          <p class="note" role="status" data-cy="import-needs-decision">
+            {{ needsDecisionText() }}
+          </p>
+        }
+
+        @if (review.lines().length === 0) {
+          <p class="note" data-cy="import-lines-empty">{{ t().imports.review.empty }}</p>
+        } @else {
+          <app-import-lines
+            [lines]="review.lines()"
+            [categoryNames]="categoryNames()"
+            [editable]="review.editable()"
+            [busy]="review.busy() !== null"
+            (accept)="accept($event)"
+            (reject)="reject($event)"
+            (reopen)="reopen($event)"
+            (edit)="openDecision($event)"
+          />
+        }
+
+        @if (review.hasMore()) {
+          <div>
+            <button
+              type="button"
+              class="button"
+              data-cy="import-load-more"
+              [disabled]="review.loadingMore()"
+              (click)="review.loadMore()"
+            >
+              {{
+                review.loadingMore() ? t().imports.review.loadingMore : t().imports.review.loadMore
+              }}
+            </button>
+          </div>
+        }
+
+        @if (review.editable()) {
+          <section class="shortcuts" data-cy="import-shortcuts">
+            <h2 class="text-small">{{ t().imports.review.shortcuts.title }}</h2>
+            <ul>
+              <li>{{ t().imports.review.shortcuts.move }}</li>
+              <li>{{ t().imports.review.shortcuts.accept }}</li>
+              <li>{{ t().imports.review.shortcuts.reject }}</li>
+              <li>{{ t().imports.review.shortcuts.category }}</li>
+            </ul>
+          </section>
+        }
+      }
+    }
+  }
+
+  <app-decision-sheet
+    [line]="decisionLine()"
+    [categoryOptions]="categoryOptions()"
+    [accountOptions]="accountOptions()"
+    [busy]="review.busy() !== null"
+    (decided)="decided($event)"
+    (cancelled)="decisionLine.set(null)"
+  />
+
+  <app-confirm-dialog
+    [open]="confirmApply()"
+    [heading]="t().imports.review.applyConfirm.title"
+    [description]="applyDescription()"
+    [confirmLabel]="t().imports.review.applyConfirm.confirm"
+    [busy]="review.busy() === 'apply'"
+    (confirmed)="doApply()"
+    (cancelled)="confirmApply.set(false)"
+  />
+  <app-confirm-dialog
+    [open]="confirmDiscard()"
+    [heading]="t().imports.review.discardConfirm.title"
+    [description]="t().imports.review.discardConfirm.description"
+    [confirmLabel]="t().imports.review.discardConfirm.confirm"
+    tone="risk"
+    [busy]="review.busy() === 'discard'"
+    (confirmed)="doDiscard()"
+    (cancelled)="confirmDiscard.set(false)"
+  />
+  <app-confirm-dialog
+    [open]="confirmUndo()"
+    [heading]="t().imports.review.undoConfirm.title"
+    [description]="t().imports.review.undoConfirm.description"
+    [confirmLabel]="t().imports.review.undoConfirm.confirm"
+    [reasonLabel]="t().imports.review.undoConfirm.reason"
+    tone="risk"
+    [busy]="review.busy() === 'undo'"
+    (confirmed)="doUndo($event)"
+    (cancelled)="confirmUndo.set(false)"
+  />
+</app-page-layout>
