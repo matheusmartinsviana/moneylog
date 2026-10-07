@@ -1,0 +1,228 @@
+/*
+ * Sistema de movimento (ADR-011, src/app/common/motion/README.md).
+ * Só `transform` e `opacity`. `data-motion="off"` (testes/e2e) e `prefers-reduced-motion` desligam tudo.
+ * Carregado depois de utilities.css: as regras de microinteração abaixo refinam as classes globais.
+ */
+:root {
+  --motion-instant: 90ms;
+  --motion-fast: 160ms;
+  --motion-base: 240ms;
+  --motion-slow: 420ms;
+  --motion-hero: 640ms;
+  --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --motion-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --motion-ease-spring: cubic-bezier(0.34, 1.35, 0.64, 1);
+  --motion-dx: 8px;
+  --motion-dy: 16px;
+  --motion-dist-lg: 24px;
+  --motion-stagger: 50ms;
+  --motion-stagger-max: 600ms;
+}
+
+/* ---- Entrada de blocos (appStagger / appReveal) ---- */
+.m-pending {
+  opacity: 0;
+  transform: translate(var(--motion-dx), var(--motion-dy));
+}
+
+.m-enter {
+  animation: m-enter var(--motion-slow) var(--motion-ease) both;
+  animation-delay: min(calc(var(--m-i, 0) * var(--motion-stagger)), var(--motion-stagger-max));
+  will-change: transform, opacity;
+}
+
+@keyframes m-enter {
+  from {
+    opacity: 0;
+    transform: translate(var(--motion-dx), var(--motion-dy));
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Estados, banners e toasts (Angular `animate.enter` / `animate.leave`). */
+.m-toast-in {
+  animation: m-toast-in var(--motion-base) var(--motion-ease-spring) both;
+}
+
+.m-toast-out {
+  animation: m-toast-out var(--motion-fast) var(--motion-ease-in) both;
+}
+
+.m-banner-in {
+  animation: m-banner-in var(--motion-base) var(--motion-ease) both;
+}
+
+.m-banner-out {
+  animation: m-banner-out var(--motion-fast) var(--motion-ease-in) both;
+}
+
+@keyframes m-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--motion-dist-lg)) scale(0.97);
+  }
+}
+
+@keyframes m-toast-out {
+  to {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+}
+
+@keyframes m-banner-in {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes m-banner-out {
+  to {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+}
+
+/* Saída de overlays: clone animado por Web Animations (ghost-exit.ts). */
+.m-ghost,
+.m-ghost * {
+  animation: none !important;
+  pointer-events: none !important;
+}
+
+/* ---- Microinterações globais ---- */
+@media (prefers-reduced-motion: no-preference) {
+  /* Anel de foco que "abre" em vez de aparecer de uma vez. */
+  :focus-visible {
+    transition: box-shadow var(--motion-fast) var(--motion-ease);
+  }
+
+  .button:not(:disabled, [aria-disabled='true']) {
+    transition-duration: var(--motion-fast);
+    transition-timing-function: var(--motion-ease);
+  }
+
+  .button:active:not(:disabled, [aria-disabled='true']) {
+    transition-duration: var(--motion-instant);
+  }
+
+  /* Botão em andamento: barra discreta sob o rótulo (aria-busy), sem mexer no layout. */
+  .button[aria-busy='true'] {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .button[aria-busy='true']::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    background-color: currentcolor;
+    opacity: 0.5;
+    transform-origin: left;
+    animation: m-busy 1.1s var(--motion-ease) infinite;
+  }
+
+  @keyframes m-busy {
+    from {
+      transform: scaleX(0);
+    }
+
+    to {
+      transform: scaleX(1);
+      opacity: 0;
+    }
+  }
+
+  /* Troca de tema: transição curta só nas propriedades de cor (classe posta pelo ThemeService). */
+  html.m-theme-switch,
+  html.m-theme-switch *,
+  html.m-theme-switch *::before,
+  html.m-theme-switch *::after {
+    transition:
+      color var(--motion-base) linear,
+      background-color var(--motion-base) linear,
+      border-color var(--motion-base) linear,
+      fill var(--motion-base) linear,
+      stroke var(--motion-base) linear !important;
+  }
+
+  /* Transição de rota: só a página (<main>) troca; sidebar e cabeçalho ficam. */
+  ::view-transition-group(root),
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+  }
+
+  ::view-transition-old(page) {
+    animation: m-vt-out var(--motion-fast) var(--motion-ease-in) both;
+  }
+
+  ::view-transition-new(page) {
+    animation: m-vt-in var(--motion-base) var(--motion-ease) both;
+  }
+
+  @keyframes m-vt-out {
+    to {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+  }
+
+  @keyframes m-vt-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+}
+
+.m-page {
+  view-transition-name: page;
+}
+
+@media print {
+  .m-pending {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---- Desligado: preferência do sistema ou `data-motion="off"` (testes, e2e) ---- */
+@media (prefers-reduced-motion: reduce) {
+  .m-pending {
+    opacity: 1;
+    transform: none;
+  }
+
+  .m-enter,
+  .m-page {
+    view-transition-name: none;
+  }
+}
+
+[data-motion='off'] *,
+[data-motion='off'] *::before,
+[data-motion='off'] *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+[data-motion='off'] .m-pending {
+  opacity: 1;
+  transform: none;
+}
+
+[data-motion='off'] .m-page {
+  view-transition-name: none;
+}

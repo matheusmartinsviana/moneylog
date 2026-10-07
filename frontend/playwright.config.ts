@@ -43,6 +43,8 @@ export default defineConfig({
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     serviceWorkers: 'allow',
+    // Movimento desligado por padrão (sem flakiness); o e2e de movimento liga com `test.use({ reducedMotion: 'no-preference' })`.
+    reducedMotion: 'reduce',
   },
   projects: integration
     ? [
