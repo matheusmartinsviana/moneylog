@@ -1,0 +1,35 @@
+#!/bin/bash
+# Prepara a instância (executado uma vez pelo cloud-init). Nenhum segredo aqui: a configuração vem do SSM no momento do deploy.
+set -euo pipefail
+dnf install -y docker
+systemctl enable --now docker
+mkdir -p /opt/moneylog
+
+cat > /opt/moneylog/deploy.sh <<'DEPLOY'
+#!/bin/bash
+# Uso: /opt/moneylog/deploy.sh <tag-da-imagem>
+# Baixa a configuração do SSM para arquivos (um por variável, com o NOME da variável) e sobe o container lendo-os como Docker secrets
+# via SECRETS_DIR (application-prod.yaml). Os valores nunca vão para a linha de comando nem para o log.
+set -euo pipefail
+TAG="$${1:?informe a tag da imagem}"
+REGION="${region}"
+IMAGE="${registry}/${repository}:$TAG"
+SECRETS=/opt/moneylog/secrets
+
+rm -rf "$SECRETS" && mkdir -p "$SECRETS" && chmod 700 "$SECRETS"
+aws ssm get-parameters-by-path --region "$REGION" --path "${ssm_prefix}" --with-decryption --query 'Parameters[].[Name,Value]' --output text |
+  while IFS=$'\t' read -r name value; do
+    printf '%s' "$value" > "$SECRETS/$(basename "$name")"
+  done
+chmod 400 "$SECRETS"/*
+
+aws ecr get-login-password --region "$REGION" | docker login --username AWS --password-stdin "${registry}" >/dev/null
+docker pull "$IMAGE"
+docker rm -f moneylog 2>/dev/null || true
+docker run -d --name moneylog --restart unless-stopped -p 8080:8080 --read-only --tmpfs /tmp \
+  -v "$SECRETS":/run/secrets:ro -v /opt/moneylog/backups:/var/backups/moneylog \
+  -e SPRING_PROFILES_ACTIVE=prod "$IMAGE"
+echo "$TAG" > /opt/moneylog/current-tag
+DEPLOY
+chmod 755 /opt/moneylog/deploy.sh
+mkdir -p /opt/moneylog/backups && chown 10001:10001 /opt/moneylog/backups

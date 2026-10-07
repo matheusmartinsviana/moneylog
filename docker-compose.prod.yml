@@ -1,0 +1,74 @@
+# Exemplo de produção local/servidor único (T175): backend (perfil prod) + Postgres. SEM segredos neste arquivo:
+# tudo vem do .env (copie de .env.example) ou de arquivos em ./secrets (Docker secrets, opcional).
+#   docker compose -f docker-compose.prod.yml --env-file .env up --build
+# O perfil prod não sobe sem JWT_SECRET, MONEYLOG_OWNER_*, DB_* e MONEYLOG_TRUSTED_PROXIES.
+# Em produção na AWS o Postgres é o RDS (ADR-005): remova o serviço `postgres` e aponte DB_URL para o RDS.
+name: moneylog-prod
+
+services:
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:?defina DB_NAME no .env}
+      POSTGRES_USER: ${DB_USER:?defina DB_USER no .env}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?defina DB_PASSWORD no .env}
+    volumes:
+      - moneylog-prod-pgdata:/var/lib/postgresql/data
+    networks: [internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  backend:
+    build:
+      context: backend
+    image: moneylog-backend:local
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME}
+      DB_USER: ${DB_USER:?defina DB_USER no .env}
+      DB_PASSWORD: ${DB_PASSWORD:?defina DB_PASSWORD no .env}
+      JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET no .env}
+      MONEYLOG_OWNER_EMAIL: ${MONEYLOG_OWNER_EMAIL:?defina MONEYLOG_OWNER_EMAIL no .env}
+      MONEYLOG_OWNER_PASSWORD_HASH: ${MONEYLOG_OWNER_PASSWORD_HASH:-}
+      MONEYLOG_ALLOWED_ORIGINS: ${MONEYLOG_ALLOWED_ORIGINS:?defina MONEYLOG_ALLOWED_ORIGINS no .env}
+      # Atrás do proxy do compose/ALB. Local: a rede interna do Docker (172.16.0.0/12).
+      MONEYLOG_TRUSTED_PROXIES: ${MONEYLOG_TRUSTED_PROXIES:?defina MONEYLOG_TRUSTED_PROXIES no .env}
+      AI_PROVIDER: ${AI_PROVIDER:-none}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-}
+      MONEYLOG_PUSH_VAPID_PUBLIC: ${MONEYLOG_PUSH_VAPID_PUBLIC:-}
+      MONEYLOG_PUSH_VAPID_PRIVATE: ${MONEYLOG_PUSH_VAPID_PRIVATE:-}
+      MONEYLOG_PUSH_VAPID_SUBJECT: ${MONEYLOG_PUSH_VAPID_SUBJECT:-}
+      MONEYLOG_PUSH_ENABLED: ${MONEYLOG_PUSH_ENABLED:-false}
+      MONEYLOG_BACKUP_ENABLED: ${MONEYLOG_BACKUP_ENABLED:-false}
+      BACKUP_ENCRYPTION_KEY: ${BACKUP_ENCRYPTION_KEY:-}
+      BACKUP_STORAGE: ${BACKUP_STORAGE:-local}
+      BACKUP_PREFIX: ${BACKUP_PREFIX:-moneylog/}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-7}
+      BACKUP_CRON: ${BACKUP_CRON:-0 0 3 * * *}
+      BACKUP_S3_REGION: ${BACKUP_S3_REGION:-}
+      BACKUP_S3_BUCKET: ${BACKUP_S3_BUCKET:-}
+      BACKUP_S3_ENDPOINT: ${BACKUP_S3_ENDPOINT:-}
+    ports:
+      - "127.0.0.1:${APP_PORT:-8080}:8080"
+    volumes:
+      - moneylog-prod-backups:/var/backups/moneylog
+    networks: [internal]
+    read_only: true
+    tmpfs:
+      - /tmp
+
+networks:
+  internal:
+
+volumes:
+  moneylog-prod-pgdata:
+  moneylog-prod-backups:

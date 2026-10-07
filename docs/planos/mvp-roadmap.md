@@ -305,3 +305,28 @@ Numeração: backend S-119 em diante; frontend FE-S-112 em diante. O texto compl
 
 1. `orquestrador`: o plano da etapa (já escritos) → 2. `revisor` revisa **o plano** (🔴 volta ao orquestrador) → 3. `dev-backend`/`dev-frontend`, uma task por vez, independentes em paralelo (a **sessão principal** despacha: subagente não dispara subagente) → 4. `revisor` revisa o **código** da task (🔴/🟠 voltam ao dev) → 5. `tester` valida a task/etapa (bug volta ao dev) → 6. a sessão principal resume ao usuário; **commit só quando o usuário pedir** (Conventional Commits, sem linha de atribuição de IA, regra do `CLAUDE.md`).
    Ao despachar, passar sempre: caminho do plano, número da task e o que já foi feito.
+
+---
+
+## Registro de execução: T177 (parcial) e contrato 2.10.0 (2026-10-07)
+
+- **Concluído:** orçamento do bundle inicial. De 532,25 kB para **498,53 kB** (limite de aviso 500 kB, erro 1 MB), sem aviso no `ng build`.
+- **Como:** providers de infra usados por uma única área saíram de `app.config.ts` para `src/app/lazy-providers.ts`, ligados em `providers` da rota lazy de cada feature (import, planning, settings, home, goals, notes, vault, debts, people, quick-add). Ficaram globais os do shell ou de várias áreas (auth, accounts, cards, categories, transactions, notifications, ai, reports, search).
+- **Regra nova:** `lazy-providers.ts` entra na exceção S-31 do `.dependency-cruiser.cjs`. Facade nova que use uma porta movida fora das rotas listadas precisa da rota adicionada a `lazy-providers.ts`.
+- **Contrato 2.10.0:** `applyFailureOf` lê `problem.position` e `problem.cause` (`cause` desconhecida vira `OTHER`, `position` ausente vira `null`); o regex sobre `detail` ficou só como fallback.
+- **Pendente em T177:** banner de offline com marca de desatualizado (CA1), aviso de nova versão (CA2), convite de instalação e instrução iOS (CA3), Lighthouse local (CA4), limpeza do cache no logout (CA5) e suíte E2E de PWA (CA6) não foram feitos nesta rodada.
+
+## Registro de execução: T177 (conclusão do PWA, 2026-10-07)
+
+- **Feito:** `PwaService` (`common/services`) e `app-pwa-notices` no shell: banner de offline (honesto: o que já carregou segue na tela, pode estar desatualizado, salvar exige estar online; nada é enfileirado), aviso de nova versão com "Atualizar" atrás de confirmação (recarrega; o que não foi salvo se perde) e convite de instalação (Android/desktop via `beforeinstallprompt`; iOS Safari com a instrução de "Adicionar à Tela de Início"), dispensável com memória em `localStorage` protegida por try/catch. i18n pt/en/es em `pwa.*`.
+- **Logout:** `clearPrivateCachesHook` apaga do Cache Storage tudo que não é `ngsw:` nem `moneylog-prefs`. Hoje o `ngsw-config` não cacheia a API, então é rede de segurança. Logout forçado por 401 não passa pelos hooks.
+- **Desvio do CA1:** não há cache de respostas `GET` no service worker (nem marca de "desatualizado" por tela); o dado antigo é só o que já está em memória na tela. Cache de leitura com carimbo exigiria `dataGroups` e decisão de produto.
+- **Bundle inicial:** conferido no `ng build` (ver saída); sem aviso acima de 500 kB.
+- **Ainda pendente:** Lighthouse local (CA4) e suíte E2E de PWA (CA6), por pedido de modo rápido.
+
+## Registro de execução: Etapa 9, T175, T176 e T180 (2026-10-07)
+- **T175:** `backend/Dockerfile` (multi-stage, `eclipse-temurin:21-jre-alpine`, uid 10001, `MaxRAMPercentage=75`, `postgresql17-client`), `application-prod.yaml` (logs ECS/JSON, swagger/api-docs off, probes, segredos por `configtree` em `SECRETS_DIR`), `docker-compose.prod.yml` sem segredos. Provado: `docker build` OK; compose sobe backend + Postgres; `/actuator/health` UP, `/v3/api-docs` e swagger 404, cookie `Secure`, `id` = 10001; login, criar conta e criar despesa (saldo 974,50) OK; sentinelas de senha/JWT/token não aparecem nos logs. Imagem 429 MB; partida 5,3 a 6,3 s (meta < 30 s).
+- **T176:** porta `BackupStorage` (`core.backup.app`), `LocalDirBackupStorage`, `S3BackupStorage` (SigV4 em JDK puro, sem SDK; testado contra S3 falso, sem credencial real), credenciais por ambiente ou IMDSv2, cifra AES-256-GCM, retenção de 7 dias só no prefixo, `PgDumpCommand`, job desligado por padrão, `scripts/backup.sh` e `restore.sh` (shellcheck limpo), `docs/operacao/backup.md`. `BackupRestoreIT` restaura numa base vazia e compara saldos, razão (soma 0) e hash de todas as tabelas. Job rodou de verdade na imagem (pg_dump + cifra, `read_only`).
+- **T180:** ADR-005 (proposta), `infra/terraform/` (`fmt -check` e `validate` OK via `hashicorp/terraform:1.9` em Docker; nunca `plan`/`apply`), `.github/workflows/ci.yml` e `deploy.yml` (`actionlint` limpo; deploy manual com Environment aprovado e OIDC), `docs/operacao/deploy-aws.md` com o checklist de go-live (TOTP/2FA, HTTPS, `unaccent` com papel dono, log de query string, `trusted-proxies`, VAPID, IA).
+- **Desvios:** Terraform em arquivos de um módulo raiz (não submódulos); RDS provisionado, Postgres na EC2 fica como alternativa na ADR; teste de varredura de logs foi manual (sentinelas), sem teste automatizado; restore de dump cifrado fora do app não tem CLI.
+- **Não executado:** `terraform plan/apply`, `deploy.yml`, S3/IMDS/CloudFront reais, restauração em RDS.

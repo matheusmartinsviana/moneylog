@@ -1,0 +1,79 @@
+name: deploy
+
+# Manual e com aprovação: o Environment "production" precisa ter revisores obrigatórios (Settings > Environments).
+# Sem chave de longa duração: a role da AWS é assumida por OIDC. Nenhum segredo neste arquivo.
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Tag ou commit a publicar"
+        required: true
+        default: main
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Imagem do backend
+        id: image
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          TAG="$(git rev-parse --short=12 HEAD)"
+          docker build -t "$REGISTRY/moneylog-backend:$TAG" backend
+          docker push "$REGISTRY/moneylog-backend:$TAG"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Front
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Publica o front e invalida o cache
+        env:
+          FRONT_BUCKET: ${{ vars.FRONTEND_BUCKET }}
+          DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
+        run: |
+          aws s3 sync frontend/dist/moneylog/browser "s3://$FRONT_BUCKET" --delete
+          aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/*"
+
+      - name: Atualiza o backend (SSM Run Command)
+        env:
+          INSTANCE_ID: ${{ vars.BACKEND_INSTANCE_ID }}
+          TAG: ${{ steps.image.outputs.tag }}
+        run: |
+          CMD_ID="$(aws ssm send-command --instance-ids "$INSTANCE_ID" --document-name AWS-RunShellScript \
+            --parameters "commands=[\"/opt/moneylog/deploy.sh $TAG\"]" --query Command.CommandId --output text)"
+          aws ssm wait command-executed --command-id "$CMD_ID" --instance-id "$INSTANCE_ID"
+          aws ssm get-command-invocation --command-id "$CMD_ID" --instance-id "$INSTANCE_ID" --query Status --output text
