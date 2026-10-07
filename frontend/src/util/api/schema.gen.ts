@@ -2467,6 +2467,10 @@ export interface components {
             traceId: string;
             /** @description Só em `VALIDATION_FAILED`. */
             errors?: components["schemas"]["FieldError"][];
+            /** @description Só em `IMPORT_APPLY_FAILED` (2.10.0): posição (1 = primeira) da linha do lote que falhou. */
+            position?: number;
+            /** @description Só em `IMPORT_APPLY_FAILED` (2.10.0): `code` da recusa da linha (ex.: `IMPORT_LINE_ALREADY_RECORDED`, `IMPORT_TRANSFER_LEG_ALREADY_RECORDED`). Código aberto; o front trata os desconhecidos como genéricos. */
+            cause?: string;
         };
         FieldError: {
             /** @description Caminho do campo (ex.: `amount`, `newDebt.personId`). */

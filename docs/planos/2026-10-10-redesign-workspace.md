@@ -812,3 +812,14 @@ Modo rápido pedido pelo dono: sem relatório de QA, sem revisão formal, sem E2
 - **Específico do `ng test`:** specs de navegação, shell e Início ajustados de propósito; `PROPER_NOUNS` e a lista de contextos de `translations.spec.ts` ganharam Anthropic, Claude, Code, MCP e `workspacePages`.
 - **E2E desatualizados (não consertados, por pedido):** `home-dashboard.e2e.ts` (botão primário agora é o Salvar do Quick Capture e `home-quick-capture-link` virou "Mais opções"), `shell.e2e.ts` e `e2e/support.ts` (sidebar de 15 itens, `/more` com Vault, IA e MCP, ordem de Tab), `workspace-shell.e2e.ts`/`qa-redesign-fatia-a.e2e.ts` (cabeçalho: "Adicionar despesa/receita" no Início não navega).
 - **Ficou de fora:** fatia D (T213 a T217), G, `e2e:integration`, T200, teclado numérico/Salvar acima do teclado no mobile (T219 item de layout) sem verificação em 375 px.
+
+### Registro de execução: fatia D (T213 a T215, frontend, modo rápido)
+
+Sem commit, sem E2E, sem tester/revisor (T216 e T217 puladas por pedido). Só frontend; `schema.gen.ts` e `modules/imports` intocados. `lint`, `lint:deps`, `typecheck`, `build` verdes; `npm test` com 2.745 testes verdes.
+
+- **T213 (Contas):** `account-row` virou cartão Wallet (glifo em tom do tipo, nome, tipo, instituição, saldo grande com tabulares, ações embaixo), em grade `auto-fill` de 19 rem; cabeçalho de "tabela" removido. Mesmos `data-cy`, mesmas ações, saldo vindo de `currentBalance`. "Arquivadas" intacta.
+- **T214 (Movimentações):** lista mobile usa o mesmo glifo/linha dos Recentes (`transaction-list-item` com `glyph`); tabela do desktop com hover suave e padding maior; filtros e `totals` do backend inalterados. Detalhe no 375 px: tela cheia com botão "Voltar" (`detail-back`, reaproveita `transactions.detail.back`); o X fica só no painel do desktop; foco volta à linha de origem (já existia). `?q=` já preenchia o filtro (`filtersFromQuery`).
+- **T215 (varredura):** busca por raio/sombra/cor/duração fora dos tokens: só sobraram 3 literais (raio 12px do glifo em `accounts-strip` e 10px do tooltip, trocados por `--radius-control`; 4px/2px de anéis de foco e gráfico ficam). `Sparkline` já usa tokens. Capturas claro/escuro não geradas (modo rápido).
+- **Demo:** nada a mudar (as telas leem os mesmos dados).
+- **Bundle inicial:** 532,11 kB (aviso de 500 kB). Esta fatia só mexe em chunks lazy e não o altera; não achei corte barato (Angular core/router/forms + shell + providers de todos os módulos em `app.config`). Opção futura: providers por rota.
+- **Pendências:** E2E de Contas/Movimentações não rodados; capturas de evidência de T215; sem perguntas de regra de negócio novas.
