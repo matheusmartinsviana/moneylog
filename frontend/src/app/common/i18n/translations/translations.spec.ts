@@ -27,6 +27,7 @@ const PROPER_NOUNS = new Set([
   'Español',
   'Português',
   'Pix',
+  'Safari',
   'CVV',
   // Nomes de teclas.
   'Enter',
@@ -141,6 +142,7 @@ describe('Traduções', () => {
       'notifications',
       'people',
       'projections',
+      'pwa',
       'quickAdd',
       'recurrences',
       'search',

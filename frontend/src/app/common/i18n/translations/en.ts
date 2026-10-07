@@ -9,6 +9,22 @@ export const en: AppI18n = {
     primaryNavigation: 'Main navigation',
     bottomNavigation: 'Bottom navigation',
   },
+  pwa: {
+    offlineTitle: "You're offline.",
+    offlineText:
+      'What already loaded stays on screen but may be out of date. You need to be online to save anything.',
+    updateTitle: 'New version available.',
+    updateText: 'Update to get the latest improvements.',
+    updateAction: 'Update',
+    confirmTitle: 'Update now?',
+    confirmText: "The app will reload. Anything you haven't saved on this screen will be lost.",
+    confirmCancel: 'Not now',
+    installTitle: 'Install the app.',
+    installText: 'Open the app from your home screen in its own window.',
+    installIos: 'In Safari, tap share and then add to home screen.',
+    installAction: 'Install',
+    installDismiss: 'Dismiss',
+  },
   nav: {
     home: 'Home',
     transactions: 'Transactions',

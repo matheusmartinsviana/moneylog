@@ -9,6 +9,22 @@ export const pt: AppI18n = {
     primaryNavigation: 'Navegação principal',
     bottomNavigation: 'Navegação inferior',
   },
+  pwa: {
+    offlineTitle: 'Você está sem conexão.',
+    offlineText:
+      'O que já carregou continua na tela, mas pode estar desatualizado. Para salvar algo, é preciso estar online.',
+    updateTitle: 'Nova versão disponível.',
+    updateText: 'Atualize para usar as melhorias.',
+    updateAction: 'Atualizar',
+    confirmTitle: 'Atualizar agora?',
+    confirmText: 'O app vai recarregar. O que você não salvou nesta tela será perdido.',
+    confirmCancel: 'Agora não',
+    installTitle: 'Instale o app.',
+    installText: 'Abra o app direto da tela inicial, em janela própria.',
+    installIos: 'No Safari, toque em compartilhar e depois em adicionar à tela de início.',
+    installAction: 'Instalar',
+    installDismiss: 'Dispensar',
+  },
   nav: {
     home: 'Início',
     transactions: 'Movimentações',

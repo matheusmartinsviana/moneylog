@@ -31,6 +31,23 @@ export abstract class AppI18n {
     readonly bottomNavigation: string;
   };
 
+  /** Avisos do PWA: sem conexão, nova versão e instalação. */
+  abstract readonly pwa: {
+    readonly offlineTitle: string;
+    readonly offlineText: string;
+    readonly updateTitle: string;
+    readonly updateText: string;
+    readonly updateAction: string;
+    readonly confirmTitle: string;
+    readonly confirmText: string;
+    readonly confirmCancel: string;
+    readonly installTitle: string;
+    readonly installText: string;
+    readonly installIos: string;
+    readonly installAction: string;
+    readonly installDismiss: string;
+  };
+
   /**
    * Um nome só por destino (S-56, S-57): o mesmo texto vale para o item da navegação, o nome
    * acessível, o título da página e os atalhos que levam até ela.

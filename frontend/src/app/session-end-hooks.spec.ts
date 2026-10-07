@@ -1,6 +1,6 @@
 import { firstValueFrom, throwError } from 'rxjs';
 
-import { cancelPushHook } from '~/app/session-end-hooks';
+import { cancelPushHook, clearPrivateCachesHook } from '~/app/session-end-hooks';
 import { PUSH_SUBSCRIPTION_KEY } from '~/modules/notifications/core/facades/push.facade';
 import { NotificationsGatewayStub } from '~/testing/notifications-testing';
 
@@ -30,5 +30,32 @@ describe('cancelPushHook (M4)', () => {
     const gateway = new NotificationsGatewayStub();
     await firstValueFrom(cancelPushHook(gateway)());
     expect(gateway.calls).toEqual([]);
+  });
+});
+
+describe('clearPrivateCachesHook (T177)', () => {
+  function fakeCaches(names: string[]) {
+    const store = new Set(names);
+    return {
+      store,
+      api: {
+        keys: () => Promise.resolve([...store]),
+        delete: (name: string) => Promise.resolve(store.delete(name)),
+      } as unknown as CacheStorage,
+    };
+  }
+
+  it('Dado caches de dados e do shell, quando sai, então apaga os de dados e mantém ngsw e idioma', async () => {
+    const { store, api } = fakeCaches(['ngsw:/:db:control', 'moneylog-prefs', 'api-v1', 'outro']);
+
+    await firstValueFrom(clearPrivateCachesHook(api)());
+
+    expect([...store].sort()).toEqual(['moneylog-prefs', 'ngsw:/:db:control']);
+  });
+
+  it('Dado o Cache Storage indisponível ou falhando, então não lança', async () => {
+    await expect(firstValueFrom(clearPrivateCachesHook(undefined)())).resolves.toBeUndefined();
+    const broken = { keys: () => Promise.reject(new Error('x')) } as unknown as CacheStorage;
+    await expect(firstValueFrom(clearPrivateCachesHook(broken)())).resolves.toBeUndefined();
   });
 });

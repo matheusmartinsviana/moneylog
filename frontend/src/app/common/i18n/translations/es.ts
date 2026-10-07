@@ -9,6 +9,22 @@ export const es: AppI18n = {
     primaryNavigation: 'Navegación principal',
     bottomNavigation: 'Navegación inferior',
   },
+  pwa: {
+    offlineTitle: 'Estás sin conexión.',
+    offlineText:
+      'Lo que ya cargó sigue en pantalla, pero puede estar desactualizado. Para guardar algo necesitas conexión.',
+    updateTitle: 'Nueva versión disponible.',
+    updateText: 'Actualiza para usar las mejoras.',
+    updateAction: 'Actualizar',
+    confirmTitle: '¿Actualizar ahora?',
+    confirmText: 'La app se recargará. Lo que no hayas guardado en esta pantalla se perderá.',
+    confirmCancel: 'Ahora no',
+    installTitle: 'Instala la app.',
+    installText: 'Abre la app desde la pantalla de inicio, en su propia ventana.',
+    installIos: 'En Safari, toca compartir y luego añadir a pantalla de inicio.',
+    installAction: 'Instalar',
+    installDismiss: 'Descartar',
+  },
   nav: {
     home: 'Inicio',
     transactions: 'Movimientos',
