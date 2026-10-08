@@ -896,3 +896,23 @@ Pedido do dono (4 imagens de referência + vidro líquido do portfólio). Sem co
 - **Bundle:** inicial 527 para 463 kB (`@defer` de busca, avatar e "Mais").
 - **Testes:** `goals.page.spec` (NG04002), `VaultGateway` em Configurações (`SETTINGS_PROVIDERS`), specs do shell, cabeçalho, Quick Capture, recentes e Início atualizados; e2e legados da sidebar ajustados no que foi barato.
 - **Pendências:** colapso de linha removida, saída animada de modais fechados por rota, filtro por "Valor" (depende do backend), login/UI Kit só herdam os tokens.
+
+### Registro de execução: terceiros, compromissos acompanhados e conta a definir (frontend, modo rápido, contrato 2.14.0)
+
+- **Módulos novos:** `third-parties` (a receber por pessoa, bloco bruto x terceiros x líquido, marcar despesa) e `commitments` (lista, detalhe, cadastro, marcar item pago, atualizar progresso), cada um com porta, facades, requests facade, mapper, mock e specs; ligados em `PLANNING_PROVIDERS` e `TRANSACTIONS_PROVIDERS`.
+- **Telas:** `/planning/third-parties` (seletor de mês, estados completos, valores como o servidor devolveu), `/planning/commitments` (+ modal `new`) e `/planning/commitments/:id`; duas abas novas em Planejamento. Dívidas totais ganhou o bloco "Compromissos acompanhados" (`tracked`), fora do total, com a curva por mês à parte.
+- **Despesa de terceiro:** detalhe da movimentação (despesa e compra no cartão) tem "Marcar como despesa de terceiro" (modal com `app-person-field`, cria pessoa na hora, `Idempotency-Key`) e, quando marcada, selo com ícone + texto, pessoa, a receber/reembolsado/pendente e o atalho do fluxo de reembolso existente (`/quick-add?mode=refund`), nunca renda.
+- **Recorrências:** criar sem conta ("conta a definir", selo na lista e nas pendentes); ao realizar, a folha pede conta + meio (`RealizeOccurrenceInput`), e o `RECURRENCE_ACCOUNT_REQUIRED` do servidor abre os campos mesmo quando a tela não sabia (Início).
+- **Faturas:** nada a mudar; `lateEntry` já é tratado nas telas e nos mappers.
+- **Demo:** `src/demo/demo-third-parties.ts` (dados sintéticos: a receber, 2 compromissos, `tracked` na visão de dívidas).
+- **Também:** `closingConfirmed: true` nos fixtures de cartão (mock, demo, testes) para o typecheck fechar com o contrato atual; `source: RECEIPT` do contrato tratado como item sem link.
+- **Pendências:** selo "de terceiro" nas listas (o `Transaction` não traz a marca; hoje só no detalhe, via a visão a receber); desfazer marca e registrar recebimento sem movimento (`/v1/third-party-receipts`, `DELETE /v1/third-party-expenses/{id}`) não implementados; cartão-resumo no Início não feito (opcional); abrir o reembolso já com a despesa original escolhida depende de aceitar `originId` no `/quick-add`.
+
+### Registro de execução: primeiro acesso / definir a senha (frontend, modo rápido, contrato 2.15.0, ADR-015)
+
+- **Fluxo:** ao abrir `/login`, `SessionFacade.passwordSetupRequired()` consulta `GET /v1/auth/status`; `true` mostra "Primeiro acesso" (e-mail, código de configuração em mono sem autocomplete, nova senha, confirmar), `false` segue o login; falha na consulta cai no login com aviso discreto.
+- **Camadas:** `AuthGateway` ganhou `passwordSetupRequired` e `setupPassword`; `AuthRequestsFacade` traduz `INVALID_SETUP_CODE`, `WEAK_PASSWORD`, `TOO_MANY_ATTEMPTS` (+`Retry-After`), `VALIDATION_FAILED` e rede em `AuthFailure`; o envio usa `exhaustMap` e reaproveita `signedIn$` (token em memória, navega ao `returnUrl`/Início).
+- **UI:** `TextFieldComponent` ganhou `revealable` (botão Mostrar/Ocultar com `aria-pressed`) e `mono`; regras (12+, até 72 bytes, diferente do e-mail) só como dica ao vivo; senha fraca vai no campo da senha, código mantido; 429 desabilita o botão com contagem; erros em `role="alert"`; foco inicial no primeiro campo.
+- **i18n:** `auth.setup.*`, `auth.login.statusUnavailable/checking`, `errors.codes.WEAK_PASSWORD/PASSWORD_MISMATCH` em pt/en/es. Mock: status sempre `false`.
+- **Testes:** facade de sessão, requests facade (HTTP) e `LoginPage` (os dois modos, todos os erros, contagem, axe).
+- **Pendências:** sem e2e do fluxo; "trocar senha" autenticado não existe no backend (ADR-015); `pwa.service.spec` e um teste do app-shell falharam na suíte completa, fora do escopo.

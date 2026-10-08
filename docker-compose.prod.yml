@@ -38,6 +38,9 @@ services:
       JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET no .env}
       MONEYLOG_OWNER_EMAIL: ${MONEYLOG_OWNER_EMAIL:?defina MONEYLOG_OWNER_EMAIL no .env}
       MONEYLOG_OWNER_PASSWORD_HASH: ${MONEYLOG_OWNER_PASSWORD_HASH:-}
+      # Primeiro acesso (ADR-015): código de uso único (use secret/arquivo em produção) e reset de uso único.
+      MONEYLOG_OWNER_SETUP_CODE: ${MONEYLOG_OWNER_SETUP_CODE:-}
+      MONEYLOG_OWNER_RESET_PASSWORD: ${MONEYLOG_OWNER_RESET_PASSWORD:-false}
       MONEYLOG_ALLOWED_ORIGINS: ${MONEYLOG_ALLOWED_ORIGINS:?defina MONEYLOG_ALLOWED_ORIGINS no .env}
       # Atrás do proxy do compose/ALB. Local: a rede interna do Docker (172.16.0.0/12).
       MONEYLOG_TRUSTED_PROXIES: ${MONEYLOG_TRUSTED_PROXIES:?defina MONEYLOG_TRUSTED_PROXIES no .env}

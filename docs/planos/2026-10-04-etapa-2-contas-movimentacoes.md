@@ -940,3 +940,14 @@ Pedido do dono (menos burocracia). Só afrouxa o contrato: cliente antigo contin
 - Partida dobrada intacta: a categoria resolvida continua sendo a contrapartida; testes provam soma zero e impacto idêntico ao caso explícito (PR 01).
 - Continuam obrigatórios: valor, data, conta/cartão, tipo/direção, pessoa da dívida, dias do cartão, limite, alvo da meta, motivo do ajuste e nomes.
 - Mudou o teste que esperava `400` para `installments` ausente (`CardPurchaseIT`): agora é `201` com 1x.
+
+## 10. Registro: senha do dono no banco e primeiro acesso (contrato 2.15.0, ADR-015)
+
+Pedido do dono: escolher a própria senha no primeiro login e passar o e-mail do dono para `v@mviana.tech` mantendo o `id` e os dados. Altera o ADR-003 (a senha deixa de viver só no ambiente).
+
+- Migração aditiva V8.10: `users.password_hash`, `password_set_at`, `password_setup_pending`, `setup_code_hash`, `setup_code_expires_at`.
+- `GET /v1/auth/status` (público) devolve `{passwordSetupRequired}`; `POST /v1/auth/setup-password {email, setupCode, newPassword}` define a senha, abre a sessão e revoga todos os refresh tokens. Senha: 12+ caracteres, até 72 bytes, diferente do e-mail (`422 WEAK_PASSWORD`, não consome o código).
+- Código de uso único: 256 bits, só o SHA-256 no banco, 24 h, apagado no uso (UPDATE condicional contra corrida), comparação em tempo constante. Gerado e impresso uma vez só no log do perfil dev; fora dele vem de `MONEYLOG_OWNER_SETUP_CODE[_FILE]`. Recusas iguais (`401 INVALID_SETUP_CODE`); rate limit por IP do login (`429` + `Retry-After`).
+- Ordem do login: senha do banco (única que vale quando definida) > redefinição pendente (ninguém entra) > hash do ambiente (retrocompatibilidade; agora opcional).
+- `MONEYLOG_OWNER_EMAIL` novo renomeia o dono (mesmo `id`, nunca segundo usuário); `MONEYLOG_OWNER_RESET_PASSWORD=true` (uso único, remover depois) apaga a senha do banco e revoga as sessões.
+- Testes: `FirstAccessUseCasesTest`, `FirstAccessIT` (feliz, código errado/reutilizado/expirado, senha fraca, rate limit, revogação, isolamento) e `FirstAccessCompatIT` (retrocompatibilidade e prioridade do banco).
