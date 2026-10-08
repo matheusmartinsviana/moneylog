@@ -1,0 +1,15 @@
+# ADR-016: metas de medida, estágio e plano das metas
+
+Status: aceita (2026-10-08). Plano: `docs/planos/2026-10-05-etapa-5-metas-resumo-projecoes.md` (seção "Metas de medida e plano").
+
+## Decisão
+1. **`Goal.kind = METRIC`.** A meta acompanha uma `GoalMetric` do sistema (`TOTAL_DEBT`, `CARD_DEBT`, `PEOPLE_DEBT`, `OTHER_DEBT`, `ACCOUNTS_BALANCE`, `AVAILABLE_BALANCE`, `FIXED_COSTS_MONTHLY`) até um `target`. `baseline` e `baselineAt` são capturados na criação (sem passo "montando"); `direction` é derivada (`target < baseline` = `DECREASE`, `>` = `INCREASE`, igual = `422 GOAL_METRIC_TARGET_EQUALS_BASELINE`). `SAVINGS` e `DEBT_PAYOFF` não mudam. Sem reservas. Uma meta ativa por medida + alvo (`409 GOAL_METRIC_DUPLICATE`, também no índice único parcial V8.14).
+2. **Uma fonte por medida, nada recalculado.** Dívidas = `DebtOverviewCalculator` (mesmo total e partes de `GET /v1/debts/overview`); saldos = `DashboardSummary.balances`; custo fixo = `MonthlyEstimate.fixedCosts` (o de `GET /v1/recurrences/summary`). Falta de dado vale 0,00. `GoalMetricValues` calcula só as fontes das medidas pedidas e cada fonte uma vez.
+3. **Uma leitura por requisição (ADR-008).** `GoalReadModel` calcula as medidas das metas ativas de uma requisição de uma vez (N metas `METRIC` = 1 leitura do razão, no máximo 1 leitura de recorrências, 1 consulta de instantâneos). Meta arquivada não calcula (`current`, `remaining` e `metricAsOf` nulos).
+4. **Progresso 0..1 monotônico.** `DECREASE`: `(baseline − current) / (baseline − target)`; `INCREASE`: `(current − baseline) / (target − baseline)`; clamp; só chega a `1.0000` quando atingida (arredondamento nunca promete conquista).
+5. **Estágio derivado em toda leitura** (qualquer `kind`): `FANTASY` sem prazo, `OBJECTIVE` com prazo, `STRATEGY` com prazo + plano automático + plano declarado (`planNote` ou ao menos uma ação), `CONSISTENT` com `streak >= 2`, `ACHIEVED` prevalece. O plano automático é uma trajetória linear (`GoalPlanner`): `requiredPace` = distância que falta ÷ meses restantes (para cima ao centavo), `monthsLeft`, `nextMilestone` (esperado no fim do mês), `onTrack` e `gap` (contra o esperado no fim do mês anterior).
+6. **Consistência com instantâneos.** `goal_metric_snapshots` (um por meta e mês, `UNIQUE (goal_id, reference_month)`), gravado na criação/re-ancoragem, na primeira leitura do mês (transação própria, nunca falha a leitura) e por job diário idempotente (23:55). Mês sem instantâneo é "sem dado", nunca "cumprido"; não se inventa histórico anterior à criação. Em `SAVINGS` o histórico sai das próprias reservas (valor guardado até o fim de cada mês), sem instantâneo.
+7. **Plano declarado**: `planNote` (≤ 500) e até 10 ações (`goal_actions`, `goal_action_checkins`) com frequência `MONTHLY`/`WEEKLY`/`ONE_TIME`; não movem dinheiro nem tocam o razão.
+
+## Consequências
+Contrato 2.17.0 só aditivo (campos novos, rotas de ações; `GoalUpdate.name/target` deixam de ser obrigatórios no contrato). Migração V8.14 aditiva. Cálculo só no backend. Notificações e projeções de meta ignoram `METRIC` (sem nome nem reservas). Backup JSON não leva ainda os campos novos (pendência).
