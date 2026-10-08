@@ -41,6 +41,7 @@ import { NetWorthComponent } from '~/app/features/home/components/net-worth/net-
 import { QuickCaptureComponent } from '~/app/features/home/components/quick-capture/quick-capture.component';
 import { RecentTransactionsComponent } from '~/app/features/home/components/recent-transactions/recent-transactions.component';
 import { SpendingOverviewComponent } from '~/app/features/home/components/spending-overview/spending-overview.component';
+import { ThirdPartySummaryCardComponent } from '~/app/features/home/components/third-party-summary-card/third-party-summary-card.component';
 import { UpcomingListComponent } from '~/app/features/home/components/upcoming-list/upcoming-list.component';
 import { dailyText } from '~/app/features/notifications/notification-text';
 import {
@@ -81,6 +82,7 @@ import { formatCompetence, formatIsoDate } from '~/util/date';
   imports: [
     MotionStaggerDirective,
     DebtSummaryCardComponent,
+    ThirdPartySummaryCardComponent,
     RouterLink,
     AccountsStripComponent,
     BudgetCardComponent,

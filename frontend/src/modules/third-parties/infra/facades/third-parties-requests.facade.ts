@@ -6,16 +6,21 @@ import { ThirdPartiesGateway } from '~/modules/third-parties/core/interfaces/thi
 import type {
   ThirdPartyExpense,
   ThirdPartyExpenseInput,
+  ThirdPartyReceipt,
+  ThirdPartyReceiptInput,
   ThirdPartyReceivables,
 } from '~/modules/third-parties/core/types/third-party';
 import { THIRD_PARTY_ENDPOINTS } from '~/modules/third-parties/infra/endpoints';
 import {
   toExpense,
   toExpenseRequest,
+  toReceipt,
+  toReceiptRequest,
   toReceivables,
 } from '~/modules/third-parties/infra/facades/third-parties-response.mapper';
 import type {
   ThirdPartyExpenseResponse,
+  ThirdPartyReceiptResponse,
   ThirdPartyReceivablesResponse,
 } from '~/modules/third-parties/infra/responses/third-party.response';
 import { emptyReceivables } from '~/modules/third-parties/mock-data/empty-receivables';
@@ -61,4 +66,34 @@ export class ThirdPartiesRequestsFacade extends ThirdPartiesGateway {
       })
       .pipe(map(toExpense), catchError(fail));
   }
+
+  recordReceipt(
+    input: ThirdPartyReceiptInput,
+    idempotencyKey: string,
+  ): Observable<ThirdPartyReceipt> {
+    if (this.useMocks) return throwError(() => new ProblemError(mockNotFound('PERSON_NOT_FOUND')));
+    return this.http
+      .post<ThirdPartyReceiptResponse>(THIRD_PARTY_ENDPOINTS.receipts, toReceiptRequest(input), {
+        headers: new HttpHeaders().set(IDEMPOTENCY_HEADER, idempotencyKey),
+      })
+      .pipe(map(toReceipt), catchError(fail));
+  }
+
+  deleteReceipt(id: string): Observable<void> {
+    if (this.useMocks) return throwError(() => new ProblemError(mockNotFound('RECEIPT_NOT_FOUND')));
+    return this.http.delete<void>(THIRD_PARTY_ENDPOINTS.receipt(id)).pipe(
+      map(() => undefined),
+      catchError(fail),
+    );
+  }
+}
+
+function mockNotFound(code: string) {
+  return {
+    status: 404,
+    code,
+    fieldErrors: [],
+    traceId: null,
+    retryAfterSeconds: null,
+  };
 }

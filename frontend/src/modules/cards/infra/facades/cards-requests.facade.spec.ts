@@ -80,7 +80,7 @@ describe('CardsRequestsFacade', () => {
       );
 
       expect(card).toMatchObject({ name: 'Roxinho', status: 'ACTIVE', version: 0 });
-      expect(card.limit.amount).toBe('5000.00');
+      expect(card.limit?.amount).toBe('5000.00');
       http.expectNone(() => true);
     });
   });
@@ -179,7 +179,7 @@ describe('CardsRequestsFacade', () => {
         overLimit: false,
         warnings: [],
       });
-      expect((await result).availableLimitAfter.amount).toBe('6517.00');
+      expect((await result).availableLimitAfter?.amount).toBe('6517.00');
     });
 
     it('Dado a prévia de mudança de dias e a de pagamento, então vão como parâmetros de consulta', async () => {
@@ -246,5 +246,39 @@ describe('CardsRequestsFacade', () => {
         problem: { status: 422, code: 'CARD_HAS_PENDING_BALANCE' },
       });
     });
+  });
+
+  it('Dado confirmar o fechamento, então POST closing-confirmation com a versão e devolve o cartão', async () => {
+    const { gateway, http } = setup(false);
+
+    const result = firstValueFrom(gateway.setClosingConfirmation('card-1', true, 3));
+    const req = http.expectOne(CARDS_ENDPOINTS.closingConfirmation('card-1'));
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ confirmed: true, version: 3 });
+    req.flush(aCardResponse({ closingConfirmed: true, version: 4 }));
+
+    const card = await result;
+    expect(card.closingConfirmed).toBe(true);
+    expect(card.version).toBe(4);
+  });
+
+  it('Dado criar sem limite, então o POST manda limit nulo', async () => {
+    const { gateway, http } = setup(false);
+
+    const result = firstValueFrom(
+      gateway.create({
+        name: 'Azul',
+        institution: null,
+        limit: null,
+        closingDay: 10,
+        dueDay: 17,
+        defaultPaymentAccountId: null,
+      }),
+    );
+    const req = http.expectOne(CARDS_ENDPOINTS.collection);
+    expect(req.request.body.limit).toBeNull();
+    req.flush(aCardResponse({ limit: null, availableLimit: null, usedRatio: null }));
+
+    expect((await result).limit).toBeNull();
   });
 });

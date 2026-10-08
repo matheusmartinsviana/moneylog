@@ -199,4 +199,32 @@ describe('CardsPage', () => {
     const violations = await axeViolations(container);
     expect(violations, describeViolations(violations)).toEqual([]);
   });
+
+  it('Dado cartão sem limite, então mostra "Limite não definido" sem barra, percentual nem disponível', async () => {
+    const gateway = new CardsGatewayStub();
+    gateway.cards = [
+      aCard({
+        id: 'n',
+        limit: null,
+        availableLimit: null,
+        usedRatio: null,
+        overLimit: false,
+      }),
+    ];
+    await setup(gateway);
+
+    const row = screen.getByTestId('card-row-n');
+    expect(within(row).getByTestId('card-limit-unset-n')).toHaveTextContent(pt.cards.limit.notSet);
+    expect(within(row).queryByRole('progressbar')).not.toBeInTheDocument();
+    expect(within(row).queryByTestId('card-limit-n-text')).not.toBeInTheDocument();
+    expect(within(row).queryByTestId('card-over-limit-n')).not.toBeInTheDocument();
+  });
+
+  it('Dado fechamento não confirmado, então o cartão mostra o selo com texto', async () => {
+    const gateway = new CardsGatewayStub();
+    gateway.cards = [aCard({ id: 'c', closingConfirmed: false })];
+    await setup(gateway);
+
+    expect(screen.getByTestId('closing-badge-c')).toHaveTextContent(pt.cards.closing.badge);
+  });
 });

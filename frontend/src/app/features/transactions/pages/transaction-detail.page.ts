@@ -28,6 +28,10 @@ import { I18nService } from '~/app/common/i18n/i18n.service';
 import { interpolate } from '~/app/common/i18n/interpolate';
 import { ToastService } from '~/app/common/services/toast.service';
 import { LinkedNotesComponent } from '~/app/features/notes/components/linked-notes/linked-notes.component';
+import {
+  ReceiptPersonOption,
+  ThirdPartyReceiptModalComponent,
+} from '~/app/features/planning/components/third-party-receipt-modal/third-party-receipt-modal.component';
 import { CancelInstallmentsActionComponent } from '~/app/features/transactions/components/cancel-installments-action/cancel-installments-action.component';
 import { ImpactPanelComponent } from '~/app/features/transactions/components/impact-panel/impact-panel.component';
 import { InstallmentsListComponent } from '~/app/features/transactions/components/installments-list/installments-list.component';
@@ -36,7 +40,10 @@ import { ThirdPartyMarkModalComponent } from '~/app/features/transactions/compon
 import { VoidActionComponent } from '~/app/features/transactions/components/void-action/void-action.component';
 import { flowOf, flowSign } from '~/app/features/transactions/transaction-flow';
 import { transactionLabel } from '~/app/features/transactions/transaction-label';
-import { ThirdPartyExpenseFacade } from '~/modules/third-parties/core/facades/third-party-expense.facade';
+import {
+  ThirdPartyExpenseFacade,
+  ThirdPartyLink,
+} from '~/modules/third-parties/core/facades/third-party-expense.facade';
 import { TransactionDetailFacade } from '~/modules/transactions/core/facades/transaction-detail.facade';
 import type { Transaction } from '~/modules/transactions/core/types/transaction';
 import { formatCompetenceShort, formatInstant, formatIsoDate } from '~/util/date';
@@ -75,6 +82,7 @@ interface Field {
     CancelInstallmentsActionComponent,
     ThirdPartyBadgeComponent,
     ThirdPartyMarkModalComponent,
+    ThirdPartyReceiptModalComponent,
     MoneyComponent,
   ],
   providers: [TransactionDetailFacade, ThirdPartyExpenseFacade],
@@ -176,6 +184,25 @@ export class TransactionDetailPage {
       this.cancelDone.update((value) => value + 1);
       this.toast.show(this.t().transactions.detail.cancel.toast);
     });
+  }
+
+  protected readonly receiptOpen = signal(false);
+
+  /** A pessoa e a despesa desta tela são o único vínculo possível no modal. */
+  protected receiptPeople(link: ThirdPartyLink): readonly ReceiptPersonOption[] {
+    return [
+      {
+        id: link.person.id,
+        name: link.person.name,
+        expenses: [{ id: this.id(), label: this.transaction()?.description ?? '' }],
+      },
+    ];
+  }
+
+  protected afterReceipt(): void {
+    this.receiptOpen.set(false);
+    this.toast.show(this.t().thirdParties.receipts.toast.recorded);
+    this.thirdParty.find(this.id());
   }
 
   protected afterMarked(): void {

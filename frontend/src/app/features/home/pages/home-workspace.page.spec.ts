@@ -41,6 +41,7 @@ import {
   provideReportsStub,
   ReportsGatewayStub,
 } from '~/testing/reports-testing';
+import { provideThirdPartiesStub } from '~/testing/third-parties-testing';
 import { provideTransactionsStub, TransactionsGatewayStub } from '~/testing/transactions-testing';
 import { LedgerGate } from '~/util/api/ledger-gate';
 
@@ -92,6 +93,7 @@ async function setup(s: Stubs = stubs(), language: 'pt' | 'en' = 'pt') {
       ...provideCategoriesStub(),
       ...provideNotificationsStub(),
       ...provideDebtOverviewStub(),
+      ...provideThirdPartiesStub(),
     ],
   });
   await result.fixture.whenStable();

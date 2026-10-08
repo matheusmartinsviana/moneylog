@@ -4,7 +4,15 @@
   <header class="intro">
     <h2 class="intro__title">{{ t().thirdParties.title }}</h2>
     <p class="note" data-cy="tp-description">{{ t().thirdParties.description }}</p>
+    @if (receivables.data()) {
+      <button type="button" class="button" data-cy="tp-register-receipt" (click)="openRegister()">
+        {{ t().thirdParties.receipts.register }}
+      </button>
+    }
   </header>
+  @if (removeError(); as message) {
+    <p class="banner" role="alert" data-cy="tp-remove-error">{{ message }}</p>
+  }
 
   @switch (receivables.state().status) {
     @case ('loading') {
@@ -98,6 +106,20 @@
                             {{ text }}
                           }
                         </p>
+                        @if (item.source === 'RECEIPT') {
+                          <p class="note" [attr.data-cy]="'tp-receipt-note-' + item.refId">
+                            {{ t().thirdParties.receipts.reflected }}
+                          </p>
+                          <button
+                            type="button"
+                            class="button"
+                            [attr.data-cy]="'tp-receipt-remove-' + item.refId"
+                            [attr.aria-label]="t().thirdParties.receipts.removeLabel"
+                            (click)="askRemove(item.refId)"
+                          >
+                            {{ t().thirdParties.receipts.remove }}
+                          </button>
+                        }
                       </li>
                     }
                   </ul>
@@ -156,5 +178,23 @@
         </app-section-container>
       }
     }
+  }
+
+  <app-confirm-dialog
+    [open]="pendingRemove() !== null"
+    [heading]="t().thirdParties.receipts.removeConfirm.title"
+    [description]="t().thirdParties.receipts.removeConfirm.description"
+    [confirmLabel]="t().thirdParties.receipts.removeConfirm.confirm"
+    [busy]="receipts.removing()"
+    tone="risk"
+    (confirmed)="confirmRemove()"
+    (cancelled)="cancelRemove()"
+  />
+  @if (receiptOpen()) {
+    <app-third-party-receipt-modal
+      [people]="receiptPeople()"
+      (closed)="receiptOpen.set(false)"
+      (recorded)="afterRecorded()"
+    />
   }
 </app-page-layout>

@@ -21,6 +21,9 @@ import { PageLayoutComponent } from '~/app/common/components/page-layout/page-la
 import { HTML_LANG } from '~/app/common/i18n/i18n';
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { interpolate } from '~/app/common/i18n/interpolate';
+import { ToastService } from '~/app/common/services/toast.service';
+import { ClosingBadgeComponent } from '~/app/features/cards/components/closing-badge/closing-badge.component';
+import { ClosingConfirmModalComponent } from '~/app/features/cards/components/closing-confirm-modal/closing-confirm-modal.component';
 import { InvoiceItemsTableComponent } from '~/app/features/cards/components/invoice-items-table/invoice-items-table.component';
 import { InvoicePaymentsListComponent } from '~/app/features/cards/components/invoice-payments-list/invoice-payments-list.component';
 import { InvoiceTotalsComponent } from '~/app/features/cards/components/invoice-totals/invoice-totals.component';
@@ -52,6 +55,8 @@ import { formatCompetenceShort } from '~/util/date';
     InvoiceItemsTableComponent,
     InvoicePaymentsListComponent,
     PayInvoiceSheetComponent,
+    ClosingBadgeComponent,
+    ClosingConfirmModalComponent,
   ],
   providers: [InvoiceDetailFacade, CardDetailFacade, AccountsListFacade],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -62,6 +67,7 @@ export class InvoicePage {
   private readonly destroyRef = inject(DestroyRef);
   private readonly i18n = inject(I18nService);
   private readonly accountsFacade = inject(AccountsListFacade);
+  private readonly toast = inject(ToastService);
   protected readonly t = this.i18n.t;
   protected readonly facade = inject(InvoiceDetailFacade);
   private readonly cardFacade = inject(CardDetailFacade);
@@ -74,6 +80,7 @@ export class InvoicePage {
   protected readonly invoice = this.facade.invoice;
   protected readonly card = this.cardFacade.card;
   protected readonly paying = signal(false);
+  protected readonly closingOpen = signal(false);
   protected readonly accounts = signal<readonly Account[]>([]);
   protected readonly cashAccounts = computed(() =>
     this.accounts().filter(
@@ -143,6 +150,13 @@ export class InvoicePage {
   protected onPaid(invoice: Invoice): void {
     this.paying.set(false);
     this.facade.replace(invoice);
+    this.cardFacade.loadCard(this.id(), true);
+  }
+
+  /** Fechamento confirmado: relê o cartão e a fatura do backend (o calendário não muda, mas o selo some). */
+  protected afterClosing(): void {
+    this.closingOpen.set(false);
+    this.toast.show(this.t().cards.closing.toast);
     this.cardFacade.loadCard(this.id(), true);
   }
 

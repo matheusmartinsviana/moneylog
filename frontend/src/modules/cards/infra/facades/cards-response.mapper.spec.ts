@@ -48,7 +48,7 @@ describe('cards-response.mapper', () => {
       archivable: false,
       version: 2,
     });
-    expect(typeof card.limit.amount).toBe('string');
+    expect(typeof card.limit?.amount).toBe('string');
     expect(card.currentInvoice?.outstanding.amount).toBe('1283.00');
     expect(Object.keys(card)).not.toContain('number');
     expect(Object.keys(card)).not.toContain('cvv');
@@ -108,7 +108,7 @@ describe('cards-response.mapper', () => {
     });
 
     expect(preview.total.amount).toBe('9.99');
-    expect(preview.availableLimitAfter.amount).toBe('-1.00');
+    expect(preview.availableLimitAfter?.amount).toBe('-1.00');
     expect(preview.installments[0]?.amount.amount).toBe('600.01');
     expect(preview.installments[0]?.invoice.dueDate).toBe('2026-11-05');
     expect(preview.warnings).toEqual(['OVER_LIMIT', 'LATE_ENTRY']);
@@ -198,5 +198,48 @@ describe('cards-response.mapper', () => {
       date: '2026-10-26',
     });
     expect(anInvoiceSummaryResponse().id).toBe('inv-1');
+  });
+});
+
+describe('cards-response.mapper (sem limite e fechamento)', () => {
+  it('Dado cartão sem limite, então limit, availableLimit e usedRatio ficam nulos e nada é calculado', () => {
+    const card = toCard(
+      aCardResponse({ limit: null, availableLimit: null, usedRatio: null, overLimit: false }),
+    );
+
+    expect(card.limit).toBeNull();
+    expect(card.availableLimit).toBeNull();
+    expect(card.usedRatio).toBeNull();
+    expect(card.overLimit).toBe(false);
+  });
+
+  it('Dado campos ausentes (omitidos pelo backend), então também viram nulos', () => {
+    const response = aCardResponse();
+    delete response.limit;
+    delete response.availableLimit;
+    delete response.usedRatio;
+
+    const card = toCard(response);
+
+    expect(card.limit).toBeNull();
+    expect(card.availableLimit).toBeNull();
+    expect(card.usedRatio).toBeNull();
+  });
+
+  it('Dado closingConfirmed falso, então o cartão carrega a marca', () => {
+    expect(toCard(aCardResponse({ closingConfirmed: false })).closingConfirmed).toBe(false);
+  });
+
+  it('Dado criar sem limite, então o corpo manda limit nulo', () => {
+    const body = toCreateRequest({
+      name: 'Azul',
+      institution: null,
+      limit: null,
+      closingDay: 10,
+      dueDay: 17,
+      defaultPaymentAccountId: null,
+    });
+
+    expect(body.limit).toBeNull();
   });
 });

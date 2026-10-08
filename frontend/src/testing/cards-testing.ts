@@ -83,6 +83,7 @@ export function aCard(overrides: Partial<Card> = {}): Card {
     currentInvoice: anInvoiceSummary(),
     totalCommitted: brl('1283.00'),
     committedFuture: brl('1000.00'),
+    closingConfirmed: true,
     archivable: false,
     version: 2,
     ...overrides,
@@ -158,6 +159,7 @@ export class CardsGatewayStub extends CardsGateway {
   readonly paymentPreviewCalls: { invoiceId: string; amount: string }[] = [];
   readonly billingPreviewCalls: { cardId: string; closingDay: number; dueDay: number }[] = [];
   readonly updates: CardUpdate[] = [];
+  readonly creates: CardInput[] = [];
   /** Resultado das escritas de cartão (`create`, `update`, `archive`, `unarchive`). */
   next: Observable<Card> | null = null;
   getResult: Observable<Card> | null = null;
@@ -186,6 +188,7 @@ export class CardsGatewayStub extends CardsGateway {
 
   create(input: CardInput): Observable<Card> {
     this.calls.push(`create:${input.name}`);
+    this.creates.push(input);
     return this.next ?? of(aCard({ name: input.name }));
   }
 
@@ -193,6 +196,13 @@ export class CardsGatewayStub extends CardsGateway {
     this.calls.push(`update:${id}:${input.version}`);
     this.updates.push(input);
     return this.next ?? of(aCard({ id, name: input.name, version: input.version + 1 }));
+  }
+
+  closingCalls: { id: string; confirmed: boolean; version: number }[] = [];
+
+  setClosingConfirmation(id: string, confirmed: boolean, version: number): Observable<Card> {
+    this.closingCalls.push({ id, confirmed, version });
+    return this.next ?? of(aCard({ id, closingConfirmed: confirmed, version: version + 1 }));
   }
 
   archive(id: string): Observable<Card> {

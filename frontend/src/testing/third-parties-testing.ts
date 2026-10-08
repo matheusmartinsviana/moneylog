@@ -5,6 +5,8 @@ import { ThirdPartiesGateway } from '~/modules/third-parties/core/interfaces/thi
 import type {
   ThirdPartyExpense,
   ThirdPartyExpenseInput,
+  ThirdPartyReceipt,
+  ThirdPartyReceiptInput,
   ThirdPartyReceivables,
 } from '~/modules/third-parties/core/types/third-party';
 import { brl } from '~/testing/accounts-testing';
@@ -87,6 +89,10 @@ export function anEmptyReceivables(): ThirdPartyReceivables {
 export class ThirdPartiesGatewayStub extends ThirdPartiesGateway {
   receivables$: Observable<ThirdPartyReceivables> | null = null;
   mark$: Observable<ThirdPartyExpense> | null = null;
+  recordReceipt$: Observable<ThirdPartyReceipt> | null = null;
+  deleteReceipt$: Observable<void> | null = null;
+  readonly receipts: { input: ThirdPartyReceiptInput; key: string }[] = [];
+  readonly deletes: string[] = [];
   readonly gets: (string | null)[] = [];
   readonly marks: { input: ThirdPartyExpenseInput; key: string }[] = [];
 
@@ -106,6 +112,26 @@ export class ThirdPartiesGatewayStub extends ThirdPartiesGateway {
         note: input.note,
       })
     );
+  }
+
+  recordReceipt(input: ThirdPartyReceiptInput, key: string): Observable<ThirdPartyReceipt> {
+    this.receipts.push({ input, key });
+    return (
+      this.recordReceipt$ ??
+      of({
+        id: 'rcp-1',
+        personId: input.personId,
+        transactionId: input.transactionId,
+        amount: brl(input.amount),
+        receivedOn: input.receivedOn,
+        note: input.note,
+      })
+    );
+  }
+
+  deleteReceipt(id: string): Observable<void> {
+    this.deletes.push(id);
+    return this.deleteReceipt$ ?? of(undefined);
   }
 }
 

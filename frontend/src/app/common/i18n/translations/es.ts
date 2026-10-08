@@ -1465,6 +1465,18 @@ export const es: AppI18n = {
       overLimit: 'Por encima del límite',
       overLimitSummary: 'Por encima del límite: disponible {available}',
       creditBalance: 'Crédito en la tarjeta',
+      notSet: 'Límite no definido',
+    },
+    closing: {
+      badge: 'Cierre no confirmado',
+      hint: 'El día de cierre es provisional; las facturas pueden cambiar cuando lo confirmes.',
+      action: 'Confirmar cierre',
+      modalTitle: 'Confirmar cierre',
+      modalDescription: 'Comprueba que estos días coinciden con el extracto de tu tarjeta.',
+      adjust: 'Ajustar los días',
+      confirm: 'Confirmar',
+      confirming: 'Confirmando…',
+      toast: 'Cierre confirmado.',
     },
     noInvoice: 'Sin factura abierta.',
     invoiceLine: 'Factura de {month} · vence {date}',
@@ -1509,6 +1521,7 @@ export const es: AppI18n = {
       institution: 'Institución',
       optional: 'Opcional.',
       limit: 'Límite',
+      limitHint: 'Opcional. Déjalo en blanco para definirlo después.',
       closingDay: 'Día de cierre',
       dueDay: 'Día de vencimiento',
       dayValue: 'Día {day}',
@@ -3152,6 +3165,38 @@ export const es: AppI18n = {
         RECEIPT: 'Cobro, origen por confirmar',
       },
     },
+    receipts: {
+      register: 'Registrar un cobro',
+      reflected: 'Recibido (ya reflejado en el saldo)',
+      remove: 'Quitar',
+      removeLabel: 'Quitar este cobro',
+      removeConfirm: {
+        title: '¿Quitar este cobro?',
+        description:
+          'No se registró nada en tus cuentas, así que solo desaparece el registro. El monto vuelve a quedar pendiente si estaba ligado a un gasto.',
+        confirm: 'Quitar',
+      },
+      toast: { recorded: 'Cobro registrado.', removed: 'Cobro quitado.' },
+      modal: {
+        title: 'Registrar un cobro',
+        description:
+          'Para el dinero que la persona ya envió y que ya está en tu saldo. No se registra nada en las cuentas y no cuenta como ingreso.',
+        noPeople:
+          'Agrega una persona con un gasto de tercero o un préstamo para registrar un cobro.',
+        person: 'Persona',
+        amount: 'Monto recibido',
+        date: 'Fecha del cobro',
+        link: 'Gasto de tercero (opcional)',
+        linkHint:
+          'Ligarlo reduce lo pendiente de ese gasto. Sin ligar, el origen queda por confirmar.',
+        noLink: 'Sin vínculo',
+        note: 'Nota',
+        save: 'Registrar',
+        saving: 'Registrando…',
+        cancel: 'Cancelar',
+      },
+    },
+    home: { title: 'Por cobrar a terceros', open: 'Ver detalles' },
     month: {
       title: 'Gasto del mes: bruto, de terceros y neto',
       description:

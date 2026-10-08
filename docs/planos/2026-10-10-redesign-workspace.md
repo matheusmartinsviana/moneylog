@@ -916,3 +916,11 @@ Pedido do dono (4 imagens de referência + vidro líquido do portfólio). Sem co
 - **i18n:** `auth.setup.*`, `auth.login.statusUnavailable/checking`, `errors.codes.WEAK_PASSWORD/PASSWORD_MISMATCH` em pt/en/es. Mock: status sempre `false`.
 - **Testes:** facade de sessão, requests facade (HTTP) e `LoginPage` (os dois modos, todos os erros, contagem, axe).
 - **Pendências:** sem e2e do fluxo; "trocar senha" autenticado não existe no backend (ADR-015); `pwa.service.spec` e um teste do app-shell falharam na suíte completa, fora do escopo.
+
+### Registro de execução: cartão sem limite, fechamento não confirmado, recebimentos sem movimento (frontend, modo rápido)
+
+- **Cartão sem limite:** `Card.limit`, `availableLimit`, `usedRatio` (e `PurchasePreview.availableLimitAfter`) viram nulos no tipo e no mapper; `CardInput.limit` aceita `null` (corpo manda `limit: null`). Lista, detalhe, strip de contas e resumo de cartões do Início, prévia de compra e demo mostram "Limite não definido", sem barra, percentual nem "disponível"; nada é dividido nem somado no front. Formulário: Limite opcional com dica "deixe em branco para definir depois".
+- **Fechamento não confirmado:** `closingConfirmed === false` mostra o selo (ícone + texto) na lista, no detalhe e na fatura, com a dica honesta e "Confirmar fechamento"; o modal mostra os dias salvos e chama `POST /v1/cards/{id}/closing-confirmation` (`exhaustMap`, versão do cartão); "Ajustar os dias" leva à edição (PUT com prévia).
+- **Recebimentos de terceiros:** na tela "A receber" os itens `RECEIPT` mostram "Recebido (já refletido no saldo)" e "Remover" (confirmação, `DELETE /v1/third-party-receipts/{id}`); "Registrar recebimento" (pessoa, valor, data, vínculo opcional a despesa marcada, `Idempotency-Key`) também no detalhe da despesa de terceiro. Depois de cada ação relê o `third-party-receivables`.
+- **Dívidas totais e Início:** `tracked` com itens e sem cartão/dívida deixa de ser "vazio"; cartão "A receber de terceiros" no Início (`@defer`, só com valor do servidor, some quando tudo zero).
+- **Pendências:** `Transaction` do contrato não traz a marca "de terceiro" (falta p.ex. `thirdParty { personId, personName }`), então o selo nas listas segue só no detalhe; sem e2e; demo é só leitura (confirmar/registrar/remover respondem `DEMO_MODE`).

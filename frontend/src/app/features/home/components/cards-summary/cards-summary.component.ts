@@ -35,9 +35,13 @@ import type { Card } from '~/modules/cards/core/types/card';
                 [class.is-negative]="card.overLimit"
                 [attr.data-cy]="'home-card-available-' + card.id"
               >
-                <app-money [value]="card.availableLimit" />
-                @if (card.overLimit) {
-                  <span class="card__over">{{ t().home.cards.overLimit }}</span>
+                @if (card.availableLimit; as available) {
+                  <app-money [value]="available" />
+                  @if (card.overLimit) {
+                    <span class="card__over">{{ t().home.cards.overLimit }}</span>
+                  }
+                } @else {
+                  {{ t().cards.limit.notSet }}
                 }
               </dd>
             </div>

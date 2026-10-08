@@ -55,6 +55,29 @@ export interface ThirdPartyReceivables {
   readonly month: ThirdPartyMonth;
 }
 
+/**
+ * Recebimento de terceiro **sem movimento de conta** (`POST /v1/third-party-receipts`): o dinheiro já
+ * está no saldo observado; nunca é renda nem consumo.
+ */
+export interface ThirdPartyReceipt {
+  readonly id: string;
+  readonly personId: string;
+  readonly transactionId: string | null;
+  readonly amount: Money;
+  readonly receivedOn: string | null;
+  readonly note: string | null;
+}
+
+export interface ThirdPartyReceiptInput {
+  readonly personId: string;
+  /** Despesa marcada da mesma pessoa; `null` = sem vínculo ("origem a confirmar"). */
+  readonly transactionId: string | null;
+  /** Decimal digitado. */
+  readonly amount: string;
+  readonly receivedOn: string | null;
+  readonly note: string | null;
+}
+
 /** A marca de uma despesa como de terceiro (`POST /v1/third-party-expenses`). */
 export interface ThirdPartyExpense {
   readonly id: string;

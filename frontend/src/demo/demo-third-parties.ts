@@ -43,6 +43,20 @@ export function thirdPartyReceivablesView(
       status: 'PARTIAL',
     });
   }
+  // Recebimento sem movimento de conta (já refletido no saldo), de valor sintético.
+  const receiptOwed = 5_000;
+  const receiptReceived = 5_000;
+  items.push({
+    source: 'RECEIPT',
+    refId: '00000011-0000-4000-8000-000000000001',
+    description: 'Recebimento de exemplo',
+    date: addMonths(w.today, 0),
+    expectedDate: null,
+    owed: money(receiptOwed),
+    received: money(receiptReceived),
+    pending: money(0),
+    status: 'RECEIVED',
+  });
   items.push({
     source: 'DEBT',
     refId: w.debts[0]?.id ?? 'demo-debt-receivable-1',

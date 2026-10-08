@@ -46,16 +46,20 @@ import { formatCompetenceShort, formatIsoDate } from '~/util/date';
               <app-money [value]="data.total" />
             </dd>
           </div>
-          <div class="ledger__row">
-            <dt class="ledger__label">{{ t().cards.purchase.preview.availableAfter }}</dt>
-            <dd
-              class="ledger__value"
-              [class.is-negative]="data.overLimit"
-              data-cy="purchase-preview-available-after"
-            >
-              <app-money [value]="data.availableLimitAfter" />
-            </dd>
-          </div>
+          @if (data.availableLimitAfter; as availableAfter) {
+            <div class="ledger__row">
+              <dt class="ledger__label">{{ t().cards.purchase.preview.availableAfter }}</dt>
+              <dd
+                class="ledger__value"
+                [class.is-negative]="data.overLimit"
+                data-cy="purchase-preview-available-after"
+              >
+                <app-money [value]="availableAfter" />
+              </dd>
+            </div>
+          } @else {
+            <p class="note" data-cy="purchase-preview-limit-unset">{{ t().cards.limit.notSet }}</p>
+          }
         </dl>
 
         @for (warning of data.warnings; track warning) {

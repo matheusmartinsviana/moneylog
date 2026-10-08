@@ -23,6 +23,7 @@ import { commitmentViews, thirdPartyReceivablesView } from '~/demo/demo-third-pa
 import {
   accountView,
   cardView,
+  noLimitCardView,
   categoryView,
   currentInvoice,
   dashboardView,
@@ -210,9 +211,20 @@ export class DemoHttpBackend extends HttpBackend {
 
     // ---- Cartões e faturas
     if (path === '/v1/cards')
-      return paged(q.get('status') === 'ARCHIVED' ? [] : [cardView(w)], page, pageSize);
+      return paged(
+        q.get('status') === 'ARCHIVED' ? [] : [cardView(w), noLimitCardView(w)],
+        page,
+        pageSize,
+      );
     const card = /^\/v1\/cards\/([^/]+)(?:\/([a-z-]+))?$/.exec(path);
     if (card) {
+      const noLimit = noLimitCardView(w);
+      if (card[1] === noLimit.id) {
+        if (card[2] === undefined) return noLimit;
+        if (card[2] === 'invoices') return paged([], page, pageSize);
+        if (card[2] === 'future-installments') return { total: money(0), byInvoice: [] };
+        throw new NotFound();
+      }
       if (card[1] !== w.card.id) throw new NotFound();
       switch (card[2]) {
         case undefined:
@@ -421,7 +433,7 @@ export class DemoHttpBackend extends HttpBackend {
     const base = Math.floor(total / n);
     const cur = currentInvoice(w) ?? w.invoices[w.invoices.length - 1]!;
     const card = cardView(w);
-    const available = Math.round(Number(card.availableLimit.amount) * 100) - total;
+    const available = Math.round(Number(card.availableLimit?.amount ?? '0') * 100) - total;
     return {
       installments: Array.from({ length: n }, (_, i) => ({
         number: i + 1,

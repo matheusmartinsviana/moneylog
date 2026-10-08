@@ -15,12 +15,13 @@ export interface Card {
   readonly id: string;
   readonly name: string;
   readonly institution: string | null;
-  readonly limit: Money;
-  readonly availableLimit: Money;
+  /** `null` = limite ainda não definido: sem barra, sem percentual, sem "disponível" (nada se calcula no front). */
+  readonly limit: Money | null;
+  readonly availableLimit: Money | null;
   readonly overLimit: boolean;
   readonly creditBalance: Money;
   /** Razão 0..1 do limite usado, do backend, só para a largura da barra. */
-  readonly usedRatio: number;
+  readonly usedRatio: number | null;
   readonly closingDay: number;
   readonly dueDay: number;
   readonly defaultPaymentAccountId: string | null;
@@ -30,6 +31,8 @@ export interface Card {
   readonly totalCommitted: Money;
   /** Parcelas já assumidas que ainda não caíram numa fatura (faturas `FUTURE`). */
   readonly committedFuture: Money;
+  /** `false` = o dia de fechamento é provisório (não confirmado por documento). */
+  readonly closingConfirmed: boolean;
   readonly archivable: boolean;
   readonly version: number;
 }
@@ -38,7 +41,8 @@ export interface Card {
 export interface CardInput {
   readonly name: string;
   readonly institution: string | null;
-  readonly limit: string;
+  /** Decimal digitado; `null` = definir depois. */
+  readonly limit: string | null;
   readonly closingDay: number;
   readonly dueDay: number;
   readonly defaultPaymentAccountId: string | null;

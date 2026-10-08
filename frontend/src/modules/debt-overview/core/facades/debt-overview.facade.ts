@@ -44,7 +44,8 @@ export class DebtOverviewFacade {
         switchMap((months) =>
           this.gateway.get(months).pipe(
             map((data): DebtOverviewState => ({
-              status: data.hasRecords ? 'ready' : 'empty',
+              // Só compromissos acompanhados (sem cartão nem dívida) também não é "vazio": o bloco aparece.
+              status: data.hasRecords || data.tracked.items.length > 0 ? 'ready' : 'empty',
               data,
             })),
             startWith<DebtOverviewState>({ status: 'loading' }),

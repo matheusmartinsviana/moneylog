@@ -107,11 +107,11 @@ export class CardsRequestsFacade extends CardsGateway {
           id: '00000000-0000-4000-8000-0000000000c1',
           name: body.name,
           institution: body.institution ?? null,
-          limit: body.limit,
-          availableLimit: body.limit,
+          limit: body.limit ?? null,
+          availableLimit: body.limit ?? null,
           overLimit: false,
           creditBalance: { amount: '0.00', currency: 'BRL' },
-          usedRatio: 0,
+          usedRatio: body.limit ? 0 : null,
           closingDay: body.closingDay,
           dueDay: body.dueDay,
           defaultPaymentAccountId: body.defaultPaymentAccountId ?? null,
@@ -145,6 +145,13 @@ export class CardsRequestsFacade extends CardsGateway {
 
   unarchive(id: string): Observable<Card> {
     return this.action(CARDS_ENDPOINTS.unarchive(id));
+  }
+
+  setClosingConfirmation(id: string, confirmed: boolean, version: number): Observable<Card> {
+    if (this.useMocks) return notFound('CARD_NOT_FOUND');
+    return this.http
+      .post<CardResponse>(CARDS_ENDPOINTS.closingConfirmation(id), { confirmed, version })
+      .pipe(map(toCard), catchError(fail));
   }
 
   listInvoices(cardId: string, query: InvoicesQuery): Observable<Slice<InvoiceSummary>> {

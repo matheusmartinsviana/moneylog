@@ -31,6 +31,22 @@
     }
     @case ('ready') {
       @if (invoice(); as inv) {
+        @if (card(); as c) {
+          @if (!c.closingConfirmed) {
+            <div class="closing" data-cy="invoice-closing-unconfirmed">
+              <app-closing-badge [cardId]="c.id" />
+              <p class="hint">{{ t().cards.closing.hint }}</p>
+              <button
+                type="button"
+                class="button"
+                data-cy="invoice-closing-confirm"
+                (click)="closingOpen.set(true)"
+              >
+                {{ t().cards.closing.action }}
+              </button>
+            </div>
+          }
+        }
         @if (payBlocked(); as reason) {
           <p class="hint" id="invoice-pay-hint" data-cy="invoice-pay-blocked">{{ reason }}</p>
         }
@@ -93,5 +109,12 @@
         </div>
       </div>
     }
+  }
+  @if (closingOpen() && card(); as c) {
+    <app-closing-confirm-modal
+      [card]="c"
+      (closed)="closingOpen.set(false)"
+      (confirmed)="afterClosing()"
+    />
   }
 </app-page-layout>

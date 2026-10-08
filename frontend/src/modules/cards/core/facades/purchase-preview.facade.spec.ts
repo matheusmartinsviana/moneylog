@@ -41,7 +41,7 @@ describe('PurchasePreviewFacade', () => {
     const data = facade.data()!;
     expect(data.installments.map((i) => i.amount.amount)).toEqual(['600.01', '599.99']);
     expect(data.total.amount).toBe('1200.00');
-    expect(data.availableLimitAfter.amount).toBe('1.00');
+    expect(data.availableLimitAfter?.amount).toBe('1.00');
     expect(data.installments).toHaveLength(2);
   });
 

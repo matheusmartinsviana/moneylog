@@ -401,4 +401,38 @@ describe('CardPage', () => {
     const violations = await axeViolations(container);
     expect(violations, describeViolations(violations)).toEqual([]);
   });
+
+  it('Dado cartão sem limite, então o cabeçalho diz "Limite não definido" e não desenha barra nem disponível', async () => {
+    const gateway = scenario();
+    gateway.cards = [aCard({ limit: null, availableLimit: null, usedRatio: null })];
+    await setup(gateway);
+
+    expect(text(screen.getByTestId('card-limit-value'))).toBe(pt.cards.limit.notSet);
+    expect(screen.queryByTestId('card-available')).not.toBeInTheDocument();
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+  });
+
+  it('Dado fechamento não confirmado, então mostra selo, dica honesta e confirma com o cartão da resposta', async () => {
+    const user = userEvent.setup();
+    const gateway = scenario();
+    gateway.cards = [aCard({ closingConfirmed: false, version: 4 })];
+    await setup(gateway);
+
+    expect(screen.getByTestId('closing-badge-card-1')).toHaveTextContent(pt.cards.closing.badge);
+    expect(screen.getByTestId('card-closing-hint')).toHaveTextContent(pt.cards.closing.hint);
+
+    await user.click(screen.getByTestId('card-closing-confirm'));
+    expect(text(await screen.findByTestId('closing-modal-closing'))).toBe('Dia 25');
+
+    await user.click(screen.getByTestId('closing-modal-confirm'));
+
+    expect(gateway.closingCalls).toEqual([{ id: 'card-1', confirmed: true, version: 4 }]);
+  });
+
+  it('Dado fechamento confirmado, então não mostra selo nem ação de confirmar', async () => {
+    await setup();
+
+    expect(screen.queryByTestId('closing-badge-card-1')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('card-closing-confirm')).not.toBeInTheDocument();
+  });
 });

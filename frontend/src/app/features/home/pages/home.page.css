@@ -285,3 +285,10 @@
 .daily {
   font-size: var(--text-sm);
 }
+
+.stack {
+  display: grid;
+  align-content: start;
+  gap: var(--space-4);
+  min-width: 0;
+}

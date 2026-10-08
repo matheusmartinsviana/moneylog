@@ -5,6 +5,7 @@ import { MoneyComponent } from '~/app/common/components/money/money.component';
 import { HTML_LANG } from '~/app/common/i18n/i18n';
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { interpolate } from '~/app/common/i18n/interpolate';
+import { ClosingBadgeComponent } from '~/app/features/cards/components/closing-badge/closing-badge.component';
 import { LimitMeterComponent } from '~/app/features/cards/components/limit-meter/limit-meter.component';
 import type { Card } from '~/modules/cards/core/types/card';
 import { formatCompetenceShort, formatIsoDate } from '~/util/date';
@@ -17,7 +18,7 @@ import { isPositive } from '~/util/money';
  */
 @Component({
   selector: 'li[app-card-row]',
-  imports: [RouterLink, MoneyComponent, LimitMeterComponent],
+  imports: [RouterLink, MoneyComponent, LimitMeterComponent, ClosingBadgeComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './card-row.component.html',
   styleUrl: './card-row.component.css',

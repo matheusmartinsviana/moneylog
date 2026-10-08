@@ -24,7 +24,9 @@ import { TabPanelDirective } from '~/app/common/components/tabs/tab-panel.direct
 import { TabItem, TabsComponent } from '~/app/common/components/tabs/tabs.component';
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { EntityChanges } from '~/app/common/services/entity-changes';
+import { ToastService } from '~/app/common/services/toast.service';
 import { CardHeaderComponent } from '~/app/features/cards/components/card-header/card-header.component';
+import { ClosingConfirmModalComponent } from '~/app/features/cards/components/closing-confirm-modal/closing-confirm-modal.component';
 import { FutureInstallmentsListComponent } from '~/app/features/cards/components/future-installments-list/future-installments-list.component';
 import { InvoiceSummaryRowComponent } from '~/app/features/cards/components/invoice-summary-row/invoice-summary-row.component';
 import { PayInvoiceSheetComponent } from '~/app/features/cards/components/pay-invoice-sheet/pay-invoice-sheet.component';
@@ -63,6 +65,7 @@ type ActionId = 'pay' | 'purchase' | 'ongoing' | 'edit';
     FutureInstallmentsListComponent,
     PayInvoiceSheetComponent,
     OngoingInstallmentsModalComponent,
+    ClosingConfirmModalComponent,
   ],
   providers: [CardDetailFacade, AccountsListFacade],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -73,6 +76,7 @@ export class CardPage {
   private readonly changes = inject(EntityChanges);
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
+  private readonly toast = inject(ToastService);
   private readonly accountsFacade = inject(AccountsListFacade);
   protected readonly t = inject(I18nService).t;
   protected readonly facade = inject(CardDetailFacade);
@@ -192,6 +196,14 @@ export class CardPage {
   }
 
   protected readonly ongoingOpen = signal(false);
+  protected readonly closingOpen = signal(false);
+
+  /** Fechamento confirmado: o cartão devolvido pelo backend é relido (selo some). */
+  protected afterClosing(): void {
+    this.closingOpen.set(false);
+    this.toast.show(this.t().cards.closing.toast);
+    this.facade.refresh(this.id());
+  }
 
   /** Cadastrou o parcelado em andamento: o cartão relê fatura, limite e parcelas futuras do backend. */
   protected afterOngoing(): void {

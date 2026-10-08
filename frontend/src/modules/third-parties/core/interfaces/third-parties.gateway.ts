@@ -3,6 +3,8 @@ import { Observable } from 'rxjs';
 import type {
   ThirdPartyExpense,
   ThirdPartyExpenseInput,
+  ThirdPartyReceipt,
+  ThirdPartyReceiptInput,
   ThirdPartyReceivables,
 } from '~/modules/third-parties/core/types/third-party';
 
@@ -18,4 +20,11 @@ export abstract class ThirdPartiesGateway {
     input: ThirdPartyExpenseInput,
     idempotencyKey: string,
   ): Observable<ThirdPartyExpense>;
+  /** Registra um recebimento sem movimento de conta. `Idempotency-Key`: uma por tentativa. */
+  abstract recordReceipt(
+    input: ThirdPartyReceiptInput,
+    idempotencyKey: string,
+  ): Observable<ThirdPartyReceipt>;
+  /** Remove um recebimento registrado sem movimento (`204`). */
+  abstract deleteReceipt(id: string): Observable<void>;
 }

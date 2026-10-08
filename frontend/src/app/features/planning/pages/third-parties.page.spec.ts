@@ -5,7 +5,7 @@ import { NEVER, of } from 'rxjs';
 
 import { pt } from '~/app/common/i18n/translations/pt';
 import { ThirdPartiesPage } from '~/app/features/planning/pages/third-parties.page';
-import { failWith } from '~/testing/accounts-testing';
+import { brl, failWith } from '~/testing/accounts-testing';
 import { axeViolations, describeViolations } from '~/testing/axe';
 import { provideI18nTesting } from '~/testing/i18n-testing';
 import {
@@ -108,5 +108,68 @@ describe('ThirdPartiesPage', () => {
 
     const violations = await axeViolations(container);
     expect(violations, describeViolations(violations)).toEqual([]);
+  });
+
+  it('Dado um recebimento sem movimento, então mostra "já refletido no saldo" e remove depois de confirmar', async () => {
+    const user = userEvent.setup();
+    const gateway = new ThirdPartiesGatewayStub();
+    const data = aReceivables();
+    gateway.receivables$ = of({
+      ...data,
+      people: [
+        {
+          ...data.people[0]!,
+          items: [
+            ...data.people[0]!.items,
+            {
+              source: 'RECEIPT',
+              refId: 'rcp-9',
+              description: null,
+              date: '2026-10-05',
+              expectedDate: null,
+              owed: brl('50.00'),
+              received: brl('50.00'),
+              pending: brl('0.00'),
+              status: 'RECEIVED',
+            },
+          ],
+        },
+      ],
+    });
+    await setup(gateway);
+
+    expect(screen.getByTestId('tp-receipt-note-rcp-9')).toHaveTextContent(
+      'Recebido (já refletido no saldo)',
+    );
+    await user.click(screen.getByTestId('tp-receipt-remove-rcp-9'));
+    expect(gateway.deletes).toEqual([]);
+    await user.click(
+      await screen.findByRole('button', { name: pt.thirdParties.receipts.removeConfirm.confirm }),
+    );
+
+    expect(gateway.deletes).toEqual(['rcp-9']);
+    expect(gateway.gets).toEqual([null, null]);
+  });
+
+  it('Dado registrar recebimento, então o modal envia pessoa, valor, data e vínculo opcional ao backend', async () => {
+    const user = userEvent.setup();
+    const { gateway } = await setup();
+
+    await user.click(screen.getByTestId('tp-register-receipt'));
+    expect(await screen.findByTestId('tpr-description')).toHaveTextContent(
+      pt.thirdParties.receipts.modal.description,
+    );
+    await user.click(screen.getByTestId('tpr-person'));
+    await user.click(await screen.findByRole('option', { name: 'Ana' }));
+    await user.type(screen.getByTestId('tpr-amount'), '50,00');
+    await user.click(screen.getByTestId('tpr-save'));
+
+    expect(gateway.receipts).toHaveLength(1);
+    expect(gateway.receipts[0]!.input).toMatchObject({
+      personId: 'person-1',
+      amount: '50.00',
+      transactionId: null,
+    });
+    expect(gateway.gets).toEqual([null, null]);
   });
 });

@@ -130,6 +130,14 @@
                   >
                     {{ t().transactions.thirdParty.detail.register }}
                   </a>
+                  <button
+                    type="button"
+                    class="button"
+                    data-cy="detail-third-receipt"
+                    (click)="receiptOpen.set(true)"
+                  >
+                    {{ t().thirdParties.receipts.register }}
+                  </button>
                   <a
                     class="button"
                     routerLink="/planning/third-parties"
@@ -210,6 +218,15 @@
     [transactionId]="id()"
     (closed)="markOpen.set(false)"
     (marked)="afterMarked()"
+  />
+}
+@if (receiptOpen() && thirdParty.link(); as link) {
+  <app-third-party-receipt-modal
+    [people]="receiptPeople(link)"
+    [presetPersonId]="link.person.id"
+    [presetTransactionId]="id()"
+    (closed)="receiptOpen.set(false)"
+    (recorded)="afterReceipt()"
   />
 }
 <router-outlet (deactivate)="reloadAfterEdit()" />

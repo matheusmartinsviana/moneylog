@@ -64,7 +64,7 @@
     }
     @case ('ready') {
       @if (card(); as c) {
-        <app-card-header [card]="c" />
+        <app-card-header [card]="c" (confirmClosing)="closingOpen.set(true)" />
         @if (payHint(); as hint) {
           @if (!compact()) {
             <p class="hint" id="card-pay-hint" data-cy="card-pay-hint" [attr.data-reason]="hint">
@@ -172,6 +172,13 @@
         />
       }
     }
+  }
+  @if (closingOpen() && card(); as c) {
+    <app-closing-confirm-modal
+      [card]="c"
+      (closed)="closingOpen.set(false)"
+      (confirmed)="afterClosing()"
+    />
   }
   @if (ongoingOpen()) {
     <app-ongoing-installments-modal

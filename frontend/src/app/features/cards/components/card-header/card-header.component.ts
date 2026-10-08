@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 
 import { MoneyComponent } from '~/app/common/components/money/money.component';
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { interpolate } from '~/app/common/i18n/interpolate';
+import { ClosingBadgeComponent } from '~/app/features/cards/components/closing-badge/closing-badge.component';
 import { LimitMeterComponent } from '~/app/features/cards/components/limit-meter/limit-meter.component';
 import type { Card } from '~/modules/cards/core/types/card';
 import { formatMoney, isPositive } from '~/util/money';
@@ -14,7 +15,7 @@ import { formatMoney, isPositive } from '~/util/money';
  */
 @Component({
   selector: 'app-card-header',
-  imports: [MoneyComponent, LimitMeterComponent],
+  imports: [MoneyComponent, LimitMeterComponent, ClosingBadgeComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @let c = card();
@@ -23,14 +24,22 @@ import { formatMoney, isPositive } from '~/util/money';
       <dl class="ledger">
         <div class="ledger__row">
           <dt class="ledger__label">{{ t().cards.detail.limitLabel }}</dt>
-          <dd class="ledger__value" data-cy="card-limit-value"><app-money [value]="c.limit" /></dd>
-        </div>
-        <div class="ledger__row">
-          <dt class="ledger__label">{{ t().cards.detail.availableLabel }}</dt>
-          <dd class="ledger__value" [class.is-negative]="c.overLimit" data-cy="card-available">
-            <app-money [value]="c.availableLimit" />
+          <dd class="ledger__value" data-cy="card-limit-value">
+            @if (c.limit; as limit) {
+              <app-money [value]="limit" />
+            } @else {
+              {{ t().cards.limit.notSet }}
+            }
           </dd>
         </div>
+        @if (c.availableLimit; as available) {
+          <div class="ledger__row">
+            <dt class="ledger__label">{{ t().cards.detail.availableLabel }}</dt>
+            <dd class="ledger__value" [class.is-negative]="c.overLimit" data-cy="card-available">
+              <app-money [value]="available" />
+            </dd>
+          </div>
+        }
         @if (hasCredit()) {
           <div class="ledger__row">
             <dt class="ledger__label">{{ t().cards.detail.creditBalanceLabel }}</dt>
@@ -49,6 +58,20 @@ import { formatMoney, isPositive } from '~/util/money';
       <p class="header__future num" data-cy="card-committed-future">{{ committedFuture() }}</p>
       <p class="header__note">{{ t().cards.detail.committedFutureNote }}</p>
       <p class="header__note" data-cy="card-days">{{ days() }}</p>
+      @if (!c.closingConfirmed) {
+        <div class="header__closing">
+          <app-closing-badge [cardId]="c.id" />
+          <p class="header__note" data-cy="card-closing-hint">{{ t().cards.closing.hint }}</p>
+          <button
+            type="button"
+            class="button"
+            data-cy="card-closing-confirm"
+            (click)="confirmClosing.emit()"
+          >
+            {{ t().cards.closing.action }}
+          </button>
+        </div>
+      }
     </section>
   `,
   styles: `
@@ -60,6 +83,12 @@ import { formatMoney, isPositive } from '~/util/money';
       display: grid;
       gap: var(--space-3);
       padding: var(--space-5);
+    }
+
+    .header__closing {
+      display: grid;
+      justify-items: start;
+      gap: var(--space-2);
     }
 
     .header__future {
@@ -76,6 +105,8 @@ export class CardHeaderComponent {
   protected readonly t = inject(I18nService).t;
 
   readonly card = input.required<Card>();
+  /** Pede o modal "Confirmar fechamento" (a tela dona abre). */
+  readonly confirmClosing = output<void>();
 
   protected readonly hasCredit = computed(() => isPositive(this.card().creditBalance));
   protected readonly committedFuture = computed(() =>

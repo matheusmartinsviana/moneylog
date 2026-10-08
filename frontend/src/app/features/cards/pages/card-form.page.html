@@ -61,7 +61,9 @@
         formControlName="limit"
         fieldId="card-limit"
         [currency]="currency"
+        [mandatory]="false"
         [label]="t().cards.form.limit"
+        [hint]="t().cards.form.limitHint"
       />
       <div class="form__days">
         <app-number-stepper

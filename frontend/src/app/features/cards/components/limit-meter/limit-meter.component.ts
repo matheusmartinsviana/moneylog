@@ -17,14 +17,28 @@ import { formatMoney } from '~/util/money';
   imports: [ProgressBarComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <app-progress-bar
-      [fieldId]="'card-limit-' + card().id"
-      [label]="t().cards.limit.label"
-      [hideLabel]="hideLabel()"
-      [value]="card().usedRatio"
-      [valueText]="summary()"
-      [tone]="card().overLimit ? 'risk' : 'default'"
-    />
+    @let c = card();
+    @if (c.limit === null || c.availableLimit === null || c.usedRatio === null) {
+      <p class="unset" [attr.data-cy]="'card-limit-unset-' + c.id">
+        {{ t().cards.limit.notSet }}
+      </p>
+    } @else {
+      <app-progress-bar
+        [fieldId]="'card-limit-' + c.id"
+        [label]="t().cards.limit.label"
+        [hideLabel]="hideLabel()"
+        [value]="c.usedRatio"
+        [valueText]="summary()"
+        [tone]="c.overLimit ? 'risk' : 'default'"
+      />
+    }
+  `,
+  styles: `
+    .unset {
+      margin: 0;
+      color: var(--color-text-muted);
+      font-size: var(--text-sm);
+    }
   `,
 })
 export class LimitMeterComponent {
@@ -36,6 +50,7 @@ export class LimitMeterComponent {
   protected readonly summary = computed(() => {
     const card = this.card();
     const copy = this.t().cards.limit;
+    if (card.limit === null || card.availableLimit === null) return '';
     return card.overLimit
       ? interpolate(copy.overLimitSummary, { available: formatMoney(card.availableLimit) })
       : interpolate(copy.summary, {

@@ -2,11 +2,15 @@ import type {
   ThirdPartyExpense,
   ThirdPartyExpenseInput,
   ThirdPartyItem,
+  ThirdPartyReceipt,
+  ThirdPartyReceiptInput,
   ThirdPartyReceivables,
 } from '~/modules/third-parties/core/types/third-party';
 import type {
   ThirdPartyExpenseRequest,
   ThirdPartyExpenseResponse,
+  ThirdPartyReceiptRequest,
+  ThirdPartyReceiptResponse,
   ThirdPartyReceivablesResponse,
 } from '~/modules/third-parties/infra/responses/third-party.response';
 import type { Money } from '~/util/money';
@@ -73,6 +77,28 @@ export function toExpenseRequest(input: ThirdPartyExpenseInput): ThirdPartyExpen
   return {
     transactionId: input.transactionId,
     personId: input.personId,
+    ...(note === '' ? {} : { note }),
+  };
+}
+
+export function toReceipt(response: ThirdPartyReceiptResponse): ThirdPartyReceipt {
+  return {
+    id: response.id,
+    personId: response.personId,
+    transactionId: response.transactionId,
+    amount: money(response.amount),
+    receivedOn: response.receivedOn,
+    note: response.note,
+  };
+}
+
+export function toReceiptRequest(input: ThirdPartyReceiptInput): ThirdPartyReceiptRequest {
+  const note = input.note?.trim() ?? '';
+  return {
+    personId: input.personId,
+    amount: input.amount,
+    ...(input.transactionId === null ? {} : { transactionId: input.transactionId }),
+    ...(input.receivedOn === null ? {} : { receivedOn: input.receivedOn }),
     ...(note === '' ? {} : { note }),
   };
 }

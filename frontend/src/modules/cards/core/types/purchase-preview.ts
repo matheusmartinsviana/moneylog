@@ -29,7 +29,8 @@ export type PurchaseWarning = 'LATE_ENTRY' | 'OVER_LIMIT' | 'FUTURE_DATE';
 export interface PurchasePreview {
   readonly installments: readonly PurchasePreviewInstallment[];
   readonly total: Money;
-  readonly availableLimitAfter: Money;
+  /** `null` = cartão sem limite definido: a prévia não mostra "disponível". */
+  readonly availableLimitAfter: Money | null;
   readonly overLimit: boolean;
   readonly warnings: readonly PurchaseWarning[];
 }

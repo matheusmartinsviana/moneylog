@@ -3,6 +3,7 @@ export const CARDS_ENDPOINTS = {
   collection: '/v1/cards',
   item: (id: string) => `/v1/cards/${encodeURIComponent(id)}`,
   archive: (id: string) => `/v1/cards/${encodeURIComponent(id)}/archive`,
+  closingConfirmation: (id: string) => `/v1/cards/${encodeURIComponent(id)}/closing-confirmation`,
   unarchive: (id: string) => `/v1/cards/${encodeURIComponent(id)}/unarchive`,
   invoices: (id: string) => `/v1/cards/${encodeURIComponent(id)}/invoices`,
   futureInstallments: (id: string) => `/v1/cards/${encodeURIComponent(id)}/future-installments`,

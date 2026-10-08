@@ -93,10 +93,14 @@ const ICON: Readonly<Record<AccountType, IconName>> = {
               /></span>
             }
             <span class="tile__note" [class.is-negative]="card.overLimit">
-              {{ t().dashboard.accounts.limitAvailable }}:
-              <app-money [value]="card.availableLimit" />
-              @if (card.overLimit) {
-                · {{ t().dashboard.accounts.overLimit }}
+              @if (card.availableLimit; as available) {
+                {{ t().dashboard.accounts.limitAvailable }}:
+                <app-money [value]="available" />
+                @if (card.overLimit) {
+                  · {{ t().dashboard.accounts.overLimit }}
+                }
+              } @else {
+                {{ t().cards.limit.notSet }}
               }
             </span>
           </a>

@@ -5,12 +5,14 @@ import {
   effect,
   inject,
   OnInit,
+  signal,
   untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
+import { ConfirmDialogComponent } from '~/app/common/components/confirm-dialog/confirm-dialog.component';
 import {
   EmptyStateAction,
   EmptyStateComponent,
@@ -23,7 +25,14 @@ import { SectionContainerComponent } from '~/app/common/components/section-conta
 import { HTML_LANG } from '~/app/common/i18n/i18n';
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { interpolate } from '~/app/common/i18n/interpolate';
+import { problemMessage } from '~/app/common/i18n/problem-message';
+import { ToastService } from '~/app/common/services/toast.service';
 import { PlanningNavComponent } from '~/app/features/planning/components/planning-nav/planning-nav.component';
+import {
+  ReceiptPersonOption,
+  ThirdPartyReceiptModalComponent,
+} from '~/app/features/planning/components/third-party-receipt-modal/third-party-receipt-modal.component';
+import { ThirdPartyReceiptFacade } from '~/modules/third-parties/core/facades/third-party-receipt.facade';
 import { ThirdPartyReceivablesFacade } from '~/modules/third-parties/core/facades/third-party-receivables.facade';
 import type { ThirdPartyItem } from '~/modules/third-parties/core/types/third-party';
 import { formatCompetence, formatIsoDate } from '~/util/date';
@@ -49,8 +58,10 @@ const MAX_MONTH = '2100-12';
     MonthPickerComponent,
     MoneyComponent,
     PlanningNavComponent,
+    ConfirmDialogComponent,
+    ThirdPartyReceiptModalComponent,
   ],
-  providers: [ThirdPartyReceivablesFacade],
+  providers: [ThirdPartyReceivablesFacade, ThirdPartyReceiptFacade],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './third-parties.page.html',
   styleUrl: './third-parties.page.css',
@@ -59,6 +70,27 @@ export class ThirdPartiesPage implements OnInit {
   private readonly i18n = inject(I18nService);
   protected readonly t = this.i18n.t;
   protected readonly receivables = inject(ThirdPartyReceivablesFacade);
+  protected readonly receipts = inject(ThirdPartyReceiptFacade);
+  private readonly toast = inject(ToastService);
+  protected readonly receiptOpen = signal(false);
+  /** Recebimento que o usuário pediu para remover (aguardando a confirmação). */
+  protected readonly pendingRemove = signal<string | null>(null);
+  protected readonly removeError = computed(() => {
+    const problem = this.receipts.problem();
+    return problem && !this.receiptOpen() ? problemMessage(problem, this.t().errors) : null;
+  });
+  protected readonly receiptPeople = computed<readonly ReceiptPersonOption[]>(() =>
+    (this.receivables.data()?.people ?? []).map((person) => ({
+      id: person.personId,
+      name: person.name,
+      expenses: person.items
+        .filter((item) => item.source === 'EXPENSE')
+        .map((item) => ({
+          id: item.refId,
+          label: item.description ?? this.t().thirdParties.people.noDescription,
+        })),
+    })),
+  );
   protected readonly minMonth = MIN_MONTH;
   protected readonly maxMonth = MAX_MONTH;
   protected readonly picker = new FormControl<string | null>(null);
@@ -88,6 +120,15 @@ export class ThirdPartiesPage implements OnInit {
         }
       });
     });
+    // Falha ao remover: fecha a confirmação e mostra o aviso na página (a lista segue como estava).
+    effect(() => {
+      if (this.receipts.problem() !== null) untracked(() => this.pendingRemove.set(null));
+    });
+    this.receipts.removed$.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.pendingRemove.set(null);
+      this.toast.show(this.t().thirdParties.receipts.toast.removed);
+      this.receivables.load();
+    });
     this.picker.valueChanges.pipe(takeUntilDestroyed()).subscribe((value) => {
       if (
         value !== null &&
@@ -101,6 +142,32 @@ export class ThirdPartiesPage implements OnInit {
 
   ngOnInit(): void {
     this.receivables.load(null);
+  }
+
+  /** Registrado no modal: relê o a-receber do backend (nada é ajustado no front). */
+  protected afterRecorded(): void {
+    this.receiptOpen.set(false);
+    this.toast.show(this.t().thirdParties.receipts.toast.recorded);
+    this.receivables.load();
+  }
+
+  protected askRemove(id: string): void {
+    this.receipts.clearProblem();
+    this.pendingRemove.set(id);
+  }
+
+  protected confirmRemove(): void {
+    const id = this.pendingRemove();
+    if (id !== null) this.receipts.remove(id);
+  }
+
+  protected cancelRemove(): void {
+    this.pendingRemove.set(null);
+  }
+
+  protected openRegister(): void {
+    this.receipts.clearProblem();
+    this.receiptOpen.set(true);
   }
 
   protected retry(): void {

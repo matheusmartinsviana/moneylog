@@ -44,6 +44,7 @@ export const HOME_PROVIDERS: Provider[] = [
   provideMonthlySummary(),
   provideGoals(),
   providePeople(),
+  provideThirdParties(),
 ];
 export const CARD_DETAIL_PROVIDERS: Provider[] = [provideDebtOverview()];
 export const GOALS_PROVIDERS: Provider[] = [provideGoals()];

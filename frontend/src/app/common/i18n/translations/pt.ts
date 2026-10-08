@@ -1457,6 +1457,18 @@ export const pt: AppI18n = {
       overLimit: 'Acima do limite',
       overLimitSummary: 'Acima do limite: disponível {available}',
       creditBalance: 'Crédito no cartão',
+      notSet: 'Limite não definido',
+    },
+    closing: {
+      badge: 'Fechamento não confirmado',
+      hint: 'O dia de fechamento é provisório; as faturas podem mudar quando você confirmar.',
+      action: 'Confirmar fechamento',
+      modalTitle: 'Confirmar fechamento',
+      modalDescription: 'Confira se estes dias batem com a fatura do seu cartão.',
+      adjust: 'Ajustar os dias',
+      confirm: 'Confirmar',
+      confirming: 'Confirmando…',
+      toast: 'Fechamento confirmado.',
     },
     noInvoice: 'Sem fatura aberta.',
     invoiceLine: 'Fatura de {month} · vence {date}',
@@ -1501,6 +1513,7 @@ export const pt: AppI18n = {
       institution: 'Instituição',
       optional: 'Opcional.',
       limit: 'Limite',
+      limitHint: 'Opcional. Deixe em branco para definir depois.',
       closingDay: 'Dia de fechamento',
       dueDay: 'Dia de vencimento',
       dayValue: 'Dia {day}',
@@ -3142,6 +3155,38 @@ export const pt: AppI18n = {
         RECEIPT: 'Recebimento, origem a confirmar',
       },
     },
+    receipts: {
+      register: 'Registrar recebimento',
+      reflected: 'Recebido (já refletido no saldo)',
+      remove: 'Remover',
+      removeLabel: 'Remover este recebimento',
+      removeConfirm: {
+        title: 'Remover este recebimento?',
+        description:
+          'Nada foi lançado nas suas contas, então só o registro some. O valor volta a ficar pendente se estava ligado a uma despesa.',
+        confirm: 'Remover',
+      },
+      toast: { recorded: 'Recebimento registrado.', removed: 'Recebimento removido.' },
+      modal: {
+        title: 'Registrar recebimento',
+        description:
+          'Para o dinheiro que a pessoa já enviou e que já está no seu saldo. Nada é lançado nas contas e não conta como renda.',
+        noPeople:
+          'Cadastre uma pessoa com despesa de terceiro ou empréstimo para registrar um recebimento.',
+        person: 'Pessoa',
+        amount: 'Valor recebido',
+        date: 'Data do recebimento',
+        link: 'Despesa de terceiro (opcional)',
+        linkHint:
+          'Ligar reduz o pendente dessa despesa. Sem ligação, fica como origem a confirmar.',
+        noLink: 'Sem vínculo',
+        note: 'Observação',
+        save: 'Registrar',
+        saving: 'Registrando…',
+        cancel: 'Cancelar',
+      },
+    },
+    home: { title: 'A receber de terceiros', open: 'Ver detalhes' },
     month: {
       title: 'Gasto do mês: bruto, de terceiros e líquido',
       description:

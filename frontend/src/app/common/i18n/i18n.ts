@@ -1209,6 +1209,20 @@ export abstract class AppI18n {
       /** `{available}`: disponível (negativo) quando passou do limite. */
       readonly overLimitSummary: string;
       readonly creditBalance: string;
+      /** Cartão sem limite cadastrado: sem barra, sem percentual, sem "disponível". */
+      readonly notSet: string;
+    };
+    /** Fechamento não confirmado (`closingConfirmed = false`). */
+    readonly closing: {
+      readonly badge: string;
+      readonly hint: string;
+      readonly action: string;
+      readonly modalTitle: string;
+      readonly modalDescription: string;
+      readonly adjust: string;
+      readonly confirm: string;
+      readonly confirming: string;
+      readonly toast: string;
     };
     readonly noInvoice: string;
     /** `{month}` (ex.: nov/2026) e `{date}`: referência e vencimento da fatura. */
@@ -1246,6 +1260,7 @@ export abstract class AppI18n {
       readonly institution: string;
       readonly optional: string;
       readonly limit: string;
+      readonly limitHint: string;
       readonly closingDay: string;
       readonly dueDay: string;
       /** `{day}`: dia do mês. */
@@ -3009,6 +3024,35 @@ export abstract class AppI18n {
       readonly expected: string;
       readonly source: Readonly<Record<'DEBT' | 'EXPENSE' | 'RECEIPT', string>>;
     };
+    readonly receipts: {
+      readonly register: string;
+      /** "Recebido (já refletido no saldo)": o dinheiro já está no saldo observado. */
+      readonly reflected: string;
+      readonly remove: string;
+      readonly removeLabel: string;
+      readonly removeConfirm: {
+        readonly title: string;
+        readonly description: string;
+        readonly confirm: string;
+      };
+      readonly toast: { readonly recorded: string; readonly removed: string };
+      readonly modal: {
+        readonly title: string;
+        readonly description: string;
+        readonly noPeople: string;
+        readonly person: string;
+        readonly amount: string;
+        readonly date: string;
+        readonly link: string;
+        readonly linkHint: string;
+        readonly noLink: string;
+        readonly note: string;
+        readonly save: string;
+        readonly saving: string;
+        readonly cancel: string;
+      };
+    };
+    readonly home: { readonly title: string; readonly open: string };
     readonly month: {
       readonly title: string;
       readonly description: string;

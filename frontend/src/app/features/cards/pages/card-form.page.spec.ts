@@ -103,7 +103,6 @@ describe('CardFormPage', () => {
 
       expect(gateway.calls).toEqual([]);
       expect(input('card-name')).toHaveAttribute('aria-invalid', 'true');
-      expect(input('card-limit')).toHaveAttribute('aria-invalid', 'true');
       expect(input('card-closing-day')).toHaveAttribute('aria-invalid', 'true');
     });
 
@@ -170,6 +169,20 @@ describe('CardFormPage', () => {
       await userEvent.click(screen.getByTestId('card-default-account'));
       expect(screen.getByTestId('card-default-account-option-acc-1')).toBeInTheDocument();
       expect(screen.queryByTestId('card-default-account-option-acc-inv')).not.toBeInTheDocument();
+    });
+
+    it('Dado o limite em branco, então o cartão é criado sem limite (definir depois)', async () => {
+      const { gateway, fixture } = await setup();
+      expect(screen.getByText(pt.cards.form.limitHint)).toBeInTheDocument();
+      await type('card-name', 'Azul');
+      await type('card-closing-day', '10');
+      await type('card-due-day', '17');
+
+      await userEvent.click(screen.getByTestId('card-form-save'));
+      await fixture.whenStable();
+
+      expect(gateway.creates).toHaveLength(1);
+      expect(gateway.creates[0]!.limit).toBeNull();
     });
 
     it('Dado nenhuma conta cadastrada, então explica que dá para escolher depois e salva sem conta padrão', async () => {

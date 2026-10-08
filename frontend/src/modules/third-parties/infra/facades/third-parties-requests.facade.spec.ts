@@ -97,4 +97,50 @@ describe('ThirdPartiesRequestsFacade', () => {
       problem: { code: 'THIRD_PARTY_EXPENSE_ALREADY_MARKED' },
     });
   });
+
+  it('Dado registrar recebimento, então POST com Idempotency-Key e só os campos preenchidos', async () => {
+    const { gateway, http } = setup(false);
+
+    const result = firstValueFrom(
+      gateway.recordReceipt(
+        {
+          personId: 'p-1',
+          transactionId: null,
+          amount: '50.00',
+          receivedOn: '2026-10-05',
+          note: '  ',
+        },
+        'key-r',
+      ),
+    );
+    const req = http.expectOne(THIRD_PARTY_ENDPOINTS.receipts);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.headers.get('Idempotency-Key')).toBe('key-r');
+    expect(req.request.body).toEqual({
+      personId: 'p-1',
+      amount: '50.00',
+      receivedOn: '2026-10-05',
+    });
+    req.flush({
+      id: 'r-1',
+      personId: 'p-1',
+      transactionId: null,
+      amount: { amount: '50.00', currency: 'BRL' },
+      receivedOn: '2026-10-05',
+      note: null,
+    });
+
+    expect((await result).amount.amount).toBe('50.00');
+  });
+
+  it('Dado remover recebimento, então DELETE no id e conclui no 204', async () => {
+    const { gateway, http } = setup(false);
+
+    const result = firstValueFrom(gateway.deleteReceipt('r-1'), { defaultValue: undefined });
+    const req = http.expectOne(THIRD_PARTY_ENDPOINTS.receipt('r-1'));
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null, { status: 204, statusText: 'No Content' });
+
+    await expect(result).resolves.toBeUndefined();
+  });
 });

@@ -6,10 +6,13 @@
   <span class="row__institution" [attr.data-cy]="'card-institution-' + c.id">{{
     c.institution
   }}</span>
+  @if (!c.closingConfirmed) {
+    <app-closing-badge [cardId]="c.id" />
+  }
 </div>
 <div class="row__limit">
   <app-limit-meter [card]="c" [hideLabel]="true" />
-  @if (c.overLimit) {
+  @if (c.overLimit && c.limit !== null) {
     <p class="row__over" [attr.data-cy]="'card-over-limit-' + c.id">
       {{ t().cards.limit.overLimit }}
     </p>

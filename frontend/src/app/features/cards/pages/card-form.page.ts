@@ -169,7 +169,7 @@ export class CardFormPage {
         this.form.setValue({
           name: card.name,
           institution: card.institution ?? '',
-          limit: card.limit.amount,
+          limit: card.limit?.amount ?? null,
           closingDay: card.closingDay,
           dueDay: card.dueDay,
           defaultPaymentAccountId: card.defaultPaymentAccountId,
@@ -238,7 +238,7 @@ export class CardFormPage {
     const base: CardInput = {
       name: value.name.trim(),
       institution: institution === '' ? null : institution,
-      limit: value.limit ?? '',
+      limit: value.limit === null || value.limit.trim() === '' ? null : value.limit,
       closingDay: value.closingDay ?? 0,
       dueDay: value.dueDay ?? 0,
       defaultPaymentAccountId: value.defaultPaymentAccountId,

@@ -47,7 +47,7 @@ describe('CardDetailFacade', () => {
     const card = facade.card()!;
     expect(card.committedFuture.amount).toBe('1000.00');
     expect(card.totalCommitted.amount).toBe('1283.00');
-    expect(card.availableLimit.amount).toBe('7717.00');
+    expect(card.availableLimit?.amount).toBe('7717.00');
   });
 
   it('Dado as parcelas futuras, então carrega só quando pedido e usa total e byInvoice do backend', () => {
@@ -119,10 +119,10 @@ describe('CardDetailFacade', () => {
 
     facade.refresh('card-1');
     // Enquanto espera, o cartão anterior continua na tela.
-    expect(facade.card()?.availableLimit.amount).toBe('7717.00');
+    expect(facade.card()?.availableLimit?.amount).toBe('7717.00');
 
     gateway.getResult = null;
     facade.refresh('card-1');
-    expect(facade.card()?.availableLimit.amount).toBe('9000.00');
+    expect(facade.card()?.availableLimit?.amount).toBe('9000.00');
   });
 });

@@ -171,6 +171,35 @@ export function cardView(w: World): S['Card'] {
   };
 }
 
+/**
+ * Segundo cartão do demo, **sem limite definido** e com o fechamento **não confirmado** (dados sintéticos,
+ * sem fatura nem compra): mostra "Limite não definido" e o selo de fechamento provisório.
+ */
+export function noLimitCardView(w: World): S['Card'] {
+  return {
+    id: demoId('card', 2),
+    name: 'Cartão Azul',
+    institution: 'Banco de exemplo',
+    limit: null,
+    availableLimit: null,
+    overLimit: false,
+    creditBalance: money(0),
+    usedRatio: null,
+    closingDay: 10,
+    dueDay: 17,
+    defaultPaymentAccountId: null,
+    status: 'ACTIVE',
+    currentInvoice: null,
+    totalCommitted: money(0),
+    committedFuture: money(0),
+    closingConfirmed: false,
+    archivable: true,
+    version: 0,
+    createdAt: ts(w.accounts[0]!.openingDate),
+    updatedAt: ts(w.accounts[0]!.openingDate),
+  };
+}
+
 export function futureInstallments(w: World): S['FutureInstallments'] {
   const cur = currentInvoice(w);
   const later = w.invoices.filter(

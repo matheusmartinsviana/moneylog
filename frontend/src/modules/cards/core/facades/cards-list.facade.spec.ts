@@ -47,7 +47,7 @@ describe('CardsListFacade', () => {
     facade.load();
 
     const card = facade.data()![0]!;
-    expect(card.availableLimit.amount).toBe('1.00');
+    expect(card.availableLimit?.amount).toBe('1.00');
     expect(card.totalCommitted.amount).toBe('3.33');
     expect(card.committedFuture.amount).toBe('4.44');
     expect(card.usedRatio).toBe(0.25);

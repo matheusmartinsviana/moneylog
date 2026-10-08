@@ -98,11 +98,11 @@ export function toCard(response: CardResponse): Card {
     id: response.id,
     name: response.name,
     institution: response.institution,
-    limit: money(response.limit),
-    availableLimit: money(response.availableLimit),
+    limit: response.limit ? money(response.limit) : null,
+    availableLimit: response.availableLimit ? money(response.availableLimit) : null,
     overLimit: response.overLimit,
     creditBalance: money(response.creditBalance),
-    usedRatio: response.usedRatio,
+    usedRatio: response.usedRatio ?? null,
     closingDay: response.closingDay,
     dueDay: response.dueDay,
     defaultPaymentAccountId: response.defaultPaymentAccountId,
@@ -110,6 +110,7 @@ export function toCard(response: CardResponse): Card {
     currentInvoice: response.currentInvoice ? toInvoiceSummary(response.currentInvoice) : null,
     totalCommitted: money(response.totalCommitted),
     committedFuture: money(response.committedFuture),
+    closingConfirmed: response.closingConfirmed,
     archivable: response.archivable,
     version: response.version,
   };
@@ -139,7 +140,7 @@ export function toPurchasePreview(response: PurchasePreviewResponse): PurchasePr
       lateEntry: installment.lateEntry,
     })),
     total: money(response.total),
-    availableLimitAfter: money(response.availableLimitAfter),
+    availableLimitAfter: response.availableLimitAfter ? money(response.availableLimitAfter) : null,
     overLimit: response.overLimit,
     warnings: [...response.warnings],
   };
@@ -175,7 +176,10 @@ export function toCreateRequest(input: CardInput): CardCreateRequest {
   return {
     name: input.name,
     institution: institution === '' ? null : institution,
-    limit: { amount: input.limit, currency: BRL },
+    limit:
+      input.limit === null || input.limit.trim() === ''
+        ? null
+        : { amount: input.limit, currency: BRL },
     closingDay: input.closingDay,
     dueDay: input.dueDay,
     defaultPaymentAccountId: input.defaultPaymentAccountId,

@@ -38,6 +38,20 @@ describe('DebtOverviewFacade', () => {
     expect(facade.state().status).toBe('empty');
   });
 
+  it('Dado só compromissos acompanhados (sem cartão nem dívida), então o estado é pronto e o bloco aparece', () => {
+    const stub = new DebtOverviewGatewayStub();
+    const base = anEmptyDebtOverview();
+    stub.overview$ = of({
+      ...base,
+      tracked: { ...base.tracked, items: [aDebtOverview().tracked.items[0]!] },
+    });
+    const { facade } = setup(stub);
+
+    facade.load();
+
+    expect(facade.state().status).toBe('ready');
+  });
+
   it('Dado cadastro quitado (total zero com registros), então segue pronto', () => {
     const stub = new DebtOverviewGatewayStub();
     stub.overview$ = of(

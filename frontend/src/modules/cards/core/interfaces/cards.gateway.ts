@@ -42,6 +42,12 @@ export abstract class CardsGateway {
   abstract update(id: string, input: CardUpdate): Observable<Card>;
   abstract archive(id: string): Observable<Card>;
   abstract unarchive(id: string): Observable<Card>;
+  /** Marca o fechamento como confirmado (ou não) por documento; devolve o cartão do backend. */
+  abstract setClosingConfirmation(
+    id: string,
+    confirmed: boolean,
+    version: number,
+  ): Observable<Card>;
 
   abstract listInvoices(cardId: string, query: InvoicesQuery): Observable<Slice<InvoiceSummary>>;
   abstract futureInstallments(cardId: string): Observable<FutureInstallments>;

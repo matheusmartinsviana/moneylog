@@ -225,7 +225,12 @@
                 <app-net-worth [netWorth]="data.summary.netWorth" />
               </app-section-container>
 
-              <app-debt-summary-card class="area-debts" />
+              <div class="area-debts stack">
+                <app-debt-summary-card />
+                @defer (on idle) {
+                  <app-third-party-summary-card />
+                }
+              </div>
 
               <app-section-container
                 class="area-cards"
