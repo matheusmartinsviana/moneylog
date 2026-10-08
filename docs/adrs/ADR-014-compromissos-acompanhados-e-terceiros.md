@@ -11,5 +11,7 @@ A carga das finanças reais de um usuário mostrou quatro lacunas: (1) emprésti
 3. **Recorrência com conta a definir**: despesa/receita pode ser criada sem conta nem meio de pagamento; confirmar a ocorrência exige `accountId` e `method` (`RECURRENCE_ACCOUNT_REQUIRED`).
 4. **Fatura emitida e vazia**: a fatura fechada, ainda no prazo de vencimento e sem nenhum item ou pagamento recebe a compra do ciclo (e o parcelado em andamento) como lançamento tardio. Antes, uma fatura vazia contava como "paga" e o item ia para a fatura corrente. Depois do vencimento volta a regra geral (S-14).
 
+5. **Fatura histórica** (`POST /v1/cards/{id}/historical-invoices`, `Transaction.source = HISTORICAL`, contrato 2.16.0): o pagamento de uma fatura de mês anterior ao app, sem as compras, entra como um item `CARD −X / EQUITY +X` na fatura do fechamento informado (sem categoria, sem lançamento tardio, **sem consumo**), seguido do pagamento real. Resultado final: `CARD 0`, conta `−X`, `EQUITY +X`; dívida e limite sem efeito líquido; propriedade testada (200 cenários) de soma zero e consumo zero. Só para fatura que já fechou. Estorno do item segue a guarda de fatura fechada.
+
 ## Consequências
 Migrações V8.05 a V8.08 aditivas. Nenhum campo ou rota existente muda de formato. Cálculo só no backend (`TrackedCommitment`, `ThirdPartyReceivables`). Fora do escopo: pagamento de item com movimentação de conta (o acompanhamento é independente do razão), desfazer marca de terceiro, alocação parcial do valor de uma compra a um terceiro.

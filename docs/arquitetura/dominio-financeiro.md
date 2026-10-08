@@ -677,4 +677,4 @@ Pendência de Produto (não alterada): o consumo mensal por **reembolso em mês 
 - **Despesa de terceiro**: marca (compra ou despesa → pessoa) sem posting. O gasto segue consumo bruto até o `REFUND` ligado à compra, que reduz o consumo na categoria original (nunca receita). "A receber de terceiros" = dívidas `RECEIVABLE` + despesas marcadas, lidas do estado, sem somar movimentos.
 - **Fatura emitida e vazia** (§2.5.3, exceção à alocação): fechada, dentro do prazo de vencimento e sem item nem pagamento, recebe o item como lançamento tardio; fora do prazo vale a regra geral.
 - **Recorrência com conta a definir** (§2.7): conta e meio de pagamento juntos ou nenhum dos dois; confirmar exige ambos.
-
+- **Fatura histórica** (ADR-014, 2.16.0): item `CARD −X / EQUITY +X` numa fatura passada (sem categoria, sem consumo, origem `HISTORICAL`) para registrar o pagamento real de uma fatura cujas compras o app não tem; depois o pagamento a quita (CARD 0, conta −X).
