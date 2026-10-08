@@ -34,6 +34,11 @@ export class OccurrenceRowComponent {
     () =>
       this.occurrence().description?.trim() || this.t().recurrences.types[this.occurrence().type],
   );
+  /** Despesa/receita sem conta (2.14.0): a conta e o meio são pedidos ao realizar. */
+  protected readonly accountToDefine = computed(() => {
+    const o = this.occurrence();
+    return o.type !== 'CARD_PURCHASE' && o.accountId === null && o.cardId === null;
+  });
   protected readonly dateText = computed(() =>
     formatIsoDate(this.occurrence().date, HTML_LANG[this.i18n.language()]),
   );

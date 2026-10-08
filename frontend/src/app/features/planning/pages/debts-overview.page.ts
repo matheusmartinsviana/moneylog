@@ -31,7 +31,7 @@ import {
   DEBT_OVERVIEW_MONTHS,
   type DebtOverview,
 } from '~/modules/debt-overview/core/types/debt-overview';
-import { formatIsoDate } from '~/util/date';
+import { formatCompetence, formatIsoDate } from '~/util/date';
 import { formatMoney, isPositive } from '~/util/money';
 import { formatRatio } from '~/util/ratio';
 
@@ -156,6 +156,25 @@ export class DebtsOverviewPage implements OnInit {
     return interpolate(this.t().debtOverview.cards.installmentText, {
       amount: formatMoney(plan.installmentAmount),
     });
+  }
+
+  protected trackedInstallments(paid: number | null, total: number | null): string {
+    return interpolate(this.t().debtOverview.tracked.installments, {
+      paid: String(paid ?? 0),
+      total: String(total ?? 0),
+    });
+  }
+
+  protected trackedProgress(value: string): string {
+    return interpolate(this.t().debtOverview.tracked.progress, { percent: this.ratio(value) });
+  }
+
+  protected trackedNext(value: string): string {
+    return interpolate(this.t().debtOverview.tracked.nextDue, { date: this.date(value) });
+  }
+
+  protected monthText(competence: string): string {
+    return formatCompetence(competence, this.locale());
   }
 
   protected goalProgress(progress: string): string {

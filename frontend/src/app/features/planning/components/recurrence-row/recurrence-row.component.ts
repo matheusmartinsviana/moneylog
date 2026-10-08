@@ -7,7 +7,7 @@ import { HTML_LANG } from '~/app/common/i18n/i18n';
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { interpolate } from '~/app/common/i18n/interpolate';
 import { frequencyText } from '~/app/features/planning/recurrence-text';
-import type { Recurrence } from '~/modules/recurrences/core/types/recurrence';
+import { isAccountToDefine, type Recurrence } from '~/modules/recurrences/core/types/recurrence';
 import { formatIsoDate } from '~/util/date';
 
 /**
@@ -45,6 +45,8 @@ export class RecurrenceRowComponent {
     const name = recurrence.card?.name ?? recurrence.account?.name;
     return name ? interpolate(this.t().recurrences.row.on, { name }) : null;
   });
+  /** Despesa/receita sem conta: a conta e o meio são informados ao confirmar cada ocorrência. */
+  protected readonly accountToDefine = computed(() => isAccountToDefine(this.recurrence()));
   protected readonly next = computed(() => {
     const date = this.recurrence().nextOccurrence;
     return date === null

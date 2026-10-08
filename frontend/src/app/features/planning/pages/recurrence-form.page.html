@@ -118,16 +118,21 @@
           formControlName="accountId"
           fieldId="recurrence-account"
           [options]="accountOptions()"
+          [mandatory]="false"
+          [emptyLabel]="t().recurrences.form.accountTbd"
+          [hint]="t().recurrences.form.accountTbdHint"
           [label]="t().recurrences.form.account"
         />
-        <app-select
-          formControlName="method"
-          fieldId="recurrence-method"
-          [options]="methodOptions()"
-          [mandatory]="false"
-          [emptyLabel]="t().transactions.methods.OTHER"
-          [label]="t().recurrences.form.method"
-        />
+        @if (hasAccount()) {
+          <app-select
+            formControlName="method"
+            fieldId="recurrence-method"
+            [options]="methodOptions()"
+            [mandatory]="false"
+            [emptyLabel]="t().transactions.methods.OTHER"
+            [label]="t().recurrences.form.method"
+          />
+        }
       }
 
       <app-select

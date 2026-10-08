@@ -29,6 +29,25 @@ describe('OccurrenceRealizeFacade', () => {
     expect(gateway.realizations[0]?.key).toBeTruthy();
   });
 
+  it('Dado recorrência sem conta, então a conta e o meio vão na confirmação', () => {
+    const { facade, gateway } = setup();
+
+    facade.realize('rec-1', '2026-10-10', null, { accountId: 'acc-1', method: 'PIX' });
+
+    expect(gateway.realizations[0]?.payment).toEqual({ accountId: 'acc-1', method: 'PIX' });
+  });
+
+  it('Dado RECURRENCE_ACCOUNT_REQUIRED, então o erro fica tipado e a tentativa não fica pendente', () => {
+    const gateway = new RecurrencesGatewayStub();
+    gateway.realize$ = failWith(422, 'RECURRENCE_ACCOUNT_REQUIRED');
+    const { facade } = setup(gateway);
+
+    facade.realize('rec-1', '2026-10-10', null);
+
+    expect(facade.problem()?.code).toBe('RECURRENCE_ACCOUNT_REQUIRED');
+    expect(facade.canRetry()).toBe(false);
+  });
+
   it('Dado o clique duplo, então uma requisição só', () => {
     const gateway = new RecurrencesGatewayStub();
     gateway.realize$ = new Subject<ReturnType<typeof aRealized>>();

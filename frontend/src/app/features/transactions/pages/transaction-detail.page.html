@@ -87,6 +87,61 @@
             <app-impact-panel [impact]="tx.impact" />
           }
 
+          @if (canMarkThirdParty()) {
+            @if (thirdParty.link(); as link) {
+              <section
+                class="third row-card"
+                aria-labelledby="detail-third-title"
+                data-cy="detail-third-party"
+              >
+                <h2 class="third__title" id="detail-third-title">
+                  {{ t().transactions.thirdParty.detail.title }}
+                  <app-third-party-badge [name]="link.person.name" />
+                </h2>
+                <dl class="third__facts">
+                  <div>
+                    <dt>{{ t().transactions.thirdParty.detail.person }}</dt>
+                    <dd data-cy="detail-third-person">{{ link.person.name }}</dd>
+                  </div>
+                  <div>
+                    <dt>{{ t().transactions.thirdParty.detail.owed }}</dt>
+                    <dd data-cy="detail-third-owed"><app-money [value]="link.item.owed" /></dd>
+                  </div>
+                  <div>
+                    <dt>{{ t().transactions.thirdParty.detail.received }}</dt>
+                    <dd data-cy="detail-third-received">
+                      <app-money [value]="link.item.received" />
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>{{ t().transactions.thirdParty.detail.pending }}</dt>
+                    <dd data-cy="detail-third-pending">
+                      <app-money [value]="link.item.pending" />
+                    </dd>
+                  </div>
+                </dl>
+                <p class="third__note">{{ t().transactions.thirdParty.detail.rule }}</p>
+                <div class="third__actions">
+                  <a
+                    class="button"
+                    routerLink="/quick-add"
+                    [queryParams]="{ mode: 'refund', description: tx.description }"
+                    data-cy="detail-third-refund"
+                  >
+                    {{ t().transactions.thirdParty.detail.register }}
+                  </a>
+                  <a
+                    class="button"
+                    routerLink="/planning/third-parties"
+                    data-cy="detail-third-list"
+                  >
+                    {{ t().transactions.thirdParty.detail.openList }}
+                  </a>
+                </div>
+              </section>
+            }
+          }
+
           <app-linked-notes
             type="TRANSACTION"
             cy="detail-notes"
@@ -115,6 +170,18 @@
                 (voided)="confirmVoid($event)"
               />
             }
+            @if (
+              canMarkThirdParty() && thirdParty.lookup().status === 'done' && !thirdParty.link()
+            ) {
+              <button
+                type="button"
+                class="button"
+                data-cy="detail-third-mark"
+                (click)="markOpen.set(true)"
+              >
+                {{ t().transactions.thirdParty.action }}
+              </button>
+            }
             @if (facade.canCancelInstallments()) {
               <app-cancel-installments-action
                 [busy]="facade.canceling()"
@@ -138,4 +205,11 @@
     }
   }
 </aside>
+@if (markOpen()) {
+  <app-third-party-mark-modal
+    [transactionId]="id()"
+    (closed)="markOpen.set(false)"
+    (marked)="afterMarked()"
+  />
+}
 <router-outlet (deactivate)="reloadAfterEdit()" />

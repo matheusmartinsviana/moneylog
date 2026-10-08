@@ -148,6 +148,9 @@ export class RecurrenceFormPage {
   private readonly typeValue = valueSignal(this.form.controls.type);
   private readonly frequencyValue = valueSignal(this.form.controls.frequency);
   private readonly endModeValue = valueSignal(this.form.controls.endMode);
+  private readonly accountValue = valueSignal(this.form.controls.accountId);
+  /** Com conta escolhida o meio de pagamento vale; sem ela, a conta e o meio ficam para a confirmação. */
+  protected readonly hasAccount = computed(() => this.accountValue() !== null);
   protected readonly isCard = computed(() => this.typeValue() === 'CARD_PURCHASE');
   protected readonly isCustom = computed(() => this.frequencyValue() === 'CUSTOM');
   protected readonly endMode = computed<EndMode>(() => {
@@ -341,7 +344,8 @@ export class RecurrenceFormPage {
           description: value.description.trim(),
           categoryId: value.categoryId ?? '',
           accountId: card ? null : value.accountId,
-          method: card ? null : (value.method as RecurrenceMethod | null),
+          method:
+            card || value.accountId === null ? null : (value.method as RecurrenceMethod | null),
           cardId: card ? value.cardId : null,
           endDate: value.endDate,
           version: recurrence.version,
@@ -356,7 +360,7 @@ export class RecurrenceFormPage {
       description: value.description.trim(),
       categoryId: value.categoryId ?? '',
       accountId: card ? null : value.accountId,
-      method: card ? null : (value.method as RecurrenceMethod | null),
+      method: card || value.accountId === null ? null : (value.method as RecurrenceMethod | null),
       cardId: card ? value.cardId : null,
       frequency: (value.frequency ?? 'MONTHLY') as Frequency,
       interval: this.isCustom() ? value.interval : null,

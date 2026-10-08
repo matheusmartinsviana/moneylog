@@ -13,6 +13,11 @@
     @if (destination(); as text) {
       <span>{{ text }}</span>
     }
+    @if (accountToDefine()) {
+      <span class="status" [attr.data-cy]="'recurrence-account-tbd-' + r.id">{{
+        t().recurrences.row.accountTbd
+      }}</span>
+    }
   </p>
 </div>
 <div class="row__values">

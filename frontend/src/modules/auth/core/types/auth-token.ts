@@ -9,3 +9,10 @@ export interface Credentials {
   readonly email: string;
   readonly password: string;
 }
+
+/** Dados do primeiro acesso (`POST /v1/auth/setup-password`). A validação real é do servidor. */
+export interface SetupPasswordInput {
+  readonly email: string;
+  readonly setupCode: string;
+  readonly newPassword: string;
+}

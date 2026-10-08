@@ -8,7 +8,13 @@ import { NEVER, of, Subject } from 'rxjs';
 import { pt } from '~/app/common/i18n/translations/pt';
 import { ToastService } from '~/app/common/services/toast.service';
 import { OccurrencesPage } from '~/app/features/planning/pages/occurrences.page';
-import { brl, failWith } from '~/testing/accounts-testing';
+import {
+  AccountsGatewayStub,
+  anAccount,
+  brl,
+  failWith,
+  provideAccountsStub,
+} from '~/testing/accounts-testing';
 import { axeViolations, describeViolations } from '~/testing/axe';
 import { provideI18nTesting } from '~/testing/i18n-testing';
 import {
@@ -24,11 +30,18 @@ vi.setConfig({ testTimeout: 20_000 });
 class DummyComponent {}
 
 const text = (el: HTMLElement) => el.textContent?.replace(/\s+/g, ' ').trim();
+const pick = async (id: string, value: string) => {
+  await userEvent.click(screen.getByTestId(id));
+  await userEvent.click(screen.getByTestId(`${id}-option-${value}`));
+};
 const field = (id: string) => screen.getByTestId(id) as HTMLInputElement;
 
 async function setup(gateway = new RecurrencesGatewayStub()) {
+  const accounts = new AccountsGatewayStub();
+  accounts.accounts = [anAccount({ id: 'acc-1', name: 'Conta corrente' })];
   const result = await render(OccurrencesPage, {
     providers: [
+      provideAccountsStub(accounts),
       provideI18nTesting('pt'),
       provideRouter([{ path: 'cards/:id/invoices/:invoiceId', component: DummyComponent }]),
       provideRecurrencesStub(gateway),
@@ -173,6 +186,51 @@ describe('OccurrencesPage', () => {
       expect(toast.toasts()[0]?.message).toBe(pt.recurrences.realize.toast);
       expect(screen.queryByTestId('occurrence-row-rec-1-2026-10-10')).not.toBeInTheDocument();
       expect(screen.queryByTestId('realize-sheet-panel')).not.toBeInTheDocument();
+    });
+
+    it('Dado recorrência sem conta, então a folha pede conta e meio e só envia com os dois', async () => {
+      const gateway = scenario();
+      gateway.occurrences = [
+        anOccurrence({
+          recurrenceId: 'rec-3',
+          date: '2026-10-20',
+          description: 'Aluguel',
+          accountId: null,
+          cardId: null,
+        }),
+      ];
+      const { fixture } = await setup(gateway);
+
+      expect(screen.getByTestId('occurrence-account-tbd-rec-3-2026-10-20')).toHaveTextContent(
+        pt.recurrences.occurrences.accountTbd,
+      );
+      await userEvent.click(screen.getByTestId('occurrence-realize-rec-3-2026-10-20'));
+      expect(screen.getByTestId('realize-account-note')).toBeInTheDocument();
+      await userEvent.click(screen.getByTestId('realize-submit'));
+      await fixture.whenStable();
+      expect(gateway.realizations).toHaveLength(0);
+
+      await pick('realize-account', 'acc-1');
+      await pick('realize-method', 'PIX');
+      await userEvent.click(screen.getByTestId('realize-submit'));
+      await fixture.whenStable();
+
+      expect(gateway.realizations[0]?.payment).toEqual({ accountId: 'acc-1', method: 'PIX' });
+    });
+
+    it('Dado RECURRENCE_ACCOUNT_REQUIRED do servidor (tela sem saber), então a folha passa a pedir a conta no campo', async () => {
+      const gateway = scenario();
+      gateway.realize$ = failWith(422, 'RECURRENCE_ACCOUNT_REQUIRED');
+      const { fixture } = await setup(gateway);
+
+      await userEvent.click(screen.getByTestId('occurrence-realize-rec-1-2026-10-10'));
+      expect(screen.queryByTestId('realize-account-note')).not.toBeInTheDocument();
+      await userEvent.click(screen.getByTestId('realize-submit'));
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(screen.getByTestId('realize-account-note')).toBeInTheDocument();
+      expect(screen.queryByTestId('realize-error')).not.toBeInTheDocument();
     });
 
     it('Dado o valor do modelo sem mudar, então vai sem valor (o backend usa o do modelo)', async () => {

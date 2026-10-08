@@ -19,6 +19,28 @@
         [label]="t().recurrences.realize.amount"
         [hint]="t().recurrences.realize.amountHint"
       />
+      @if (needsAccount()) {
+        <p class="form__note" data-cy="realize-account-note">
+          {{ t().recurrences.realize.accountNote }}
+        </p>
+        @if (noAccounts()) {
+          <p class="form__note" role="status" data-cy="realize-no-accounts">
+            {{ t().recurrences.realize.noAccounts }}
+          </p>
+        }
+        <app-select
+          formControlName="accountId"
+          fieldId="realize-account"
+          [options]="accountOptions()"
+          [label]="t().recurrences.realize.account"
+        />
+        <app-select
+          formControlName="method"
+          fieldId="realize-method"
+          [options]="methodOptions()"
+          [label]="t().recurrences.realize.method"
+        />
+      }
       @if (target().viaCard === true) {
         <p class="form__note" data-cy="realize-card-note">{{ t().recurrences.realize.cardNote }}</p>
       }

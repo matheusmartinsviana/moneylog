@@ -19,6 +19,7 @@ import {
   notificationSettings,
   reminderList,
 } from '~/demo/demo-etapa7';
+import { commitmentViews, thirdPartyReceivablesView } from '~/demo/demo-third-parties';
 import {
   accountView,
   cardView,
@@ -269,6 +270,14 @@ export class DemoHttpBackend extends HttpBackend {
       return paged(list, page, pageSize);
     }
     if (path === '/v1/debts/overview') return debtOverviewView(w, num('months', 12));
+    if (path === '/v1/debts/third-party-receivables')
+      return thirdPartyReceivablesView(w, q.get('month'));
+    if (path === '/v1/commitments') {
+      const list = commitmentViews(w);
+      return paged(list, page, pageSize);
+    }
+    const commitment = /^\/v1\/commitments\/([^/]+)$/.exec(path);
+    if (commitment) return this.find(commitmentViews(w), commitment[1]!);
     const debt = /^\/v1\/debts\/([^/]+)$/.exec(path);
     if (debt) return debtView(w, this.find(w.debts, debt[1]!));
 

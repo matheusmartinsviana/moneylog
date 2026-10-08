@@ -148,4 +148,68 @@ describe('AuthRequestsFacade', () => {
       await expect(result).rejects.toMatchObject({ reason });
     });
   });
+
+  describe('primeiro acesso', () => {
+    it('Dado o mock, então status é falso e nenhuma requisição sai', async () => {
+      const { gateway, http } = setup(true);
+
+      expect(await firstValueFrom(gateway.passwordSetupRequired())).toBe(false);
+      http.expectNone(() => true);
+    });
+
+    it('Dado a API, então GET /v1/auth/status devolve passwordSetupRequired', async () => {
+      const { gateway, http } = setup(false);
+
+      const result = firstValueFrom(gateway.passwordSetupRequired());
+      http.expectOne(AUTH_ENDPOINTS.status).flush({ passwordSetupRequired: true });
+
+      expect(await result).toBe(true);
+    });
+
+    it('Dado o setup, então POST /v1/auth/setup-password com o corpo do contrato', async () => {
+      const { gateway, http } = setup(false);
+
+      const result = firstValueFrom(
+        gateway.setupPassword({ email: 'a@b.c', setupCode: 'C', newPassword: 'N' }),
+      );
+      const req = http.expectOne(AUTH_ENDPOINTS.setupPassword);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({ email: 'a@b.c', setupCode: 'C', newPassword: 'N' });
+      req.flush(token);
+
+      expect(await result).toEqual(token);
+    });
+
+    it.each([
+      [401, 'INVALID_SETUP_CODE', 'invalid_setup_code'],
+      [422, 'WEAK_PASSWORD', 'weak_password'],
+      [400, 'VALIDATION_FAILED', 'validation'],
+      [500, 'INTERNAL_ERROR', 'unavailable'],
+    ])('Dado %i %s, então a falha é %s', async (status, code, reason) => {
+      const { gateway, http } = setup(false);
+
+      const result = firstValueFrom(
+        gateway.setupPassword({ email: 'a@b.c', setupCode: 'C', newPassword: 'N' }),
+      ).catch((error: unknown) => error);
+      http.expectOne(AUTH_ENDPOINTS.setupPassword).flush({ code }, { status, statusText: code });
+
+      expect(await result).toMatchObject({ reason });
+    });
+
+    it('Dado 429 com Retry-After, então a falha traz a espera', async () => {
+      const { gateway, http } = setup(false);
+
+      const result = firstValueFrom(
+        gateway.setupPassword({ email: 'a@b.c', setupCode: 'C', newPassword: 'N' }),
+      ).catch((error: unknown) => error);
+      http
+        .expectOne(AUTH_ENDPOINTS.setupPassword)
+        .flush(
+          { code: 'TOO_MANY_ATTEMPTS' },
+          { status: 429, statusText: 'x', headers: { 'Retry-After': '42' } },
+        );
+
+      expect(await result).toMatchObject({ reason: 'rate_limited', retryAfterSeconds: 42 });
+    });
+  });
 });

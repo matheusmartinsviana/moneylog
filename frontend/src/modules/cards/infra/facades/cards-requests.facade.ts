@@ -119,6 +119,7 @@ export class CardsRequestsFacade extends CardsGateway {
           currentInvoice: null,
           totalCommitted: { amount: '0.00', currency: 'BRL' },
           committedFuture: { amount: '0.00', currency: 'BRL' },
+          closingConfirmed: true,
           archivable: true,
           version: 0,
           createdAt: '2026-01-01T00:00:00Z',

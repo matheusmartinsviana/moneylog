@@ -44,6 +44,7 @@ export function aCardResponse(overrides: Partial<CardResponse> = {}): CardRespon
     currentInvoice: anInvoiceSummaryResponse(),
     totalCommitted: brl('1283.00'),
     committedFuture: brl('1000.00'),
+    closingConfirmed: true,
     archivable: false,
     version: 2,
     createdAt: '2026-10-01T12:00:00Z',

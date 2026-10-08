@@ -14,7 +14,7 @@ import { I18nService } from '~/app/common/i18n/i18n.service';
       min-width: 0;
     }
 
-    /* Cinco abas podem não caber numa linha de 375 px: quebram em vez de alargar a página. */
+    /* Sete abas podem não caber numa linha de 375 px: quebram em vez de alargar a página. */
     .tabs {
       display: flex;
       flex-wrap: wrap;
@@ -63,12 +63,28 @@ import { I18nService } from '~/app/common/i18n/i18n.service';
       >
         {{ t().recurrences.tabs.debts }}
       </a>
+      <a
+        class="tab"
+        routerLink="/planning/third-parties"
+        data-cy="planning-tab-third-parties"
+        [attr.aria-current]="current() === 'thirdParties' ? 'page' : null"
+      >
+        {{ t().recurrences.tabs.thirdParties }}
+      </a>
+      <a
+        class="tab"
+        routerLink="/planning/commitments"
+        data-cy="planning-tab-commitments"
+        [attr.aria-current]="current() === 'commitments' ? 'page' : null"
+      >
+        {{ t().recurrences.tabs.commitments }}
+      </a>
     </nav>
   `,
 })
 export class PlanningNavComponent {
   protected readonly t = inject(I18nService).t;
   readonly current = input.required<
-    'recurrences' | 'pending' | 'summary' | 'projections' | 'debts'
+    'recurrences' | 'pending' | 'summary' | 'projections' | 'debts' | 'thirdParties' | 'commitments'
   >();
 }

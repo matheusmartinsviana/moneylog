@@ -3,7 +3,11 @@ import { Observable, of } from 'rxjs';
 
 import { SessionFacade } from '~/modules/auth/core/facades/session.facade';
 import { AuthGateway } from '~/modules/auth/core/interfaces/auth.gateway';
-import type { AuthToken, Credentials } from '~/modules/auth/core/types/auth-token';
+import type {
+  AuthToken,
+  Credentials,
+  SetupPasswordInput,
+} from '~/modules/auth/core/types/auth-token';
 import { provideAuth } from '~/modules/auth/infra/auth.providers';
 import { AUTH_ENDPOINTS } from '~/modules/auth/infra/endpoints';
 import { API_MOCKS } from '~/util/api-mocks';
@@ -18,6 +22,9 @@ export class AuthGatewayStub extends AuthGateway {
   login$: Observable<AuthToken> = of(aToken());
   refresh$: Observable<AuthToken> = of(aToken('token-2'));
   logout$: Observable<void> = of(undefined);
+  setupRequired$: Observable<boolean> = of(false);
+  setup$: Observable<AuthToken> = of(aToken('token-setup'));
+  readonly setups: SetupPasswordInput[] = [];
   readonly logins: Credentials[] = [];
   refreshes = 0;
   logouts = 0;
@@ -25,6 +32,15 @@ export class AuthGatewayStub extends AuthGateway {
   login(credentials: Credentials): Observable<AuthToken> {
     this.logins.push(credentials);
     return this.login$;
+  }
+
+  passwordSetupRequired(): Observable<boolean> {
+    return this.setupRequired$;
+  }
+
+  setupPassword(input: SetupPasswordInput): Observable<AuthToken> {
+    this.setups.push(input);
+    return this.setup$;
   }
 
   refresh(): Observable<AuthToken> {

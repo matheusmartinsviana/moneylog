@@ -1,0 +1,114 @@
+:host {
+  display: block;
+}
+
+.back {
+  width: fit-content;
+  color: var(--color-accent);
+  font-weight: var(--weight-medium);
+}
+
+.head {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.head__title {
+  margin: 0;
+  font-size: var(--text-xl);
+  overflow-wrap: anywhere;
+}
+
+.note {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.facts {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.fact,
+.month {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-4);
+}
+
+.fact dt {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.fact dd {
+  margin: 0;
+  font-weight: var(--weight-semibold);
+}
+
+.fact__text {
+  font-weight: var(--weight-regular);
+  overflow-wrap: anywhere;
+}
+
+.schedule,
+.months {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.item__main,
+.item__values {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.item__title,
+.item__amount {
+  margin: 0;
+  font-weight: var(--weight-semibold);
+  overflow-wrap: anywhere;
+}
+
+.item .button {
+  justify-self: start;
+}
+
+.form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.form__pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--space-4);
+}
+
+.form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+@media (width >= 768px) {
+  .item {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1.5fr) auto;
+    align-items: center;
+  }
+}

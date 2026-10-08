@@ -19,7 +19,11 @@ import {
 import { AuthGateway } from '~/modules/auth/core/interfaces/auth.gateway';
 import { SESSION_END_HOOKS } from '~/modules/auth/core/interfaces/session-end-hook';
 import { AuthFailure } from '~/modules/auth/core/types/auth-failure';
-import type { AuthToken, Credentials } from '~/modules/auth/core/types/auth-token';
+import type {
+  AuthToken,
+  Credentials,
+  SetupPasswordInput,
+} from '~/modules/auth/core/types/auth-token';
 
 /**
  * - `unknown`: o refresh silencioso do boot ainda não terminou;
@@ -34,6 +38,9 @@ export type LoginState =
   | { readonly status: 'idle' }
   | { readonly status: 'submitting' }
   | { readonly status: 'failed'; readonly failure: AuthFailure };
+
+/** Estado do envio do primeiro acesso (mesmo formato do login). */
+export type SetupState = LoginState;
 
 const IDLE: LoginState = { status: 'idle' };
 const SUBMITTING: LoginState = { status: 'submitting' };
@@ -55,6 +62,8 @@ export class SessionFacade {
   private readonly current = signal<SessionStatus>('unknown');
   private readonly currentLogin = signal<LoginState>(IDLE);
   private readonly submissions = new Subject<Credentials>();
+  private readonly currentSetup = signal<SetupState>(IDLE);
+  private readonly setupSubmissions = new Subject<SetupPasswordInput>();
   private readonly signedInEvents = new Subject<void>();
   private accessToken: string | null = null;
   private inflight: Observable<string> | null = null;
@@ -62,6 +71,7 @@ export class SessionFacade {
   readonly status = this.current.asReadonly();
   readonly authenticated = computed(() => this.current() === 'authenticated');
   readonly loginState = this.currentLogin.asReadonly();
+  readonly setupState = this.currentSetup.asReadonly();
   /** Emite quando um login termina com sucesso (a tela de login navega para o `returnUrl`). */
   readonly signedIn$ = this.signedInEvents.asObservable();
 
@@ -85,6 +95,37 @@ export class SessionFacade {
         this.currentLogin.set(state);
         if (state.status === 'idle') this.signedInEvents.next();
       });
+
+    this.setupSubmissions
+      .pipe(
+        exhaustMap((input) => {
+          this.currentSetup.set(SUBMITTING);
+          return this.gateway.setupPassword(input).pipe(
+            tap((token) => this.authenticate(token)),
+            map((): SetupState => IDLE),
+            catchError((error: unknown) =>
+              of<SetupState>({ status: 'failed', failure: asFailure(error) }),
+            ),
+          );
+        }),
+      )
+      .subscribe((state) => {
+        this.currentSetup.set(state);
+        if (state.status === 'idle') this.signedInEvents.next();
+      });
+  }
+
+  /**
+   * Consulta se o dono precisa definir a senha. Nunca falha: `null` quando não deu para consultar
+   * (a tela cai no login normal com um aviso).
+   */
+  passwordSetupRequired(): Observable<boolean | null> {
+    return this.gateway.passwordSetupRequired().pipe(catchError(() => of(null)));
+  }
+
+  /** Envia o primeiro acesso. O resultado vem em `setupState` e `signedIn$`. */
+  setupPassword(input: SetupPasswordInput): void {
+    this.setupSubmissions.next(input);
   }
 
   /** Token atual para o `Authorization` (nunca é exposto em signal nem em template). */

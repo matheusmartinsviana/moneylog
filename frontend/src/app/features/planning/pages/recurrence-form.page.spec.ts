@@ -96,7 +96,7 @@ async function fillBasic() {
 
 describe('RecurrenceFormPage', () => {
   describe('criar', () => {
-    it('Dado o formulário novo, então pede tipo, valor, descrição, categoria, conta, método, frequência, início e fim', async () => {
+    it('Dado o formulário novo, então pede tipo, valor, descrição, categoria, conta, frequência, início e fim', async () => {
       await setup();
 
       expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(
@@ -108,7 +108,6 @@ describe('RecurrenceFormPage', () => {
         'recurrence-description',
         'recurrence-category',
         'recurrence-account',
-        'recurrence-method',
         'recurrence-frequency',
         'recurrence-start',
         'recurrence-end-mode',
@@ -144,6 +143,28 @@ describe('RecurrenceFormPage', () => {
       });
       expect(toast.toasts()[0]?.message).toBe(pt.recurrences.toast.created);
       expect(navigate).toHaveBeenCalledWith(['/planning/recurrences']);
+    });
+
+    it('Dado conta escolhida, então pede o método; sem conta ("a definir"), cria sem conta e sem método', async () => {
+      const { gateway, fixture } = await setup();
+
+      expect(screen.queryByTestId('recurrence-method')).not.toBeInTheDocument();
+      await pick('recurrence-account', 'acc-1');
+      expect(screen.getByTestId('recurrence-method')).toBeInTheDocument();
+      await userEvent.click(screen.getByTestId('recurrence-account'));
+      await userEvent.click(screen.getByTestId('recurrence-account-option-all'));
+      expect(screen.queryByTestId('recurrence-method')).not.toBeInTheDocument();
+      expect(screen.getByTestId('recurrence-account')).toHaveAccessibleDescription(
+        pt.recurrences.form.accountTbdHint,
+      );
+
+      await type('recurrence-amount', '119,00');
+      await type('recurrence-description', 'Internet');
+      await pick('recurrence-category', 'cat-home');
+      await userEvent.click(screen.getByTestId('recurrence-form-save'));
+      await fixture.whenStable();
+
+      expect(gateway.creates[0]).toMatchObject({ accountId: null, method: null, cardId: null });
     });
 
     it('Dado Receita, então só as categorias de receita aparecem', async () => {

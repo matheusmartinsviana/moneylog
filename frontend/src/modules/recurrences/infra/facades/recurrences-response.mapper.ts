@@ -104,15 +104,18 @@ function optionalText(text: string): { description?: string } {
   return value !== '' ? { description: value } : {};
 }
 
-/** Só o destino do tipo vai no corpo: conta + meio de pagamento **ou** cartão (nunca os dois). */
+/**
+ * Só o destino do tipo vai no corpo: conta + meio de pagamento **ou** cartão (nunca os dois), ou nenhum
+ * ("conta a definir", 2.14.0: a conta e o meio são informados ao confirmar cada ocorrência).
+ */
 function destination(input: {
   readonly accountId: string | null;
   readonly method: RecurrenceInput['method'];
   readonly cardId: string | null;
 }) {
-  return input.cardId !== null
-    ? { cardId: input.cardId }
-    : { accountId: input.accountId, ...(input.method ? { method: input.method } : {}) };
+  if (input.cardId !== null) return { cardId: input.cardId };
+  if (input.accountId === null) return {};
+  return { accountId: input.accountId, ...(input.method ? { method: input.method } : {}) };
 }
 
 export function toCreateRequest(input: RecurrenceInput): RecurrenceCreateRequest {

@@ -94,6 +94,10 @@ export class OccurrencesPage implements OnInit {
       amount: occurrence.amount,
       label: occurrence.description ?? this.t().recurrences.types[occurrence.type],
       viaCard: occurrence.cardId !== null,
+      accountToDefine:
+        occurrence.type !== 'CARD_PURCHASE' &&
+        occurrence.accountId === null &&
+        occurrence.cardId === null,
     });
   }
 

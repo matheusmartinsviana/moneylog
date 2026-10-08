@@ -27,31 +27,48 @@ export type TextFieldType = 'text' | 'email' | 'password';
         [for]="controlId()"
         >{{ label() }}</label
       >
-      <input
-        class="input"
-        [type]="type()"
-        [id]="controlId()"
-        [attr.data-cy]="fieldId()"
-        [attr.data-autofocus]="autofocus() ? '' : null"
-        [attr.autocomplete]="autocomplete() ?? null"
-        [attr.maxlength]="maxlength() ?? null"
-        [attr.inputmode]="inputmode() ?? null"
-        [attr.enterkeyhint]="enterkeyhint() ?? null"
-        [attr.role]="role() ?? null"
-        [attr.aria-controls]="ariaControls() ?? null"
-        [attr.aria-expanded]="ariaExpanded()"
-        [attr.aria-activedescendant]="ariaActivedescendant() ?? null"
-        [attr.aria-autocomplete]="role() === 'combobox' ? 'list' : null"
-        [placeholder]="placeholder() ?? ''"
-        [value]="value()"
-        [disabled]="disabled()"
-        [attr.aria-required]="mandatory()"
-        [attr.aria-invalid]="showError()"
-        [attr.aria-describedby]="describedBy()"
-        spellcheck="false"
-        (input)="onInput($event)"
-        (blur)="onTouched()"
-      />
+      <div class="field__control">
+        <input
+          class="input"
+          [class.input--mono]="mono()"
+          [class.input--revealable]="revealable()"
+          [type]="revealable() && revealed() ? 'text' : type()"
+          [id]="controlId()"
+          [attr.data-cy]="fieldId()"
+          [attr.data-autofocus]="autofocus() ? '' : null"
+          [attr.autocomplete]="autocomplete() ?? null"
+          [attr.maxlength]="maxlength() ?? null"
+          [attr.inputmode]="inputmode() ?? null"
+          [attr.enterkeyhint]="enterkeyhint() ?? null"
+          [attr.role]="role() ?? null"
+          [attr.aria-controls]="ariaControls() ?? null"
+          [attr.aria-expanded]="ariaExpanded()"
+          [attr.aria-activedescendant]="ariaActivedescendant() ?? null"
+          [attr.aria-autocomplete]="role() === 'combobox' ? 'list' : null"
+          [placeholder]="placeholder() ?? ''"
+          [value]="value()"
+          [disabled]="disabled()"
+          [attr.aria-required]="mandatory()"
+          [attr.aria-invalid]="showError()"
+          [attr.aria-describedby]="describedBy()"
+          spellcheck="false"
+          (input)="onInput($event)"
+          (blur)="onTouched()"
+        />
+        @if (revealable()) {
+          <button
+            type="button"
+            class="field__reveal"
+            [attr.data-cy]="fieldId() + '-reveal'"
+            [attr.aria-pressed]="revealed()"
+            [attr.aria-controls]="controlId()"
+            [attr.aria-label]="revealed() ? hideLabelText() : showLabelText()"
+            (click)="revealed.set(!revealed())"
+          >
+            {{ revealed() ? hideLabelText() : showLabelText() }}
+          </button>
+        }
+      </div>
       @if (hint(); as text) {
         <p class="field__hint" [id]="hintId()">{{ text }}</p>
       }
@@ -62,6 +79,37 @@ export type TextFieldType = 'text' | 'email' | 'password';
     :host {
       display: block;
       min-width: 0;
+    }
+
+    .field__control {
+      position: relative;
+      display: grid;
+    }
+
+    .input--mono {
+      font-family: var(--font-mono, ui-monospace, monospace);
+      letter-spacing: 0.02em;
+    }
+
+    .input--revealable {
+      padding-right: 5.5rem;
+    }
+
+    .field__reveal {
+      position: absolute;
+      top: 50%;
+      right: var(--space-2);
+      transform: translateY(-50%);
+      min-height: 2rem;
+      padding: 0 var(--space-2);
+      border-radius: var(--radius-control);
+      color: var(--color-text-muted);
+      font-size: var(--text-sm);
+      font-weight: var(--weight-medium);
+    }
+
+    .field__reveal:hover {
+      color: var(--color-text);
     }
   `,
 })
@@ -85,6 +133,14 @@ export class TextFieldComponent extends FieldControl<string | null> {
   /** Só informa `aria-required`; a regra é o `Validators.required` do controle. */
   readonly mandatory = input(true);
 
+  /** Campo de senha com "Mostrar/Ocultar" (botão próprio, `aria-pressed`). Só faz sentido em `password`. */
+  readonly revealable = input(false);
+  readonly showLabelText = input('Show');
+  readonly hideLabelText = input('Hide');
+  /** Fonte monoespaçada (códigos). */
+  readonly mono = input(false);
+
+  protected readonly revealed = signal(false);
   protected readonly value = signal('');
 
   writeValue(value: string | null): void {

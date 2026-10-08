@@ -59,6 +59,32 @@ export interface SchedulePoint {
   readonly remainingAfter: Money;
 }
 
+/**
+ * Compromisso acompanhado na visão de dívidas: **fora do `total`** (sem dupla contagem). Saldo e progresso
+ * só existem no projeto de longo prazo; no empréstimo de terceiro são nulos e a tela não os inventa.
+ */
+export interface TrackedItem {
+  readonly id: string;
+  readonly kind: 'TRACKED_THIRD_PARTY' | 'LONG_TERM_PROJECT';
+  readonly name: string;
+  readonly counterparty: string | null;
+  readonly total: Money | null;
+  readonly paid: Money | null;
+  readonly nominalBalance: Money | null;
+  readonly progress: string | null;
+  readonly installmentsTotal: number | null;
+  readonly installmentsPaid: number | null;
+  readonly remainingInstallments: number | null;
+  readonly nextDueDate: string | null;
+  readonly directPending: Money | null;
+}
+
+export interface TrackedOverview {
+  readonly items: readonly TrackedItem[];
+  /** Pendente de pagamento direto por mês de vencimento (curva à parte do cronograma de dívidas). */
+  readonly scheduleByMonth: readonly { readonly competence: string; readonly amount: Money }[];
+}
+
 export type PayoffReason = 'UNDATED_DEBTS' | 'BEYOND_HORIZON';
 export type IncomeSource = 'RECURRING_ESTIMATE' | 'LAST_FULL_MONTH' | 'NONE';
 
@@ -109,6 +135,8 @@ export interface DebtOverview {
     readonly progress: string;
     readonly remaining: Money;
   } | null;
+  /** Compromissos acompanhados: bloco separado, fora do total de dívidas. */
+  readonly tracked: TrackedOverview;
 }
 
 /** Compra parcelada em andamento. `installmentAmount` é a string decimal digitada. */

@@ -4,6 +4,7 @@ import type {
   Occurrence,
   OccurrenceStatus,
   RealizedTransaction,
+  RealizePayment,
   Recurrence,
   RecurrenceInput,
   RecurrenceSummary,
@@ -45,12 +46,14 @@ export abstract class RecurrencesGateway {
   /**
    * Confirma a ocorrência (cria a movimentação). `Idempotency-Key` obrigatório: uma por tentativa
    * (a mesma chave + o mesmo corpo devolve a mesma movimentação). `amount` `null` = valor do modelo.
+   * `payment`: conta e meio, obrigatórios na recorrência "a definir" (`RECURRENCE_ACCOUNT_REQUIRED`).
    */
   abstract realize(
     recurrenceId: string,
     date: string,
     amount: string | null,
     idempotencyKey: string,
+    payment?: RealizePayment | null,
   ): Observable<RealizedTransaction>;
   abstract skip(recurrenceId: string, date: string): Observable<Occurrence>;
 }

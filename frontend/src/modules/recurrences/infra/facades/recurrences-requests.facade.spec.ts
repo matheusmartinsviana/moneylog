@@ -129,6 +129,20 @@ describe('RecurrencesRequestsFacade', () => {
       await result;
     });
 
+    it('Dado criar sem conta ("conta a definir"), então o corpo não leva conta nem método', async () => {
+      const { gateway, http } = setup(false);
+
+      const result = firstValueFrom(
+        gateway.create({ ...INPUT, accountId: null, method: null }, 'key-tbd'),
+      );
+      const req = http.expectOne(RECURRENCES_ENDPOINTS.collection);
+      expect(req.request.body).not.toHaveProperty('accountId');
+      expect(req.request.body).not.toHaveProperty('method');
+      expect(req.request.body).not.toHaveProperty('cardId');
+      req.flush(aRecurrenceResponse({ account: null, method: null }));
+      expect((await result).account).toBeNull();
+    });
+
     it('Dado criar no cartão em CUSTOM, então leva cardId, intervalo e unidade, sem conta', async () => {
       const { gateway, http } = setup(false);
 
@@ -258,6 +272,21 @@ describe('RecurrencesRequestsFacade', () => {
       expect(second.request.body).toEqual({});
       second.flush(aResponse());
       await model;
+    });
+
+    it('Dado realizar uma recorrência sem conta, então o corpo leva a conta e o meio escolhidos', async () => {
+      const { gateway, http } = setup(false);
+
+      const result = firstValueFrom(
+        gateway.realize('rec-1', '2026-10-10', null, 'key-p', {
+          accountId: 'acc-1',
+          method: 'PIX',
+        }),
+      );
+      const req = http.expectOne(RECURRENCES_ENDPOINTS.realize('rec-1', '2026-10-10'));
+      expect(req.request.body).toEqual({ accountId: 'acc-1', method: 'PIX' });
+      req.flush(aResponse());
+      await result;
     });
 
     it('Dado realizar uma compra no cartão, então devolve a fatura da 1ª parcela (a escolhida pelo backend)', async () => {

@@ -48,3 +48,28 @@
 .login__submit {
   min-height: 2.75rem;
 }
+
+.login__notice {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.login__rules {
+  display: grid;
+  gap: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.login__rules ul {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.login__rule--met {
+  color: var(--color-text);
+}

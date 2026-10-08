@@ -26,6 +26,51 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/auth/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * O dono ainda precisa escolher a senha (primeiro acesso)?
+         * @description Público e sem dado sensível. `passwordSetupRequired=true` quando o dono não tem senha no banco e (pediu redefinição
+         *     ou não há hash no ambiente): o front mostra a tela de primeiro acesso em vez do login (ADR-015).
+         */
+        get: operations["getAuthStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/auth/setup-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Primeiro acesso, o dono escolhe a senha
+         * @description Só funciona enquanto o dono não tem senha definida (`GET /v1/auth/status`). Exige o e-mail do dono e o `setupCode` de
+         *     uso único (impresso no log de inicialização do perfil dev, ou informado em `MONEYLOG_OWNER_SETUP_CODE`), que expira
+         *     em 24 h ou ao ser usado. Senha: 12 a 72 bytes e diferente do e-mail (`422 WEAK_PASSWORD`, o código não é consumido).
+         *     Devolve o mesmo par do login (cookie `ml_refresh` + `AuthToken`) e revoga todas as sessões anteriores. E-mail, código
+         *     errado, expirado ou já usado: `401 INVALID_SETUP_CODE` (mesma resposta). Limite: 5 falhas por IP em 15 min → `429`.
+         */
+        post: operations["setupPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/auth/refresh": {
         parameters: {
             query?: never;
@@ -427,6 +472,28 @@ export interface paths {
          */
         put: operations["updateCard"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/cards/{id}/closing-confirmation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Marca se o fechamento do cartão está confirmado por documento
+         * @description Não muda o calendário nem as faturas (o `closingDay` segue como parâmetro técnico). Devolve o cartão atualizado; versão diferente → `409`.
+         */
+        post: operations["setCardClosingConfirmation"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1000,6 +1067,50 @@ export interface paths {
          */
         post: operations["markThirdPartyExpense"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/third-party-receipts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Registra um recebimento de terceiro já refletido no saldo, sem movimento de conta
+         * @description Para o dinheiro que a pessoa já enviou e que **já está no saldo observado**: nada é lançado no razão (sem conta, sem renda, sem consumo). Com
+         *     `transactionId` (despesa marcada como de terceiro, da mesma pessoa) reduz o pendente dela; sem, aparece como item `RECEIPT` já recebido,
+         *     "origem a confirmar". `Idempotency-Key` opcional.
+         */
+        post: operations["recordThirdPartyReceipt"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/third-party-expenses/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Desfaz a marca de despesa de terceiro (correção de responsável)
+         * @description Só a marca sai; a despesa, o consumo e os reembolsos ficam como estão. `Idempotency-Key` não se aplica (remover de novo é 404).
+         */
+        delete: operations["unmarkThirdPartyExpense"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2842,6 +2953,16 @@ export interface components {
             email: string;
             password: string;
         };
+        SetupPasswordRequest: {
+            /** Format: email */
+            email: string;
+            setupCode: string;
+            /** @description 12 caracteres no mínimo, 72 bytes no máximo, diferente do e-mail. */
+            newPassword: string;
+        };
+        AuthStatus: {
+            passwordSetupRequired: boolean;
+        };
         AuthToken: {
             /** @description JWT de 15 min. O front o guarda só em memória. */
             accessToken: string;
@@ -3777,6 +3898,8 @@ export interface components {
              *     faturas; o `/upcoming` e o dashboard são líquidos). Ver a exceção da identidade na descrição de `Card`.
              */
             committedFuture: components["schemas"]["Money"];
+            /** @description Fechamento confirmado por documento (2.14.0). `false` = o `closingDay` é só um parâmetro técnico provisório, nunca um fato: a tela mostra "fechamento não confirmado". Padrão `true`. */
+            closingConfirmed: boolean;
             /** @description Ativo, sem saldo em aberto, sem crédito e sem parcela futura (S-120). */
             archivable: boolean;
             /** Format: int64 */
@@ -4285,6 +4408,11 @@ export interface components {
             total: components["schemas"]["Money"];
             remainingAfter: components["schemas"]["Money"];
         };
+        CardClosingConfirmationInput: {
+            confirmed: boolean;
+            /** Format: int64 */
+            version: number;
+        };
         /** @enum {string} */
         CommitmentKind: "TRACKED_THIRD_PARTY" | "LONG_TERM_PROJECT";
         /** @enum {string} */
@@ -4377,6 +4505,10 @@ export interface components {
             /** Format: date */
             nextDueDate?: string | null;
             notes?: string | null;
+            /** @description Opcional; nulo não muda (corrigir o nome). */
+            name?: string | null;
+            /** @description Opcional; nulo não muda (corrigir a titularidade, por exemplo "Titular a confirmar"). */
+            counterparty?: string | null;
             /** Format: int64 */
             version: number;
         };
@@ -4386,6 +4518,33 @@ export interface components {
             /** Format: uuid */
             personId: string;
             note?: string | null;
+            /** @description Parte reembolsável já comprovada (padrão `null` = o valor cobrado da compra, inclusive as parcelas futuras). Entre 0,01 e o valor cobrado. */
+            amount?: string | null;
+        };
+        ThirdPartyReceiptInput: {
+            /** Format: uuid */
+            personId: string;
+            /**
+             * Format: uuid
+             * @description Despesa marcada como de terceiro (da mesma pessoa) à qual o recebimento se liga; ausente = sem vínculo ("origem a confirmar").
+             */
+            transactionId?: string | null;
+            amount: components["schemas"]["AmountInput"];
+            /** Format: date */
+            receivedOn?: string | null;
+            note?: string | null;
+        };
+        ThirdPartyReceipt: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            personId: string;
+            /** Format: uuid */
+            transactionId: string | null;
+            amount: components["schemas"]["Money"];
+            /** Format: date */
+            receivedOn: string | null;
+            note: string | null;
         };
         ThirdPartyExpense: {
             /** Format: uuid */
@@ -4395,10 +4554,11 @@ export interface components {
             /** Format: uuid */
             personId: string;
             note: string | null;
+            amount: components["schemas"]["Money"] | null;
         };
         ThirdPartyItem: {
             /** @enum {string} */
-            source: "DEBT" | "EXPENSE";
+            source: "DEBT" | "EXPENSE" | "RECEIPT";
             /** Format: uuid */
             refId: string;
             description: string | null;
@@ -6616,6 +6776,57 @@ export interface operations {
             500: components["responses"]["InternalServerError"];
         };
     };
+    getAuthStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Estado do primeiro acesso. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthStatus"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    setupPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetupPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description Senha definida e sessão aberta. */
+            200: {
+                headers: {
+                    "Set-Cookie": components["headers"]["RefreshCookie"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthToken"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
     refreshToken: {
         parameters: {
             query?: never;
@@ -7286,6 +7497,37 @@ export interface operations {
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
             422: components["responses"]["UnprocessableEntity"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    setCardClosingConfirmation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CardClosingConfirmationInput"];
+            };
+        };
+        responses: {
+            /** @description O cartão atualizado. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Card"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
             500: components["responses"]["InternalServerError"];
         };
     };
@@ -8069,6 +8311,62 @@ export interface operations {
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
             422: components["responses"]["UnprocessableEntity"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    recordThirdPartyReceipt: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ThirdPartyReceiptInput"];
+            };
+        };
+        responses: {
+            /** @description Recebimento registrado. */
+            201: {
+                headers: {
+                    Location: components["headers"]["Location"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThirdPartyReceipt"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["UnprocessableEntity"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    unmarkThirdPartyExpense: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Marca removida. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
             500: components["responses"]["InternalServerError"];
         };
     };

@@ -9,6 +9,7 @@ import {
 } from '~/modules/recurrences/core/interfaces/recurrences.gateway';
 import type {
   Occurrence,
+  RealizePayment,
   RealizedTransaction,
   Recurrence,
   RecurrenceInput,
@@ -145,9 +146,13 @@ export class RecurrencesRequestsFacade extends RecurrencesGateway {
     date: string,
     amount: string | null,
     idempotencyKey: string,
+    payment: RealizePayment | null = null,
   ): Observable<RealizedTransaction> {
     if (this.useMocks) return notFound();
-    const body: RealizeRequest = amount === null ? {} : { amount };
+    const body: RealizeRequest = {
+      ...(amount === null ? {} : { amount }),
+      ...(payment ? { accountId: payment.accountId, method: payment.method } : {}),
+    };
     return this.http
       .post<RealizedTransactionResponse>(RECURRENCES_ENDPOINTS.realize(recurrenceId, date), body, {
         headers: new HttpHeaders().set(IDEMPOTENCY_HEADER, idempotencyKey),

@@ -31,9 +31,12 @@ import { LinkedNotesComponent } from '~/app/features/notes/components/linked-not
 import { CancelInstallmentsActionComponent } from '~/app/features/transactions/components/cancel-installments-action/cancel-installments-action.component';
 import { ImpactPanelComponent } from '~/app/features/transactions/components/impact-panel/impact-panel.component';
 import { InstallmentsListComponent } from '~/app/features/transactions/components/installments-list/installments-list.component';
+import { ThirdPartyBadgeComponent } from '~/app/features/transactions/components/third-party-badge/third-party-badge.component';
+import { ThirdPartyMarkModalComponent } from '~/app/features/transactions/components/third-party-mark-modal/third-party-mark-modal.component';
 import { VoidActionComponent } from '~/app/features/transactions/components/void-action/void-action.component';
 import { flowOf, flowSign } from '~/app/features/transactions/transaction-flow';
 import { transactionLabel } from '~/app/features/transactions/transaction-label';
+import { ThirdPartyExpenseFacade } from '~/modules/third-parties/core/facades/third-party-expense.facade';
 import { TransactionDetailFacade } from '~/modules/transactions/core/facades/transaction-detail.facade';
 import type { Transaction } from '~/modules/transactions/core/types/transaction';
 import { formatCompetenceShort, formatInstant, formatIsoDate } from '~/util/date';
@@ -66,13 +69,15 @@ interface Field {
     EmptyStateComponent,
     ErrorStateComponent,
     IconComponent,
-    MoneyComponent,
     ImpactPanelComponent,
     InstallmentsListComponent,
     VoidActionComponent,
     CancelInstallmentsActionComponent,
+    ThirdPartyBadgeComponent,
+    ThirdPartyMarkModalComponent,
+    MoneyComponent,
   ],
-  providers: [TransactionDetailFacade],
+  providers: [TransactionDetailFacade, ThirdPartyExpenseFacade],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '(document:keydown.escape)': 'onEscape($event)' },
   templateUrl: './transaction-detail.page.html',
@@ -86,11 +91,13 @@ export class TransactionDetailPage {
   private readonly i18n = inject(I18nService);
   protected readonly t = this.i18n.t;
   protected readonly facade = inject(TransactionDetailFacade);
+  protected readonly thirdParty = inject(ThirdPartyExpenseFacade);
 
   /** `:id` da rota. */
   readonly id = input.required<string>();
 
   protected readonly cancelDone = signal(0);
+  protected readonly markOpen = signal(false);
   private readonly heading = viewChild<ElementRef<HTMLElement>>('heading');
 
   protected readonly state = this.facade.state;
@@ -124,6 +131,15 @@ export class TransactionDetailPage {
       date: formatInstant(tx.voidedAt, HTML_LANG[this.i18n.language()]),
     });
   });
+  /** Despesa ou compra no cartão ativa: pode ser de terceiro (a marca não muda o lançamento). */
+  protected readonly canMarkThirdParty = computed(() => {
+    const tx = this.transaction();
+    return (
+      tx !== null &&
+      tx.status === 'ACTIVE' &&
+      (tx.type === 'EXPENSE' || tx.type === 'CARD_PURCHASE')
+    );
+  });
   protected readonly fields = computed<readonly Field[]>(() => {
     const tx = this.transaction();
     return tx ? this.fieldsOf(tx) : [];
@@ -145,6 +161,14 @@ export class TransactionDetailPage {
         );
       }
     });
+    // Despesa elegível: pergunta ao backend se já está marcada (pessoa e reembolso recebido).
+    effect(() => {
+      const tx = this.transaction();
+      const eligible = this.canMarkThirdParty();
+      untracked(() => {
+        if (tx !== null && eligible) this.thirdParty.find(tx.id);
+      });
+    });
     this.facade.voided$.pipe(takeUntilDestroyed()).subscribe(() => {
       this.toast.show(this.t().transactions.detail.void.toast);
     });
@@ -152,6 +176,12 @@ export class TransactionDetailPage {
       this.cancelDone.update((value) => value + 1);
       this.toast.show(this.t().transactions.detail.cancel.toast);
     });
+  }
+
+  protected afterMarked(): void {
+    this.markOpen.set(false);
+    this.toast.show(this.t().transactions.thirdParty.modal.toast);
+    this.thirdParty.find(this.id());
   }
 
   protected retry(): void {

@@ -1,0 +1,50 @@
+<app-page-layout [heading]="t().nav.planning">
+  <a
+    pageActions
+    class="button button--primary"
+    routerLink="/planning/commitments/new"
+    data-cy="commitments-add"
+  >
+    {{ t().commitments.add }}
+  </a>
+
+  <app-planning-nav current="commitments" />
+
+  <header class="intro">
+    <h2 class="intro__title">{{ t().commitments.title }}</h2>
+    <p class="note" data-cy="commitments-description">{{ t().commitments.description }}</p>
+  </header>
+
+  @switch (commitments.state().status) {
+    @case ('loading') {
+      <div data-cy="commitments-loading">
+        <p class="visually-hidden" role="status">{{ t().commitments.loading }}</p>
+        <div class="list-skeleton" aria-hidden="true">
+          <div class="list-skeleton__row"></div>
+          <div class="list-skeleton__row"></div>
+        </div>
+      </div>
+    }
+    @case ('empty') {
+      <app-empty-state
+        [heading]="t().commitments.empty.title"
+        [description]="t().commitments.empty.description"
+        [actions]="emptyActions()"
+        illustration="timeline"
+      />
+    }
+    @case ('error') {
+      <app-error-state [problem]="commitments.error()" (retry)="retry()" />
+    }
+    @case ('ready') {
+      @if (commitments.data(); as data) {
+        <ul class="list" data-cy="commitments-list">
+          @for (commitment of data; track commitment.id) {
+            <li app-commitment-row [commitment]="commitment"></li>
+          }
+        </ul>
+      }
+    }
+  }
+</app-page-layout>
+<router-outlet (deactivate)="commitments.load()" />

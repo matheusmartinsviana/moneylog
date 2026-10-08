@@ -228,3 +228,38 @@ describe('DebtsOverviewPage', () => {
     expect(violations, describeViolations(violations)).toEqual([]);
   });
 });
+
+describe('DebtsOverviewPage: compromissos acompanhados', () => {
+  it('Dado compromissos, então ficam num bloco à parte, fora do total, e o empréstimo de terceiro não tem saldo', async () => {
+    await setup();
+
+    const tracked = screen.getByTestId('debts-tracked');
+    expect(screen.getByTestId('debts-total')).not.toContainElement(tracked);
+    expect(tracked.closest('section')).not.toBe(screen.getByTestId('debts-total'));
+    expect(text(screen.getByTestId('debts-total-value'))).toContain('R$ 6.500,00');
+    expect(text(screen.getByTestId('debts-tracked-c-loan'))).toContain('4 de 12 parcelas pagas');
+    expect(text(screen.getByTestId('debts-tracked-c-loan'))).toContain(
+      pt.debtOverview.tracked.balanceUnknown,
+    );
+    expect(text(screen.getByTestId('debts-tracked-balance-c-project'))).toBe('R$ 270.000,00');
+  });
+
+  it('Dado a curva à parte, então lista o pendente por mês sem entrar no cronograma das dívidas', async () => {
+    await setup();
+
+    const schedule = screen.getByTestId('debts-tracked-schedule');
+    expect(text(schedule)).toContain('R$ 4.000,00');
+    expect(screen.getByTestId('debts-tracked')).toContainElement(schedule);
+  });
+
+  it('Dado nenhum compromisso, então diz que não há e oferece cadastrar', async () => {
+    const gateway = new DebtOverviewGatewayStub();
+    gateway.overview$ = of(aDebtOverview({ tracked: { items: [], scheduleByMonth: [] } }));
+    await setup(gateway);
+
+    expect(screen.getByTestId('debts-tracked-empty')).toHaveTextContent(
+      pt.debtOverview.tracked.empty,
+    );
+    expect(screen.getByTestId('debts-tracked-add')).toBeInTheDocument();
+  });
+});

@@ -4,11 +4,17 @@ import { catchError, map, Observable, of, throwError } from 'rxjs';
 
 import { AuthGateway } from '~/modules/auth/core/interfaces/auth.gateway';
 import { AuthFailure } from '~/modules/auth/core/types/auth-failure';
-import type { AuthToken, Credentials } from '~/modules/auth/core/types/auth-token';
+import type {
+  AuthToken,
+  Credentials,
+  SetupPasswordInput,
+} from '~/modules/auth/core/types/auth-token';
 import { AUTH_ENDPOINTS } from '~/modules/auth/infra/endpoints';
 import type {
+  AuthStatusResponse,
   AuthTokenResponse,
   LoginRequest,
+  SetupPasswordRequest,
 } from '~/modules/auth/infra/responses/auth-token.response';
 import { FAKE_SESSION } from '~/modules/auth/mock-data/fake-session';
 import { toProblem } from '~/util/api/problem';
@@ -27,6 +33,20 @@ function loginFailure(error: unknown): Observable<never> {
       : problem.status === 429
         ? new AuthFailure('rate_limited', problem.retryAfterSeconds)
         : new AuthFailure(problem.status === 0 ? 'network' : 'unavailable');
+  return throwError(() => failure);
+}
+
+/** Falha do primeiro acesso: o `code` do servidor decide a mensagem (nunca o texto dele). */
+function setupFailure(error: unknown): Observable<never> {
+  const problem = toProblem(error);
+  let failure: AuthFailure;
+  if (problem.status === 0) failure = new AuthFailure('network');
+  else if (problem.status === 429 || problem.code === 'TOO_MANY_ATTEMPTS')
+    failure = new AuthFailure('rate_limited', problem.retryAfterSeconds);
+  else if (problem.code === 'INVALID_SETUP_CODE') failure = new AuthFailure('invalid_setup_code');
+  else if (problem.code === 'WEAK_PASSWORD') failure = new AuthFailure('weak_password');
+  else if (problem.code === 'VALIDATION_FAILED') failure = new AuthFailure('validation');
+  else failure = new AuthFailure('unavailable');
   return throwError(() => failure);
 }
 
@@ -55,6 +75,29 @@ export class AuthRequestsFacade extends AuthGateway {
     return this.http
       .post<AuthTokenResponse>(AUTH_ENDPOINTS.login, body)
       .pipe(map(toToken), catchError(loginFailure));
+  }
+
+  passwordSetupRequired(): Observable<boolean> {
+    if (this.useMocks) return of(false);
+    return this.http.get<AuthStatusResponse>(AUTH_ENDPOINTS.status).pipe(
+      map((response) => response.passwordSetupRequired),
+      catchError((error: unknown) => {
+        const problem = toProblem(error);
+        return throwError(() => new AuthFailure(problem.status === 0 ? 'network' : 'unavailable'));
+      }),
+    );
+  }
+
+  setupPassword(input: SetupPasswordInput): Observable<AuthToken> {
+    if (this.useMocks) return of(toToken(FAKE_SESSION));
+    const body: SetupPasswordRequest = {
+      email: input.email,
+      setupCode: input.setupCode,
+      newPassword: input.newPassword,
+    };
+    return this.http
+      .post<AuthTokenResponse>(AUTH_ENDPOINTS.setupPassword, body)
+      .pipe(map(toToken), catchError(setupFailure));
   }
 
   refresh(): Observable<AuthToken> {

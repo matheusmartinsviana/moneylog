@@ -31,5 +31,6 @@ export function emptyOverview(months: number): DebtOverviewResponse {
       payoffReason: null,
     },
     payoffGoal: null,
+    tracked: { items: [], scheduleByMonth: [] },
   };
 }

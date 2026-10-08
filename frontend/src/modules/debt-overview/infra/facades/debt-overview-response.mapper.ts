@@ -17,6 +17,9 @@ const money = (value: { amount: string; currency: string }): Money => ({
   currency: value.currency,
 });
 
+const optionalMoney = (value: { amount: string; currency: string } | null): Money | null =>
+  value ? money(value) : null;
+
 function toLine(item: DebtOverviewResponse['people']['items'][number]): DebtLine {
   return {
     debtId: item.debtId,
@@ -109,6 +112,27 @@ export function toDebtOverview(response: DebtOverviewResponse): DebtOverview {
           remaining: money(response.payoffGoal.remaining),
         }
       : null,
+    tracked: {
+      items: response.tracked.items.map((item) => ({
+        id: item.id,
+        kind: item.kind,
+        name: item.name,
+        counterparty: item.counterparty,
+        total: optionalMoney(item.total),
+        paid: optionalMoney(item.paid),
+        nominalBalance: optionalMoney(item.nominalBalance),
+        progress: item.progress,
+        installmentsTotal: item.installmentsTotal,
+        installmentsPaid: item.installmentsPaid,
+        remainingInstallments: item.remainingInstallments,
+        nextDueDate: item.nextDueDate,
+        directPending: optionalMoney(item.directPending),
+      })),
+      scheduleByMonth: response.tracked.scheduleByMonth.map((month) => ({
+        competence: month.competence,
+        amount: money(month.amount),
+      })),
+    },
   };
 }
 

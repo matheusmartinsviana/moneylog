@@ -9,6 +9,7 @@ import {
 import type {
   Occurrence,
   RealizedTransaction,
+  RealizePayment,
   Recurrence,
   RecurrenceInput,
   RecurrenceSummary,
@@ -95,6 +96,7 @@ export class RecurrencesGatewayStub extends RecurrencesGateway {
     date: string;
     amount: string | null;
     key: string;
+    payment: RealizePayment | null;
   }[] = [];
   readonly creates: RecurrenceInput[] = [];
   /** `Idempotency-Key` de cada `create`, na ordem. */
@@ -178,9 +180,10 @@ export class RecurrencesGatewayStub extends RecurrencesGateway {
     date: string,
     amount: string | null,
     key: string,
+    payment: RealizePayment | null = null,
   ): Observable<RealizedTransaction> {
     this.calls.push(`realize:${recurrenceId}:${date}`);
-    this.realizations.push({ recurrenceId, date, amount, key });
+    this.realizations.push({ recurrenceId, date, amount, key, payment });
     return this.realize$ ?? of(aRealized({ date, amount: brl(amount ?? '119.00') }));
   }
 

@@ -233,4 +233,49 @@ describe('SessionFacade', () => {
       expect(session.token()).toBe('token-1');
     });
   });
+
+  describe('primeiro acesso', () => {
+    it('Dado o setup certo, então autentica e avisa o sucesso', () => {
+      const { gateway, session } = setup();
+      let signedIn = 0;
+      session.signedIn$.subscribe(() => signedIn++);
+
+      session.setupPassword({ email: 'a@b.c', setupCode: 'C', newPassword: 'N' });
+
+      expect(gateway.setups).toHaveLength(1);
+      expect(session.authenticated()).toBe(true);
+      expect(session.token()).toBe('token-setup');
+      expect(signedIn).toBe(1);
+    });
+
+    it('Dado a falha, então guarda o motivo e não autentica', () => {
+      const { gateway, session } = setup();
+      gateway.setup$ = throwError(() => new AuthFailure('invalid_setup_code'));
+
+      session.setupPassword({ email: 'a@b.c', setupCode: 'C', newPassword: 'N' });
+
+      expect(session.setupState()).toMatchObject({
+        status: 'failed',
+        failure: { reason: 'invalid_setup_code' },
+      });
+      expect(session.authenticated()).toBe(false);
+    });
+
+    it('Dado clique duplo, então só uma requisição sai enquanto a primeira não termina', () => {
+      const { gateway, session } = setup();
+      gateway.setup$ = NEVER;
+
+      session.setupPassword({ email: 'a@b.c', setupCode: 'C', newPassword: 'N' });
+      session.setupPassword({ email: 'a@b.c', setupCode: 'C', newPassword: 'N' });
+
+      expect(gateway.setups).toHaveLength(1);
+    });
+
+    it('Dado falha ao consultar o status, então devolve null em vez de lançar', async () => {
+      const { gateway, session } = setup();
+      gateway.setupRequired$ = throwError(() => new AuthFailure('network'));
+
+      expect(await firstValueFrom(session.passwordSetupRequired())).toBeNull();
+    });
+  });
 });

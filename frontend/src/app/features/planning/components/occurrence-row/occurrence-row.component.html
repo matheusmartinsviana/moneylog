@@ -6,6 +6,11 @@
     <span [attr.data-cy]="'occurrence-via-' + key()">
       {{ o.cardId ? t().recurrences.occurrences.viaCard : t().recurrences.occurrences.viaAccount }}
     </span>
+    @if (accountToDefine()) {
+      <span class="status" [attr.data-cy]="'occurrence-account-tbd-' + key()">
+        {{ t().recurrences.occurrences.accountTbd }}
+      </span>
+    }
     @if (o.direction === 'IN') {
       <span>{{ t().recurrences.occurrences.incoming }}</span>
     }

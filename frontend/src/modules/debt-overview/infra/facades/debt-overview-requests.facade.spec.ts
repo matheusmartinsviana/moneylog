@@ -53,6 +53,41 @@ describe('DebtOverviewRequestsFacade', () => {
     expect(overview.comparison.debtToIncome).toBe('1.0833');
   });
 
+  it('Dado compromissos acompanhados, então vêm à parte do total e sem saldo no empréstimo de terceiro', async () => {
+    const { gateway, http } = setup(false);
+    const raw = emptyOverview(12);
+    raw.total = { amount: '0.00', currency: 'BRL' };
+    raw.tracked = {
+      items: [
+        {
+          id: 'c-1',
+          kind: 'TRACKED_THIRD_PARTY',
+          name: 'Empréstimo',
+          counterparty: 'Ana',
+          total: null,
+          paid: { amount: '400.00', currency: 'BRL' },
+          nominalBalance: null,
+          progress: null,
+          installmentsTotal: 12,
+          installmentsPaid: 4,
+          remainingInstallments: 8,
+          nextDueDate: '2026-11-15',
+          directPending: null,
+        },
+      ],
+      scheduleByMonth: [{ competence: '2026-11', amount: { amount: '100.00', currency: 'BRL' } }],
+    };
+
+    const result = firstValueFrom(gateway.get(12));
+    http.expectOne((r) => r.url === DEBT_OVERVIEW_ENDPOINTS.overview).flush(raw);
+
+    const overview = await result;
+    expect(overview.total.amount).toBe('0.00');
+    expect(overview.tracked.items[0]?.nominalBalance).toBeNull();
+    expect(overview.tracked.items[0]?.paid?.amount).toBe('400.00');
+    expect(overview.tracked.scheduleByMonth[0]?.amount.amount).toBe('100.00');
+  });
+
   it('Dado a prévia do parcelado, então posta o corpo do contrato e devolve o que falta', async () => {
     const { gateway, http } = setup(false);
 

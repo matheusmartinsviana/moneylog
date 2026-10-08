@@ -730,6 +730,38 @@ export abstract class AppI18n {
         readonly network: string;
         readonly unavailable: string;
       };
+      /** Aviso discreto quando não deu para consultar se é o primeiro acesso. */
+      readonly statusUnavailable: string;
+      readonly checking: string;
+    };
+    /** Primeiro acesso: definir a senha com o código de configuração (ADR-015). */
+    readonly setup: {
+      readonly title: string;
+      readonly description: string;
+      readonly email: string;
+      readonly code: string;
+      readonly codeHint: string;
+      readonly newPassword: string;
+      readonly confirmPassword: string;
+      readonly show: string;
+      readonly hide: string;
+      readonly rulesTitle: string;
+      readonly ruleLength: string;
+      readonly ruleBytes: string;
+      readonly ruleNotEmail: string;
+      readonly submit: string;
+      readonly submitting: string;
+      /** `{seconds}`: espera até poder tentar de novo. */
+      readonly retryIn: string;
+      readonly errors: {
+        readonly invalidCode: string;
+        readonly weakPassword: string;
+        /** `{seconds}`: espera até poder tentar de novo. */
+        readonly rateLimited: string;
+        readonly validation: string;
+        readonly network: string;
+        readonly unavailable: string;
+      };
     };
     readonly session: {
       readonly title: string;
@@ -848,6 +880,33 @@ export abstract class AppI18n {
 
   /** Movimentações: lista, filtros e totais (T39). Valores vêm da API; aqui só rótulos. */
   abstract readonly transactions: {
+    /** Despesa de terceiro (2.14.0): selo, marca e vínculo com o reembolso. */
+    readonly thirdParty: {
+      readonly badge: string;
+      /** `{name}`: pessoa responsável. */
+      readonly badgeFor: string;
+      readonly action: string;
+      readonly modal: {
+        readonly title: string;
+        readonly description: string;
+        readonly person: string;
+        readonly note: string;
+        readonly save: string;
+        readonly saving: string;
+        readonly cancel: string;
+        readonly toast: string;
+      };
+      readonly detail: {
+        readonly title: string;
+        readonly person: string;
+        readonly owed: string;
+        readonly received: string;
+        readonly pending: string;
+        readonly rule: string;
+        readonly register: string;
+        readonly openList: string;
+      };
+    };
     readonly loading: string;
     readonly voided: string;
     readonly noCategory: string;
@@ -1661,6 +1720,8 @@ export abstract class AppI18n {
       readonly summary: string;
       readonly projections: string;
       readonly debts: string;
+      readonly thirdParties: string;
+      readonly commitments: string;
     };
     /** Custo fixo e receita recorrente mensais: sempre rotulados como estimativa (S-146). */
     readonly summary: {
@@ -1696,6 +1757,8 @@ export abstract class AppI18n {
       readonly end: string;
       readonly deactivate: string;
       readonly actionsLabel: string;
+      /** Recorrência sem conta definida (2.14.0). */
+      readonly accountTbd: string;
     };
     readonly endSheet: {
       readonly title: string;
@@ -1728,6 +1791,8 @@ export abstract class AppI18n {
       readonly method: string;
       readonly card: string;
       readonly cardNote: string;
+      readonly accountTbd: string;
+      readonly accountTbdHint: string;
       readonly frequency: string;
       readonly interval: string;
       readonly unit: string;
@@ -1764,6 +1829,7 @@ export abstract class AppI18n {
       readonly viaAccount: string;
       readonly viaCard: string;
       readonly incoming: string;
+      readonly accountTbd: string;
       readonly overdue: string;
       readonly realize: string;
       readonly skip: string;
@@ -1784,6 +1850,10 @@ export abstract class AppI18n {
       readonly date: string;
       readonly amount: string;
       readonly amountHint: string;
+      readonly account: string;
+      readonly method: string;
+      readonly accountNote: string;
+      readonly noAccounts: string;
       readonly cardNote: string;
       readonly submit: string;
       readonly submitting: string;
@@ -2752,6 +2822,27 @@ export abstract class AppI18n {
 
   /** Visão total de dívidas, parcelado em andamento e cartão do Início (2.13.0). Valores vêm da API. */
   abstract readonly debtOverview: {
+    /** Compromissos acompanhados (2.14.0): bloco à parte, fora do total. */
+    readonly tracked: {
+      readonly title: string;
+      readonly description: string;
+      readonly empty: string;
+      readonly manage: string;
+      readonly add: string;
+      /** `{paid}` e `{total}`. */
+      readonly installments: string;
+      readonly balanceUnknown: string;
+      /** `{percent}`. */
+      readonly progress: string;
+      /** `{date}`. */
+      readonly nextDue: string;
+      readonly paid: string;
+      readonly balance: string;
+      readonly directPending: string;
+      readonly scheduleTitle: string;
+      readonly scheduleNote: string;
+      readonly kinds: Readonly<Record<'TRACKED_THIRD_PARTY' | 'LONG_TERM_PROJECT', string>>;
+    };
     readonly title: string;
     readonly description: string;
     readonly loading: string;
@@ -2885,6 +2976,169 @@ export abstract class AppI18n {
       readonly loading: string;
       readonly error: string;
       readonly retry: string;
+    };
+  };
+
+  /** Dinheiro a receber de terceiros (2.14.0). Valores e datas vêm da API; nada é calculado no front. */
+  abstract readonly thirdParties: {
+    readonly title: string;
+    readonly description: string;
+    readonly loading: string;
+    readonly empty: {
+      readonly title: string;
+      readonly description: string;
+      readonly action: string;
+    };
+    readonly total: {
+      readonly title: string;
+      readonly owed: string;
+      readonly received: string;
+      readonly pending: string;
+      /** `{date}`. */
+      readonly asOf: string;
+      readonly note: string;
+    };
+    readonly people: {
+      readonly title: string;
+      readonly owed: string;
+      readonly received: string;
+      readonly pending: string;
+      readonly none: string;
+      readonly noDescription: string;
+      /** `{date}`. */
+      readonly expected: string;
+      readonly source: Readonly<Record<'DEBT' | 'EXPENSE' | 'RECEIPT', string>>;
+    };
+    readonly month: {
+      readonly title: string;
+      readonly description: string;
+      readonly picker: string;
+      readonly gross: string;
+      readonly refunds: string;
+      readonly personalNet: string;
+      readonly thirdParty: string;
+      readonly reimbursed: string;
+      readonly pending: string;
+      readonly note: string;
+    };
+  };
+
+  /** Compromissos acompanhados (2.14.0): só acompanhamento, sem mexer em contas nem no total de dívidas. */
+  abstract readonly commitments: {
+    readonly title: string;
+    readonly description: string;
+    readonly loading: string;
+    readonly add: string;
+    readonly kinds: Readonly<Record<'TRACKED_THIRD_PARTY' | 'LONG_TERM_PROJECT', string>>;
+    readonly itemTypes: Readonly<
+      Record<'DOWN_PAYMENT' | 'INSTALLMENT' | 'EXTRAORDINARY' | 'FINANCING', string>
+    >;
+    readonly empty: {
+      readonly title: string;
+      readonly description: string;
+      readonly action: string;
+    };
+    readonly row: {
+      /** `{name}`. */
+      readonly counterparty: string;
+      /** `{paid}` e `{total}`. */
+      readonly installments: string;
+      /** `{date}`. */
+      readonly nextDue: string;
+      readonly paid: string;
+      readonly balance: string;
+      /** `{percent}`. */
+      readonly progress: string;
+      readonly balanceUnknown: string;
+      /** `{name}`. */
+      readonly open: string;
+    };
+    readonly detail: {
+      readonly back: string;
+      readonly loading: string;
+      readonly notFound: {
+        readonly title: string;
+        readonly description: string;
+      };
+      readonly total: string;
+      readonly paid: string;
+      readonly balance: string;
+      readonly progress: string;
+      readonly directPending: string;
+      readonly financingPending: string;
+      readonly financingNote: string;
+      readonly installments: string;
+      readonly nextDue: string;
+      readonly counterparty: string;
+      readonly notes: string;
+      readonly trackedNote: string;
+      readonly onlyTracking: string;
+      readonly pendingByMonth: string;
+      readonly schedule: {
+        readonly title: string;
+        readonly empty: string;
+        /** `{date}`. */
+        readonly paidOn: string;
+        readonly pending: string;
+        readonly noDate: string;
+        /** `{date}`. */
+        readonly due: string;
+        readonly markPaid: string;
+        /** `{label}`. */
+        readonly markPaidFor: string;
+        readonly dialog: {
+          readonly title: string;
+          /** `{label}`. */
+          readonly description: string;
+          readonly date: string;
+          readonly confirm: string;
+          readonly saving: string;
+          readonly cancel: string;
+        };
+        readonly toast: string;
+      };
+      readonly progressForm: {
+        readonly title: string;
+        readonly installmentsPaid: string;
+        readonly paidAmount: string;
+        readonly nextDueDate: string;
+        readonly notes: string;
+        readonly save: string;
+        readonly saving: string;
+        readonly toast: string;
+      };
+    };
+    readonly form: {
+      readonly title: string;
+      readonly kind: string;
+      readonly name: string;
+      readonly counterparty: string;
+      readonly notes: string;
+      readonly installmentsTotal: string;
+      readonly installmentsPaid: string;
+      readonly paidAmount: string;
+      readonly nextDueDate: string;
+      readonly trackedNote: string;
+      readonly schedule: {
+        readonly title: string;
+        readonly hint: string;
+        readonly empty: string;
+        readonly add: string;
+        /** `{number}`. */
+        readonly item: string;
+        /** `{number}`. */
+        readonly remove: string;
+        readonly label: string;
+        readonly type: string;
+        readonly dueDate: string;
+        readonly amount: string;
+        readonly paid: string;
+        readonly paidOn: string;
+      };
+      readonly save: string;
+      readonly saving: string;
+      readonly cancel: string;
+      readonly toast: string;
     };
   };
 

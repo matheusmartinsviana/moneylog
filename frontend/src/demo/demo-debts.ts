@@ -1,4 +1,5 @@
 import { addMonths, addMonthsKey, dateIn } from '~/demo/demo-dates';
+import { trackedOverview } from '~/demo/demo-third-parties';
 import { dashboardView, recurrenceSummary } from '~/demo/demo-views';
 import { money, ratio, type S, type World } from '~/demo/demo-world';
 
@@ -162,6 +163,7 @@ export function debtOverviewView(w: World, months: number): S['DebtOverview'] {
       payoffReason: left === 0 ? null : 'BEYOND_HORIZON',
     },
     payoffGoal: null,
+    tracked: trackedOverview(w),
   };
 }
 

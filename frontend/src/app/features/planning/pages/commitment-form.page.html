@@ -1,0 +1,186 @@
+<app-form-modal
+  #modal
+  [heading]="t().commitments.form.title"
+  [dirty]="dirty()"
+  [busy]="facade.saving()"
+  (closed)="close()"
+>
+  <form
+    class="form"
+    [formGroup]="form"
+    (ngSubmit)="onSubmit()"
+    novalidate
+    data-cy="commitment-form"
+  >
+    @if (banner(); as message) {
+      <p class="banner" role="alert" data-cy="commitment-error">{{ message }}</p>
+    }
+    <app-segmented-control
+      formControlName="kind"
+      fieldId="commitment-kind"
+      [options]="kindOptions()"
+      [label]="t().commitments.form.kind"
+    />
+    <app-text-field
+      formControlName="name"
+      fieldId="commitment-name"
+      autocomplete="off"
+      [maxlength]="100"
+      [label]="t().commitments.form.name"
+    />
+    <app-text-field
+      formControlName="counterparty"
+      fieldId="commitment-counterparty"
+      autocomplete="off"
+      [maxlength]="100"
+      [mandatory]="false"
+      [label]="t().commitments.form.counterparty"
+    />
+
+    @if (!isProject()) {
+      <p class="form__hint" data-cy="commitment-tracked-note">
+        {{ t().commitments.form.trackedNote }}
+      </p>
+      <div class="form__pair">
+        <app-number-stepper
+          formControlName="installmentsTotal"
+          fieldId="commitment-installments-total"
+          [min]="1"
+          [max]="600"
+          [label]="t().commitments.form.installmentsTotal"
+        />
+        <app-number-stepper
+          formControlName="installmentsPaid"
+          fieldId="commitment-installments-paid"
+          [min]="0"
+          [max]="600"
+          [label]="t().commitments.form.installmentsPaid"
+        />
+      </div>
+      <app-money-input
+        formControlName="paidAmount"
+        fieldId="commitment-paid-amount"
+        [currency]="currency"
+        [mandatory]="false"
+        [allowZero]="true"
+        [label]="t().commitments.form.paidAmount"
+      />
+      <app-date-picker
+        formControlName="nextDueDate"
+        fieldId="commitment-next-due"
+        [mandatory]="false"
+        [label]="t().commitments.form.nextDueDate"
+      />
+    } @else {
+      <section class="schedule" aria-labelledby="commitment-schedule-title">
+        <h3 class="schedule__title" id="commitment-schedule-title">
+          {{ t().commitments.form.schedule.title }}
+        </h3>
+        <p class="form__hint">{{ t().commitments.form.schedule.hint }}</p>
+        <ul class="schedule__list" formArrayName="schedule" data-cy="commitment-schedule">
+          @for (item of items.controls; track item; let index = $index) {
+            <li
+              class="schedule__item row-card"
+              [formGroupName]="index"
+              [attr.data-cy]="'commitment-item-' + index"
+            >
+              <p class="schedule__name">{{ itemLabel(index) }}</p>
+              <app-text-field
+                formControlName="label"
+                [fieldId]="'commitment-item-label-' + index"
+                autocomplete="off"
+                [maxlength]="100"
+                [label]="t().commitments.form.schedule.label"
+              />
+              <div class="form__pair">
+                <app-select
+                  formControlName="type"
+                  [fieldId]="'commitment-item-type-' + index"
+                  [options]="typeOptions()"
+                  [label]="t().commitments.form.schedule.type"
+                />
+                <app-money-input
+                  formControlName="amount"
+                  [fieldId]="'commitment-item-amount-' + index"
+                  [currency]="currency"
+                  [label]="t().commitments.form.schedule.amount"
+                />
+              </div>
+              <app-date-picker
+                formControlName="dueDate"
+                [fieldId]="'commitment-item-due-' + index"
+                [mandatory]="false"
+                [label]="t().commitments.form.schedule.dueDate"
+              />
+              <app-checkbox
+                formControlName="paid"
+                [fieldId]="'commitment-item-paid-' + index"
+                [label]="t().commitments.form.schedule.paid"
+              />
+              @if (item.controls.paid.value) {
+                <app-date-picker
+                  formControlName="paidOn"
+                  [fieldId]="'commitment-item-paid-on-' + index"
+                  [mandatory]="false"
+                  [label]="t().commitments.form.schedule.paidOn"
+                />
+              }
+              <button
+                type="button"
+                class="button"
+                [attr.data-cy]="'commitment-item-remove-' + index"
+                [attr.aria-label]="removeLabel(index)"
+                (click)="removeItem(index)"
+              >
+                {{ removeLabel(index) }}
+              </button>
+            </li>
+          }
+        </ul>
+        @if (itemCount() === 0) {
+          <p class="form__hint" data-cy="commitment-schedule-empty">
+            {{ t().commitments.form.schedule.empty }}
+          </p>
+        }
+        <button
+          type="button"
+          class="button"
+          data-cy="commitment-item-add"
+          [disabled]="itemCount() >= maxItems"
+          (click)="addItem()"
+        >
+          {{ t().commitments.form.schedule.add }}
+        </button>
+      </section>
+    }
+
+    <app-text-field
+      formControlName="notes"
+      fieldId="commitment-notes"
+      autocomplete="off"
+      [maxlength]="1000"
+      [mandatory]="false"
+      [label]="t().commitments.form.notes"
+    />
+
+    <div class="form__actions">
+      <button
+        type="button"
+        class="button"
+        data-cy="commitment-cancel"
+        (click)="modal.requestClose()"
+      >
+        {{ t().commitments.form.cancel }}
+      </button>
+      <button
+        type="submit"
+        class="button button--primary"
+        data-cy="commitment-save"
+        [disabled]="facade.saving()"
+        [attr.aria-busy]="facade.saving()"
+      >
+        {{ facade.saving() ? t().commitments.form.saving : t().commitments.form.save }}
+      </button>
+    </div>
+  </form>
+</app-form-modal>

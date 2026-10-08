@@ -1,41 +1,139 @@
 <main id="main-content" class="login" tabindex="-1" data-cy="login-page">
-  <form class="login__card surface" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
-    <header class="login__header">
-      <!-- Espaço reservado para o logo (ainda não definido). -->
-      <span class="login__logo-slot" aria-hidden="true"></span>
-      <p class="login__brand" data-cy="login-brand">{{ t().shell.brand }}</p>
-      <h1 class="login__title" data-cy="page-title">{{ t().auth.login.title }}</h1>
-      <p class="login__description">{{ t().auth.login.description }}</p>
-    </header>
-
-    <app-text-field
-      formControlName="email"
-      fieldId="login-email"
-      type="email"
-      autocomplete="username"
-      inputmode="email"
-      [label]="t().auth.login.email"
-    />
-    <app-text-field
-      formControlName="password"
-      fieldId="login-password"
-      type="password"
-      autocomplete="current-password"
-      [label]="t().auth.login.password"
-    />
-
-    @if (errorMessage(); as message) {
-      <p class="login__error" role="alert" data-cy="login-error">{{ message }}</p>
-    }
-
-    <button
-      type="submit"
-      class="button button--primary login__submit"
-      data-cy="login-submit"
-      [disabled]="submitting()"
-      [attr.aria-busy]="submitting()"
+  @if (checking()) {
+    <section class="login__card surface" aria-busy="true" data-cy="login-checking">
+      <p class="login__brand">{{ t().shell.brand }}</p>
+      <p class="login__description" role="status">{{ t().auth.login.checking }}</p>
+    </section>
+  } @else if (setupMode()) {
+    <form
+      class="login__card surface"
+      [formGroup]="setupForm"
+      (ngSubmit)="onSetupSubmit()"
+      novalidate
+      data-cy="setup-form"
     >
-      {{ submitting() ? t().auth.login.submitting : t().auth.login.submit }}
-    </button>
-  </form>
+      <header class="login__header">
+        <span class="login__logo-slot" aria-hidden="true"></span>
+        <p class="login__brand">{{ t().shell.brand }}</p>
+        <h1 class="login__title" data-cy="page-title">{{ t().auth.setup.title }}</h1>
+        <p class="login__description">{{ t().auth.setup.description }}</p>
+      </header>
+
+      <app-text-field
+        formControlName="email"
+        fieldId="setup-email"
+        type="email"
+        autocomplete="username"
+        inputmode="email"
+        [label]="t().auth.setup.email"
+      />
+      <app-text-field
+        formControlName="setupCode"
+        fieldId="setup-code"
+        autocomplete="off"
+        [mono]="true"
+        [label]="t().auth.setup.code"
+        [hint]="t().auth.setup.codeHint"
+      />
+      <app-text-field
+        formControlName="newPassword"
+        fieldId="setup-new-password"
+        type="password"
+        autocomplete="new-password"
+        [revealable]="true"
+        [showLabelText]="t().auth.setup.show"
+        [hideLabelText]="t().auth.setup.hide"
+        [label]="t().auth.setup.newPassword"
+      />
+      <app-text-field
+        formControlName="confirmPassword"
+        fieldId="setup-confirm-password"
+        type="password"
+        autocomplete="new-password"
+        [revealable]="true"
+        [showLabelText]="t().auth.setup.show"
+        [hideLabelText]="t().auth.setup.hide"
+        [label]="t().auth.setup.confirmPassword"
+      />
+
+      <div class="login__rules" data-cy="setup-rules">
+        <p class="login__rules-title">{{ t().auth.setup.rulesTitle }}</p>
+        <ul>
+          @for (rule of rules(); track rule.key) {
+            <li [class.login__rule--met]="rule.met" [attr.data-cy]="'setup-rule-' + rule.key">
+              <span aria-hidden="true">{{ rule.met ? '✓' : '○' }}</span> {{ rule.text }}
+            </li>
+          }
+        </ul>
+      </div>
+
+      <div aria-live="assertive" role="alert">
+        @if (setupError(); as message) {
+          <p class="login__error" data-cy="setup-error">{{ message }}</p>
+        }
+      </div>
+
+      <button
+        type="submit"
+        class="button button--primary login__submit"
+        data-cy="setup-submit"
+        [disabled]="setupBlocked()"
+        [attr.aria-busy]="setupSubmitting()"
+      >
+        @if (setupSubmitting()) {
+          {{ t().auth.setup.submitting }}
+        } @else if (retryRemaining() > 0) {
+          {{ interpolateSeconds(retryRemaining()) }}
+        } @else {
+          {{ t().auth.setup.submit }}
+        }
+      </button>
+    </form>
+  } @else {
+    <form class="login__card surface" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+      <header class="login__header">
+        <!-- Espaço reservado para o logo (ainda não definido). -->
+        <span class="login__logo-slot" aria-hidden="true"></span>
+        <p class="login__brand" data-cy="login-brand">{{ t().shell.brand }}</p>
+        <h1 class="login__title" data-cy="page-title">{{ t().auth.login.title }}</h1>
+        <p class="login__description">{{ t().auth.login.description }}</p>
+      </header>
+
+      <app-text-field
+        formControlName="email"
+        fieldId="login-email"
+        type="email"
+        autocomplete="username"
+        inputmode="email"
+        [label]="t().auth.login.email"
+      />
+      <app-text-field
+        formControlName="password"
+        fieldId="login-password"
+        type="password"
+        autocomplete="current-password"
+        [label]="t().auth.login.password"
+      />
+
+      @if (setupRequired() === null) {
+        <p class="login__notice" data-cy="login-status-notice" role="status">
+          {{ t().auth.login.statusUnavailable }}
+        </p>
+      }
+
+      @if (errorMessage(); as message) {
+        <p class="login__error" role="alert" data-cy="login-error">{{ message }}</p>
+      }
+
+      <button
+        type="submit"
+        class="button button--primary login__submit"
+        data-cy="login-submit"
+        [disabled]="submitting()"
+        [attr.aria-busy]="submitting()"
+      >
+        {{ submitting() ? t().auth.login.submitting : t().auth.login.submit }}
+      </button>
+    </form>
+  }
 </main>

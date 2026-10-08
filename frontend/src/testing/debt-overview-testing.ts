@@ -110,6 +110,44 @@ export function aDebtOverview(overrides: Partial<DebtOverview> = {}): DebtOvervi
       payoffReason: 'UNDATED_DEBTS',
     },
     payoffGoal: null,
+    tracked: {
+      items: [
+        {
+          id: 'c-loan',
+          kind: 'TRACKED_THIRD_PARTY',
+          name: 'Empréstimo da Ana',
+          counterparty: 'Ana',
+          total: null,
+          paid: brl('400.00'),
+          nominalBalance: null,
+          progress: null,
+          installmentsTotal: 12,
+          installmentsPaid: 4,
+          remainingInstallments: 8,
+          nextDueDate: '2026-11-15',
+          directPending: null,
+        },
+        {
+          id: 'c-project',
+          kind: 'LONG_TERM_PROJECT',
+          name: 'Apartamento na planta',
+          counterparty: 'Construtora Exemplo',
+          total: brl('300000.00'),
+          paid: brl('30000.00'),
+          nominalBalance: brl('270000.00'),
+          progress: '0.1000',
+          installmentsTotal: null,
+          installmentsPaid: null,
+          remainingInstallments: null,
+          nextDueDate: '2026-12-10',
+          directPending: brl('120000.00'),
+        },
+      ],
+      scheduleByMonth: [
+        { competence: '2026-12', amount: brl('4000.00') },
+        { competence: '2027-01', amount: brl('4000.00') },
+      ],
+    },
     ...overrides,
   };
 }
@@ -140,6 +178,7 @@ export function anEmptyDebtOverview(): DebtOverview {
       payoffCompetence: null,
       payoffReason: null,
     },
+    tracked: { items: [], scheduleByMonth: [] },
   });
 }
 

@@ -163,6 +163,7 @@ export function cardView(w: World): S['Card'] {
     currentInvoice: current ? invoiceCore(w, current) : null,
     totalCommitted: money(committed),
     committedFuture: money(future),
+    closingConfirmed: true,
     archivable: false,
     version: 0,
     createdAt: ts(w.accounts[0]!.openingDate),

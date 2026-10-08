@@ -1,5 +1,6 @@
 import { Provider } from '@angular/core';
 
+import { provideCommitments } from '~/modules/commitments/infra/commitments.providers';
 import { provideDashboard } from '~/modules/dashboard/infra/dashboard.providers';
 import { provideDebtOverview } from '~/modules/debt-overview/infra/debt-overview.providers';
 import { provideDebts } from '~/modules/debts/infra/debts.providers';
@@ -12,6 +13,7 @@ import { providePeople } from '~/modules/people/infra/people.providers';
 import { provideProjections } from '~/modules/projections/infra/projections.providers';
 import { provideRecurrences } from '~/modules/recurrences/infra/recurrences.providers';
 import { provideReports } from '~/modules/reports/infra/reports.providers';
+import { provideThirdParties } from '~/modules/third-parties/infra/third-parties.providers';
 
 /**
  * Portas (core) → implementações (infra) usadas por uma única área, ligadas na rota lazy dela
@@ -27,7 +29,12 @@ export const PLANNING_PROVIDERS: Provider[] = [
   provideProjections(),
   provideMonthlySummary(),
   provideDebtOverview(),
+  provideThirdParties(),
+  provideCommitments(),
+  providePeople(),
 ];
+/** Detalhe da movimentação: marcar como despesa de terceiro (pessoas + terceiros). */
+export const TRANSACTIONS_PROVIDERS: Provider[] = [provideThirdParties(), providePeople()];
 /** Relatórios: só o Início os lê; o UI Kit (dev/mock) usa a porta de demonstração do mesmo provider. */
 export const REPORTS_PROVIDERS: Provider[] = [provideReports()];
 export const HOME_PROVIDERS: Provider[] = [

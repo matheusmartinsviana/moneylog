@@ -22,6 +22,7 @@ import { axeViolations, describeViolations } from '~/testing/axe';
 import { CategoriesGatewayStub, provideCategoriesStub } from '~/testing/categories-testing';
 import { provideI18nTesting } from '~/testing/i18n-testing';
 import { provideNotesStub } from '~/testing/notes-testing';
+import { provideThirdPartiesStub } from '~/testing/third-parties-testing';
 import {
   aTransaction,
   provideTransactionsStub,
@@ -91,6 +92,7 @@ async function setup(tx: Transaction, gateway = new TransactionsGatewayStub()) {
       ),
       provideI18nTesting('pt'),
       provideNotesStub(),
+      provideThirdPartiesStub(),
       provideTransactionsStub(gateway),
       provideAccountsStub(accounts),
       provideCategoriesStub(new CategoriesGatewayStub()),

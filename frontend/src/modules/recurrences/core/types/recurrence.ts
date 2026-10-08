@@ -143,3 +143,21 @@ export interface RealizedTransaction {
     readonly dueDate: string;
   } | null;
 }
+
+/**
+ * Conta e meio escolhidos ao confirmar uma ocorrência de recorrência "a definir" (2.14.0). Sem eles, o
+ * backend recusa com `RECURRENCE_ACCOUNT_REQUIRED`.
+ */
+export interface RealizePayment {
+  readonly accountId: string;
+  readonly method: RecurrenceMethod;
+}
+
+/** Recorrência de conta ou receita sem conta definida (e que não é de cartão). */
+export function isAccountToDefine(
+  recurrence: Pick<Recurrence, 'type' | 'account' | 'card'>,
+): boolean {
+  return (
+    recurrence.type !== 'CARD_PURCHASE' && recurrence.account === null && recurrence.card === null
+  );
+}

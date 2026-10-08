@@ -268,6 +268,85 @@
         </app-section-container>
 
         <app-section-container
+          [heading]="t().debtOverview.tracked.title"
+          [description]="t().debtOverview.tracked.description"
+        >
+          <div data-cy="debts-tracked">
+            @if (data.tracked.items.length === 0) {
+              <p class="note" data-cy="debts-tracked-empty">{{ t().debtOverview.tracked.empty }}</p>
+            } @else {
+              <ul class="blocks" data-cy="debts-tracked-list">
+                @for (item of data.tracked.items; track item.id) {
+                  <li class="block" [attr.data-cy]="'debts-tracked-' + item.id">
+                    <div class="block__head">
+                      <a class="link" [routerLink]="['/planning/commitments', item.id]">{{
+                        item.name
+                      }}</a>
+                      <span class="tag">{{ t().debtOverview.tracked.kinds[item.kind] }}</span>
+                    </div>
+                    @if (item.kind === 'TRACKED_THIRD_PARTY') {
+                      <p class="note">
+                        {{ trackedInstallments(item.installmentsPaid, item.installmentsTotal) }}
+                        ·
+                        {{ t().debtOverview.tracked.balanceUnknown }}
+                      </p>
+                      @if (item.paid; as paid) {
+                        <p class="note">
+                          {{ t().debtOverview.tracked.paid }}: <app-money [value]="paid" />
+                        </p>
+                      }
+                    } @else {
+                      <dl class="mini">
+                        @if (item.nominalBalance; as balance) {
+                          <div>
+                            <dt>{{ t().debtOverview.tracked.balance }}</dt>
+                            <dd [attr.data-cy]="'debts-tracked-balance-' + item.id">
+                              <app-money [value]="balance" />
+                            </dd>
+                          </div>
+                        }
+                        @if (item.directPending; as pending) {
+                          <div>
+                            <dt>{{ t().debtOverview.tracked.directPending }}</dt>
+                            <dd><app-money [value]="pending" /></dd>
+                          </div>
+                        }
+                      </dl>
+                      @if (item.progress; as value) {
+                        <p class="note">{{ trackedProgress(value) }}</p>
+                      }
+                    }
+                    @if (item.nextDueDate; as next) {
+                      <p class="note">{{ trackedNext(next) }}</p>
+                    }
+                  </li>
+                }
+              </ul>
+              @if (data.tracked.scheduleByMonth.length > 0) {
+                <h3 class="block__sub">{{ t().debtOverview.tracked.scheduleTitle }}</h3>
+                <ul class="months" data-cy="debts-tracked-schedule">
+                  @for (entry of data.tracked.scheduleByMonth; track entry.competence) {
+                    <li class="block__head">
+                      <span>{{ monthText(entry.competence) }}</span>
+                      <strong><app-money [value]="entry.amount" /></strong>
+                    </li>
+                  }
+                </ul>
+                <p class="note">{{ t().debtOverview.tracked.scheduleNote }}</p>
+              }
+            }
+            <div class="actions">
+              <a class="button" routerLink="/planning/commitments" data-cy="debts-tracked-manage">
+                {{ t().debtOverview.tracked.manage }}
+              </a>
+              <a class="button" routerLink="/planning/commitments/new" data-cy="debts-tracked-add">
+                {{ t().debtOverview.tracked.add }}
+              </a>
+            </div>
+          </div>
+        </app-section-container>
+
+        <app-section-container
           [heading]="t().debtOverview.schedule.title"
           [description]="t().debtOverview.schedule.description"
         >

@@ -24,6 +24,7 @@ import {
 import { provideI18nTesting } from '~/testing/i18n-testing';
 import { provideNotesStub } from '~/testing/notes-testing';
 import { aDebtSummary } from '~/testing/people-testing';
+import { provideThirdPartiesStub } from '~/testing/third-parties-testing';
 import {
   aTransaction,
   provideTransactionsStub,
@@ -62,6 +63,7 @@ async function setup(gateway: TransactionsGatewayStub, url: string) {
       ),
       provideI18nTesting('pt'),
       provideNotesStub(),
+      provideThirdPartiesStub(),
       provideTransactionsStub(gateway),
       provideAccountsStub(accounts),
       provideCategoriesStub(categories),

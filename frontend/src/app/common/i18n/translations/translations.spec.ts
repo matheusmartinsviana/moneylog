@@ -123,6 +123,7 @@ describe('Traduções', () => {
       'cards',
       'categories',
       'charts',
+      'commitments',
       'dashboard',
       'debtOverview',
       'debts',
@@ -150,6 +151,7 @@ describe('Traduções', () => {
       'settings',
       'shell',
       'summary',
+      'thirdParties',
       'transactions',
       'workspacePages',
     ]);
