@@ -887,6 +887,148 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/commitments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Compromissos acompanhados (ordem `name asc`)
+         * @description Empréstimo no nome de terceiro e projeto de longo prazo (ADR-014). Não geram lançamento: não mexem em caixa, consumo, patrimônio
+         *     nem no total de `GET /v1/debts/overview`. Tudo que é derivado (pago, saldo nominal, progresso, próximo vencimento) vem do backend.
+         */
+        get: operations["listCommitments"];
+        put?: never;
+        /**
+         * Cadastra um compromisso acompanhado
+         * @description `TRACKED_THIRD_PARTY`: `installmentsTotal` e `installmentsPaid` (+ `paidAmount` e `nextDueDate`, se informados). O saldo restante **não é
+         *     calculado** (`nominalBalance` e `total` ficam nulos). `LONG_TERM_PROJECT`: `schedule` completo (itens pagos e pendentes, cada um com
+         *     `type`, `amount`, `dueDate` opcional, `paid` e `paidOn` opcional); `total`, se informado, tem de fechar com Σ do cronograma
+         *     (`422 COMMITMENT_INVALID`). O item `FINANCING` faz parte do saldo nominal mas **não é despesa nem dinheiro recebido** e fica fora do
+         *     pendente de pagamento direto. `Idempotency-Key` opcional: mesma chave e mesmo corpo devolvem o mesmo compromisso.
+         */
+        post: operations["createCommitment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/commitments/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+            };
+            cookie?: never;
+        };
+        /** Um compromisso acompanhado */
+        get: operations["getCommitment"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/commitments/{id}/schedule/{position}/pay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+                /** @description Posição do item no cronograma (1..n). */
+                position: number;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Marca um item do cronograma como pago
+         * @description Só o acompanhamento: **nenhuma conta é movimentada**. Devolve o compromisso atualizado. Já pago → `422 COMMITMENT_SCHEDULE_ITEM_ALREADY_PAID`;
+         *     posição inexistente → `404 COMMITMENT_SCHEDULE_ITEM_NOT_FOUND`; versão diferente → `409`.
+         */
+        post: operations["payCommitmentScheduleItem"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/commitments/{id}/progress": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Atualiza o progresso informado de um empréstimo de terceiro
+         * @description Só para `TRACKED_THIRD_PARTY` (parcelas pagas, valor pago, próximo vencimento, observações). Devolve o compromisso atualizado.
+         */
+        post: operations["updateCommitmentProgress"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/third-party-expenses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Marca uma despesa ou compra no cartão como de terceiro (responsável real)
+         * @description Não muda nenhum lançamento: o gasto **continua consumo bruto do usuário até o reembolso**. O reembolso recebido é um `REFUND` ligado à
+         *     compra (`refundOfTransactionId`), que reduz o consumo na categoria original e nunca é receita. Compra parcelada: a marca vale para a
+         *     compra inteira, inclusive as parcelas futuras. Já marcada → `422 THIRD_PARTY_EXPENSE_ALREADY_MARKED`; estornada ou de outro tipo →
+         *     `422 THIRD_PARTY_EXPENSE_INVALID`. `Idempotency-Key` opcional.
+         */
+        post: operations["markThirdPartyExpense"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/debts/third-party-receivables": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Dinheiro a receber de terceiros, por pessoa, e o gasto bruto x terceiros x líquido do mês
+         * @description Lê o **estado**: dívidas `RECEIVABLE` (empréstimo concedido: a receber = principal, recebido = Σ quitações ativas) e despesas marcadas como de
+         *     terceiro (a receber = valor cobrado, recebido = Σ `REFUND` ativos ligados à compra). Fora de patrimônio, renda e consumo. `month`
+         *     (padrão: mês atual) traz o **bruto** (`grossConsumption` = despesas pagas + cartão + dívidas de consumo, antes dos reembolsos), os
+         *     `refunds`, o `personalNet` (= consumo do livro = bruto − reembolsos), o consumo de terceiro (`thirdPartyConsumption`), o já
+         *     reembolsado (`thirdPartyReimbursed`) e o `thirdPartyPending` (de terceiro e ainda não reembolsado, dentro do bruto).
+         */
+        get: operations["getThirdPartyReceivables"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/debts/overview": {
         parameters: {
             query?: never;
@@ -4143,8 +4285,184 @@ export interface components {
             total: components["schemas"]["Money"];
             remainingAfter: components["schemas"]["Money"];
         };
+        /** @enum {string} */
+        CommitmentKind: "TRACKED_THIRD_PARTY" | "LONG_TERM_PROJECT";
+        /** @enum {string} */
+        CommitmentItemType: "DOWN_PAYMENT" | "INSTALLMENT" | "EXTRAORDINARY" | "FINANCING";
+        CommitmentItem: {
+            position: number;
+            label: string;
+            type: components["schemas"]["CommitmentItemType"];
+            /** Format: date */
+            dueDate: string | null;
+            amount: components["schemas"]["Money"];
+            paid: boolean;
+            /** Format: date */
+            paidOn: string | null;
+        };
+        CommitmentMonth: {
+            competence: string;
+            amount: components["schemas"]["Money"];
+        };
+        /**
+         * @description Compromisso acompanhado (2.14.0). `total`, `nominalBalance` e `progress` só existem no projeto (`LONG_TERM_PROJECT`); no empréstimo de
+         *     terceiro são `null` (o saldo exato não é conhecido nem estimado). `directPending` e `financingPending` só no projeto.
+         */
+        Commitment: {
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["CommitmentKind"];
+            name: string;
+            counterparty: string | null;
+            notes: string | null;
+            total: components["schemas"]["Money"] | null;
+            paid: components["schemas"]["Money"] | null;
+            nominalBalance: components["schemas"]["Money"] | null;
+            /** @description Razão pago ÷ total com 4 casas (`0.0227`). */
+            progress: string | null;
+            installmentsTotal: number | null;
+            installmentsPaid: number | null;
+            remainingInstallments: number | null;
+            /** Format: date */
+            nextDueDate: string | null;
+            directPending: components["schemas"]["Money"] | null;
+            financingPending: components["schemas"]["Money"] | null;
+            pendingByMonth: components["schemas"]["CommitmentMonth"][];
+            schedule: components["schemas"]["CommitmentItem"][];
+            /** Format: int64 */
+            version: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        CommitmentSlice: {
+            items: components["schemas"]["Commitment"][];
+            hasNext: boolean;
+        };
+        CommitmentItemInput: {
+            label: string;
+            type: components["schemas"]["CommitmentItemType"];
+            /** Format: date */
+            dueDate?: string | null;
+            amount: components["schemas"]["AmountInput"];
+            /** @default false */
+            paid: boolean;
+            /** Format: date */
+            paidOn?: string | null;
+        };
+        CommitmentInput: {
+            kind: components["schemas"]["CommitmentKind"];
+            name: string;
+            counterparty?: string | null;
+            notes?: string | null;
+            /** @description Só no projeto; tem de fechar com Σ do cronograma. */
+            total?: string | null;
+            installmentsTotal?: number | null;
+            installmentsPaid?: number | null;
+            paidAmount?: string | null;
+            /** Format: date */
+            nextDueDate?: string | null;
+            schedule?: components["schemas"]["CommitmentItemInput"][] | null;
+        };
+        CommitmentPayInput: {
+            /** Format: date */
+            paidOn: string;
+            /** Format: int64 */
+            version: number;
+        };
+        CommitmentProgressInput: {
+            installmentsPaid: number;
+            paidAmount?: string | null;
+            /** Format: date */
+            nextDueDate?: string | null;
+            notes?: string | null;
+            /** Format: int64 */
+            version: number;
+        };
+        ThirdPartyExpenseInput: {
+            /** Format: uuid */
+            transactionId: string;
+            /** Format: uuid */
+            personId: string;
+            note?: string | null;
+        };
+        ThirdPartyExpense: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            transactionId: string;
+            /** Format: uuid */
+            personId: string;
+            note: string | null;
+        };
+        ThirdPartyItem: {
+            /** @enum {string} */
+            source: "DEBT" | "EXPENSE";
+            /** Format: uuid */
+            refId: string;
+            description: string | null;
+            /** Format: date */
+            date: string;
+            /** Format: date */
+            expectedDate: string | null;
+            owed: components["schemas"]["Money"];
+            received: components["schemas"]["Money"];
+            pending: components["schemas"]["Money"];
+            status: string;
+        };
+        ThirdPartyPerson: {
+            /** Format: uuid */
+            personId: string;
+            name: string;
+            owed: components["schemas"]["Money"];
+            received: components["schemas"]["Money"];
+            pending: components["schemas"]["Money"];
+            items: components["schemas"]["ThirdPartyItem"][];
+        };
+        ThirdPartyMonth: {
+            competence: string;
+            grossConsumption: components["schemas"]["Money"];
+            refunds: components["schemas"]["Money"];
+            personalNet: components["schemas"]["Money"];
+            thirdPartyConsumption: components["schemas"]["Money"];
+            thirdPartyReimbursed: components["schemas"]["Money"];
+            thirdPartyPending: components["schemas"]["Money"];
+        };
+        ThirdPartyReceivables: {
+            /** Format: date */
+            asOf: string;
+            owed: components["schemas"]["Money"];
+            received: components["schemas"]["Money"];
+            pending: components["schemas"]["Money"];
+            people: components["schemas"]["ThirdPartyPerson"][];
+            month: components["schemas"]["ThirdPartyMonth"];
+        };
+        DebtOverviewTrackedItem: {
+            /** Format: uuid */
+            id: string;
+            kind: components["schemas"]["CommitmentKind"];
+            name: string;
+            counterparty: string | null;
+            total: components["schemas"]["Money"] | null;
+            paid: components["schemas"]["Money"] | null;
+            nominalBalance: components["schemas"]["Money"] | null;
+            progress: string | null;
+            installmentsTotal: number | null;
+            installmentsPaid: number | null;
+            remainingInstallments: number | null;
+            /** Format: date */
+            nextDueDate: string | null;
+            directPending: components["schemas"]["Money"] | null;
+        };
+        /** @description Compromissos acompanhados (2.14.0), **fora do `total`** (sem dupla contagem). `scheduleByMonth` é o pendente de pagamento direto por mês de vencimento. */
+        DebtOverviewTracked: {
+            items: components["schemas"]["DebtOverviewTrackedItem"][];
+            scheduleByMonth: components["schemas"]["CommitmentMonth"][];
+        };
         /** @description Veja `GET /v1/debts/overview`. Tudo calculado pelo backend; o front só exibe. */
         DebtOverview: {
+            tracked: components["schemas"]["DebtOverviewTracked"];
             /** Format: date */
             asOf: string;
             total: components["schemas"]["Money"];
@@ -4351,7 +4669,7 @@ export interface components {
             updatedAt: string;
         };
         /**
-         * @description `EXPENSE`/`INCOME`: `accountId` + `method`. `CARD_PURCHASE`: `cardId` (à vista). Conta **e** cartão, ou nenhum dos
+         * @description `EXPENSE`/`INCOME`: `accountId` + `method` (2.14.0: ou nenhum dos dois, "conta a definir", informados ao confirmar cada ocorrência). `CARD_PURCHASE`: `cardId` (à vista). Conta **e** cartão, ou nenhum dos
          *     dois, → `422 RECURRENCE_INVALID`. Em `CUSTOM`, `interval` (≥ 1) e `unit` são obrigatórios (`interval` ausente ou `null`
          *     → `422 RECURRENCE_INVALID`, S-242); nas demais não existem.
          */
@@ -4420,6 +4738,13 @@ export interface components {
         RealizeOccurrenceInput: {
             /** @description Valor real (ex.: a conta de luz veio diferente). Padrão = valor do modelo. */
             amount?: components["schemas"]["AmountInput"] | null;
+            /**
+             * Format: uuid
+             * @description Só na recorrência de conta a definir (2.14.0), a conta `CASH` do pagamento. Faltando, `422 RECURRENCE_ACCOUNT_REQUIRED`.
+             */
+            accountId?: string | null;
+            /** @description Só na recorrência de conta a definir (2.14.0). */
+            method?: components["schemas"]["PaymentMethod"] | null;
         };
         /** @description Ocorrência de uma recorrência (prevista, realizada ou pulada). */
         Occurrence: {
@@ -7560,6 +7885,216 @@ export interface operations {
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
             422: components["responses"]["UnprocessableEntity"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    listCommitments: {
+        parameters: {
+            query?: {
+                /** @description Página (1-indexada). */
+                page?: components["parameters"]["Page"];
+                /** @description Itens por página. */
+                pageSize?: components["parameters"]["PageSize"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Página de compromissos. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommitmentSlice"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    createCommitment: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommitmentInput"];
+            };
+        };
+        responses: {
+            /** @description Compromisso criado. */
+            201: {
+                headers: {
+                    Location: components["headers"]["Location"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Commitment"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["UnprocessableEntity"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    getCommitment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description O compromisso. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Commitment"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    payCommitmentScheduleItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+                /** @description Posição do item no cronograma (1..n). */
+                position: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommitmentPayInput"];
+            };
+        };
+        responses: {
+            /** @description O compromisso atualizado. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Commitment"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["UnprocessableEntity"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    updateCommitmentProgress: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommitmentProgressInput"];
+            };
+        };
+        responses: {
+            /** @description O compromisso atualizado. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Commitment"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["UnprocessableEntity"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    markThirdPartyExpense: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ThirdPartyExpenseInput"];
+            };
+        };
+        responses: {
+            /** @description Marca criada. */
+            201: {
+                headers: {
+                    Location: components["headers"]["Location"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThirdPartyExpense"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["UnprocessableEntity"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    getThirdPartyReceivables: {
+        parameters: {
+            query?: {
+                /** @description Competência `AAAA-MM`. Padrão o mês atual. */
+                month?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A visão. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThirdPartyReceivables"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
             500: components["responses"]["InternalServerError"];
         };
     };

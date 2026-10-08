@@ -1,0 +1,15 @@
+# ADR-014: compromissos acompanhados, despesa de terceiro e carga de fatura emitida
+
+Status: aceita (2026-10-07). Contrato 2.14.0 (só acréscimos).
+
+## Contexto
+A carga das finanças reais de um usuário mostrou quatro lacunas: (1) empréstimo no nome de terceiro que o usuário acompanha, sem saldo conhecido; (2) projeto de longo prazo (imóvel na planta) com cronograma próprio, parte financiada; (3) compra paga pelo usuário que é de outra pessoa (irmã, mãe), com o gasto bruto, o gasto de terceiros e o gasto pessoal líquido distintos; (4) fatura de cartão já emitida pelo banco e ainda sem itens no app.
+
+## Decisão
+1. **Compromisso acompanhado** (`/v1/commitments`, `TrackedCommitment`): não tem postings, então não toca caixa, consumo, receita, patrimônio nem o total de dívidas (sem dupla contagem por construção). `TRACKED_THIRD_PARTY` guarda só o informado (parcelas pagas/total, valor pago, próximo vencimento); o saldo restante **não é calculado** (nem por proporção). `LONG_TERM_PROJECT` guarda o cronograma completo (sinal, parcelas, extraordinárias, financiamento); pago = Σ itens pagos, saldo nominal = total − pago, progresso = pago ÷ total (4 casas); o item `FINANCING` faz parte do saldo nominal mas não é despesa nem dinheiro recebido e fica fora do pendente de pagamento direto. `GET /v1/debts/overview` traz `tracked` à parte, fora do `total`.
+2. **Despesa de terceiro** (`POST /v1/third-party-expenses`, `GET /v1/debts/third-party-receivables`): a marca só identifica o responsável (pessoa) de uma compra ou despesa, inclusive as parcelas futuras (a marca é da compra). **Regra do dono: a despesa continua consumo bruto do usuário até o reembolso**; o recebimento (um `REFUND` ligado à compra) a neutraliza na categoria original e nunca é receita. A visão "a receber de terceiros" lê o estado: dívidas `RECEIVABLE` (empréstimo concedido) e despesas marcadas, por pessoa, e o mês traz bruto, reembolsos, líquido pessoal, consumo de terceiro e pendente. Ambiguidade registrada para o dono: "líquido = bruto − terceiros reembolsados" x "terceiro fora do consumo mesmo pendente"; foi adotada a primeira.
+3. **Recorrência com conta a definir**: despesa/receita pode ser criada sem conta nem meio de pagamento; confirmar a ocorrência exige `accountId` e `method` (`RECURRENCE_ACCOUNT_REQUIRED`).
+4. **Fatura emitida e vazia**: a fatura fechada, ainda no prazo de vencimento e sem nenhum item ou pagamento recebe a compra do ciclo (e o parcelado em andamento) como lançamento tardio. Antes, uma fatura vazia contava como "paga" e o item ia para a fatura corrente. Depois do vencimento volta a regra geral (S-14).
+
+## Consequências
+Migrações V8.05 a V8.08 aditivas. Nenhum campo ou rota existente muda de formato. Cálculo só no backend (`TrackedCommitment`, `ThirdPartyReceivables`). Fora do escopo: pagamento de item com movimentação de conta (o acompanhamento é independente do razão), desfazer marca de terceiro, alocação parcial do valor de uma compra a um terceiro.

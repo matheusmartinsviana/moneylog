@@ -670,3 +670,11 @@ Plano `docs/planos/2026-10-10-redesign-workspace.md` §5 e §12 (S-282 a S-291),
 | S-302 | médio   | **Desempenho (R13)**: os relatórios e o dashboard carregam o `FinancialRecords` inteiro (S-79, ADR-008); a busca não (SQL com `user_id`, `unaccent` sem índice = varredura do usuário). Medido com 10.000 e 50.000 movimentações em `RedesignVolumeQaIT` (resultado na ADR-011 §8: com 50.000 movimentações cada leitura do razão custa 1,7 a 2,4 s e o Início com 4 cargas ~10 s em série; com 10.000, ~0,2 s por leitura e ~0,9 s o Início; a busca, 0,1 a 0,3 s com 50.000). O limite de 2 leituras do razão em voo no Início é do front (T201); o gatilho do cache por usuário (ADR-008, item 3) segue "se passar de ~2 s por chamada" |
 
 Pendência de Produto (não alterada): o consumo mensal por **reembolso em mês posterior** (despesa em novembro, reembolso em dezembro) reduz o consumo de dezembro e a categoria pode ficar negativa; por despesa o consumo nunca é negativo (teto do reembolso). Decidir se a regra é por mês ou por despesa.
+
+## 9. Compromissos acompanhados, despesa de terceiro e fatura emitida (ADR-014, contrato 2.14.0)
+
+- **Compromisso acompanhado** (`TrackedCommitment`): sem postings; fora do caixa, do consumo, do patrimônio e do total de dívidas. Empréstimo de terceiro: só o informado, saldo não calculado. Projeto de longo prazo: cronograma de itens (`DOWN_PAYMENT`, `INSTALLMENT`, `EXTRAORDINARY`, `FINANCING`); pago = Σ itens pagos; saldo nominal = total − pago; o `FINANCING` não é despesa nem dinheiro recebido. Invariante testada (300 cronogramas aleatórios): pago + pendente direto + financiamento pendente = total.
+- **Despesa de terceiro**: marca (compra ou despesa → pessoa) sem posting. O gasto segue consumo bruto até o `REFUND` ligado à compra, que reduz o consumo na categoria original (nunca receita). "A receber de terceiros" = dívidas `RECEIVABLE` + despesas marcadas, lidas do estado, sem somar movimentos.
+- **Fatura emitida e vazia** (§2.5.3, exceção à alocação): fechada, dentro do prazo de vencimento e sem item nem pagamento, recebe o item como lançamento tardio; fora do prazo vale a regra geral.
+- **Recorrência com conta a definir** (§2.7): conta e meio de pagamento juntos ou nenhum dos dois; confirmar exige ambos.
+
