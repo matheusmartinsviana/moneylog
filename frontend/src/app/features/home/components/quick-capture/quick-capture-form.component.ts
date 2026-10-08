@@ -17,9 +17,9 @@ import { Observable, startWith } from 'rxjs';
 import type { ChoiceOption } from '~/app/common/components/forms/choice-option';
 import { DatePickerComponent } from '~/app/common/components/forms/date-picker/date-picker.component';
 import { MoneyInputComponent } from '~/app/common/components/forms/money-input/money-input.component';
-import { SegmentedControlComponent } from '~/app/common/components/forms/segmented-control/segmented-control.component';
 import { SelectComponent } from '~/app/common/components/forms/select/select.component';
 import { TextFieldComponent } from '~/app/common/components/forms/text-field/text-field.component';
+import { IconComponent } from '~/app/common/components/icon/icon.component';
 import { interpolate } from '~/app/common/i18n/interpolate';
 import { PersonFieldComponent } from '~/app/features/people/components/person-field/person-field.component';
 import { TransactionFormBase } from '~/app/features/quick-add/components/transaction-form.base';
@@ -49,7 +49,7 @@ type FormType = CaptureType | 'LOAN';
     TextFieldComponent,
     SelectComponent,
     DatePickerComponent,
-    SegmentedControlComponent,
+    IconComponent,
     PersonFieldComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -72,6 +72,8 @@ export class QuickCaptureFormComponent extends TransactionFormBase {
   readonly createPerson = input<((name: string) => Observable<PersonRef>) | null>(null);
   /** Escolheu "Emprestei": quem hospeda carrega as pessoas se ainda não tem. */
   readonly peopleNeeded = output<void>();
+  /** A IA está ligada: o atalho "Perguntar à IA" aparece (desligada, o bloco de IA já explica). */
+  readonly aiEnabled = input(false);
   readonly expanded = input(false);
   readonly expand = output<void>();
 
@@ -102,11 +104,20 @@ export class QuickCaptureFormComponent extends TransactionFormBase {
   });
   protected readonly loaning = computed(() => this.type() === 'LOAN');
 
-  protected readonly typeOptions = computed<readonly ChoiceOption[]>(() => [
-    { value: 'EXPENSE', label: this.t().dashboard.quickCapture.expense },
-    { value: 'INCOME', label: this.t().dashboard.quickCapture.income },
-    { value: 'LOAN', label: this.t().dashboard.quickCapture.loan },
-  ]);
+  /** Atalhos de tipo (a ordem do Início): "Adicionar despesa", "Adicionar receita", "Emprestei". */
+  protected readonly shortcuts = computed(() => {
+    const { actions } = this.t().header;
+    return [
+      { id: 'expense', value: 'EXPENSE' as const, label: actions.addExpense },
+      { id: 'income', value: 'INCOME' as const, label: actions.addIncome },
+      { id: 'loan', value: 'LOAN' as const, label: this.t().dashboard.quickCapture.loan },
+    ];
+  });
+
+  protected chooseType(type: FormType): void {
+    this.form.controls.type.setValue(type);
+    this.expand.emit();
+  }
   protected readonly accountOptions = computed<readonly ChoiceOption[]>(() =>
     this.accounts().map((account) => ({ value: account.id, label: account.name })),
   );

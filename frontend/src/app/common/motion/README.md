@@ -4,7 +4,7 @@ Estilos: `src/styles/motion.css`. Só `transform` e `opacity`. Sem biblioteca de
 
 ## Tokens
 
-Durações `--motion-instant` 90 · `fast` 160 · `base` 240 · `slow` 420 · `hero` 640 ms. Easings `--motion-ease` (padrão suave),
+Durações `--duration-instant` 90 · `fast` 160 · `base` 240 · `slow` 420 · `hero` 640 ms. Easings `--ease-enter` (padrão suave),
 `-in`, `-out`, `-spring` (modais). Distâncias `--motion-dx` 8, `--motion-dy` 16, `--motion-dist-lg` 24 px. Cascata
 `--motion-stagger` 50 ms por item, teto `--motion-stagger-max` 600 ms.
 

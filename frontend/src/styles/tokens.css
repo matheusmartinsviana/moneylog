@@ -34,6 +34,11 @@
   --color-chart-1: #6948d2;
   --color-chart-2: #7c7897;
   --color-focus: #6948d2;
+  /* Hover e realce interativo: azul frio e suave (o lilás fica só para ativo/primário/foco; verde é valor positivo). */
+  --color-hover: #2563eb;
+  --color-hover-soft: rgb(37 99 235 / 8%);
+  --color-hover-border: rgb(37 99 235 / 30%);
+  --gradient-hover: linear-gradient(var(--color-hover-soft), var(--color-hover-soft));
   --color-shadow: rgb(60 40 120 / 6%);
   --color-shadow-strong: rgb(60 40 120 / 14%);
   --color-scrim: rgb(246 245 251 / 88%);
@@ -76,8 +81,18 @@
   --glass-bg-strong: color-mix(in oklab, var(--color-surface) 86%, transparent);
   --glass-border: rgb(124 92 240 / 18%);
   --glass-shadow:
-    0 10px 34px -14px rgb(60 40 120 / 22%), inset 0 1px 0 0 rgb(255 255 255 / 70%),
-    inset 0 -1px 0 0 rgb(124 92 240 / 8%);
+    0 12px 36px -14px rgb(60 40 120 / 26%), inset 0 1px 0 0 rgb(255 255 255 / 90%),
+    inset 0 -1px 0 0 rgb(124 92 240 / 10%), inset 0 0 28px -14px rgb(124 92 240 / 28%);
+  /* Película de luz no topo e brilho da borda superior (o "vidro" das referências). Decorativo. */
+  --glass-sheen: linear-gradient(180deg, rgb(255 255 255 / 70%) 0%, rgb(255 255 255 / 0%) 42%);
+  --glass-edge-top: rgb(124 92 240 / 34%);
+  /* Brilho que percorre o esqueleto de carregamento (skeleton). */
+  --gradient-shimmer: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgb(124 92 240 / 14%) 50%,
+    transparent 100%
+  );
   --glass-lens-bg: rgb(255 255 255 / 45%);
   --glass-lens-glow: inset 0 0 5px 0 rgb(124 92 240 / 22%), inset 0 1px 0 0 rgb(255 255 255 / 80%);
 
@@ -130,19 +145,34 @@
   --space-10: 2.5rem;
   --space-12: 3rem;
 
-  /* Movimento: 180 a 300ms. `prefers-reduced-motion` zera as três durações (no fim do arquivo). */
-  --duration-fast: 180ms;
+  /* Movimento (sistema único, src/app/common/motion/README.md). `prefers-reduced-motion` zera as durações (no fim do arquivo). */
+  --duration-instant: 90ms;
+  --duration-fast: 160ms;
   --duration-base: 240ms;
   --duration-slow: 300ms;
+  --duration-enter: 420ms; /* entrada de blocos e de página */
+  --duration-hero: 640ms;
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-emphasized: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-enter: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.35, 0.64, 1);
 
   /* Layout do shell */
   --bottom-nav-height: 4rem;
   --sidebar-collapsed-width: 4rem;
-  --sidebar-expanded-width: 14.5rem;
-  --content-max-width: 60rem;
-  --content-wide-max-width: 72rem; /* Início: grade densa de KPIs, gráficos e listas */
+  /*
+   * Ritmo único de página (todas as telas e o cabeçalho): mesma largura máxima, mesmas margens laterais (gutter) e
+   * mesmos espaços entre blocos. Nenhuma tela define margem lateral própria.
+   */
+  --page-max-width: 72rem;
+  --page-gutter: 1rem; /* 16 px celular; 24 px tablet; 32 px desktop (abaixo) */
+  --page-pad-top: var(--space-6);
+  --page-pad-bottom: var(--space-8);
+  --page-gap: var(--space-6); /* título da página e o conteúdo */
+  --section-gap: var(--space-4); /* entre blocos do conteúdo */
+  --card-padding: var(--space-5);
   --window-max-width: 90rem;
   /* Camadas: diálogo, toast, popover/folha (por cima de tudo, inclusive do diálogo) */
   --z-dialog: 50;
@@ -160,6 +190,20 @@
   );
   --mask-fade-down: linear-gradient(to bottom, #000 0%, transparent 100%);
   --focus-ring: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-focus);
+}
+
+@media (width >= 768px) {
+  :root {
+    --page-gutter: 1.5rem;
+    --page-pad-top: var(--space-10);
+    --page-pad-bottom: var(--space-12);
+  }
+}
+
+@media (width >= 1024px) {
+  :root {
+    --page-gutter: 2rem;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -185,6 +229,9 @@
     --color-chart-1: #b7a3fb;
     --color-chart-2: #d8d3ee;
     --color-focus: #c4b5fd;
+    --color-hover: #7cb7ff;
+    --color-hover-soft: rgb(124 183 255 / 10%);
+    --color-hover-border: rgb(124 183 255 / 32%);
     --color-shadow: rgb(0 0 0 / 30%);
     --color-shadow-strong: rgb(0 0 0 / 46%);
     --color-scrim: rgb(11 11 18 / 88%);
@@ -220,8 +267,16 @@
     --glass-bg-strong: color-mix(in oklab, var(--color-surface) 84%, transparent);
     --glass-border: color-mix(in oklab, var(--color-text) 12%, transparent);
     --glass-shadow:
-      0 10px 34px -12px rgb(0 0 0 / 55%), inset 0 1px 0 0 rgb(255 255 255 / 9%),
-      inset 0 -1px 0 0 rgb(0 0 0 / 25%);
+      0 12px 38px -12px rgb(0 0 0 / 60%), inset 0 1px 0 0 rgb(255 255 255 / 22%),
+      inset 0 -1px 0 0 rgb(0 0 0 / 30%), inset 0 0 32px -16px rgb(167 139 250 / 34%);
+    --glass-sheen: linear-gradient(180deg, rgb(255 255 255 / 8%) 0%, rgb(255 255 255 / 0%) 42%);
+    --glass-edge-top: rgb(255 255 255 / 26%);
+    --gradient-shimmer: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgb(196 181 253 / 12%) 50%,
+      transparent 100%
+    );
     --glass-lens-bg: rgb(255 255 255 / 5%);
     --glass-lens-glow:
       inset 0 0 5px 0 rgb(250 250 250 / 45%), inset 0 1px 0 0 rgb(255 255 255 / 14%);
@@ -252,6 +307,9 @@
   --color-chart-1: #b7a3fb;
   --color-chart-2: #d8d3ee;
   --color-focus: #c4b5fd;
+  --color-hover: #7cb7ff;
+  --color-hover-soft: rgb(124 183 255 / 10%);
+  --color-hover-border: rgb(124 183 255 / 32%);
   --color-shadow: rgb(0 0 0 / 30%);
   --color-shadow-strong: rgb(0 0 0 / 46%);
   --color-scrim: rgb(11 11 18 / 88%);
@@ -287,8 +345,16 @@
   --glass-bg-strong: color-mix(in oklab, var(--color-surface) 84%, transparent);
   --glass-border: color-mix(in oklab, var(--color-text) 12%, transparent);
   --glass-shadow:
-    0 10px 34px -12px rgb(0 0 0 / 55%), inset 0 1px 0 0 rgb(255 255 255 / 9%),
-    inset 0 -1px 0 0 rgb(0 0 0 / 25%);
+    0 12px 38px -12px rgb(0 0 0 / 60%), inset 0 1px 0 0 rgb(255 255 255 / 22%),
+    inset 0 -1px 0 0 rgb(0 0 0 / 30%), inset 0 0 32px -16px rgb(167 139 250 / 34%);
+  --glass-sheen: linear-gradient(180deg, rgb(255 255 255 / 8%) 0%, rgb(255 255 255 / 0%) 42%);
+  --glass-edge-top: rgb(255 255 255 / 26%);
+  --gradient-shimmer: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgb(196 181 253 / 12%) 50%,
+    transparent 100%
+  );
   --glass-lens-bg: rgb(255 255 255 / 5%);
   --glass-lens-glow: inset 0 0 5px 0 rgb(250 250 250 / 45%), inset 0 1px 0 0 rgb(255 255 255 / 14%);
   color-scheme: dark;
@@ -296,8 +362,11 @@
 
 @media (prefers-reduced-motion: reduce) {
   :root {
+    --duration-instant: 0ms;
     --duration-fast: 0ms;
     --duration-base: 0ms;
     --duration-slow: 0ms;
+    --duration-enter: 0ms;
+    --duration-hero: 0ms;
   }
 }

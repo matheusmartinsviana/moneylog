@@ -124,7 +124,7 @@
   <div class="gs" data-cy="global-search" (focusout)="onFocusOut($event)">
     <ng-container [ngTemplateOutlet]="field" />
     @if (panelVisible()) {
-      <div class="gs__panel">
+      <div class="gs__panel glass glass--strong">
         <ng-container [ngTemplateOutlet]="results" />
       </div>
     }

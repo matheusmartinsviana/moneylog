@@ -120,7 +120,7 @@ import { formatCompetence, todayIso } from '~/util/date';
     }
 
     .month-trigger:hover:not(:disabled) {
-      border-color: var(--color-text-muted);
+      border-color: var(--color-hover-border);
     }
 
     .month-trigger.is-invalid {
@@ -163,7 +163,7 @@ import { formatCompetence, todayIso } from '~/util/date';
     }
 
     .month-actions__clear:hover {
-      background-color: var(--color-surface-muted);
+      background-color: var(--color-hover-soft);
       color: var(--color-text);
     }
 

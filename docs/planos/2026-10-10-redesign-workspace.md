@@ -885,3 +885,14 @@ Pedido do dono (4 imagens de referência + vidro líquido do portfólio). Sem co
 - **Já existiam e foram mantidos:** disclosure (grid 0fr→1fr), barra de progresso, clip-path dos gráficos, pressed dos botões, hover de linhas e cartões.
 - **Testes:** `data-motion="off"` no `test-setup.ts` e `reducedMotion: 'reduce'` no Playwright; spec das diretivas e `e2e/motion.e2e.ts` (fumaça com movimento ligado).
 - **Pendências:** indicador deslizante de tabs/segmented, skeleton shimmer (gradiente só como token), colapso de linha removida (`.m-collapse` pronto, falta aplicar), ripple do Quick Capture, sidebar/header (do outro agente), medição de 60 fps.
+
+### Registro de execução: fatia 2 do visual (shell, Início, Movimentações, ritmo, hover) (frontend, modo rápido)
+
+- **Shell:** sidebar sempre em trilho com indicador deslizante e popover "Mais"; cabeçalho de uma linha; faixa do demo no fluxo; `SidebarStateService` removido. `/more` segue no celular.
+- **Início:** gráfico herói à esquerda; saldo, medidor e recentes por dia à direita; KPIs do mês sob o gráfico; Quick Capture compacto com atalhos numa linha e realce ao salvar (`KpiCardsComponent` ganhou `part`).
+- **Movimentações:** filtros em pílulas (Filtrar, Data, Conta, Categoria) que abrem o painel (`Disclosure` com `hideHeader`); painel de KPIs mantido.
+- **Visual:** vidro com película/brilho de borda; hover azul (`--color-hover*`); `--motion-*` unificado em `--duration-*`; `.sk` com shimmer; `appSlideIndicator` em abas e segmentados; saída do tooltip.
+- **Ritmo:** tokens `--page-*` e `--section-gap`; `PageLayoutComponent` perdeu o `wide`; `e2e/page-spacing.e2e.ts` novo (passa nos 4 tamanhos).
+- **Bundle:** inicial 527 para 463 kB (`@defer` de busca, avatar e "Mais").
+- **Testes:** `goals.page.spec` (NG04002), `VaultGateway` em Configurações (`SETTINGS_PROVIDERS`), specs do shell, cabeçalho, Quick Capture, recentes e Início atualizados; e2e legados da sidebar ajustados no que foi barato.
+- **Pendências:** colapso de linha removida, saída animada de modais fechados por rota, filtro por "Valor" (depende do backend), login/UI Kit só herdam os tokens.

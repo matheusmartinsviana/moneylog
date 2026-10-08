@@ -17,19 +17,31 @@ export interface PositionInput {
   readonly prefer?: 'below' | 'above';
   /** Alinha à esquerda ou à direita do gatilho. */
   readonly align?: 'start' | 'end' | 'center';
+  /** `inline`: ao lado do gatilho (à direita; à esquerda se não couber), alinhado ao topo dele (trilho lateral). */
+  readonly placement?: 'block' | 'inline';
 }
 
 export interface Position {
   readonly top: number;
   readonly left: number;
   readonly maxHeight: number;
-  readonly side: 'below' | 'above';
+  readonly side: 'below' | 'above' | 'end';
 }
 
 export function computePosition(input: PositionInput): Position {
   const gap = input.gap ?? 6;
   const margin = input.margin ?? 8;
   const cap = input.maxHeight ?? 360;
+  if (input.placement === 'inline') {
+    const maxHeight = Math.min(cap, input.viewport.height - margin * 2);
+    const height = Math.min(input.height, maxHeight);
+    const top = Math.min(input.anchor.top, input.viewport.height - margin - height);
+    let left = input.anchor.right + gap;
+    if (left + input.width > input.viewport.width - margin) {
+      left = Math.max(input.anchor.left - gap - input.width, margin);
+    }
+    return { top: Math.max(top, margin), left, maxHeight, side: 'end' };
+  }
   const below = input.viewport.height - input.anchor.bottom - gap - margin;
   const above = input.anchor.top - gap - margin;
   const prefer = input.prefer ?? 'below';

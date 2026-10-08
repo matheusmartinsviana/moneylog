@@ -104,8 +104,9 @@ export const MORE_GROUPS: readonly NavGroup[] = SIDEBAR_GROUPS.map((group) => ({
 export const QUICK_ADD_ITEM: NavItem = ITEMS.quickAdd;
 
 /**
- * Trilho da sidebar (DS 03): só o essencial cabe sem rolagem em notebook. O resto das rotas continua
- * alcançável pelo item "Mais" (`/more`), que lista todas as outras seções agrupadas.
+ * Trilho da sidebar (DS 03), sempre recolhido: só o essencial cabe sem rolagem em notebook. O resto das seções
+ * abre num popover ("Mais", `SIDEBAR_POPOVER_ITEMS`); no celular a mesma lista está em `/more`. Configurações e
+ * Sair ficam fixos no rodapé do trilho.
  */
 export const SIDEBAR_MAIN_ITEMS: readonly NavItem[] = [
   ITEMS.home,
@@ -117,6 +118,17 @@ export const SIDEBAR_MAIN_ITEMS: readonly NavItem[] = [
   ITEMS.people,
   ITEMS.notes,
 ];
-
 export const SIDEBAR_MORE_ITEM: NavItem = ITEMS.more;
 export const SIDEBAR_SETTINGS_ITEM: NavItem = ITEMS.settings;
+
+/** Atalhos secundários do popover "Mais": tudo que não está no trilho nem é Configurações (rodapé). */
+export const SIDEBAR_POPOVER_ITEMS: readonly NavItem[] = SIDEBAR_ITEMS.filter(
+  (item) => !SIDEBAR_MAIN_ITEMS.includes(item) && item.key !== SIDEBAR_SETTINGS_ITEM.key,
+);
+
+/** A rota `url` (sem query nem fragmento) pertence ao item? Início só na raiz; os demais, pela seção. */
+export function isNavActive(item: NavItem, url: string): boolean {
+  const path = url.split(/[?#]/)[0] ?? '';
+  if (item.path === '/') return path === '/';
+  return path === item.path || path.startsWith(`${item.path}/`);
+}

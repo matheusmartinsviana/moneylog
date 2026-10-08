@@ -19,7 +19,6 @@ import { ProfileMenuComponent } from '~/app/common/components/profile-menu/profi
 import { TooltipDirective } from '~/app/common/components/tooltip/tooltip.directive';
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { interpolate } from '~/app/common/i18n/interpolate';
-import { CaptureRequestType, QuickCaptureBus } from '~/app/common/services/quick-capture-bus';
 import { ThemePreference, ThemeService } from '~/app/common/services/theme.service';
 import { AiStatusFacade } from '~/modules/ai/core/facades/ai-status.facade';
 import { UnreadCountFacade } from '~/modules/notifications/core/facades/unread-count.facade';
@@ -43,19 +42,14 @@ export function greetingPeriod(hour: number): GreetingPeriod {
 }
 
 /**
- * Cabeçalho do workspace (DS 02, T194), no shell de todas as rotas:
- * - **saudação** (sem nome, D4) e subtítulo **só no Início** (as demais telas têm o `h1` próprio: uma
- *   saudação em toda tela duplicaria o título);
- * - **busca global** (T209) no espaço central; em tela compacta, um botão de lupa que abre uma folha;
- * - **ações rápidas**: "Adicionar despesa/receita" e "Transferir" levam a `/quick-add?mode=`; no Início, em vez de
- *   navegar, trocam o tipo do Quick Capture e o focam; "Perguntar à IA" leva a `/ai` só com a IA ligada (`GET /v1/ai/status`);
- *   desligada, fica desabilitado (`aria-disabled`, com a dica). **Um só botão primário por tela (M6):** no Início todas são secundárias (o
- *   primário é o "Novo registro" do atalho do Quick Capture); nas outras telas "Adicionar despesa" segue primário;
- * - chip **"IA desligada"** (verdadeiro hoje; não chama endpoint que não existe) e menu do perfil no
- *   mobile (de 768 px em diante o perfil fica no rodapé da sidebar);
- * - **sino** de notificações (Etapa 7): leva à central e mostra o contador de não lidas do backend (polling
- *   leve só com a aba visível); sem número conhecido, o sino aparece sem contador.
- * Presentational + roteador.
+ * Cabeçalho do workspace (DS 02, T194), no shell de todas as rotas, **compacto e em uma linha só**:
+ * - **saudação** (sem nome, D4) e subtítulo **só no Início** (as demais telas têm o `h1` próprio);
+ * - **busca global** (T209) em pílula; em tela compacta, um botão de lupa que abre uma folha;
+ * - à direita: botões de ícone (tema e **sino** de notificações, com o contador de não lidas do backend, polling
+ *   leve só com a aba visível), o chip **"IA desligada"** (verdadeiro hoje; não chama endpoint que não existe) e o
+ *   avatar genérico (menu do perfil).
+ * As ações rápidas (adicionar despesa/receita, transferir, emprestei) moraram aqui e foram para o cartão do
+ * Quick Capture no Início; nas demais telas o "+" da sidebar e da barra inferior leva ao registro. Presentational + roteador.
  */
 @Component({
   selector: 'app-workspace-header',
@@ -75,7 +69,6 @@ export function greetingPeriod(hour: number): GreetingPeriod {
 export class WorkspaceHeaderComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly hour = inject(GREETING_HOUR);
-  private readonly captureBus = inject(QuickCaptureBus);
   protected readonly t = inject(I18nService).t;
   private readonly unread = inject(UnreadCountFacade);
   protected readonly aiStatus = inject(AiStatusFacade);
@@ -120,13 +113,6 @@ export class WorkspaceHeaderComponent implements OnInit {
   );
 
   protected readonly onHome = computed(() => (this.url().split(/[?#]/)[0] ?? '') === '/');
-  /** No Início, "Adicionar despesa/receita" foca o Quick Capture; nas outras telas o link segue para `/quick-add`. */
-  protected quickAction(event: Event, type: CaptureRequestType): void {
-    if (!this.onHome()) return;
-    event.preventDefault();
-    this.captureBus.open(type);
-  }
-
   ngOnInit(): void {
     this.aiStatus.ensureLoaded();
   }

@@ -77,6 +77,7 @@ export const ICONS = {
   settings: ['M4 7h9', 'M17 7h3', 'M4 17h3', 'M11 17h9', circle(15, 7, 2), circle(9, 17, 2)],
   chevronRight: ['M9.5 6 15.5 12l-6 6'],
   chevronDown: ['M6 9.5 12 15.5l6-6'],
+  filter: ['M4 6h16', 'M7 12h10', 'M10 18h4'],
   close: ['M6.5 6.5l11 11', 'M17.5 6.5l-11 11'],
   chevronLeft: ['M14.5 6 8.5 12l6 6'],
   chevronUp: ['M6 14.5 12 8.5l6 6'],

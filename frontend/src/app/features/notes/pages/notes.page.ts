@@ -27,6 +27,7 @@ import { PageLayoutComponent } from '~/app/common/components/page-layout/page-la
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { interpolate } from '~/app/common/i18n/interpolate';
 import { problemMessage } from '~/app/common/i18n/problem-message';
+import { SlideIndicatorDirective } from '~/app/common/motion/slide-indicator.directive';
 import { ToastService } from '~/app/common/services/toast.service';
 import { FolderTreeComponent } from '~/app/features/notes/components/folder-tree/folder-tree.component';
 import { NewNoteSheetComponent } from '~/app/features/notes/components/new-note-sheet/new-note-sheet.component';
@@ -69,6 +70,7 @@ function folderOptions(root: FolderNode): readonly ChoiceOption[] {
 @Component({
   selector: 'app-notes-page',
   imports: [
+    SlideIndicatorDirective,
     ReactiveFormsModule,
     RouterLink,
     PageLayoutComponent,

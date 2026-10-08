@@ -79,7 +79,7 @@ import type { Toast, ToastAction } from '~/app/common/services/toast.service';
     }
 
     .toast__action:hover {
-      background-color: var(--color-surface-muted);
+      background-color: var(--color-hover-soft);
     }
 
     .toast__dismiss {
@@ -95,7 +95,7 @@ import type { Toast, ToastAction } from '~/app/common/services/toast.service';
     }
 
     .toast__dismiss:hover {
-      background-color: var(--color-surface-muted);
+      background-color: var(--color-hover-soft);
       color: var(--color-text);
     }
   `,

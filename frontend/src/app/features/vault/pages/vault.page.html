@@ -1,8 +1,4 @@
-<app-page-layout
-  [heading]="t().nav.vault"
-  [description]="t().workspacePages.vault.subtitle"
-  [wide]="true"
->
+<app-page-layout [heading]="t().nav.vault" [description]="t().workspacePages.vault.subtitle">
   <a pageActions class="button" routerLink="/notes" data-cy="vault-open-notes">
     {{ t().nav.notes }}
   </a>

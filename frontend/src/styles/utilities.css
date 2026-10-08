@@ -28,7 +28,9 @@
  */
 .glass {
   border: var(--border-width) solid var(--glass-border);
+  border-top-color: var(--glass-edge-top);
   background-color: var(--glass-solid);
+  background-image: var(--glass-sheen);
   box-shadow: var(--glass-shadow);
 }
 
@@ -83,6 +85,11 @@ html[data-glass] .glass-lens {
   background-image: var(--gradient-panel-glow);
 }
 
+/* Vidro com halo: película de luz no topo + halo lilás embaixo (gráfico e painéis de destaque). */
+.glass--halo {
+  background-image: var(--glass-sheen), var(--gradient-panel-glow);
+}
+
 /*
  * Botão de ícone quadrado arredondado (DS 03): borda sutil; o ativo (`is-active`, `aria-current`,
  * `aria-pressed`) é preenchido em lilás com o ícone escuro. O nome acessível vai em `aria-label`.
@@ -109,7 +116,8 @@ html[data-glass] .glass-lens {
 
 @media (hover: hover) {
   .icon-button:hover {
-    background-color: var(--color-surface-muted);
+    border-color: var(--color-hover-border);
+    background-color: var(--color-hover-soft);
   }
 }
 
@@ -141,7 +149,8 @@ html[data-glass] .glass-lens {
 
 @media (hover: hover) {
   .pill:hover:not(:disabled, [aria-disabled='true']) {
-    background-color: var(--color-surface-muted);
+    border-color: var(--color-hover-border);
+    background-color: var(--color-hover-soft);
   }
 }
 
@@ -264,7 +273,7 @@ html[data-glass] .glass-lens {
 
 @media (hover: hover) {
   .row-hover:hover {
-    background-color: var(--color-surface-muted);
+    background-color: var(--color-hover-soft);
   }
 }
 
@@ -290,7 +299,8 @@ html[data-glass] .glass-lens {
 }
 
 .button:hover:not(:disabled, [aria-disabled='true']) {
-  background-color: var(--color-surface-muted);
+  border-color: var(--color-hover-border);
+  background-color: var(--color-hover-soft);
 }
 
 /* Pressão sutil (DS 02). Só com movimento permitido: `prefers-reduced-motion` não aplica `transform`. */
@@ -307,6 +317,7 @@ html[data-glass] .glass-lens {
 }
 
 .button--primary:hover:not(:disabled, [aria-disabled='true']) {
+  border-color: var(--color-accent);
   background-color: var(--color-accent);
   opacity: 0.92;
 }
@@ -320,7 +331,9 @@ html[data-glass] .glass-lens {
 
 /* Cor sólida (par conferido por `check-contrast`): `opacity` derrubava o contraste do texto no hover. */
 .button--soft:hover:not(:disabled, [aria-disabled='true']) {
-  background-color: var(--color-accent-soft-hover);
+  border-color: transparent;
+  background-color: var(--color-hover-soft);
+  color: var(--color-text);
 }
 
 .button:disabled,
@@ -463,9 +476,41 @@ html[data-glass] .glass-lens {
 }
 
 .tab[aria-current='page'],
-.tab[aria-selected='true'] {
-  background-color: var(--color-accent);
+.tab[aria-selected='true'],
+.tab[aria-pressed='true'] {
   color: var(--color-on-accent);
+}
+
+/* Sem medida do indicador deslizante, o próprio item é preenchido. */
+.tabs:not([data-ind-on]) .tab[aria-current='page'],
+.tabs:not([data-ind-on]) .tab[aria-selected='true'],
+.tabs:not([data-ind-on]) .tab[aria-pressed='true'] {
+  background-color: var(--color-accent);
+}
+
+.tabs {
+  position: relative;
+}
+
+.tab {
+  position: relative;
+}
+
+.tabs[data-ind-on]::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--ind-w);
+  height: var(--ind-h);
+  border-radius: var(--radius-pill);
+  background-color: var(--color-accent);
+  pointer-events: none;
+  transform: translate(var(--ind-x), var(--ind-y));
+}
+
+.tabs[data-ind-ready]::before {
+  transition: transform var(--duration-base) var(--ease-emphasized);
 }
 
 /* Aviso inline de erro de formulário ou ação (sempre com texto, nunca só cor). */
@@ -477,7 +522,41 @@ html[data-glass] .glass-lens {
   font-size: var(--text-sm);
 }
 
-/* Esqueleto de carregamento de listas. */
+/*
+ * Esqueleto de carregamento (`.sk`): bloco neutro com um brilho (`--gradient-shimmer`) que o atravessa.
+ * Só `transform` anima; sem movimento (preferência do sistema ou `data-motion="off"`) fica estático.
+ */
+.sk,
+.list-skeleton__row {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--color-surface-muted);
+}
+
+.sk::after,
+.list-skeleton__row::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--gradient-shimmer);
+  transform: translateX(-100%);
+  animation: sk-shimmer 1.6s var(--ease-standard) infinite;
+}
+
+@keyframes sk-shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sk::after,
+  .list-skeleton__row::after {
+    animation: none;
+  }
+}
+
+/* Esqueleto de listas. */
 .list-skeleton {
   display: grid;
   gap: var(--space-2);
@@ -486,20 +565,6 @@ html[data-glass] .glass-lens {
 .list-skeleton__row {
   height: 3.5rem;
   border-radius: var(--radius-control);
-  background-color: var(--color-surface-muted);
-  animation: skeleton-pulse 1.4s var(--ease-standard) infinite alternate;
-}
-
-@keyframes skeleton-pulse {
-  to {
-    opacity: 0.55;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .list-skeleton__row {
-    animation: none;
-  }
 }
 
 /* Tooltip próprio (appTooltip): criado no `body`, fora de qualquer componente. */
@@ -514,6 +579,18 @@ html[data-glass] .glass-lens {
   font-size: var(--text-xs);
   line-height: var(--leading-normal);
   animation: tooltip-in var(--duration-fast) var(--ease-standard);
+}
+
+.tooltip--out {
+  pointer-events: none;
+  animation: tooltip-out var(--duration-instant) var(--ease-in) forwards;
+}
+
+@keyframes tooltip-out {
+  to {
+    opacity: 0;
+    transform: translateY(2px);
+  }
 }
 
 @keyframes tooltip-in {

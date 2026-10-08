@@ -1,19 +1,19 @@
 <section
-  class="capture"
+  class="capture glass"
+  [class.m-flash]="flash()"
   aria-labelledby="home-capture-title"
   data-cy="home-quick-capture"
   [attr.data-expanded]="expanded()"
 >
   <header class="capture__text">
     <h2 class="capture__title" id="home-capture-title">{{ t().dashboard.quickCapture.title }}</h2>
-    <p class="capture__description">{{ t().dashboard.quickCapture.description }}</p>
   </header>
 
   @switch (view()) {
     @case ('loading') {
       <div data-cy="home-quick-capture-loading">
         <p class="visually-hidden" role="status">{{ t().dashboard.quickCapture.loading }}</p>
-        <div class="capture__skeleton" aria-hidden="true"></div>
+        <div class="capture__skeleton sk" aria-hidden="true"></div>
       </div>
     }
     @case ('error') {
@@ -56,6 +56,7 @@
         [resetToken]="resetToken()"
         [focusToken]="focusToken()"
         [autofocus]="false"
+        [aiEnabled]="aiStatus.enabled()"
         (peopleNeeded)="loadPeople()"
         (expand)="expand()"
         (submitted)="submit($event)"

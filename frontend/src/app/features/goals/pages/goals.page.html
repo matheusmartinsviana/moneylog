@@ -19,7 +19,7 @@
     <p class="banner" role="alert" data-cy="goals-payoff-error">{{ message }}</p>
   }
 
-  <nav class="tabs" [attr.aria-label]="t().goals.tabsLabel" data-cy="goals-tabs">
+  <nav class="tabs" appSlideIndicator [attr.aria-label]="t().goals.tabsLabel" data-cy="goals-tabs">
     <a
       class="tab"
       routerLink="/goals"

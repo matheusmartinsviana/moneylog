@@ -1,4 +1,4 @@
-<div class="sidebar" [class.is-expanded]="expanded()" data-cy="sidebar">
+<div class="sidebar" data-cy="sidebar">
   <!-- Marca, "Novo registro", seções e rodapé ficam dentro do único landmark da sidebar (axe `region`). -->
   <nav class="sidebar__nav" [attr.aria-label]="t().shell.primaryNavigation">
     <div class="sidebar__top">
@@ -6,109 +6,101 @@
         <!-- Espaço reservado do logo (ainda não definido). Não colocar marca aqui sem decisão do dono. -->
         <!-- prettier-ignore -->
         <span class="sidebar__sq sidebar__sq--brand"><span class="sidebar__logo-slot" aria-hidden="true"></span></span>
-        <span class="sidebar__label sidebar__brand-name">{{ t().shell.brand }}</span>
+        <span class="visually-hidden">{{ t().shell.brand }}</span>
       </a>
-      <button
-        type="button"
-        class="sidebar__link sidebar__toggle"
-        [attr.aria-expanded]="expanded()"
-        [attr.aria-label]="expanded() ? t().shell.sidebarCollapse : t().shell.sidebarExpand"
-        [appTooltip]="expanded() ? null : t().shell.sidebarExpand"
-        appTooltipSide="end"
-        [appTooltipDescribes]="false"
-        data-cy="sidebar-toggle"
-        (click)="toggle()"
-      >
-        <span class="sidebar__sq">
-          <app-icon [name]="expanded() ? 'chevronLeft' : 'chevronRight'" [size]="18" />
-        </span>
-        @if (expanded()) {
-          <span class="sidebar__label" aria-hidden="true">{{ t().shell.sidebarCollapse }}</span>
-        }
-      </button>
     </div>
-
-    <div class="sidebar__scroll" data-cy="sidebar-scroll">
-      <a
-        class="sidebar__link sidebar__quick-add"
-        [routerLink]="quickAdd.path"
-        routerLinkActive="is-active"
-        ariaCurrentWhenActive="page"
-        [appTooltip]="expanded() ? null : t().nav[quickAdd.key]"
-        appTooltipSide="end"
-        [appTooltipDescribes]="false"
-        data-cy="sidebar-quickAdd"
-      >
-        <span class="sidebar__sq sidebar__sq--add"
-          ><app-icon [name]="quickAdd.icon" [size]="20"
-        /></span>
-        <span class="sidebar__label">{{ t().nav[quickAdd.key] }}</span>
-      </a>
-
+    <div #scroll class="sidebar__scroll" data-cy="sidebar-scroll">
+      <!-- Posição calculada em tempo de execução (item ativo): não cabe em classe CSS. -->
+      <!-- eslint-disable-next-line @angular-eslint/template/no-inline-styles -->
+      <span
+        class="sidebar__indicator"
+        aria-hidden="true"
+        data-cy="sidebar-indicator"
+        [class.is-visible]="indicatorY() !== null"
+        [class.is-ready]="indicatorReady()"
+        [style.--indicator-y]="indicatorY() ?? 0"
+      ></span>
+      <div class="sidebar__item" [attr.data-nav-key]="quickAdd.key">
+        <a
+          class="sidebar__link sidebar__quick-add"
+          [class.is-active]="activeKey() === quickAdd.key"
+          [routerLink]="quickAdd.path"
+          [attr.aria-current]="activeKey() === quickAdd.key ? 'page' : null"
+          [appTooltip]="t().nav[quickAdd.key]"
+          appTooltipSide="end"
+          [appTooltipDescribes]="false"
+          data-cy="sidebar-quickAdd"
+        >
+          <span class="sidebar__sq sidebar__sq--add"
+            ><app-icon [name]="quickAdd.icon" [size]="20"
+          /></span>
+          <span class="visually-hidden">{{ t().nav[quickAdd.key] }}</span>
+        </a>
+      </div>
       <ul class="sidebar__list" data-cy="sidebar-main">
         @for (item of items; track item.key) {
-          <li>
+          <li class="sidebar__item" [attr.data-nav-key]="item.key">
             <a
               class="sidebar__link"
+              [class.is-active]="activeKey() === item.key"
               [routerLink]="item.path"
-              routerLinkActive="is-active"
-              [routerLinkActiveOptions]="item.activeOptions"
-              ariaCurrentWhenActive="page"
-              [appTooltip]="expanded() ? null : t().nav[item.key]"
+              [attr.aria-current]="activeKey() === item.key ? 'page' : null"
+              [appTooltip]="t().nav[item.key]"
               appTooltipSide="end"
               [appTooltipDescribes]="false"
               [attr.data-cy]="'sidebar-' + item.key"
             >
               <span class="sidebar__sq"><app-icon [name]="item.icon" [size]="20" /></span>
-              <span class="sidebar__label">{{ t().nav[item.key] }}</span>
+              <span class="visually-hidden">{{ t().nav[item.key] }}</span>
             </a>
           </li>
         }
-        <li>
-          <a
-            class="sidebar__link"
-            [routerLink]="more.path"
-            routerLinkActive="is-active"
-            ariaCurrentWhenActive="page"
-            [appTooltip]="expanded() ? null : t().nav.more"
-            appTooltipSide="end"
-            [appTooltipDescribes]="false"
-            data-cy="sidebar-more"
-          >
-            <span class="sidebar__sq"><app-icon [name]="more.icon" [size]="20" /></span>
-            <span class="sidebar__label">{{ t().nav.more }}</span>
-          </a>
+        <li class="sidebar__item" [attr.data-nav-key]="more.key">
+          @defer (on immediate) {
+            <app-menu
+              variant="rail"
+              fieldId="sidebar-more"
+              align="start"
+              [label]="t().nav.more"
+              [icon]="more.icon"
+              [items]="moreItems()"
+              [active]="activeKey() === more.key"
+              (selected)="openMore($event)"
+            />
+          } @placeholder {
+            <span class="sidebar__sq" aria-hidden="true"
+              ><app-icon [name]="more.icon" [size]="20"
+            /></span>
+          }
         </li>
       </ul>
     </div>
-
     <!-- Rodapé fixo: Configurações e Sair nunca saem da tela. -->
     <div class="sidebar__footer">
       <a
         class="sidebar__link"
+        [class.is-active]="settingsActive()"
         [routerLink]="settings.path"
-        routerLinkActive="is-active"
-        ariaCurrentWhenActive="page"
-        [appTooltip]="expanded() ? null : t().nav.settings"
+        [attr.aria-current]="settingsActive() ? 'page' : null"
+        [appTooltip]="t().nav.settings"
         appTooltipSide="end"
         [appTooltipDescribes]="false"
         data-cy="sidebar-settings"
       >
         <span class="sidebar__sq"><app-icon [name]="settings.icon" [size]="20" /></span>
-        <span class="sidebar__label">{{ t().nav.settings }}</span>
+        <span class="visually-hidden">{{ t().nav.settings }}</span>
       </a>
       <button
         type="button"
         class="sidebar__link"
         [attr.aria-label]="t().header.profile.signOut"
-        [appTooltip]="expanded() ? null : t().header.profile.signOut"
+        [appTooltip]="t().header.profile.signOut"
         appTooltipSide="end"
         [appTooltipDescribes]="false"
         data-cy="sidebar-signOut"
         (click)="signOut()"
       >
         <span class="sidebar__sq"><app-icon name="logout" [size]="20" /></span>
-        <span class="sidebar__label" aria-hidden="true">{{ t().header.profile.signOut }}</span>
       </button>
     </div>
   </nav>

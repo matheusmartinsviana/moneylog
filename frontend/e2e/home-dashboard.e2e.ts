@@ -164,11 +164,12 @@ test.describe('Início: valores = JSON do contrato (desktop 1280)', () => {
 
     const rows = page.locator('[data-cy="home-recent"] [data-cy^="transaction-item-"]');
     await expect(rows).toHaveCount(3);
-    expect(norm(await rows.nth(0).textContent())).toContain('Alimentação · Nubank · Hoje');
+    expect(norm(await rows.nth(0).textContent())).toContain('Alimentação · Nubank');
     expect(norm(await rows.nth(0).textContent())).toContain(`−${fmt('87.30')}`);
-    expect(norm(await rows.nth(1).textContent())).toContain('Ontem');
     expect(norm(await rows.nth(1).textContent())).toContain(`+${fmt('3000.00')}`);
-    expect(norm(await rows.nth(2).textContent())).toContain('4 de out.');
+    // Agrupadas por dia: um título por dia ("Hoje", "Ontem" e a data).
+    const days = page.locator('[data-cy^="home-recent-day-"] h3');
+    await expect(days).toHaveText(['Hoje', 'Ontem', '4 de outubro de 2026']);
 
     await rows.nth(0).click();
     await expect(page).toHaveURL(new RegExp(`/transactions/${TX_TODAY}$`));
@@ -181,11 +182,8 @@ test.describe('Início: valores = JSON do contrato (desktop 1280)', () => {
     const ask = page.locator('[data-cy="home-insight-ask-ai"]');
     await expect(ask).toHaveAttribute('aria-disabled', 'true');
     await ask.click({ force: true });
-    await page.locator('[data-cy="header-action-askAi"]').click({ force: true });
-    await expect(page.locator('[data-cy="header-action-askAi"]')).toHaveAttribute(
-      'aria-disabled',
-      'true',
-    );
+    // Sem IA ligada o cartão de captura não oferece o atalho "Perguntar à IA".
+    await expect(page.locator('[data-cy="capture-ask-ai"]')).toHaveCount(0);
     const budget = page.locator('[data-cy="home-budget"]');
     await expect(budget).toHaveAttribute('aria-disabled', 'true');
     await expect(budget).toContainText('Orçamentos por categoria chegam em breve.');
@@ -206,15 +204,11 @@ test.describe('Início: valores = JSON do contrato (desktop 1280)', () => {
     await expect(page.locator('[data-cy="empty-state-title"]')).toHaveText(
       'Orçamentos chegam em breve.',
     );
-    await expect(page.locator('[data-cy="sidebar-budgets"]')).toHaveAttribute(
-      'aria-current',
-      'page',
-    );
+    // Orçamentos mora no popover "Mais": o botão fica ativo na rota.
+    await expect(page.locator('[data-cy="sidebar-more"]')).toHaveClass(/is-active/);
   });
 
-  test('um único botão primário na tela: o Salvar do Quick Capture (ações do cabeçalho são secundárias)', async ({
-    page,
-  }) => {
+  test('um único botão primário na tela: o Salvar do Quick Capture', async ({ page }) => {
     await openHome(page);
 
     await expect(page.locator('main .button--primary, header .button--primary')).toHaveCount(1);
@@ -223,10 +217,10 @@ test.describe('Início: valores = JSON do contrato (desktop 1280)', () => {
     await expect(page.locator('[data-cy="home-quick-capture-link"]')).not.toHaveClass(
       /button--primary/,
     );
-    await expect(page.locator('[data-cy="header-action-expense"]')).toHaveClass(/button--soft/);
-    // Fora do Início a ação do cabeçalho volta a ser a primária.
-    await page.locator('[data-cy="sidebar-transactions"]').click();
-    await expect(page.locator('[data-cy="header-action-expense"]')).toHaveClass(/button--primary/);
+    // Os atalhos do cartão são pílulas, não botões primários.
+    await expect(page.locator('[data-cy="capture-type-expense"]')).not.toHaveClass(
+      /button--primary/,
+    );
   });
 
   test('o que já existia continua em "Compromissos e patrimônio" com os mesmos data-cy', async ({
@@ -383,7 +377,7 @@ test.describe('busca global (T209)', () => {
 test.describe('Início em 375 px (mobile)', () => {
   test.use({ viewport: VIEWPORTS.mobile });
 
-  test('sem rolagem horizontal, Quick Capture em primeiro e KPIs em 2 colunas', async ({
+  test('sem rolagem horizontal, uma coluna na ordem saldo, gráfico, KPIs do mês, captura e recentes', async ({
     page,
   }) => {
     await openHome(page);
@@ -391,34 +385,24 @@ test.describe('Início em 375 px (mobile)', () => {
 
     const tops = await page.evaluate(() =>
       [
-        'home-quick-capture',
-        'home-kpis',
-        'home-accounts-section',
+        'home-kpis-balance',
         'home-overview-chart',
-        'home-categories',
+        'home-kpis',
+        'home-quick-capture',
         'home-recent',
+        'home-accounts-section',
+        'home-categories',
         'home-budget',
         'home-legacy',
       ].map((id) => document.querySelector(`[data-cy="${id}"]`)?.getBoundingClientRect().top ?? -1),
     );
     for (let i = 1; i < tops.length; i++)
       expect(tops[i]!, `bloco ${i}`).toBeGreaterThan(tops[i - 1]!);
-    // O Quick Capture vem antes de qualquer KPI e dos gráficos.
-    const kpiTop = await page
-      .locator('[data-cy="kpi-in-accounts"]')
-      .evaluate((el) => el.getBoundingClientRect().top);
-    const captureTop = await page
-      .locator('[data-cy="home-quick-capture"]')
-      .evaluate((el) => el.getBoundingClientRect().top);
-    expect(captureTop).toBeLessThan(kpiTop);
 
-    const a = await page.locator('[data-cy="kpi-in-accounts"]').boundingBox();
-    const a2 = await page.locator('[data-cy="kpi-spending"]').boundingBox();
-    const b = await page.locator('[data-cy="kpi-income"]').boundingBox();
-    const c = await page.locator('[data-cy="kpi-savings"]').boundingBox();
-    // O 3º e o 4º KPIs dividem a linha.
-    expect(Math.abs(b!.y - c!.y)).toBeLessThan(2);
-    expect(Math.abs(a!.y - a2!.y)).toBeLessThan(2);
+    // Gasto e receita do mês dividem a linha; saldo e poupança ficam empilhados.
+    const spending = await page.locator('[data-cy="kpi-spending"]').boundingBox();
+    const income = await page.locator('[data-cy="kpi-income"]').boundingBox();
+    expect(Math.abs(spending!.y - income!.y)).toBeLessThan(2);
   });
 
   test('a busca é um botão de lupa que abre uma folha e devolve o foco ao fechar', async ({

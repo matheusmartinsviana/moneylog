@@ -1,4 +1,5 @@
-import { provideRouter } from '@angular/router';
+import { TestBed } from '@angular/core/testing';
+import { provideRouter, Router } from '@angular/router';
 import { render, screen } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { NEVER, of } from 'rxjs';
@@ -154,12 +155,14 @@ describe('GoalsPage', () => {
     const gateway = new GoalsGatewayStub();
     gateway.next = of(aGoal({ id: 'goal-9', kind: 'DEBT_PAYOFF' }));
     await setup(gateway);
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
 
     await userEvent.click(screen.getByTestId('goals-add-payoff'));
 
     expect(gateway.creates).toEqual([
       { kind: 'DEBT_PAYOFF', name: '', target: '', deadline: null, description: null },
     ]);
+    expect(navigate).toHaveBeenCalledWith(['/goals', 'goal-9']);
   });
 
   it('Dado erro DEBT_PAYOFF_GOAL_EXISTS, então mostra o motivo do servidor', async () => {

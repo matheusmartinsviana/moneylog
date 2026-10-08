@@ -18,6 +18,7 @@ import {
 import { FieldControl } from '~/app/common/components/forms/field-control';
 import { FieldErrorComponent } from '~/app/common/components/forms/field-error/field-error.component';
 import { TooltipDirective } from '~/app/common/components/tooltip/tooltip.directive';
+import { SlideIndicatorDirective } from '~/app/common/motion/slide-indicator.directive';
 
 /**
  * Controle segmentado (T32) para escolher um entre poucos modos (ex.: Despesa · Pix · Débito ·
@@ -26,7 +27,7 @@ import { TooltipDirective } from '~/app/common/components/tooltip/tooltip.direct
  */
 @Component({
   selector: 'app-segmented-control',
-  imports: [FieldErrorComponent, TooltipDirective],
+  imports: [FieldErrorComponent, SlideIndicatorDirective, TooltipDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
     {

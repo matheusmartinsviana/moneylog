@@ -109,7 +109,7 @@ import { I18nService } from '~/app/common/i18n/i18n.service';
     }
 
     .months__nav:hover:not(:disabled) {
-      background-color: var(--color-surface-muted);
+      background-color: var(--color-hover-soft);
       color: var(--color-text);
     }
 
@@ -135,7 +135,7 @@ import { I18nService } from '~/app/common/i18n/i18n.service';
     }
 
     .months__cell:hover:not([aria-disabled='true']) {
-      background-color: var(--color-surface-muted);
+      background-color: var(--color-hover-soft);
     }
 
     .months__cell.is-today {

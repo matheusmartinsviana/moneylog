@@ -1,4 +1,5 @@
 import {
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -82,8 +83,11 @@ export class LineChartComponent {
   readonly keys = input.required<readonly LineChartKey[]>();
   /** Base do `data-cy`. */
   readonly cy = input('line-chart');
+  /** Painel principal (Início): mais alto, com halo atrás do traço. */
+  readonly hero = input(false, { transform: booleanAttribute });
 
   protected readonly uid = ++nextId;
+  protected readonly fillId = `line-chart-fill-${this.uid}`;
   protected readonly tableId = `line-chart-table-${this.uid}`;
   protected readonly hintId = `line-chart-hint-${this.uid}`;
   protected readonly width = W;

@@ -168,6 +168,10 @@ const stack: object[] = [];
       animation-name: overlay-pop-up;
     }
 
+    .panel[data-side='end'] {
+      animation-name: overlay-pop-end;
+    }
+
     .panel--sheet {
       right: 0;
       left: 0;
@@ -236,7 +240,7 @@ const stack: object[] = [];
     }
 
     .panel__close:hover {
-      background-color: var(--color-surface-muted);
+      background-color: var(--color-hover-soft);
       color: var(--color-text);
     }
 
@@ -265,6 +269,13 @@ const stack: object[] = [];
       from {
         opacity: 0;
         transform: scale(0.98);
+      }
+    }
+
+    @keyframes overlay-pop-end {
+      from {
+        opacity: 0;
+        transform: translateX(-6px);
       }
     }
 
@@ -325,6 +336,8 @@ export class OverlayPanelComponent implements OnDestroy {
   /** Largura mínima em px do popover que acompanha o gatilho (listas curtas em campos estreitos). */
   readonly minWidth = input(0);
   readonly align = input<'start' | 'end'>('start');
+  /** `inline`: o popover abre ao lado do gatilho (trilho lateral), em vez de abaixo dele. */
+  readonly placement = input<'block' | 'inline'>('block');
   /** Prefixo dos `data-cy` do painel. */
   readonly cy = input('overlay');
 
@@ -353,7 +366,7 @@ export class OverlayPanelComponent implements OnDestroy {
     top: number;
     left: number;
     maxHeight: number;
-    side: 'below' | 'above';
+    side: 'below' | 'above' | 'end';
   }>({ top: 0, left: 0, maxHeight: 360, side: 'below' });
   protected readonly width = signal<number | null>(null);
   protected readonly keyboardOffset = signal(0);
@@ -599,6 +612,7 @@ export class OverlayPanelComponent implements OnDestroy {
         height: visual ? visual.offsetTop + visual.height : view.innerHeight,
       },
       align: this.align(),
+      placement: this.placement(),
     });
     this.position.set(result);
     this.positioned.set(true);

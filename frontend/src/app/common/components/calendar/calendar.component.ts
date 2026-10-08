@@ -157,7 +157,7 @@ import { interpolate } from '~/app/common/i18n/interpolate';
     }
 
     .cal__nav:hover:not(:disabled) {
-      background-color: var(--color-surface-muted);
+      background-color: var(--color-hover-soft);
       color: var(--color-text);
     }
 
@@ -187,7 +187,7 @@ import { interpolate } from '~/app/common/i18n/interpolate';
     }
 
     .cal__title:hover {
-      background-color: var(--color-surface-muted);
+      background-color: var(--color-hover-soft);
     }
 
     .cal__grid {
@@ -225,7 +225,7 @@ import { interpolate } from '~/app/common/i18n/interpolate';
     }
 
     .cal__day:hover:not([aria-disabled='true']) {
-      background-color: var(--color-surface-muted);
+      background-color: var(--color-hover-soft);
     }
 
     .cal__day.is-today {

@@ -166,7 +166,7 @@ const MAX_DIGITS = 9;
     }
 
     .stepper__button:hover:not(:disabled, [aria-disabled='true']) {
-      background-color: var(--color-surface-muted);
+      background-color: var(--color-hover-soft);
     }
 
     .stepper__button[aria-disabled='true'] {

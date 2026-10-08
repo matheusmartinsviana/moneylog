@@ -21,16 +21,8 @@
 }
 
 .so__skeleton {
-  height: 12rem;
+  height: 15rem;
   border-radius: var(--radius-control);
-  background-color: var(--color-surface-muted);
-  animation: so-pulse 1.4s var(--ease-standard) infinite alternate;
-}
-
-@keyframes so-pulse {
-  to {
-    opacity: 0.55;
-  }
 }
 
 .so__state {
@@ -76,11 +68,5 @@
   .so__total {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: baseline;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .so__skeleton {
-    animation: none;
   }
 }

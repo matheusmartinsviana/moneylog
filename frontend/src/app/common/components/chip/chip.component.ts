@@ -81,7 +81,7 @@ import { IconComponent } from '~/app/common/components/icon/icon.component';
     }
 
     .chip--button:hover {
-      background-color: var(--color-surface-muted);
+      background-color: var(--color-hover-soft);
     }
 
     .chip--button:focus-visible,

@@ -1147,6 +1147,8 @@ export const es: AppI18n = {
     },
     filters: {
       title: 'Filtros',
+      open: 'Filtrar',
+      date: 'Fecha',
       from: 'Desde',
       to: 'Hasta',
       competence: 'Competencia',

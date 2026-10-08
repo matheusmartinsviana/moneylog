@@ -209,7 +209,7 @@ import { todayIso } from '~/util/date';
 
     .date-box__button:hover:not(:disabled),
     .date-box__button[aria-expanded='true'] {
-      background-color: var(--color-surface-muted);
+      background-color: var(--color-hover-soft);
       color: var(--color-text);
     }
 
@@ -232,7 +232,7 @@ import { todayIso } from '~/util/date';
     }
 
     .date-box__shortcut:hover:not(:disabled) {
-      background-color: var(--color-surface-muted);
+      background-color: var(--color-hover-soft);
     }
 
     .date-box__shortcut:disabled {

@@ -80,9 +80,21 @@
 }
 
 .lc__area {
-  fill: var(--color-chart-1);
-  fill-opacity: 0.16;
   stroke: none;
+}
+
+.lc__stop {
+  stop-color: var(--color-chart-1);
+}
+
+/* Painel principal: mais alto e com o traço da série primária "brilhando" (halo, decorativo). */
+.lc__plot--hero {
+  height: 17rem;
+}
+
+.lc__plot--hero .lc__line:not(.lc__line--secondary) {
+  filter: drop-shadow(0 0 7px var(--color-chart-1));
+  stroke-width: 3;
 }
 
 .lc__y {

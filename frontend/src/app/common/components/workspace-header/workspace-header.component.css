@@ -3,176 +3,97 @@
 }
 
 /*
- * Brief DS 02: saudação à esquerda, busca no centro, status (IA e perfil) à direita e as ações rápidas
- * **abaixo**. Fora do Início não há saudação: a busca sobe para a esquerda. Mobile: a busca é um botão de lupa.
+ * Uma linha só (DS 03): saudação (só no Início), busca em pílula e, à direita, botões de ícone, chip de IA e
+ * avatar. Nunca quebra para uma segunda linha a partir de 768 px (a saudação e o chip encolhem antes). No celular
+ * a saudação desce para uma linha própria e a busca vira um botão de lupa.
  */
 .wh {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2) var(--space-3);
-  max-width: var(--content-max-width);
+  max-width: var(--page-max-width);
   margin: 0 auto;
-  padding: var(--space-3) var(--space-4) 0;
-}
-
-.wh--home {
-  max-width: var(--content-wide-max-width);
-  padding-top: var(--space-4);
+  padding: var(--space-3) var(--page-gutter) 0;
 }
 
 .wh__greeting {
-  display: contents;
+  display: grid;
+  flex: 1 1 100%;
+  order: 3;
+  gap: 2px;
+  min-width: 0;
 }
 
-/*
- * A saudação é um texto de apoio (eyebrow), menor que o `h1` da página que vem logo abaixo: antes ela tinha
- * 20 px sobre um título de 32 px e a hierarquia parecia invertida (revisão M6).
- */
 .wh__hello {
-  grid-column: 1 / -1;
-  grid-row: 2;
-  overflow-wrap: anywhere;
+  overflow: hidden;
   color: var(--color-text);
   font-size: var(--text-md);
   font-weight: var(--weight-medium);
   line-height: var(--leading-tight);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .wh__subtitle {
-  grid-column: 1 / -1;
-  grid-row: 3;
+  overflow: hidden;
   color: var(--color-text-muted);
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .wh__search {
-  grid-column: 1;
-  grid-row: 1;
+  flex: 1 1 auto;
   min-width: 0;
 }
 
 .wh__status {
-  grid-column: 2;
-  grid-row: 1;
   display: flex;
-  flex-wrap: nowrap;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
-  gap: var(--space-2) var(--space-3);
-  min-width: 0;
-}
-
-.wh__actions {
-  grid-column: 1 / -1;
-  grid-row: 4;
-  display: flex;
   gap: var(--space-2);
   min-width: 0;
-  /*
-   * O contêiner rola na horizontal (mobile) e isso corta o anel de foco de 4 px. Folga de 4 px em todos os
-   * lados, compensada pela margem negativa para o layout não mudar (BUG-QA-02, revisão A3).
-   */
-  padding: var(--space-1);
-  margin: calc(var(--space-1) * -1);
-  overflow-x: auto;
-  scroll-padding-inline: var(--space-1);
-  scroll-snap-type: x proximity;
-  scrollbar-width: none;
+  margin-left: auto;
 }
 
-.wh__actions::-webkit-scrollbar {
-  display: none;
-}
-
-.wh__actions > * {
-  flex: none;
-  scroll-snap-align: start;
-  white-space: nowrap;
-}
-
-.wh__actions .button {
-  min-height: 2.25rem;
-  padding: 0 var(--space-3);
-}
-
-/* Mobile fora do Início: só a barra fina (busca, chip e perfil); as ações vivem na barra inferior ("+"). */
+/* Mobile: só a barra fina (lupa, chip e avatar). */
 @media (width < 480px) {
   .wh__status app-chip {
     display: none;
   }
 }
 
-@media (width < 768px) {
-  .wh:not(.wh--home) .wh__actions {
-    display: none;
-  }
-}
-
 @media (width >= 768px) {
   .wh {
-    grid-template-columns: minmax(12rem, 26rem) minmax(0, 1fr) auto;
-    padding: var(--space-6) var(--space-8) 0;
+    flex-wrap: nowrap;
+    padding: var(--space-6) var(--page-gutter) 0;
   }
 
   .wh__status {
-    grid-column: 3;
-  }
-
-  .wh:not(.wh--home) {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-
-  .wh:not(.wh--home) .wh__status {
-    grid-column: 2;
-  }
-
-  .wh--home {
-    grid-template-columns: minmax(0, 1fr) minmax(12rem, 26rem) auto;
-    padding-top: var(--space-6);
+    flex: none;
+    flex-wrap: nowrap;
   }
 
   .wh__greeting {
-    display: grid;
-    grid-column: 1;
-    grid-row: 1;
-    gap: 2px;
-    min-width: 0;
+    flex: 1 1 0;
+    order: 0;
   }
 
-  .wh__hello,
-  .wh__subtitle {
-    grid-column: auto;
-    grid-row: auto;
-  }
-
-  /* Fora do Início a busca fica à esquerda; no Início ela fica entre a saudação e o status. */
+  /* Fora do Início a busca ocupa o espaço (até um limite); no Início divide com a saudação. */
   .wh__search {
-    grid-column: 1;
+    flex: 1 1 18rem;
+    max-width: 28rem;
   }
 
   .wh--home .wh__search {
-    grid-column: 2;
+    flex: 0 1 26rem;
   }
 
-  /*
-   * A partir de 768 px as ações quebram de linha em vez de rolar: nada fica cortado nem escondido atrás de uma
-   * rolagem sem pista (revisão M5) e o anel de foco nunca é recortado.
-   */
-  .wh__actions {
-    grid-row: 2;
-    flex-wrap: wrap;
-    overflow: visible;
-  }
-
-  .wh--home .wh__actions {
-    grid-row: 2;
-  }
-}
-
-@media (width <= 640px), (pointer: coarse) {
-  .wh__actions .button {
-    min-height: 2.75rem;
+  .wh:not(.wh--home) .wh__status {
+    margin-left: auto;
   }
 }
 
@@ -198,18 +119,18 @@
   text-align: center;
 }
 
-/* Ações rápidas em pílula (DS 03). */
-.wh__actions .button {
-  border-color: var(--color-border);
+/* Reserva o espaço enquanto a busca e o avatar carregam (sem salto de layout). */
+.wh__search--placeholder {
+  height: 2.75rem;
+  border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-pill);
 }
 
-.wh__actions .button--primary {
-  border-color: var(--color-accent);
-}
-
-.wh__actions .button--soft {
-  border-color: var(--color-border);
-  background-color: var(--color-surface);
-  color: var(--color-text);
+.wh__avatar-placeholder {
+  display: block;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-icon);
+  background-color: var(--color-accent-soft);
 }

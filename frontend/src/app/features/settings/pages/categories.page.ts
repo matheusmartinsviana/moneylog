@@ -24,6 +24,7 @@ import { dirtySignal } from '~/app/common/forms/dirty-signal';
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { interpolate } from '~/app/common/i18n/interpolate';
 import { problemMessage } from '~/app/common/i18n/problem-message';
+import { SlideIndicatorDirective } from '~/app/common/motion/slide-indicator.directive';
 import { ToastService } from '~/app/common/services/toast.service';
 import {
   CATEGORY_NAME_MAX,
@@ -47,6 +48,7 @@ type Action =
 @Component({
   selector: 'app-categories-page',
   imports: [
+    SlideIndicatorDirective,
     DisclosureComponent,
     ReactiveFormsModule,
     RouterLink,

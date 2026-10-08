@@ -165,7 +165,7 @@ export type RadioLayout = 'vertical' | 'horizontal' | 'cards';
     }
 
     .radio:hover:not(:disabled, [aria-disabled='true']) .radio__mark {
-      border-color: var(--color-accent);
+      border-color: var(--color-hover-border);
     }
 
     .radio.is-checked .radio__mark {

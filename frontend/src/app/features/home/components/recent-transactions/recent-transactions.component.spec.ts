@@ -46,16 +46,17 @@ async function setup(state: RecentTransactionsState = { status: 'ready', data: i
 }
 
 describe('RecentTransactionsComponent', () => {
-  it('Dado as movimentações, então lista limpa com glifo da categoria, "Hoje", "Ontem" e a data', async () => {
+  it('Dado as movimentações, então lista agrupada por dia ("Hoje", "Ontem" e a data), com glifo da categoria', async () => {
     await setup();
 
     const rows = screen.getAllByTestId(/^transaction-item-/);
     expect(rows).toHaveLength(3);
     expect(text(rows[0]!)).toContain('Almoço');
-    expect(text(rows[0]!)).toContain('Alimentação · Nubank · Hoje');
-    expect(text(rows[1]!)).toContain('Ontem');
-    // O dia relativo compara com o `asOf` do backend; outro dia mostra a data.
-    expect(text(rows[2]!)).toContain('4 de out.');
+    expect(text(rows[0]!)).toContain('Alimentação · Nubank');
+    // Um título por dia; o dia relativo compara com o `asOf` do backend; outro dia mostra a data.
+    expect(text(screen.getByTestId('home-recent-day-2026-10-10'))).toContain('Hoje');
+    expect(text(screen.getByTestId('home-recent-day-2026-10-09'))).toContain('Ontem');
+    expect(text(screen.getByTestId('home-recent-day-2026-10-04'))).toContain('4 de outubro');
     expect(text(rows[2]!)).toContain(pt.transactions.noCategory);
     // Glifo neutro com a inicial da categoria (nada de logotipo de comerciante).
     expect(rows[0]!.querySelector('[data-cy="item-glyph"]')).toHaveTextContent('A');

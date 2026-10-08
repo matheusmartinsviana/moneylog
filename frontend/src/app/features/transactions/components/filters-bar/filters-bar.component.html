@@ -1,6 +1,53 @@
 @let f = filters();
 <div class="filters" data-cy="filters-bar">
-  <app-disclosure fieldId="filters" [heading]="t().transactions.filters.title" [(open)]="open">
+  <!-- Filtros recolhidos em pílulas: cada uma abre o painel e leva ao campo correspondente. -->
+  <div class="filters__pills" role="group" [attr.aria-label]="t().transactions.filters.title">
+    <button
+      type="button"
+      class="pill filters__pill"
+      [attr.aria-expanded]="open()"
+      data-cy="filters-toggle"
+      (click)="toggle()"
+    >
+      <app-icon name="filter" [size]="16" />
+      {{ t().transactions.filters.open }}
+    </button>
+    <button
+      type="button"
+      class="pill filters__pill"
+      data-cy="filters-pill-date"
+      (click)="reveal(f.view === 'records' ? 'filter-from' : 'filter-competence')"
+    >
+      {{
+        f.view === 'records' ? t().transactions.filters.date : t().transactions.filters.competence
+      }}
+      <app-icon name="chevronDown" [size]="14" />
+    </button>
+    <button
+      type="button"
+      class="pill filters__pill"
+      data-cy="filters-pill-account"
+      (click)="reveal('filter-account')"
+    >
+      {{ t().transactions.filters.account }}
+      <app-icon name="chevronDown" [size]="14" />
+    </button>
+    <button
+      type="button"
+      class="pill filters__pill"
+      data-cy="filters-pill-category"
+      (click)="reveal('filter-category')"
+    >
+      {{ t().transactions.filters.category }}
+      <app-icon name="chevronDown" [size]="14" />
+    </button>
+  </div>
+  <app-disclosure
+    fieldId="filters"
+    [hideHeader]="true"
+    [heading]="t().transactions.filters.title"
+    [(open)]="open"
+  >
     <div class="filters__grid">
       <div class="filters__wide">
         <app-text-field

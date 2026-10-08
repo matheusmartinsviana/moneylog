@@ -58,10 +58,6 @@
     padding-top: 0;
   }
 
-  .shell--expanded .shell__window {
-    grid-template-columns: var(--sidebar-expanded-width) minmax(0, 1fr);
-  }
-
   .shell__aside {
     display: block;
     border-radius: var(--radius-panel);

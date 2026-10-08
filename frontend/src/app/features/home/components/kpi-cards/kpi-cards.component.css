@@ -14,9 +14,13 @@
   align-content: start;
   gap: var(--space-1);
   min-width: 0;
-  padding: var(--space-4);
-  border: var(--border-width) solid var(--color-border);
+  padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-panel);
+}
+
+/* Cartões em vidro (saldo e medidor) recebem borda, fundo e brilho do `.glass`; os demais, a superfície sólida. */
+.kpi:not(.glass) {
+  border: var(--border-width) solid var(--color-border);
   background-color: var(--color-surface);
   box-shadow: var(--shadow-1);
 }
@@ -35,11 +39,9 @@
   overflow-wrap: anywhere;
 }
 
-/* O herói é o número dominante da tela: maior e com a tinta de acento no topo. */
+/* O saldo é o número dominante da coluna lateral: maior, com a tinta de acento no topo. */
 .kpi--hero {
-  border-color: var(--color-border);
-  background-color: var(--color-accent-soft);
-  background-image: var(--gradient-panel-glow-soft);
+  background-image: var(--glass-sheen), var(--gradient-panel-glow-soft);
 }
 
 .kpi__value--hero {
@@ -81,19 +83,11 @@
   display: block;
   width: 70%;
   height: 1.25rem;
-  background-color: var(--color-surface-muted);
-  animation: kpi-pulse 1.4s var(--ease-standard) infinite alternate;
 }
 
 .kpi__skeleton {
   height: 1.75rem;
   border-radius: var(--radius-control);
-}
-
-@keyframes kpi-pulse {
-  to {
-    opacity: 0.55;
-  }
 }
 
 .kpi__retry {
@@ -128,17 +122,22 @@
   font-size: var(--text-2xl);
 }
 
-/* Telas largas: os 4 numa linha (herói maior). Abaixo, 2 por linha (3º e 4º dividem a segunda). */
+/* Coluna lateral do Início: saldo e medidor empilhados. */
+.kpis[data-part='balance'] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* Telas largas (modo `all`): os 4 numa linha (herói maior). Abaixo, 2 por linha. */
 @container (width >= 46rem) {
-  .kpis {
+  .kpis[data-part='all'] {
     grid-template-columns: 1.3fr repeat(3, minmax(0, 1fr));
   }
 
-  .kpi__value {
+  .kpis[data-part='all'] .kpi__value {
     font-size: var(--text-2xl);
   }
 
-  .kpi__value--hero {
+  .kpis[data-part='all'] .kpi__value--hero {
     font-size: var(--text-3xl);
   }
 }
@@ -150,12 +149,5 @@
 
   .kpi__value--hero {
     font-size: var(--text-xl);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .delta--skeleton,
-  .kpi__skeleton {
-    animation: none;
   }
 }

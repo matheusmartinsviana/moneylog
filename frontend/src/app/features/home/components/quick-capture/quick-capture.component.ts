@@ -27,6 +27,7 @@ import {
 } from '~/app/features/home/components/quick-capture/quick-capture-form.component';
 import { transactionLabel } from '~/app/features/transactions/transaction-label';
 import { AccountsListFacade } from '~/modules/accounts/core/facades/accounts-list.facade';
+import { AiStatusFacade } from '~/modules/ai/core/facades/ai-status.facade';
 import { CategoriesFacade } from '~/modules/categories/core/facades/categories.facade';
 import type { Category } from '~/modules/categories/core/types/category';
 import { PeopleListFacade } from '~/modules/people/core/facades/people-list.facade';
@@ -72,6 +73,10 @@ export class QuickCaptureComponent implements OnInit {
   private readonly baseRequest = this.bus.request()?.n ?? 0;
   protected readonly t = inject(I18nService).t;
   protected readonly facade = inject(TransactionFormFacade);
+  protected readonly aiStatus = inject(AiStatusFacade);
+  /** Realce suave no cartão depois de salvar (resposta do backend). */
+  protected readonly flash = signal(false);
+  private flashTimer: ReturnType<typeof setTimeout> | undefined;
 
   /** `?mode=income` no Início (ação "Adicionar receita"): abre em Receita. */
   readonly type = input<CaptureType>('EXPENSE');
@@ -123,12 +128,16 @@ export class QuickCaptureComponent implements OnInit {
     effect(() => {
       if (this.focusToken() > 0) untracked(() => this.expanded.set(true));
     });
+    this.destroyRef.onDestroy(() => clearTimeout(this.flashTimer));
     this.facade.saved$.pipe(takeUntilDestroyed()).subscribe((saved) => {
       if (this.lastAccountId !== '') {
         writeLastUsedAccount(this.lastAccountId);
         this.lastUsed.set(this.lastAccountId);
       }
       this.resetToken.update((value) => value + 1);
+      this.flash.set(true);
+      clearTimeout(this.flashTimer);
+      this.flashTimer = setTimeout(() => this.flash.set(false), 700);
       this.collapse();
       if (saved.type === 'LOAN_GIVEN' && saved.debt) {
         // Emprestar: valor e pessoa vêm da resposta do backend; o aviso leva à dívida criada.

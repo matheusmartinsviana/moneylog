@@ -19,6 +19,7 @@ import { ErrorStateComponent } from '~/app/common/components/error-state/error-s
 import { PageLayoutComponent } from '~/app/common/components/page-layout/page-layout.component';
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { problemMessage } from '~/app/common/i18n/problem-message';
+import { SlideIndicatorDirective } from '~/app/common/motion/slide-indicator.directive';
 import { EntityChanges } from '~/app/common/services/entity-changes';
 import { ToastService } from '~/app/common/services/toast.service';
 import { GoalCardComponent } from '~/app/features/goals/components/goal-card/goal-card.component';
@@ -36,6 +37,7 @@ import type { Goal, GoalStatus } from '~/modules/goals/core/types/goal';
 @Component({
   selector: 'app-goals-page',
   imports: [
+    SlideIndicatorDirective,
     RouterOutlet,
     RouterLink,
     PageLayoutComponent,

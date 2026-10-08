@@ -11,10 +11,12 @@ import {
   type Lang,
   ROUTES,
   runAxe,
+  seedMockResponses,
   seedPreferences,
   test,
   waitForApp,
 } from './support';
+import { homeResponses } from './support/home-fixtures';
 
 /**
  * QA da fatia A do redesign (T196), por um agente independente: o que os testes do dev não pegam.
@@ -28,6 +30,13 @@ const ROUTE_PATHS: string[] = [...ROUTES.map((r) => r.path), '/settings/categori
 const WIDTHS = [320, 375, 390, 414, 768, 820, 1023, 1024, 1180, 1199, 1200, 1280, 1440, 1920];
 
 const heightFor = (width: number) => (width < 768 ? 812 : 800);
+
+/** Início com contas (o cartão de captura só mostra os atalhos quando há conta de saldo). */
+async function openHomeWithAccounts(page: Page): Promise<void> {
+  await seedMockResponses(page, homeResponses());
+  await open(page, '/');
+  await expect(page.locator('[data-cy="capture-type-expense"]')).toBeVisible();
+}
 
 async function open(page: Page, path: string): Promise<void> {
   await page.goto(path);
@@ -48,27 +57,20 @@ test.describe('layout: larguras do plano e transições de breakpoint', () => {
     }
   });
 
-  test('1023 → 1024 liga a janela e 1199 → 1200 expande a sidebar, sem recarregar', async ({
+  test('a sidebar é sempre o trilho recolhido (64 px) a partir de 768 px, sem recarregar', async ({
     page,
   }) => {
-    const probe = () =>
-      page.evaluate(() => {
-        const win = document.querySelector('[data-cy="shell-window"]')!;
-        const aside = document.querySelector('.shell__aside')!;
-        return {
-          radius: Number.parseFloat(getComputedStyle(win).borderTopLeftRadius),
-          aside: Math.round(aside.getBoundingClientRect().width),
-        };
-      });
-    await page.setViewportSize({ width: 1023, height: 800 });
+    const aside = () =>
+      page.evaluate(() =>
+        Math.round(document.querySelector('.shell__aside')!.getBoundingClientRect().width),
+      );
+    await page.setViewportSize({ width: 768, height: 800 });
     await open(page, '/');
-    expect(await probe()).toEqual({ radius: 0, aside: 72 });
-    await page.setViewportSize({ width: 1024, height: 800 });
-    expect(await probe()).toEqual({ radius: 28, aside: 72 });
-    await page.setViewportSize({ width: 1199, height: 800 });
-    expect((await probe()).aside).toBe(72);
-    await page.setViewportSize({ width: 1200, height: 800 });
-    expect((await probe()).aside).toBe(248);
+    expect(await aside()).toBe(64);
+    for (const width of [1023, 1024, 1199, 1200, 1920]) {
+      await page.setViewportSize({ width, height: 800 });
+      expect(await aside(), `${width} px`).toBe(64);
+    }
     await expectNoHorizontalScroll(page);
   });
 
@@ -126,7 +128,7 @@ test.describe('BUG-QA-01 · sidebar recolhida em telas baixas', () => {
     await page.setViewportSize({ width: 1024, height: 600 });
     await open(page, '/');
     const overflow = await page
-      .locator('[data-cy="sidebar"]')
+      .locator('[data-cy="sidebar-scroll"]')
       .evaluate((el) => getComputedStyle(el).overflowY);
     expect(overflow).toBe('auto');
     await page.locator('[data-cy="sidebar-cards"]').hover();
@@ -148,14 +150,6 @@ test.describe('BUG-QA-01 · sidebar recolhida em telas baixas', () => {
     await page.keyboard.press('Escape');
     await expect(page.locator('body > .tooltip')).toHaveCount(0);
   });
-
-  test('expandida (>= 1200 px) não repete o rótulo em balão', async ({ page }) => {
-    await page.setViewportSize({ width: 1280, height: 800 });
-    await open(page, '/');
-    await page.locator('[data-cy="sidebar-cards"]').hover();
-    await page.waitForTimeout(600);
-    await expect(page.locator('body > .tooltip')).toHaveCount(0);
-  });
 });
 
 test.describe('foco, teclado e menu do avatar (desktop)', () => {
@@ -163,12 +157,12 @@ test.describe('foco, teclado e menu do avatar (desktop)', () => {
     await page.setViewportSize({ width: 1280, height: 800 });
   });
 
-  test('ordem de Tab: skip-link, trilho (marca, alternar, novo registro, essenciais, Mais, Configurações, Sair), busca, tema, sino, avatar, ações rápidas', async ({
+  test('ordem de Tab: skip-link, trilho (marca, novo registro, essenciais, Mais, Configurações, Sair), busca, tema, sino, avatar', async ({
     page,
   }) => {
     await open(page, '/');
     const seen: string[] = [];
-    for (let i = 0; i < 1 + 14 + 4 + 4; i++) {
+    for (let i = 0; i < 1 + 13 + 4; i++) {
       await page.keyboard.press('Tab');
       seen.push(
         await page.evaluate(() => document.activeElement?.getAttribute('data-cy') ?? 'SEM-DATA-CY'),
@@ -177,7 +171,6 @@ test.describe('foco, teclado e menu do avatar (desktop)', () => {
     expect(seen).toEqual([
       'skip-to-content',
       'sidebar-brand',
-      'sidebar-toggle',
       'sidebar-quickAdd',
       'sidebar-home',
       'sidebar-transactions',
@@ -190,15 +183,11 @@ test.describe('foco, teclado e menu do avatar (desktop)', () => {
       'sidebar-more',
       'sidebar-settings',
       'sidebar-signOut',
-      // Cabeçalho: busca, tema, sino e avatar, antes das ações rápidas.
+      // Cabeçalho: busca, tema, sino e avatar.
       'global-search-input',
       'header-theme-toggle',
       'header-bell',
       'header-profile',
-      'header-action-expense',
-      'header-action-income',
-      'header-action-transfer',
-      'header-action-askAi',
     ]);
   });
 
@@ -208,7 +197,6 @@ test.describe('foco, teclado e menu do avatar (desktop)', () => {
     for (const [path, key] of [
       ['/settings', 'settings'],
       ['/settings/categories', 'settings'],
-      ['/quick-add?mode=income', 'quickAdd'],
       ['/accounts', 'accounts'],
     ] as const) {
       await open(page, path);
@@ -225,16 +213,16 @@ test.describe('foco, teclado e menu do avatar (desktop)', () => {
     page,
   }) => {
     await open(page, '/cards');
-    const trigger = page.locator('[data-cy="sidebar-profile"]');
+    const trigger = page.locator('[data-cy="header-profile"]');
     await trigger.focus();
     await expect(trigger).toHaveAttribute('aria-expanded', 'false');
     await page.keyboard.press('Enter');
     await expect(trigger).toHaveAttribute('aria-expanded', 'true');
-    await expect(page.locator('[data-cy="sidebar-profile-item-settings"]')).toBeFocused();
+    await expect(page.locator('[data-cy="header-profile-item-settings"]')).toBeFocused();
     await page.keyboard.press('ArrowDown');
-    await expect(page.locator('[data-cy="sidebar-profile-item-signOut"]')).toBeFocused();
+    await expect(page.locator('[data-cy="header-profile-item-signOut"]')).toBeFocused();
     await page.keyboard.press('ArrowDown');
-    await expect(page.locator('[data-cy="sidebar-profile-item-settings"]')).toBeFocused();
+    await expect(page.locator('[data-cy="header-profile-item-settings"]')).toBeFocused();
     await page.keyboard.press('Escape');
     await expect(page.locator('[role="menu"]')).toHaveCount(0);
     await expect(trigger).toBeFocused();
@@ -248,7 +236,7 @@ test.describe('foco, teclado e menu do avatar (desktop)', () => {
       await seedPreferences(page, { theme: scheme });
       await page.emulateMedia({ colorScheme: scheme });
       await open(page, '/');
-      await page.locator('[data-cy="sidebar-profile"]').click();
+      await page.locator('[data-cy="header-profile"]').click();
       await expect(page.locator('[role="menu"]')).toBeVisible();
       const violations = (await runAxe(page)).filter(
         // Mesma exceção de `ui-kit.e2e.ts`: popover no portal do `body`, sem papel de diálogo.
@@ -258,7 +246,7 @@ test.describe('foco, teclado e menu do avatar (desktop)', () => {
     });
   }
 
-  test('"Perguntar à IA" não faz nada, o chip é "IA desligada" e não há logo nem dado de demonstração', async ({
+  test('sem IA ligada não há atalho de IA, o chip é "IA desligada" e não há logo nem dado de demonstração', async ({
     page,
   }) => {
     for (const path of ROUTE_PATHS) {
@@ -267,10 +255,8 @@ test.describe('foco, teclado e menu do avatar (desktop)', () => {
       expect(text, path).not.toMatch(/demonstra|demo\b|FinVault/i);
     }
     await open(page, '/');
-    const ask = page.locator('[data-cy="header-action-askAi"]');
-    await ask.click({ force: true });
-    await expect(page).toHaveURL(/\/$/);
-    await expect(page.locator('[role="dialog"], [role="menu"]')).toHaveCount(0);
+    // Desligada, a IA não aparece como atalho no cartão de captura.
+    await expect(page.locator('[data-cy="capture-ask-ai"]')).toHaveCount(0);
     await expect(page.locator('[data-cy="header-ai-status"]')).toHaveText('IA desligada');
     // Nenhuma imagem de marca: o espaço do logo é vazio e o wordmark vem de BRAND_NAME.
     await expect(
@@ -282,55 +268,64 @@ test.describe('foco, teclado e menu do avatar (desktop)', () => {
 });
 
 test.describe('BUG-QA-02 e BUG-QA-03 · o anel de foco não é cortado', () => {
-  test('o anel de 4 px de cada ação rápida cabe dentro do contêiner de rolagem (1280 px)', async ({
+  test('o anel de 4 px de cada atalho do Quick Capture cabe dentro do contêiner (1280 px)', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
-    await open(page, '/cards');
-    for (const key of ['expense', 'income', 'transfer', 'askAi']) {
+    await openHomeWithAccounts(page);
+    for (const key of ['type-expense', 'type-income', 'type-loan', 'transfer']) {
       expect(
-        await focusRingClippedSides(page, `[data-cy="header-action-${key}"]`),
-        `header-action-${key}`,
+        await focusRingClippedSides(page, `[data-cy="capture-${key}"]`),
+        `capture-${key}`,
       ).toEqual([]);
     }
   });
 
-  test('o mesmo no celular, onde as ações rolam na horizontal (375 px, Início)', async ({
+  test('o mesmo no celular, onde os atalhos rolam na horizontal (375 px, Início)', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 375, height: 812 });
-    await open(page, '/');
-    for (const key of ['expense', 'income']) {
-      expect(await focusRingClippedSides(page, `[data-cy="header-action-${key}"]`), key).toEqual(
-        [],
-      );
+    await openHomeWithAccounts(page);
+    for (const key of ['type-expense', 'type-income']) {
+      // O atalho que não cabe na linha rola para a vista com o foco; o anel tem de caber por inteiro.
+      await page
+        .locator(`[data-cy="capture-${key}"]`)
+        .evaluate((el) => el.scrollIntoView({ inline: 'center', block: 'nearest' }));
+      expect(await focusRingClippedSides(page, `[data-cy="capture-${key}"]`), key).toEqual([]);
     }
   });
 
-  test('no tablet (768 px) as ações quebram de linha: nenhuma fica cortada atrás de rolagem (M5)', async ({
-    page,
-  }) => {
-    await page.setViewportSize({ width: 768, height: 1024 });
-    await open(page, '/cards');
-    const state = await page.evaluate(() => {
-      const box = document.querySelector('[data-cy="header-actions"]')!;
-      return {
-        scrolls: box.scrollWidth > box.clientWidth + 1,
-        hidden: [...box.children].some((el) => {
-          const r = el.getBoundingClientRect();
-          return r.right > window.innerWidth + 0.5 || r.left < -0.5;
-        }),
-      };
+  for (const width of [768, 1024, 1280, 1440]) {
+    test(`${width} px: o cabeçalho é uma linha só (nada quebra para uma segunda linha)`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: 900 });
+      for (const path of ['/', '/cards']) {
+        await open(page, path);
+        const tops = await page.evaluate(() =>
+          [
+            ...document.querySelectorAll(
+              '[data-cy="workspace-header"] > *, [data-cy="workspace-header"] > * > *',
+            ),
+          ]
+            .filter((el) => el.getBoundingClientRect().height > 0)
+            .map((el) => {
+              const r = el.getBoundingClientRect();
+              return r.top + r.height / 2;
+            }),
+        );
+        const spread = Math.max(...tops) - Math.min(...tops);
+        expect(spread, `${path}: centros dos itens na mesma linha`).toBeLessThan(24);
+      }
     });
-    expect(state).toEqual({ scrolls: false, hidden: false });
-    await expectNoHorizontalScroll(page);
-  });
+  }
 
-  test('o campo de busca dos filtros de Movimentações mostra o anel inteiro (disclosure)', async ({
+  test('o campo de busca dos filtros de Movimentações mostra o anel inteiro (painel aberto pela pílula)', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await open(page, '/transactions');
+    await page.locator('[data-cy="filters-toggle"]').click();
     const field = page.locator('[data-cy="filter-search"]').first();
     await expect(field).toBeVisible();
     expect(await focusRingClippedSides(page, '[data-cy="filter-search"]')).toEqual([]);
@@ -347,8 +342,8 @@ test.describe('temas', () => {
         .filter((m) => !m.getAttribute('media') || matchMedia(m.getAttribute('media')!).matches)
         .map((m) => m.getAttribute('content')),
     );
-    expect(effective).toEqual(['#0e0e10']);
-    expect(CANVAS.dark).toBe('rgb(14, 14, 16)');
+    expect(effective).toEqual(['#0b0b12']);
+    expect(CANVAS.dark).toBe('rgb(11, 11, 18)');
   });
 
   test('data-theme vence o sistema nos dois sentidos e a troca em tempo de execução repinta a casca', async ({
@@ -358,14 +353,13 @@ test.describe('temas', () => {
     await seedPreferences(page, { theme: 'light' });
     await open(page, '/settings');
     const bg = () =>
-      page.evaluate(() => ({
-        body: getComputedStyle(document.body).backgroundColor,
-        win: getComputedStyle(document.querySelector('[data-cy="shell-window"]')!).backgroundColor,
-      }));
+      page.evaluate(async () => {
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        return { body: getComputedStyle(document.body).backgroundColor };
+      });
     expect((await bg()).body).toBe(CANVAS.light);
     await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'dark'));
     expect((await bg()).body).toBe(CANVAS.dark);
-    expect((await bg()).win).toBe('rgb(28, 28, 30)');
     await page.evaluate(() => document.documentElement.removeAttribute('data-theme'));
     expect((await bg()).body, 'sem escolha: segue o sistema (escuro)').toBe(CANVAS.dark);
   });
@@ -396,10 +390,8 @@ test.describe('forced-colors (Windows alto contraste)', () => {
     // Visual real em forced-colors: fundo igual ao do canvas (transparente ou `Canvas`) não distingue nada.
     const style = (cy: string) =>
       page.evaluate((key) => {
-        const cs = getComputedStyle(document.querySelector(`[data-cy="${key}"]`)!);
-        const canvas = getComputedStyle(
-          document.querySelector('[data-cy="shell-window"]')!,
-        ).backgroundColor;
+        const cs = getComputedStyle(document.querySelector(`[data-cy="${key}"] .sidebar__sq`)!);
+        const canvas = getComputedStyle(document.body).backgroundColor;
         const bg =
           cs.backgroundColor === canvas || /,\s*0\)$/.test(cs.backgroundColor)
             ? 'canvas'
@@ -434,11 +426,7 @@ test.describe('BUG-QA-07 · texto ampliado em tela estreita', () => {
       await expectNoHorizontalScroll(page);
       // Nada do cabeçalho fica para fora da tela: o chip e o avatar quebram de linha.
       const outside = await page.evaluate(() =>
-        [
-          ...document.querySelectorAll(
-            '[data-cy="workspace-header"] *:not([data-cy="header-actions"] *)',
-          ),
-        ]
+        [...document.querySelectorAll('[data-cy="workspace-header"] *')]
           .filter((el) => el.getBoundingClientRect().right > window.innerWidth + 0.5)
           .map((el) => el.getAttribute('data-cy') ?? el.tagName),
       );
@@ -790,22 +778,24 @@ test.describe('A4 / BUG-QA-12 · alvos de toque e hover sem perder contraste', (
   });
 
   for (const scheme of ['light', 'dark'] as const) {
-    test(`o hover de .button--soft mantém o texto a 4,5:1 e a opacidade em 1 (${scheme})`, async ({
+    test(`o hover (azul frio) mantém o texto a 4,5:1 e a opacidade em 1 (${scheme})`, async ({
       page,
     }) => {
       await seedPreferences(page, { theme: scheme });
       await page.emulateMedia({ colorScheme: scheme });
       await page.setViewportSize({ width: 1280, height: 800 });
-      await open(page, '/cards');
-      const soft = page.locator('[data-cy="header-action-income"]');
-      await soft.hover();
+      await openHomeWithAccounts(page);
+      const chip = page.locator('[data-cy="capture-type-income"]');
+      await chip.hover();
       await page.waitForTimeout(400);
-      const state = await soft.evaluate((el) => {
+      const state = await chip.evaluate((el) => {
         const cs = getComputedStyle(el);
         return { color: cs.color, background: cs.backgroundColor, opacity: cs.opacity };
       });
       expect(state.opacity).toBe('1');
-      expect(contrastRatio(state.color, state.background)).toBeGreaterThanOrEqual(4.5);
+      // O fundo do hover é translúcido: o contraste é medido contra o cartão por trás dele.
+      const card = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+      expect(contrastRatio(state.color, card)).toBeGreaterThanOrEqual(4.5);
     });
   }
 });
@@ -819,10 +809,8 @@ test.describe('BUG-QA-09 · borda de campos e controles com 3:1 (WCAG 1.4.11)', 
       await page.emulateMedia({ colorScheme: scheme });
       await page.setViewportSize({ width: 1280, height: 800 });
       await open(page, '/accounts/new');
-      const surface = await page.evaluate(
-        () => getComputedStyle(document.querySelector('[data-cy="shell-window"]')!).backgroundColor,
-      );
-      for (const selector of ['input.input', '[data-cy="header-action-transfer"]']) {
+      const surface = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+      for (const selector of ['input.input', '.button:not(.button--primary):not(.button--soft)']) {
         const border = await page
           .locator(selector)
           .first()
@@ -844,7 +832,7 @@ test.describe('BUG-QA-09 · borda de campos e controles com 3:1 (WCAG 1.4.11)', 
         control: css.getPropertyValue('--color-control-border').trim(),
       };
     });
-    expect(tokens.border).toBe('#e7e4df');
+    expect(tokens.border).toBe('#e3dff3');
     expect(tokens.control).not.toBe(tokens.border);
   });
 });
@@ -856,16 +844,24 @@ test.describe('BUG-QA-06a · foco em forced-colors também nos campos', () => {
     await page.emulateMedia({ forcedColors: 'active' });
     await page.setViewportSize({ width: 1280, height: 800 });
     await open(page, '/accounts/new');
-    await page.locator('input.input').first().focus();
-    await page.keyboard.press('Shift+Tab');
-    await page.keyboard.press('Tab');
-    const outline = await page
-      .locator('input.input')
-      .first()
-      .evaluate((el) => {
+    // Foco por teclado (:focus-visible): anda com Tab até o primeiro campo de texto do formulário.
+    let outline = { style: 'none', width: 0 };
+    for (let i = 0; i < 12; i++) {
+      await page.keyboard.press('Tab');
+      const state = await page.evaluate(() => {
+        const el = document.activeElement as HTMLElement;
         const cs = getComputedStyle(el);
-        return { style: cs.outlineStyle, width: Number.parseFloat(cs.outlineWidth) };
+        return {
+          isField: el.matches('input.input') && !el.closest('[data-cy="global-search"]'),
+          style: cs.outlineStyle,
+          width: Number.parseFloat(cs.outlineWidth),
+        };
       });
+      if (state.isField) {
+        outline = state;
+        break;
+      }
+    }
     expect(outline.style).not.toBe('none');
     expect(outline.width).toBeGreaterThan(0);
   });
@@ -884,7 +880,7 @@ test.describe('M6 · cabeçalho do Início e espaço do logo', () => {
     expect(sizes.hello).toBeLessThan(sizes.title);
   });
 
-  test('o espaço do logo continua vazio e o nome da marca alinha com os ícones da sidebar (sem recuo)', async ({
+  test('o espaço do logo continua vazio e o quadrado da marca alinha com os ícones do trilho', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
@@ -892,14 +888,18 @@ test.describe('M6 · cabeçalho do Início e espaço do logo', () => {
     const slot = page.locator('.sidebar__logo-slot');
     await expect(slot).toHaveCount(1);
     expect(await slot.evaluate((el) => el.childNodes.length)).toBe(0);
-    const offsets = await page.evaluate(() => {
-      const left = (el: Element | null) => el!.getBoundingClientRect().left;
+    // O quadrado da marca e os ícones do trilho ficam na mesma coluna (centros alinhados).
+    const centers = await page.evaluate(() => {
+      const center = (el: Element | null) => {
+        const r = el!.getBoundingClientRect();
+        return r.left + r.width / 2;
+      };
       return {
-        brand: left(document.querySelector('.sidebar__brand-name')),
-        icon: left(document.querySelector('[data-cy="sidebar-home"] app-icon')),
+        brand: center(document.querySelector('.sidebar__sq--brand')),
+        icon: center(document.querySelector('[data-cy="sidebar-home"] .sidebar__sq')),
       };
     });
-    expect(Math.abs(offsets.brand - offsets.icon)).toBeLessThanOrEqual(1);
+    expect(Math.abs(centers.brand - centers.icon)).toBeLessThanOrEqual(1);
   });
 });
 

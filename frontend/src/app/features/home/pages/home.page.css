@@ -20,25 +20,11 @@
 .skeleton__block {
   height: 9rem;
   border-radius: var(--radius-card);
-  background-color: var(--color-surface-muted);
-  animation: pulse 1.4s var(--ease-standard) infinite alternate;
 }
 
 .skeleton__block--hero {
   height: 13rem;
   border-radius: var(--radius-panel);
-}
-
-@keyframes pulse {
-  to {
-    opacity: 0.55;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .skeleton__block {
-    animation: none;
-  }
 }
 
 /*
@@ -47,7 +33,7 @@
  */
 .home {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--section-gap);
   min-width: 0;
 }
 
@@ -102,35 +88,6 @@
   box-shadow: var(--focus-ring);
 }
 
-/* Atalho do Quick Capture: cartão em destaque no topo, com o único botão primário da tela. */
-.capture {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3) var(--space-4);
-  padding: var(--space-4) var(--space-5);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-card);
-  background-color: var(--color-surface);
-  box-shadow: var(--shadow-1);
-}
-
-.capture__text {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-}
-
-.capture__title {
-  font-size: var(--text-lg);
-}
-
-.capture__description {
-  color: var(--color-text-muted);
-  font-size: var(--text-sm);
-}
-
 .block-state {
   display: grid;
   justify-items: start;
@@ -146,65 +103,114 @@
 .strip-skeleton {
   height: 8rem;
   border-radius: var(--radius-card);
-  background-color: var(--color-surface-muted);
-  animation: pulse 1.4s var(--ease-standard) infinite alternate;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .strip-skeleton {
-    animation: none;
-  }
+/* Colunas do Início: o painel do gráfico + KPIs + captura à esquerda; saldo, medidor e recentes à direita. */
+.home__main,
+.home__aside {
+  display: grid;
+  align-content: start;
+  gap: var(--section-gap);
+  min-width: 0;
 }
 
-/* Tablet e janela: duas colunas (gráfico e recentes 2/3, divisão e orçamento 1/3). */
-@container (width >= 48rem) {
+/* Celular: uma coluna; o saldo e o medidor vêm primeiro, depois o gráfico, os KPIs, o cartão de captura e os recentes. */
+.home__main,
+.home__aside {
+  display: contents;
+}
+
+.home__balance {
+  order: 1;
+}
+
+.home__overview {
+  order: 2;
+}
+
+.home__flow {
+  order: 3;
+}
+
+.home__capture {
+  order: 4;
+}
+
+.home__recent {
+  order: 5;
+}
+
+.home__accounts {
+  order: 6;
+}
+
+.home__categories {
+  order: 7;
+}
+
+.home__budget {
+  order: 8;
+}
+
+.home__insight {
+  order: 9;
+}
+
+.home__legacy {
+  order: 10;
+}
+
+/* Tablet e janela: duas colunas (a lateral tem de 18 a 22 rem). */
+@container (width >= 54rem) {
   .home {
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-    grid-template-areas:
-      'capture capture'
-      'kpis kpis'
-      'accounts accounts'
-      'overview categories'
-      'recent budget'
-      'recent insight'
-      'legacy legacy';
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 22rem);
     align-items: start;
   }
 
-  .home__capture {
-    grid-area: capture;
+  .home__main,
+  .home__aside {
+    display: grid;
   }
 
-  .home__kpis {
-    grid-area: kpis;
+  .home__main {
+    grid-column: 1;
+    grid-row: 1;
   }
 
-  .home__accounts {
-    grid-area: accounts;
+  .home__aside {
+    grid-column: 2;
+    grid-row: 1;
   }
 
-  .home__overview {
-    grid-area: overview;
+  .home__balance,
+  .home__overview,
+  .home__flow,
+  .home__capture,
+  .home__recent {
+    order: 0;
+  }
+
+  .home__accounts,
+  .home__legacy,
+  .home__insight {
+    grid-column: 1 / -1;
   }
 
   .home__categories {
-    grid-area: categories;
-  }
-
-  .home__recent {
-    grid-area: recent;
+    grid-column: 1;
   }
 
   .home__budget {
-    grid-area: budget;
+    grid-column: 2;
   }
 
-  .home__insight {
-    grid-area: insight;
+  .home__accounts {
+    order: 1;
   }
 
-  .home__legacy {
-    grid-area: legacy;
+  .home__categories,
+  .home__budget {
+    order: 2;
   }
 }
 

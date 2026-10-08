@@ -61,7 +61,7 @@ import { REPORT_PERIODS, type ReportPeriod } from '~/modules/reports/core/types/
         @case ('loading') {
           <div data-cy="home-overview-loading">
             <p class="visually-hidden" role="status">{{ t().dashboard.overview.loading }}</p>
-            <div class="so__skeleton" aria-hidden="true"></div>
+            <div class="so__skeleton sk" aria-hidden="true"></div>
           </div>
         }
         @case ('error') {
@@ -88,10 +88,11 @@ import { REPORT_PERIODS, type ReportPeriod } from '~/modules/reports/core/types/
                 [label]="t().dashboard.overview.title"
                 [series]="view.series"
                 [keys]="view.keys"
+                [hero]="true"
                 cy="home-overview-chart"
               />
             } @placeholder {
-              <div class="so__skeleton" aria-hidden="true"></div>
+              <div class="so__skeleton sk" aria-hidden="true"></div>
             }
           }
           @if (totals(); as totals) {

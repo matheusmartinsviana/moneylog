@@ -14,7 +14,7 @@
 }
 
 .select__trigger:hover:not(.is-disabled) {
-  border-color: var(--color-text-muted);
+  border-color: var(--color-hover-border);
 }
 
 .select__trigger.is-open {

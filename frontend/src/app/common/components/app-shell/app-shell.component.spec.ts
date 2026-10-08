@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { DeferBlockBehavior, TestBed } from '@angular/core/testing';
 import { Router, TitleStrategy } from '@angular/router';
 import { render, screen, within } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
@@ -26,7 +26,8 @@ import { provideBusinessModules } from '~/testing/modules-testing';
  * então as consultas à sidebar usam `hidden: true`. O layout por largura é validado no navegador (T20).
  */
 async function navigate(url: string, language: 'pt' | 'en' | 'es' = 'pt') {
-  return render(App, {
+  const result = await render(App, {
+    deferBlockBehavior: DeferBlockBehavior.Playthrough,
     routes,
     initialRoute: url,
     providers: [
@@ -39,6 +40,10 @@ async function navigate(url: string, language: 'pt' | 'en' | 'es' = 'pt') {
       provideAuthenticatedSession(),
     ],
   });
+  // A busca, o avatar e o "Mais" carregam em blocos @defer: espera chegarem.
+  await screen.findByTestId('header-profile');
+  await screen.findByTestId('sidebar-more');
+  return result;
 }
 
 /** A sidebar fica oculta no jsdom (sem media queries); localiza pelo data-cy e confere o rótulo. */
@@ -178,8 +183,8 @@ describe('App shell e rotas', () => {
       'Planejamento',
       'Pessoas',
       'Notas',
-      'Mais',
     ]);
+    expect(within(nav).getByTestId('sidebar-more')).toHaveAccessibleName('Mais');
     const footer = nav.querySelector('.sidebar__footer')!;
     expect(footer.querySelector('[data-cy="sidebar-settings"]')).toHaveAttribute(
       'href',
@@ -191,14 +196,13 @@ describe('App shell e rotas', () => {
     expect(screen.queryByText(/dream board/i)).not.toBeInTheDocument();
   });
 
-  it('Dado a sidebar, então a ordem do Tab é marca, alternar, Novo registro, seções, Mais, Configurações e Sair', async () => {
+  it('Dado a sidebar, então a ordem do Tab é marca, Novo registro, seções, Mais, Configurações e Sair', async () => {
     await navigate('/');
 
     const nav = sidebarNav();
     const order = Array.from(nav.querySelectorAll('a, button'), (el) => el.getAttribute('data-cy'));
     expect(order).toEqual([
       'sidebar-brand',
-      'sidebar-toggle',
       'sidebar-quickAdd',
       'sidebar-home',
       'sidebar-transactions',
@@ -214,16 +218,21 @@ describe('App shell e rotas', () => {
     ]);
   });
 
-  it('Dado o botão de alternar, então expande o trilho e lembra a escolha no dispositivo', async () => {
+  it('Dado "Mais" na sidebar, então abre um popover com os atalhos secundários e leva à rota escolhida', async () => {
     await navigate('/');
 
-    const toggle = within(sidebarNav()).getByTestId('sidebar-toggle');
-    expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    await userEvent.click(toggle);
-    expect(toggle).toHaveAttribute('aria-expanded', 'true');
-    expect(localStorage.getItem('moneylog.sidebar')).toBe('expanded');
-    await userEvent.click(toggle);
-    expect(localStorage.getItem('moneylog.sidebar')).toBe('collapsed');
+    const more = within(sidebarNav()).getByTestId('sidebar-more');
+    expect(more).toHaveAttribute('aria-expanded', 'false');
+    await userEvent.click(more);
+
+    const menu = await screen.findByRole('menu', { name: 'Mais' });
+    expect(
+      within(menu)
+        .getAllByRole('menuitem')
+        .map((item) => item.textContent?.trim()),
+    ).toEqual(['Orçamentos', 'Vault', 'Insights', 'IA', 'MCP', 'Importar extrato', 'Notificações']);
+    await userEvent.click(within(menu).getByRole('menuitem', { name: 'Vault' }));
+    await vi.waitFor(() => expect(TestBed.inject(Router).url).toBe('/vault'));
   });
 
   it('Dado o shell, então o cabeçalho do workspace e a janela existem e a página mantém um h1 e um main (T192, T194)', async () => {

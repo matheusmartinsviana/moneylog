@@ -6,6 +6,8 @@
 
 /* O painel (superfície, borda e raio) fica na coluna do shell (`.shell__aside`). */
 .sidebar {
+  --sq: 2.5rem;
+
   height: 100%;
   min-height: 0;
 }
@@ -13,6 +15,7 @@
 .sidebar__nav {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: var(--space-2);
   height: 100%;
   min-height: 0;
@@ -31,13 +34,16 @@
  * (token) esmaece as bordas para indicar que há mais itens. O respiro de 0.75rem mantém tudo legível sem rolagem.
  */
 .sidebar__scroll {
+  position: relative;
   display: grid;
   flex: 1;
+  justify-items: center;
   align-content: start;
   gap: var(--space-1);
   min-height: 0;
   padding-block: 0.75rem;
   overflow-y: auto;
+  contain: paint;
   overscroll-behavior: contain;
   scrollbar-width: none;
   scroll-padding-block: 0.75rem;
@@ -53,21 +59,52 @@
   gap: var(--space-1);
 }
 
-/* Linha: quadrado de ícone + rótulo (só expandida). */
+.sidebar__item {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: var(--sq);
+  height: var(--sq);
+}
+
+/* Indicador do item ativo: um quadrado lilás que desliza (só `transform`) por trás dos ícones. */
+.sidebar__indicator {
+  position: absolute;
+  top: 0;
+  left: calc(50% - var(--sq) / 2);
+  width: var(--sq);
+  height: var(--sq);
+  border-radius: var(--radius-icon);
+  background-color: var(--color-accent);
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform;
+  transform: translateY(calc(var(--indicator-y, 0) * 1px));
+}
+
+.sidebar__indicator.is-visible {
+  opacity: 1;
+}
+
+.sidebar__indicator.is-ready {
+  transition:
+    transform var(--duration-base) var(--ease-emphasized),
+    opacity var(--duration-fast) var(--ease-standard);
+}
+
+/* Linha: o quadrado de ícone (o rótulo vive como tooltip e nome acessível). */
 .sidebar__link {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  width: 100%;
+  justify-content: center;
+  width: var(--sq);
   min-width: 0;
   padding: 0;
   border: 0;
   border-radius: var(--radius-icon);
   background: none;
   color: var(--color-text);
-  font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-  text-align: left;
   text-decoration: none;
 }
 
@@ -76,8 +113,8 @@
   flex: none;
   align-items: center;
   justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: var(--sq);
+  height: var(--sq);
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-icon);
   background-color: var(--color-surface-inset);
@@ -90,11 +127,21 @@
 
 @media (hover: hover) {
   .sidebar__link:hover .sidebar__sq {
-    background-color: var(--color-surface-muted);
+    border-color: var(--color-hover-border);
+    background-image: var(--gradient-hover);
   }
 }
 
-.sidebar__link.is-active .sidebar__sq {
+/* Ativo no trilho: o indicador deslizante pinta o fundo; o quadrado fica transparente. */
+.sidebar__scroll .sidebar__link.is-active .sidebar__sq {
+  border-color: transparent;
+  background-image: none;
+  background-color: transparent;
+  color: var(--color-on-accent);
+}
+
+/* Configurações (fora da área rolável): sem indicador, o próprio quadrado é preenchido. */
+.sidebar__footer .sidebar__link.is-active .sidebar__sq {
   border-color: var(--color-accent);
   background-color: var(--color-accent);
   color: var(--color-on-accent);
@@ -110,11 +157,6 @@
   color: var(--color-accent);
 }
 
-.sidebar__brand-name {
-  font-size: var(--text-md);
-  font-weight: var(--weight-semibold);
-}
-
 .sidebar__link:focus-visible {
   box-shadow: none;
 }
@@ -123,26 +165,9 @@
   box-shadow: var(--focus-ring);
 }
 
-.sidebar__label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Recolhida: o rótulo sai da tela mas continua no DOM (nome acessível). */
-.sidebar:not(.is-expanded) .sidebar__label {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-}
-
 @media (pointer: coarse) {
-  .sidebar__sq {
-    width: 2.75rem;
-    height: 2.75rem;
+  .sidebar {
+    --sq: 2.75rem;
   }
 }
 
@@ -150,4 +175,15 @@
 .sidebar__logo-slot {
   width: 1.25rem;
   height: 1.25rem;
+}
+
+/* Alto contraste: sem cor de fundo, o item ativo se distingue por um contorno de sistema. */
+@media (forced-colors: active) {
+  .sidebar__link.is-active .sidebar__sq {
+    outline: 2px solid Highlight;
+  }
+
+  .sidebar__indicator {
+    display: none;
+  }
 }

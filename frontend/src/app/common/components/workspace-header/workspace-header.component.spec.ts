@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { DeferBlockBehavior, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { render, screen } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
@@ -23,6 +23,8 @@ class BlankComponent {}
 
 async function setup(options: { hour?: number; language?: 'pt' | 'en' | 'es'; url?: string } = {}) {
   const result = await render(WorkspaceHeaderComponent, {
+    // A busca e o avatar carregam em blocos @defer.
+    deferBlockBehavior: DeferBlockBehavior.Playthrough,
     routes: [
       { path: '', component: BlankComponent },
       { path: '**', component: BlankComponent },
@@ -35,6 +37,8 @@ async function setup(options: { hour?: number; language?: 'pt' | 'en' | 'es'; ur
       { provide: GREETING_HOUR, useValue: () => options.hour ?? 20 },
     ],
   });
+  // A busca e o avatar carregam em blocos @defer: espera chegarem.
+  await screen.findByTestId('header-profile');
   if (options.url) {
     await TestBed.inject(Router).navigateByUrl(options.url);
     await result.fixture.whenStable();
@@ -85,41 +89,16 @@ describe('WorkspaceHeaderComponent', () => {
     await setup({ url: '/cards' });
 
     expect(screen.queryByTestId('workspace-greeting')).not.toBeInTheDocument();
-    expect(screen.getByTestId('header-actions')).toBeInTheDocument();
   });
 
-  it('Dado as ações rápidas, então despesa, receita e transferência levam a /quick-add?mode=', async () => {
-    await setup();
-
-    expect(screen.getByTestId('header-action-expense')).toHaveAttribute(
-      'href',
-      '/quick-add?mode=expense',
-    );
-    expect(screen.getByTestId('header-action-income')).toHaveAttribute(
-      'href',
-      '/quick-add?mode=income',
-    );
-    expect(screen.getByTestId('header-action-transfer')).toHaveAttribute(
-      'href',
-      '/quick-add?mode=transfer',
-    );
-    expect(screen.getByRole('group', { name: pt.header.actions.label })).toBeInTheDocument();
-  });
-
-  it('Dado o Início, então as ações do cabeçalho são secundárias (o primário é o atalho do Quick Capture, M6)', async () => {
+  it('Dado o cabeçalho, então é uma linha só: sem ações rápidas (elas moram no cartão do Quick Capture)', async () => {
     const { container } = await setup();
 
+    expect(screen.queryByTestId('header-actions')).not.toBeInTheDocument();
     expect(container.querySelector('.button--primary')).toBeNull();
-    expect(screen.getByTestId('header-action-expense')).toHaveClass('button--soft');
-    expect(screen.getByTestId('header-action-income')).toHaveClass('button--soft');
-  });
-
-  it('Dado outra tela, então "Adicionar despesa" segue como o botão primário do cabeçalho', async () => {
-    const { container } = await setup({ url: '/transactions' });
-
-    expect(container.querySelectorAll('.button--primary')).toHaveLength(1);
-    expect(screen.getByTestId('header-action-expense')).toHaveClass('button--primary');
-    expect(screen.getByTestId('header-action-expense')).not.toHaveClass('button--soft');
+    expect(screen.getByTestId('header-theme-toggle')).toBeInTheDocument();
+    expect(screen.getByTestId('header-bell')).toBeInTheDocument();
+    expect(screen.getByTestId('header-profile')).toBeInTheDocument();
   });
 
   it('Dado o cabeçalho, então a busca global ocupa o centro em todas as telas', async () => {
@@ -127,22 +106,6 @@ describe('WorkspaceHeaderComponent', () => {
 
     expect(screen.getByRole('combobox', { name: pt.search.label })).toBeInTheDocument();
     expect(screen.getByTestId('global-search')).toBeInTheDocument();
-  });
-
-  it('Dado "Perguntar à IA", então está desabilitado, não faz nada e continua focável com a dica própria', async () => {
-    await setup();
-    const router = TestBed.inject(Router);
-    const navigate = vi.spyOn(router, 'navigateByUrl');
-
-    const ask = screen.getByTestId('header-action-askAi');
-    expect(ask).toHaveAttribute('aria-disabled', 'true');
-    expect(ask).not.toHaveAttribute('title');
-    await userEvent.click(ask);
-    expect(navigate).not.toHaveBeenCalled();
-
-    await userEvent.tab();
-    ask.focus();
-    expect(ask).toHaveFocus();
   });
 
   it('Dado o chip de IA, então diz "IA desligada" (verdadeiro hoje) e não há sino de notificações', async () => {

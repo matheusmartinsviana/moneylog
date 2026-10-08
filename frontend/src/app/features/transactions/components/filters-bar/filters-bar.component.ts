@@ -1,9 +1,12 @@
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,
   effect,
+  ElementRef,
   inject,
+  Injector,
   input,
   output,
   signal,
@@ -19,6 +22,7 @@ import { DatePickerComponent } from '~/app/common/components/forms/date-picker/d
 import { MonthPickerComponent } from '~/app/common/components/forms/month-picker/month-picker.component';
 import { SelectComponent } from '~/app/common/components/forms/select/select.component';
 import { TextFieldComponent } from '~/app/common/components/forms/text-field/text-field.component';
+import { IconComponent } from '~/app/common/components/icon/icon.component';
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { ListFilters, SEARCH_MAX_LENGTH } from '~/modules/transactions/core/types/list-filters';
 import {
@@ -52,6 +56,7 @@ const DATE = /^\d{4}-\d{2}-\d{2}$/;
     CheckboxComponent,
     DatePickerComponent,
     DisclosureComponent,
+    IconComponent,
     MonthPickerComponent,
     SelectComponent,
     TextFieldComponent,
@@ -71,9 +76,26 @@ export class FiltersBarComponent {
   readonly clear = output<void>();
 
   protected readonly searchMax = SEARCH_MAX_LENGTH;
-  protected readonly open = signal(
-    typeof matchMedia === 'undefined' || matchMedia('(min-width: 768px)').matches,
-  );
+  /** Recolhido por padrão: as pílulas abrem o painel. */
+  protected readonly open = signal(false);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly injector = inject(Injector);
+
+  protected toggle(): void {
+    this.open.update((value) => !value);
+  }
+
+  /** Abre o painel e leva o foco ao campo da pílula. */
+  protected reveal(fieldId: string): void {
+    this.open.set(true);
+    afterNextRender(
+      () =>
+        this.host.nativeElement
+          .querySelector<HTMLElement>(`[data-cy="${fieldId}"], #${fieldId}`)
+          ?.focus(),
+      { injector: this.injector },
+    );
+  }
 
   protected readonly form = new FormGroup({
     search: new FormControl('', { nonNullable: true }),

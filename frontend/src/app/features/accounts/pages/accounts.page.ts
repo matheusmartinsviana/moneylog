@@ -22,6 +22,7 @@ import { PageLayoutComponent } from '~/app/common/components/page-layout/page-la
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { interpolate } from '~/app/common/i18n/interpolate';
 import { problemMessage } from '~/app/common/i18n/problem-message';
+import { SlideIndicatorDirective } from '~/app/common/motion/slide-indicator.directive';
 import { EntityChanges } from '~/app/common/services/entity-changes';
 import { ToastService } from '~/app/common/services/toast.service';
 import { AccountRowComponent } from '~/app/features/accounts/components/account-row/account-row.component';
@@ -42,6 +43,7 @@ interface RowAction {
 @Component({
   selector: 'app-accounts-page',
   imports: [
+    SlideIndicatorDirective,
     RouterOutlet,
     RouterLink,
     PageLayoutComponent,

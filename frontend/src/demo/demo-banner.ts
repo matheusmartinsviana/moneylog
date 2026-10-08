@@ -5,7 +5,7 @@ const TEXT: Record<string, string> = {
   es: 'Modo demostración: los cambios no se guardan',
 };
 
-/** Mostra a faixa de demonstração, fixa no topo, sem interferir nos cliques da tela. */
+/** Mostra a faixa de demonstração no topo da página, sem sobrepor o cabeçalho. */
 export function mountDemoBanner(): void {
   const doc = document;
   const banner = doc.createElement('div');
@@ -20,19 +20,13 @@ export function mountDemoBanner(): void {
     attributes: true,
     attributeFilter: ['lang'],
   });
+  // Faixa no fluxo da página (primeira coisa do `body`): nunca fica por cima do cabeçalho do workspace.
   Object.assign(banner.style, {
-    position: 'fixed',
-    top: '4px',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    zIndex: '2000',
-    padding: '2px 12px',
-    borderRadius: '999px',
+    padding: '3px 12px',
     background: 'var(--color-text)',
     color: 'var(--color-surface)',
     font: '500 12px/1.5 system-ui, sans-serif',
-    pointerEvents: 'none',
-    whiteSpace: 'nowrap',
+    textAlign: 'center',
   });
-  doc.body.appendChild(banner);
+  doc.body.prepend(banner);
 }

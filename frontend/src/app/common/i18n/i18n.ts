@@ -895,6 +895,8 @@ export abstract class AppI18n {
     >;
     readonly filters: {
       readonly title: string;
+      readonly open: string;
+      readonly date: string;
       readonly from: string;
       readonly to: string;
       readonly competence: string;

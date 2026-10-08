@@ -15,6 +15,7 @@ import {
 import { IconComponent } from '~/app/common/components/icon/icon.component';
 import type { IconName } from '~/app/common/components/icon/icons';
 import { OverlayPanelComponent } from '~/app/common/components/overlay/overlay-panel.component';
+import { TooltipDirective } from '~/app/common/components/tooltip/tooltip.directive';
 
 /** Item do `Menu`. `checked` definido faz dele um `menuitemcheckbox` (o menu continua aberto). */
 export interface MenuItem {
@@ -26,6 +27,8 @@ export interface MenuItem {
   /** Ação que desfaz dados ou muda saldo: estilo de risco. */
   readonly destructive?: boolean;
   readonly checked?: boolean;
+  /** Ícone à esquerda do rótulo (decorativo). */
+  readonly icon?: IconName;
 }
 
 let nextId = 0;
@@ -48,7 +51,7 @@ const normalize = (text: string): string =>
  */
 @Component({
   selector: 'app-menu',
-  imports: [IconComponent, OverlayPanelComponent],
+  imports: [IconComponent, OverlayPanelComponent, TooltipDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="menu" #wrapper>
@@ -59,6 +62,8 @@ const normalize = (text: string): string =>
         aria-haspopup="menu"
         [class.menu__trigger--text]="showLabel()"
         [class.menu__trigger--avatar]="avatar()"
+        [class.menu__trigger--rail]="variant() === 'rail'"
+        [class.is-active]="active()"
         [class.is-open]="open()"
         [id]="triggerId"
         [attr.aria-expanded]="open()"
@@ -66,6 +71,9 @@ const normalize = (text: string): string =>
         [attr.aria-label]="showLabel() ? null : label()"
         [attr.data-cy]="fieldId()"
         [disabled]="disabled()"
+        [appTooltip]="variant() === 'rail' && !open() ? label() : null"
+        appTooltipSide="end"
+        [appTooltipDescribes]="false"
         (click)="toggle('first')"
         (keydown)="onTriggerKeydown($event)"
       >
@@ -83,6 +91,7 @@ const normalize = (text: string): string =>
         [label]="label()"
         [popoverRole]="null"
         [align]="align()"
+        [placement]="variant() === 'rail' ? 'inline' : 'block'"
         [cy]="fieldId() + '-panel'"
         (closed)="close()"
       >
@@ -110,6 +119,9 @@ const normalize = (text: string): string =>
                 (click)="choose(item)"
                 (keydown)="onMenuKeydown($event)"
               >
+                @if (item.icon) {
+                  <app-icon class="menu__icon" [name]="item.icon" [size]="18" />
+                }
                 @if (hasChecks()) {
                   <span class="menu__check" aria-hidden="true">
                     @if (item.checked) {
@@ -163,9 +175,45 @@ const normalize = (text: string): string =>
 
     .menu__trigger--avatar:hover:not(:disabled),
     .menu__trigger--avatar.is-open {
-      background-color: var(--color-accent-soft);
-      color: var(--color-accent);
-      opacity: 0.85;
+      background-color: var(--color-hover-soft);
+      color: var(--color-text);
+    }
+
+    /* Trilho lateral (sidebar): quadrado de ícone igual aos itens do trilho; ativo = indicador deslizante atrás. */
+    .menu__trigger--rail {
+      width: 2.5rem;
+      min-width: 2.5rem;
+      height: 2.5rem;
+      min-height: 2.5rem;
+      padding: 0;
+      border-color: var(--color-border);
+      border-radius: var(--radius-icon);
+      background-color: var(--color-surface-inset);
+      color: var(--color-text);
+    }
+
+    .menu__trigger--rail.is-active {
+      border-color: transparent;
+      background-color: transparent;
+      color: var(--color-on-accent);
+    }
+
+    .menu__trigger--rail.is-active:hover:not(:disabled),
+    .menu__trigger--rail.is-active.is-open {
+      border-color: transparent;
+      background-color: transparent;
+      background-image: none;
+      color: var(--color-on-accent);
+    }
+
+    .menu__trigger--rail:focus-visible {
+      outline: none;
+      box-shadow: var(--focus-ring);
+    }
+
+    .menu__icon {
+      flex: none;
+      color: var(--color-text-muted);
     }
 
     .menu__trigger--text {
@@ -176,8 +224,16 @@ const normalize = (text: string): string =>
 
     .menu__trigger:hover:not(:disabled),
     .menu__trigger.is-open {
-      background-color: var(--color-surface-muted);
+      background-color: var(--color-hover-soft);
       color: var(--color-text);
+    }
+
+    /* Trilho: o quadrado segue opaco; o hover só põe uma película azul por cima (igual aos links do trilho). */
+    .menu__trigger--rail:hover:not(:disabled),
+    .menu__trigger--rail.is-open {
+      border-color: var(--color-hover-border);
+      background-color: var(--color-surface-inset);
+      background-image: var(--gradient-hover);
     }
 
     .menu__trigger:disabled {
@@ -216,7 +272,7 @@ const normalize = (text: string): string =>
 
     .menu__item:hover:not([aria-disabled='true']),
     .menu__item:focus-visible {
-      background-color: var(--color-surface-muted);
+      background-color: var(--color-hover-soft);
     }
 
     .menu__item[aria-disabled='true'] {
@@ -282,6 +338,10 @@ export class MenuComponent {
   readonly avatar = input(false);
   /** Mostra o `label` (com seta) no botão, em vez do ícone de "mais". */
   readonly showLabel = input(false);
+  /** `rail`: botão quadrado do trilho da sidebar; o painel abre ao lado dele. */
+  readonly variant = input<'default' | 'rail'>('default');
+  /** Realça o botão (a rota atual está entre os itens do menu). */
+  readonly active = input(false);
   readonly align = input<'start' | 'end'>('end');
   readonly disabled = input(false);
 

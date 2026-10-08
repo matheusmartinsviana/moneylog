@@ -3,7 +3,12 @@
     {{ t().categories.backToSettings }}
   </a>
 
-  <nav class="tabs" [attr.aria-label]="t().categories.tabsLabel" data-cy="categories-tabs">
+  <nav
+    class="tabs"
+    appSlideIndicator
+    [attr.aria-label]="t().categories.tabsLabel"
+    data-cy="categories-tabs"
+  >
     <a
       class="tab"
       routerLink="/settings/categories"

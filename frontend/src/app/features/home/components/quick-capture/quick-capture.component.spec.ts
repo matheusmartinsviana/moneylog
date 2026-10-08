@@ -145,7 +145,7 @@ describe('QuickCaptureComponent (sem IA)', () => {
     );
 
     await userEvent.type(await screen.findByTestId('capture-amount'), '50');
-    await userEvent.click(screen.getByTestId('capture-type-LOAN'));
+    await userEvent.click(screen.getByTestId('capture-type-loan'));
     expect(screen.queryByTestId('capture-description')).not.toBeInTheDocument();
     expect(screen.queryByTestId('capture-category')).not.toBeInTheDocument();
     await userEvent.click(screen.getByTestId('capture-person'));
@@ -175,7 +175,7 @@ describe('QuickCaptureComponent (sem IA)', () => {
     const { transactions } = await setup();
 
     await userEvent.type(await screen.findByTestId('capture-amount'), '50');
-    await userEvent.click(screen.getByTestId('capture-type-LOAN'));
+    await userEvent.click(screen.getByTestId('capture-type-loan'));
     await userEvent.click(screen.getByTestId('quick-capture-save'));
 
     expect(transactions.creates).toHaveLength(0);

@@ -1133,6 +1133,8 @@ export const en: AppI18n = {
     },
     filters: {
       title: 'Filters',
+      open: 'Filter',
+      date: 'Date',
       from: 'From',
       to: 'To',
       competence: 'Competence',

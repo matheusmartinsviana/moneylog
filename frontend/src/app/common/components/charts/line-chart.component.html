@@ -11,6 +11,7 @@
       class="lc__plot"
       [class.lc__plot--single]="count() === 1"
       [class.lc__plot--dense]="count() > 20"
+      [class.lc__plot--hero]="hero()"
       role="group"
       tabindex="0"
       [attr.aria-label]="label()"
@@ -32,6 +33,12 @@
         [attr.aria-label]="summary()"
         focusable="false"
       >
+        <defs>
+          <linearGradient [id]="fillId" x1="0" y1="0" x2="0" y2="1">
+            <stop class="lc__stop" offset="0" stop-opacity="0.42" />
+            <stop class="lc__stop" offset="1" stop-opacity="0" />
+          </linearGradient>
+        </defs>
         @for (y of gridY(); track y) {
           <line class="lc__grid" x1="0" [attr.x2]="width" [attr.y1]="y" [attr.y2]="y" />
         }
@@ -39,6 +46,7 @@
           @if (item.area) {
             <path
               class="lc__area"
+              [attr.fill]="'url(#' + fillId + ')'"
               [attr.d]="item.area"
               [attr.data-cy]="cy() + '-area-' + item.series.id"
             />

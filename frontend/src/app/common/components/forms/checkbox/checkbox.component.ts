@@ -80,7 +80,7 @@ import { IconComponent } from '~/app/common/components/icon/icon.component';
     }
 
     .checkbox:hover:not(:disabled) .checkbox__box {
-      border-color: var(--color-accent);
+      border-color: var(--color-hover-border);
     }
 
     .checkbox.is-checked .checkbox__box {

@@ -18,6 +18,7 @@ import {
 } from '@angular/core';
 
 import { TabPanelDirective } from '~/app/common/components/tabs/tab-panel.directive';
+import { SlideIndicatorDirective } from '~/app/common/motion/slide-indicator.directive';
 
 /** Aba do `Tabs`. O texto já vem traduzido. */
 export interface TabItem {
@@ -40,7 +41,7 @@ let nextId = 0;
  */
 @Component({
   selector: 'app-tabs',
-  imports: [NgTemplateOutlet],
+  imports: [NgTemplateOutlet, SlideIndicatorDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="ui-tabs" [attr.data-cy]="fieldId()">
@@ -52,6 +53,7 @@ let nextId = 0;
         <div
           #list
           class="ui-tabs__list"
+          appSlideIndicator
           role="tablist"
           [attr.aria-label]="label()"
           (scroll)="measure()"
@@ -108,6 +110,7 @@ let nextId = 0;
     }
 
     .ui-tabs__list {
+      position: relative;
       display: flex;
       overflow-x: auto;
       overscroll-behavior-x: contain;
@@ -166,8 +169,28 @@ let nextId = 0;
     }
 
     .ui-tabs__tab.is-active {
-      border-bottom-color: var(--color-accent);
       color: var(--color-text);
+    }
+
+    .ui-tabs__list:not([data-ind-on]) .ui-tabs__tab.is-active {
+      border-bottom-color: var(--color-accent);
+    }
+
+    /* Sublinhado deslizante (diretiva appSlideIndicator). */
+    .ui-tabs__list[data-ind-on]::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: var(--ind-w);
+      height: 2px;
+      background-color: var(--color-accent);
+      pointer-events: none;
+      transform: translateX(var(--ind-x));
+    }
+
+    .ui-tabs__list[data-ind-ready]::after {
+      transition: transform var(--duration-base) var(--ease-emphasized);
     }
 
     /* O anel de foco por dentro: a lista rola e recortaria o anel por fora. */

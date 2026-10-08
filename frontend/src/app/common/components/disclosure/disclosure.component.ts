@@ -25,28 +25,31 @@ let nextId = 0;
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="disclosure" [class.is-open]="open()" [attr.data-cy]="fieldId()">
-      <div role="heading" [attr.aria-level]="headingLevel()">
-        <button
-          type="button"
-          class="disclosure__header"
-          [id]="headerId"
-          [attr.aria-expanded]="open()"
-          [attr.aria-controls]="regionId"
-          [attr.data-cy]="fieldId() + '-toggle'"
-          (click)="toggle()"
-        >
-          <span class="disclosure__title">{{ heading() }}</span>
-          @if (summary(); as text) {
-            <span class="disclosure__summary">{{ text }}</span>
-          }
-          <app-icon class="disclosure__icon" name="chevronDown" [size]="18" />
-        </button>
-      </div>
+      @if (!hideHeader()) {
+        <div role="heading" [attr.aria-level]="headingLevel()">
+          <button
+            type="button"
+            class="disclosure__header"
+            [id]="headerId"
+            [attr.aria-expanded]="open()"
+            [attr.aria-controls]="regionId"
+            [attr.data-cy]="fieldId() + '-toggle'"
+            (click)="toggle()"
+          >
+            <span class="disclosure__title">{{ heading() }}</span>
+            @if (summary(); as text) {
+              <span class="disclosure__summary">{{ text }}</span>
+            }
+            <app-icon class="disclosure__icon" name="chevronDown" [size]="18" />
+          </button>
+        </div>
+      }
       <div
         class="disclosure__region"
         role="region"
         [id]="regionId"
-        [attr.aria-labelledby]="headerId"
+        [attr.aria-labelledby]="hideHeader() ? null : headerId"
+        [attr.aria-label]="hideHeader() ? heading() : null"
         [attr.inert]="open() ? null : ''"
       >
         <div class="disclosure__inner">
@@ -137,6 +140,8 @@ export class DisclosureComponent {
   readonly headingLevel = input(2);
   /** Monta o conteúdo só enquanto aberto (e o mantém depois da primeira abertura). */
   readonly lazy = input(false);
+  /** Sem cabeçalho próprio: quem hospeda controla `open` com outro botão (pílulas de filtro). */
+  readonly hideHeader = input(false);
 
   private readonly uid = ++nextId;
   protected readonly headerId = `disclosure-header-${this.uid}`;

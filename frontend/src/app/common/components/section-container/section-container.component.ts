@@ -51,7 +51,7 @@ let nextId = 0;
 
     /* Painel em destaque (gráfico): halo lilás por trás, decorativo (token). */
     .section--glow {
-      background-image: var(--gradient-panel-glow);
+      background-image: var(--glass-sheen), var(--gradient-panel-glow);
     }
 
     /* O box-shadow de .section empata em especificidade com .lift:hover e vence por ordem. */

@@ -173,7 +173,7 @@ interface Row {
     }
 
     .tree__item:hover {
-      background-color: var(--color-surface-muted);
+      background-color: var(--color-hover-soft);
     }
 
     .tree__item:focus-visible {

@@ -20,7 +20,8 @@ import { provideReports } from '~/modules/reports/infra/reports.providers';
  * Se uma facade nova passar a usar uma porta daqui fora das rotas listadas, adicione a rota.
  */
 export const IMPORT_PROVIDERS: Provider[] = [provideImports()];
-export const SETTINGS_PROVIDERS: Provider[] = [provideExports()];
+/** Configurações: exportação e a seção do cofre (`VaultSectionComponent`, que usa `VaultGateway`). */
+export const SETTINGS_PROVIDERS: Provider[] = [provideExports(), provideNotes()];
 export const PLANNING_PROVIDERS: Provider[] = [
   provideRecurrences(),
   provideProjections(),

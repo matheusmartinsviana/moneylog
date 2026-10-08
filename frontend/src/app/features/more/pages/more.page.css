@@ -43,7 +43,7 @@
 }
 
 .more-list__link:hover {
-  background-color: var(--color-surface-muted);
+  background-color: var(--color-hover-soft);
 }
 
 .more-list__link:focus-visible {

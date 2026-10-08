@@ -1,4 +1,4 @@
-import { booleanAttribute, ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 import { MotionRevealDirective } from '~/app/common/motion/motion-reveal.directive';
 import { MotionStaggerDirective } from '~/app/common/motion/motion-stagger.directive';
@@ -12,13 +12,7 @@ import { MotionStaggerDirective } from '~/app/common/motion/motion-stagger.direc
   imports: [MotionRevealDirective, MotionStaggerDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <main
-      id="main-content"
-      class="page m-page"
-      [class.page--wide]="wide()"
-      tabindex="-1"
-      data-cy="page"
-    >
+    <main id="main-content" class="page m-page" tabindex="-1" data-cy="page">
       <header class="page__header" [appReveal]="0">
         <div class="page__heading">
           <h1 class="page__title" data-cy="page-title">
@@ -32,7 +26,7 @@ import { MotionStaggerDirective } from '~/app/common/motion/motion-stagger.direc
           <ng-content select="[pageActions]" />
         </div>
       </header>
-      <div class="page__content" appStagger [appStaggerOffset]="1">
+      <div class="page__content" appStagger [appStaggerOffset]="1" data-cy="page-content">
         <ng-content />
       </div>
     </main>
@@ -44,16 +38,11 @@ import { MotionStaggerDirective } from '~/app/common/motion/motion-stagger.direc
 
     .page {
       display: grid;
-      gap: var(--space-6);
+      gap: var(--page-gap);
       width: 100%;
-      max-width: var(--content-max-width);
+      max-width: var(--page-max-width);
       margin: 0 auto;
-      padding: var(--space-6) var(--space-4) var(--space-8);
-    }
-
-    /* Início: mais largura para a grade de KPIs, gráficos e listas (a janela chega a 90rem). */
-    .page--wide {
-      max-width: var(--content-wide-max-width);
+      padding: var(--page-pad-top) var(--page-gutter) var(--page-pad-bottom);
     }
 
     .page__header {
@@ -80,20 +69,12 @@ import { MotionStaggerDirective } from '~/app/common/motion/motion-stagger.direc
 
     .page__content {
       display: grid;
-      gap: var(--space-4);
+      gap: var(--section-gap);
       min-width: 0;
-    }
-
-    @media (width >= 768px) {
-      .page {
-        padding: var(--space-10) var(--space-8) var(--space-12);
-      }
     }
   `,
 })
 export class PageLayoutComponent {
   readonly heading = input.required<string>();
-  /** Largura maior (Início). */
-  readonly wide = input(false, { transform: booleanAttribute });
   readonly description = input<string>();
 }

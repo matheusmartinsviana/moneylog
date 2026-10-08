@@ -79,6 +79,22 @@ function ratio(a, b) {
   return (x + 0.05) / (y + 0.05);
 }
 
+const blocks = { claro: lightBlock, escuro: darkBlock };
+const hex = (r, g, b) =>
+  '#' + [r, g, b].map((v) => Math.round(v).toString(16).padStart(2, '0')).join('');
+/** Fundo de hover (`--color-hover-soft`, translúcido) composto sobre o fundo, para conferir o texto. */
+function hoverOver(block, bgHex) {
+  const m = block.match(/--color-hover-soft:\s*rgb\((\d+) (\d+) (\d+) \/ (\d+)%\)/);
+  if (!m) {
+    console.error('Token --color-hover-soft ausente.');
+    process.exit(1);
+  }
+  const a = Number(m[4]) / 100;
+  const over = [Number(m[1]), Number(m[2]), Number(m[3])];
+  const base = [1, 3, 5].map((i) => parseInt(bgHex.slice(i, i + 2), 16));
+  return hex(...over.map((c, i) => c * a + base[i] * (1 - a)));
+}
+
 const rows = ['| Tema | Texto | Fundo | Contraste | AA (4,5:1) |', '|---|---|---|---|---|'];
 let failures = 0;
 for (const [theme, map] of Object.entries(themes)) {
@@ -93,6 +109,17 @@ for (const [theme, map] of Object.entries(themes)) {
       if (!ok) failures++;
       rows.push(
         `| ${theme} | \`${fg}\` ${map[fg]} | \`${bg}\` ${map[bg]} | ${value.toFixed(2)}:1 | ${ok ? 'ok' : 'FALHA'} |`,
+      );
+    }
+  }
+  for (const fg of ['text', 'text-muted']) {
+    for (const bg of BACKGROUNDS) {
+      const over = hoverOver(blocks[theme], map[bg]);
+      const value = ratio(map[fg], over);
+      const ok = value >= MIN;
+      if (!ok) failures++;
+      rows.push(
+        `| ${theme} (hover) | \`${fg}\` ${map[fg]} | hover sobre \`${bg}\` ${over} | ${value.toFixed(2)}:1 | ${ok ? 'ok' : 'FALHA'} |`,
       );
     }
   }

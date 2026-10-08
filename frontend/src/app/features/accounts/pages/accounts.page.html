@@ -3,7 +3,12 @@
     {{ t().accounts.add }}
   </a>
 
-  <nav class="tabs" [attr.aria-label]="t().accounts.tabsLabel" data-cy="accounts-tabs">
+  <nav
+    class="tabs"
+    appSlideIndicator
+    [attr.aria-label]="t().accounts.tabsLabel"
+    data-cy="accounts-tabs"
+  >
     <a
       class="tab"
       routerLink="/accounts"

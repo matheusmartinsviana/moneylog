@@ -119,7 +119,7 @@ test.describe('janela e menu do perfil (1280, claro e escuro)', () => {
       await page.emulateMedia({ colorScheme: scheme });
       await page.goto('/');
       await waitForApp(page);
-      await page.locator('[data-cy="sidebar-profile"]').click();
+      await page.locator('[data-cy="header-profile"]').click();
       await page.waitForTimeout(350);
       await page.screenshot({
         path: `${OUT_DIR}/1280-${scheme === 'light' ? 'claro' : 'escuro'}-menu-perfil.png`,

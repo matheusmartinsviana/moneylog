@@ -10,8 +10,8 @@ export type ViewportName = keyof typeof VIEWPORTS;
 
 /** Cor de `--color-canvas` aplicada ao `body` em cada tema (tokens.css). */
 export const CANVAS = {
-  light: 'rgb(242, 242, 245)',
-  dark: 'rgb(14, 14, 16)',
+  light: 'rgb(246, 245, 251)',
+  dark: 'rgb(11, 11, 18)',
 } as const;
 
 export type Lang = 'pt' | 'en' | 'es';
@@ -250,7 +250,11 @@ export async function expectNoRawKeys(page: Page): Promise<void> {
 }
 
 export async function bodyBackground(page: Page): Promise<string> {
-  return page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  // Duas voltas de quadro: uma mudança de tema (ou de `prefers-color-scheme`) assenta no quadro seguinte.
+  return page.evaluate(async () => {
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    return getComputedStyle(document.body).backgroundColor;
+  });
 }
 
 // A suíte roda como CommonJS (o package.json não é `type: module`).
@@ -382,11 +386,11 @@ export async function expectSidebarReachable(page: Page): Promise<void> {
   const keys = await page
     .locator('[data-cy="sidebar"] a, [data-cy="sidebar"] button')
     .evaluateAll((els) => els.map((el) => el.getAttribute('data-cy') ?? ''));
-  expect(keys, 'marca, novo registro, 16 itens e avatar').toHaveLength(19);
+  expect(keys, 'marca, novo registro, 8 itens, Mais, Configurações e Sair').toHaveLength(13);
   const viewport = page.viewportSize()!;
-  const profile = (await page.locator('[data-cy="sidebar-profile"]').boundingBox())!;
-  expect(profile.y, 'o avatar já está à vista, sem rolar').toBeGreaterThanOrEqual(0);
-  expect(profile.y + profile.height, 'o avatar não passa do fim da janela').toBeLessThanOrEqual(
+  const signOut = (await page.locator('[data-cy="sidebar-signOut"]').boundingBox())!;
+  expect(signOut.y, 'o Sair já está à vista, sem rolar').toBeGreaterThanOrEqual(0);
+  expect(signOut.y + signOut.height, 'o Sair não passa do fim da janela').toBeLessThanOrEqual(
     viewport.height + 0.5,
   );
   for (const key of keys) {

@@ -97,9 +97,9 @@ import { PwaService } from '~/app/common/services/pwa.service';
     .notices {
       display: grid;
       gap: var(--space-2);
-      max-width: var(--content-max-width);
+      max-width: var(--page-max-width);
       margin: 0 auto;
-      padding: var(--space-3) var(--space-4) 0;
+      padding: var(--space-3) var(--page-gutter) 0;
     }
 
     .notices:empty {

@@ -88,7 +88,7 @@
 
 .vault__note:hover,
 .vault__note.is-selected {
-  background-color: var(--color-surface-muted);
+  background-color: var(--color-hover-soft);
 }
 
 .vault__note:focus-visible {

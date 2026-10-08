@@ -123,4 +123,28 @@ describe('computePosition', () => {
 
     expect(result.top).toBeGreaterThanOrEqual(8);
   });
+
+  it('Dado o trilho lateral, quando abre em linha, então fica à direita do gatilho, alinhado ao topo', () => {
+    const result = computePosition({
+      anchor: rect(16, 300, 40, 40),
+      width: 220,
+      height: 300,
+      viewport: VIEWPORT,
+      placement: 'inline',
+    });
+
+    expect(result).toMatchObject({ side: 'end', left: 62, top: 300 });
+  });
+
+  it('Dado pouco espaço abaixo, quando abre em linha, então sobe para caber na área visível', () => {
+    const result = computePosition({
+      anchor: rect(16, 700, 40, 40),
+      width: 220,
+      height: 300,
+      viewport: VIEWPORT,
+      placement: 'inline',
+    });
+
+    expect(result.top).toBe(492);
+  });
 });

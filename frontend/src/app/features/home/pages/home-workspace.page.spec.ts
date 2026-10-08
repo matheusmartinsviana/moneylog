@@ -102,7 +102,7 @@ async function setup(s: Stubs = stubs(), language: 'pt' | 'en' = 'pt') {
 const closedMonth = (): MonthlySummary => aSummary({ partial: false, competence: '2026-10' });
 
 describe('HomePage: novo Início (fatia C1)', () => {
-  it('Dado o Início, então a ordem é a do mobile: atalho do Quick Capture, KPIs, contas, gráfico, categorias, recentes, orçamento e compromissos', async () => {
+  it('Dado o Início, então a ordem é: gráfico, KPIs do mês, Quick Capture, saldo e poupança, recentes, contas, categorias, orçamento e compromissos', async () => {
     const s = stubs();
     s.monthly.result = () => of(closedMonth());
     await setup(s);
@@ -110,12 +110,13 @@ describe('HomePage: novo Início (fatia C1)', () => {
     await screen.findByTestId('home-overview-chart');
 
     const order = [
-      'home-quick-capture',
-      'home-kpis',
-      'home-accounts-section',
       'home-overview-chart',
-      'home-categories',
+      'home-kpis',
+      'home-quick-capture',
+      'home-kpis-balance',
       'home-recent',
+      'home-accounts-section',
+      'home-categories',
       'home-budget',
       'home-insight-text',
       'home-legacy',

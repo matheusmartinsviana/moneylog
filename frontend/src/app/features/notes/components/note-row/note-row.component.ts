@@ -79,7 +79,7 @@ import { highlightSegments } from '~/util/highlight';
     }
 
     .note-row__link:hover {
-      background-color: var(--color-surface-muted);
+      background-color: var(--color-hover-soft);
     }
 
     .note-row__link:focus-visible {

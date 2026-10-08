@@ -2,13 +2,14 @@ import {
   expect,
   expectNoHorizontalScroll,
   expectNoRawKeys,
+  seedMockResponses,
   runAxe,
   seedPreferences,
-  SIDEBAR_GROUP_ORDER,
   test,
   VIEWPORTS,
   waitForApp,
 } from './support';
+import { homeResponses } from './support/home-fixtures';
 
 /**
  * Casca do workspace (DS 02, fatia A: T191 a T195, ADR-011): janela flutuante só a partir de 1024 px, página
@@ -18,62 +19,30 @@ import {
 
 const px = (value: string) => Number.parseFloat(value);
 
-async function windowStyle(page: import('@playwright/test').Page) {
-  return page.locator('[data-cy="shell-window"]').evaluate((el) => {
-    const style = getComputedStyle(el);
-    const box = el.getBoundingClientRect();
-    return {
-      radius: style.borderTopLeftRadius,
-      shadow: style.boxShadow,
-      border: style.borderTopWidth,
-      left: box.left,
-      width: box.width,
-      top: box.top,
-    };
-  });
-}
+const MAIN_ITEMS = [
+  'home',
+  'transactions',
+  'accounts',
+  'cards',
+  'goals',
+  'planning',
+  'people',
+  'notes',
+];
 
-test.describe('janela flutuante (>= 1024 px)', () => {
+test.describe('shell em telas largas (trilho sempre recolhido)', () => {
   test.use({ viewport: VIEWPORTS.desktop });
 
-  test('1280 px: janela com raio de 28px, sombra, margem e largura máxima centralizada', async ({
+  test('1280 px: trilho de 64 px, conteúdo sobre o canvas e sem rolagem horizontal', async ({
     page,
   }) => {
     await page.goto('/');
     await waitForApp(page);
 
-    const style = await windowStyle(page);
-    expect(px(style.radius)).toBe(28);
-    expect(style.shadow).not.toBe('none');
-    expect(px(style.border)).toBe(1);
-    expect(style.left, 'margem de 24px ao redor').toBeGreaterThanOrEqual(24);
-    expect(style.top).toBeGreaterThanOrEqual(24);
-    expect(style.width).toBeLessThanOrEqual(1440);
+    const aside = (await page.locator('.shell__aside').boundingBox())!;
+    expect(Math.round(aside.width)).toBe(64);
+    await expect(page.locator('[data-cy="bottom-nav"]')).toBeHidden();
     await expectNoHorizontalScroll(page);
-  });
-
-  test('em tela larga a janela fica centralizada e não passa de 90rem', async ({ page }) => {
-    await page.setViewportSize({ width: 1800, height: 900 });
-    await page.goto('/');
-    await waitForApp(page);
-
-    const style = await windowStyle(page);
-    expect(style.width).toBe(1440);
-    expect(Math.abs(style.left - (1800 - 1440) / 2)).toBeLessThanOrEqual(1);
-  });
-
-  test('1024 px: janela com a sidebar recolhida; abaixo, sem janela', async ({ page }) => {
-    await page.setViewportSize({ width: 1024, height: 800 });
-    await page.goto('/');
-    await waitForApp(page);
-    expect(px((await windowStyle(page)).radius)).toBe(28);
-    expect((await page.locator('[data-cy="sidebar"]').boundingBox())!.width).toBeLessThan(100);
-
-    await page.setViewportSize({ width: 1023, height: 800 });
-    const tablet = await windowStyle(page);
-    expect(px(tablet.radius)).toBe(0);
-    expect(tablet.shadow).toBe('none');
-    expect(tablet.left).toBe(0);
   });
 
   test('a página rola (não há rolagem interna) e a sidebar acompanha por sticky', async ({
@@ -87,139 +56,99 @@ test.describe('janela flutuante (>= 1024 px)', () => {
       () => document.documentElement.scrollHeight > document.documentElement.clientHeight,
     );
     expect(scrollable, 'a página, não a janela, rola').toBe(true);
-    const overflow = await page
-      .locator('[data-cy="shell-window"]')
-      .evaluate((el) => getComputedStyle(el).overflowY);
-    expect(overflow, 'a janela não é um contêiner de rolagem').toBe('visible');
-
     const before = (await page.locator('[data-cy="sidebar"]').boundingBox())!.y;
     await page.evaluate(() => window.scrollTo(0, 300));
     const after = (await page.locator('[data-cy="sidebar"]').boundingBox())!.y;
     expect(Math.abs(after - before), 'a sidebar continua no mesmo lugar').toBeLessThanOrEqual(1);
-    // Restaura a rolagem ao navegar (roteador): a janela não segura o scroll.
     await page.locator('[data-cy="sidebar-cards"]').click();
     await expect(page.locator('[data-cy="page-title"]')).toHaveText('Cartões');
     expect(await page.evaluate(() => window.scrollY)).toBe(0);
   });
 
-  test('o menu do perfil abre por cima da janela (portal no body), por teclado, e devolve o foco', async ({
+  test('o menu do perfil abre por cima do conteúdo (portal no body), por teclado, e devolve o foco', async ({
     page,
   }) => {
-    await page.goto('/quick-add');
+    await page.goto('/cards');
     await waitForApp(page);
     const trigger = page.locator('[data-cy="header-profile"]');
-    await page.locator('[data-cy="sidebar-profile"]').click();
-    const panel = page.locator('[data-cy="sidebar-profile-menu"]');
+    await trigger.click();
+    const panel = page.locator('[data-cy="header-profile-menu"]');
     await expect(panel).toBeVisible();
-    // O painel é portal no body (fora da janela): não é cortado por ela.
-    expect(await panel.evaluate((el) => el.closest('[data-cy="shell-window"]'))).toBeNull();
+    expect(await panel.evaluate((el) => el.closest('[data-cy="sidebar"]'))).toBeNull();
     await page.keyboard.press('Escape');
     await expect(panel).toBeHidden();
-    await expect(page.locator('[data-cy="sidebar-profile"]')).toBeFocused();
-    await expect(trigger).toBeHidden();
+    await expect(trigger).toBeFocused();
   });
 });
 
-test.describe('sem janela em telas menores', () => {
-  test('375 px: sem raio, sem sombra, surface de ponta a ponta, barra inferior e sem rolagem horizontal', async ({
-    page,
-  }) => {
+test.describe('shell em telas menores', () => {
+  test('375 px: barra inferior, sem sidebar e sem rolagem horizontal', async ({ page }) => {
     await page.setViewportSize(VIEWPORTS.mobile);
     await page.goto('/');
     await waitForApp(page);
 
-    const style = await windowStyle(page);
-    expect(px(style.radius)).toBe(0);
-    expect(style.shadow).toBe('none');
-    expect(style.left).toBe(0);
-    expect(style.width).toBe(375);
     await expect(page.locator('[data-cy="bottom-nav"]')).toBeVisible();
+    await expect(page.locator('.shell__aside')).toBeHidden();
     await expectNoHorizontalScroll(page);
   });
 
-  test('768 px: tela cheia, sidebar recolhida, sem barra inferior', async ({ page }) => {
+  test('768 px: trilho recolhido, sem barra inferior', async ({ page }) => {
     await page.setViewportSize(VIEWPORTS.tablet);
     await page.goto('/');
     await waitForApp(page);
 
-    const style = await windowStyle(page);
-    expect(px(style.radius)).toBe(0);
-    expect(style.width).toBe(768);
+    expect(Math.round((await page.locator('.shell__aside').boundingBox())!.width)).toBe(64);
     await expect(page.locator('[data-cy="bottom-nav"]')).toBeHidden();
     await expectNoHorizontalScroll(page);
   });
 });
 
-test.describe('sidebar em grupos', () => {
+test.describe('sidebar em trilho', () => {
   test.use({ viewport: VIEWPORTS.desktop });
 
-  test('três grupos nomeados com os itens na ordem, sem cabeçalho de grupo focável', async ({
+  test('os itens essenciais na ordem; o ativo tem aria-current e o indicador fica sobre ele', async ({
     page,
   }) => {
     await page.goto('/cards');
     await waitForApp(page);
 
-    for (const [group, expected] of Object.entries(SIDEBAR_GROUP_ORDER)) {
-      const section = page.locator(`[data-cy="sidebar-group-${group}"]`);
-      await expect(section).toHaveAttribute('role', 'group');
-      const labelled = await section.getAttribute('aria-labelledby');
-      await expect(page.locator(`#${labelled}`)).toBeVisible(); // expandida: o título aparece
-      const keys = await section
-        .locator('a[data-cy^="sidebar-"]')
-        .evaluateAll((links) =>
-          links.map((a) => a.getAttribute('data-cy')!.replace('sidebar-', '')),
-        );
-      expect(keys).toEqual(expected);
-      expect(await page.locator(`#${labelled}`).getAttribute('tabindex')).toBeNull();
-    }
+    const keys = await page
+      .locator('[data-cy="sidebar-main"] a[data-cy^="sidebar-"]')
+      .evaluateAll((links) => links.map((a) => a.getAttribute('data-cy')!.replace('sidebar-', '')));
+    expect(keys).toEqual(MAIN_ITEMS);
     await expect(page.locator('[data-cy="sidebar-cards"]')).toHaveAttribute('aria-current', 'page');
-    await expect(page.locator('[data-cy="sidebar-planning"] .sidebar__label')).toHaveText(
-      'Planejamento',
-    );
-    // Orçamentos (T208), Vault, IA e MCP (fatia F) e Notificações estão na ordem dos grupos acima.
+
+    const [item, indicator] = await Promise.all([
+      page.locator('[data-cy="sidebar-cards"] .sidebar__sq').boundingBox(),
+      page.locator('[data-cy="sidebar-indicator"]').boundingBox(),
+    ]);
+    expect(Math.abs(item!.y - indicator!.y)).toBeLessThanOrEqual(1);
+    expect(Math.abs(item!.x - indicator!.x)).toBeLessThanOrEqual(1);
   });
 
-  test('o item ativo tem fundo em tinta de acento e o rodapé só tem o avatar com menu', async ({
+  test('"Mais" abre um popover com os atalhos secundários e leva à rota escolhida', async ({
     page,
   }) => {
-    await page.goto('/cards');
-    await waitForApp(page);
-
-    const [active, tint] = await page.evaluate(() => {
-      const link = document.querySelector('[data-cy="sidebar-cards"]')!;
-      const probe = document.createElement('span');
-      probe.style.backgroundColor = 'var(--color-accent-soft)';
-      document.body.append(probe);
-      const tint = getComputedStyle(probe).backgroundColor;
-      probe.remove();
-      return [getComputedStyle(link).backgroundColor, tint];
-    });
-    expect(active).toBe(tint);
-
-    await page.locator('[data-cy="sidebar-profile"]').click();
-    await expect(page.locator('[data-cy="sidebar-profile-item-settings"]')).toBeVisible();
-    await expect(page.locator('[data-cy="sidebar-profile-item-signOut"]')).toBeVisible();
-    await page.locator('[data-cy="sidebar-profile-item-settings"]').click();
-    await expect(page).toHaveURL(/\/settings$/);
-  });
-
-  test('tablet: sidebar recolhida com divisores entre grupos e títulos fora da tela', async ({
-    page,
-  }) => {
-    await page.setViewportSize(VIEWPORTS.tablet);
     await page.goto('/');
     await waitForApp(page);
 
-    for (const group of Object.keys(SIDEBAR_GROUP_ORDER)) {
-      const section = page.locator(`[data-cy="sidebar-group-${group}"]`);
-      const title = section.locator('.sidebar__group-title');
-      expect((await title.boundingBox())!.width).toBeLessThanOrEqual(1);
-      await expect(section).toHaveAccessibleName(/.+/);
-    }
-    const divider = await page
-      .locator('[data-cy="sidebar-group-workspace"]')
-      .evaluate((el) => getComputedStyle(el).borderTopWidth);
-    expect(px(divider)).toBe(1);
+    await page.locator('[data-cy="sidebar-more"]').click();
+    const menu = page.locator('[data-cy="sidebar-more-menu"]');
+    await expect(menu).toBeVisible();
+    await expect(menu.getByRole('menuitem')).toHaveCount(7);
+    await page.locator('[data-cy="sidebar-more-item-vault"]').click();
+    await expect(page).toHaveURL(/\/vault$/);
+    await expect(page.locator('[data-cy="sidebar-more"]')).toHaveClass(/is-active/);
+  });
+
+  test('o rodapé tem Configurações e Sair; Configurações fica ativo na rota', async ({ page }) => {
+    await page.goto('/settings');
+    await waitForApp(page);
+    await expect(page.locator('[data-cy="sidebar-settings"]')).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    await expect(page.locator('[data-cy="sidebar-signOut"]')).toBeVisible();
   });
 });
 
@@ -241,50 +170,40 @@ test.describe('cabeçalho do workspace', () => {
     await page.locator('[data-cy="sidebar-cards"]').click();
     await expect(page.locator('[data-cy="page-title"]')).toHaveText('Cartões');
     await expect(greeting).toHaveCount(0);
-    await expect(page.locator('[data-cy="header-actions"]')).toBeVisible();
     await expectNoRawKeys(page);
   });
 
-  test('ações rápidas levam a /quick-add?mode= e "Perguntar à IA" está desabilitado e não faz nada', async ({
+  test('os atalhos do Quick Capture levam a /quick-add?mode=transfer ou trocam o tipo; sem IA não há atalho de IA', async ({
     page,
   }) => {
-    await page.goto('/cards');
+    await seedMockResponses(page, homeResponses());
+    await page.goto('/');
     await waitForApp(page);
 
-    await page.locator('[data-cy="header-action-income"]').click();
-    await expect(page).toHaveURL(/\(modal:quick-add\)\?mode=income$/);
-    await page.locator('[data-cy="header-action-transfer"]').click();
+    await expect(page.locator('[data-cy="capture-type-expense"]')).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await page.locator('[data-cy="capture-type-income"]').click();
+    await expect(page.locator('[data-cy="capture-type-income"]')).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await page.locator('[data-cy="capture-transfer"]').click();
     await expect(page).toHaveURL(/\(modal:quick-add\)\?mode=transfer$/);
-    await page.locator('[data-cy="header-action-expense"]').click();
-    await expect(page).toHaveURL(/\(modal:quick-add\)\?mode=expense$/);
-
-    const ask = page.locator('[data-cy="header-action-askAi"]');
-    await expect(ask).toHaveAttribute('aria-disabled', 'true');
-    const url = page.url();
-    // `force`: o Playwright recusa clicar em `aria-disabled`; o clique de verdade não pode fazer nada.
-    await ask.click({ force: true });
-    expect(page.url()).toBe(url);
-    await ask.focus();
-    await expect(page.locator('.tooltip')).toHaveText('Disponível quando a IA estiver configurada');
+    await expect(page.locator('[data-cy="capture-ask-ai"]')).toHaveCount(0);
     await expect(page.locator('[data-cy="header-ai-status"]')).toHaveText('IA desligada');
-    await expect(page.getByRole('button', { name: /notifica/i })).toHaveCount(0);
   });
 
-  test('mobile: cabeçalho compacto sem rolagem horizontal; o perfil fica no cabeçalho e as ações no Início', async ({
+  test('mobile: cabeçalho compacto sem rolagem horizontal; o perfil fica no cabeçalho', async ({
     page,
   }) => {
     await page.setViewportSize(VIEWPORTS.mobile);
     await page.goto('/');
     await waitForApp(page);
     await expect(page.locator('[data-cy="header-profile"]')).toBeVisible();
-    await expect(page.locator('[data-cy="header-actions"]')).toBeVisible();
     await expectNoHorizontalScroll(page);
 
-    await page.locator('[data-cy="bottom-nav-goals"]').click();
-    await expect(page.locator('[data-cy="header-actions"]')).toBeHidden();
-    await expect(page.locator('[data-cy="header-profile"]')).toBeVisible();
-
-    // Alvo de toque de 44 px no avatar e nas ações.
     const box = (await page.locator('[data-cy="header-profile"]').boundingBox())!;
     expect(Math.min(box.width, box.height)).toBeGreaterThanOrEqual(36);
   });
@@ -317,9 +236,9 @@ test.describe('microinterações e movimento reduzido', () => {
     page,
   }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
-    await page.goto('/cards');
+    await page.goto('/transactions');
     await waitForApp(page);
-    const button = page.locator('[data-cy="header-action-expense"]');
+    const button = page.locator('[data-cy="transactions-add"]');
     await button.hover();
     await page.mouse.down();
     await expect
@@ -382,7 +301,7 @@ test.describe('microinterações e movimento reduzido', () => {
     page,
   }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.goto('/cards');
+    await page.goto('/transactions');
     await waitForApp(page);
 
     const durations = await page.evaluate(() => {
@@ -393,7 +312,7 @@ test.describe('microinterações e movimento reduzido', () => {
     });
     expect(durations.map((d) => px(d))).toEqual([0, 0, 0]);
 
-    const button = page.locator('[data-cy="header-action-expense"]');
+    const button = page.locator('[data-cy="transactions-add"]');
     await button.hover();
     await page.mouse.down();
     const transform = await button.evaluate((el) => getComputedStyle(el).transform);
@@ -401,9 +320,7 @@ test.describe('microinterações e movimento reduzido', () => {
     expect(transform).toBe('none');
   });
 
-  test('sem preferência de movimento, as durações são 180, 240 e 300 ms (entre 180 e 300)', async ({
-    page,
-  }) => {
+  test('sem preferência de movimento, as durações são 160, 240 e 300 ms', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.goto('/cards');
     await waitForApp(page);
@@ -416,11 +333,11 @@ test.describe('microinterações e movimento reduzido', () => {
     });
     // O build de produção minifica `180ms` para `.18s`: compara em milissegundos.
     const ms = durations.map((d) => (d.endsWith('ms') ? px(d) : px(d) * 1000));
-    expect(ms).toEqual([180, 240, 300]);
+    expect(ms).toEqual([160, 240, 300]);
     const transition = await page
-      .locator('[data-cy="sidebar-home"]')
+      .locator('[data-cy="sidebar-home"] .sidebar__sq')
       .evaluate((el) => getComputedStyle(el).transitionDuration);
-    expect(transition.split(',').every((d) => px(d) <= 0.3 && px(d) >= 0.18)).toBe(true);
+    expect(transition.split(',').every((d) => px(d) <= 0.3 && px(d) >= 0.16)).toBe(true);
   });
 });
 

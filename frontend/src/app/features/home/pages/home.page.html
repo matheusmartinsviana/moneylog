@@ -1,4 +1,4 @@
-<app-page-layout [heading]="t().nav.home" [description]="asOf()" [wide]="true">
+<app-page-layout [heading]="t().nav.home" [description]="asOf()">
   @if (dashboard.data()?.summary?.isProjection) {
     <span pageActions class="tag" data-cy="home-projection">{{ t().home.projection }}</span>
   }
@@ -8,9 +8,9 @@
       <div data-cy="home-loading">
         <p class="visually-hidden" role="status">{{ t().home.loading }}</p>
         <div class="skeleton" aria-hidden="true">
-          <div class="skeleton__block skeleton__block--hero"></div>
-          <div class="skeleton__block"></div>
-          <div class="skeleton__block"></div>
+          <div class="skeleton__block skeleton__block--hero sk"></div>
+          <div class="skeleton__block sk"></div>
+          <div class="skeleton__block sk"></div>
         </div>
       </div>
     }
@@ -60,20 +60,49 @@
       }
       @if (dashboard.data(); as data) {
         <div class="home" data-cy="home-dashboard" data-motion-skip appStagger>
-          <app-quick-capture
-            class="home__capture"
-            [type]="captureType()"
-            [asOf]="data.summary.asOf"
-            (saved)="afterCaptured()"
-          />
+          <div class="home__main">
+            <app-spending-overview
+              class="home__overview"
+              [state]="overview.state()"
+              [period]="overview.period()"
+              (periodChange)="changePeriod($event)"
+              (retry)="overview.retry()"
+            />
 
-          <app-kpi-cards
-            class="home__kpis"
-            [summary]="data.summary"
-            [monthly]="monthly.data()"
-            [monthlyStatus]="monthlyStatus()"
-            (retry)="monthly.load(data.summary.month.competence)"
-          />
+            <app-kpi-cards
+              class="home__flow"
+              part="flow"
+              [summary]="data.summary"
+              [monthly]="monthly.data()"
+              [monthlyStatus]="monthlyStatus()"
+              (retry)="monthly.load(data.summary.month.competence)"
+            />
+
+            <app-quick-capture
+              class="home__capture"
+              [type]="captureType()"
+              [asOf]="data.summary.asOf"
+              (saved)="afterCaptured()"
+            />
+          </div>
+
+          <div class="home__aside">
+            <app-kpi-cards
+              class="home__balance"
+              part="balance"
+              [summary]="data.summary"
+              [monthly]="monthly.data()"
+              [monthlyStatus]="monthlyStatus()"
+              (retry)="monthly.load(data.summary.month.competence)"
+            />
+
+            <app-recent-transactions
+              class="home__recent"
+              [state]="recent.state()"
+              [asOf]="data.summary.asOf"
+              (retry)="recent.retry()"
+            />
+          </div>
 
           <section
             class="home__accounts"
@@ -95,7 +124,7 @@
               @case ('loading') {
                 <div data-cy="home-accounts-loading">
                   <p class="visually-hidden" role="status">{{ t().dashboard.accounts.loading }}</p>
-                  <div class="strip-skeleton" aria-hidden="true"></div>
+                  <div class="strip-skeleton sk" aria-hidden="true"></div>
                 </div>
               }
               @case ('empty') {
@@ -130,26 +159,11 @@
             }
           </section>
 
-          <app-spending-overview
-            class="home__overview"
-            [state]="overview.state()"
-            [period]="overview.period()"
-            (periodChange)="changePeriod($event)"
-            (retry)="overview.retry()"
-          />
-
           <app-category-spending
             class="home__categories"
             [state]="categories.state()"
             [month]="data.summary.month.competence"
             (retry)="categories.retry()"
-          />
-
-          <app-recent-transactions
-            class="home__recent"
-            [state]="recent.state()"
-            [asOf]="data.summary.asOf"
-            (retry)="recent.retry()"
           />
 
           <app-budget-card class="home__budget" />

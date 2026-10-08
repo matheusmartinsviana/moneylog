@@ -47,13 +47,10 @@ export const appConfig: ApplicationConfig = {
       routes,
       withComponentInputBinding(),
       withInMemoryScrolling({ scrollPositionRestoration: 'top' }),
-      // Troca de página com cross-fade só no <main> (`.m-page`); sem animar o primeiro carregamento nem com movimento desligado.
-      withViewTransitions({
-        skipInitialTransition: true,
-        onViewTransitionCreated: ({ transition }) => {
-          if (!motionEnabled()) transition.skipTransition();
-        },
-      }),
+      // Troca de página com cross-fade só no <main> (`.m-page`), sem animar o primeiro carregamento. Com movimento
+      // desligado no início (preferência do sistema ou `data-motion="off"`) a transição nem é criada: pular uma
+      // transição já criada faz o Angular logar o `AbortError` no console em desenvolvimento.
+      ...(motionEnabled() ? [withViewTransitions({ skipInitialTransition: true })] : []),
     ),
     { provide: TitleStrategy, useExisting: I18nTitleStrategy },
     provideI18n(),

@@ -34,8 +34,10 @@ import { formatIsoDate } from '~/util/date';
       <span class="item__description">{{ title() }}</span>
       <span class="item__meta">
         {{ tx.category?.name ?? t().transactions.noCategory }} ·
-        {{ tx.account?.name ?? tx.card?.name }} ·
-        {{ dateLabel() ?? date() }}
+        {{ tx.account?.name ?? tx.card?.name }}
+        @if (!hideDate()) {
+          · {{ dateLabel() ?? date() }}
+        }
       </span>
       @if (tx.status === 'VOIDED') {
         <span class="item__tag status" data-tone="warning">{{ t().transactions.voided }}</span>
@@ -125,6 +127,8 @@ export class TransactionListItemComponent {
   readonly glyph = input(false);
   /** Rótulo da data já traduzido ("Hoje", "Ontem"), no lugar da data completa. */
   readonly dateLabel = input<string | null>(null);
+  /** A data já está no título do grupo (lista por dia): a linha não a repete. */
+  readonly hideDate = input(false);
   readonly open = output<Transaction>();
 
   protected readonly title = computed(() =>

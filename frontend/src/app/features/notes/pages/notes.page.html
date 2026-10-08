@@ -11,7 +11,12 @@
 
   <p class="storage" data-cy="notes-storage">{{ t().notes.storage }}</p>
 
-  <nav class="tabs" [attr.aria-label]="t().notes.list.viewLabel" data-cy="notes-tabs">
+  <nav
+    class="tabs"
+    appSlideIndicator
+    [attr.aria-label]="t().notes.list.viewLabel"
+    data-cy="notes-tabs"
+  >
     <a
       class="tab"
       routerLink="/notes"

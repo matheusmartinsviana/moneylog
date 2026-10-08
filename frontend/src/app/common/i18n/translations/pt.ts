@@ -1142,6 +1142,8 @@ export const pt: AppI18n = {
     },
     filters: {
       title: 'Filtros',
+      open: 'Filtrar',
+      date: 'Data',
       from: 'De',
       to: 'Até',
       competence: 'Competência',

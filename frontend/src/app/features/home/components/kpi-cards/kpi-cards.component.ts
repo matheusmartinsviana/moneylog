@@ -33,115 +33,133 @@ interface Chip {
   imports: [MoneyComponent, GaugeComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="kpis" role="group" [attr.aria-label]="t().dashboard.kpis.label" data-cy="home-kpis">
-      <section
-        class="kpi kpi--hero"
-        aria-labelledby="kpi-in-accounts-title"
-        data-cy="kpi-in-accounts"
-      >
-        <h3 class="kpi__label" id="kpi-in-accounts-title">
-          {{ t().dashboard.kpis.inAccounts.title }}
-        </h3>
-        <p
-          class="kpi__value kpi__value--hero"
-          [class.is-negative]="negative(summary().balances.inAccounts.amount)"
-          data-cy="kpi-in-accounts-value"
+    <div
+      class="kpis"
+      role="group"
+      [attr.aria-label]="t().dashboard.kpis.label"
+      [attr.data-part]="part()"
+      [attr.data-cy]="part() === 'balance' ? 'home-kpis-balance' : 'home-kpis'"
+    >
+      @if (part() !== 'flow') {
+        <section
+          class="kpi kpi--hero glass glass--halo"
+          aria-labelledby="kpi-in-accounts-title"
+          data-cy="kpi-in-accounts"
         >
-          <app-money [value]="summary().balances.inAccounts" />
-        </p>
-        @if (inAccountsChip(); as chip) {
-          <p class="delta" [attr.data-tone]="chip.tone" data-cy="kpi-in-accounts-change">
-            {{ chip.text }}
+          <h3 class="kpi__label" id="kpi-in-accounts-title">
+            {{ t().dashboard.kpis.inAccounts.title }}
+          </h3>
+          <p
+            class="kpi__value kpi__value--hero"
+            [class.is-negative]="negative(summary().balances.inAccounts.amount)"
+            data-cy="kpi-in-accounts-value"
+          >
+            <app-money [value]="summary().balances.inAccounts" />
           </p>
-        }
-      </section>
+          @if (inAccountsChip(); as chip) {
+            <p class="delta" [attr.data-tone]="chip.tone" data-cy="kpi-in-accounts-change">
+              {{ chip.text }}
+            </p>
+          }
+        </section>
+      }
 
-      <section class="kpi" aria-labelledby="kpi-spending-title" data-cy="kpi-spending">
-        <h3 class="kpi__label" id="kpi-spending-title">{{ t().dashboard.kpis.spending.title }}</h3>
-        <p class="kpi__value" data-cy="kpi-spending-value">
-          <app-money [value]="summary().month.consumption" />
-        </p>
-        <p class="kpi__caption" data-cy="kpi-spending-caption">{{ caption() }}</p>
-        @if (spendingChip(); as chip) {
-          <p class="delta" [attr.data-tone]="chip.tone" data-cy="kpi-spending-change">
-            {{ chip.text }}
+      @if (part() !== 'balance') {
+        <section class="kpi" aria-labelledby="kpi-spending-title" data-cy="kpi-spending">
+          <h3 class="kpi__label" id="kpi-spending-title">
+            {{ t().dashboard.kpis.spending.title }}
+          </h3>
+          <p class="kpi__value" data-cy="kpi-spending-value">
+            <app-money [value]="summary().month.consumption" />
           </p>
-        } @else if (monthlyStatus() === 'loading') {
-          <p class="delta delta--skeleton" aria-hidden="true"></p>
-        }
-      </section>
+          <p class="kpi__caption" data-cy="kpi-spending-caption">{{ caption() }}</p>
+          @if (spendingChip(); as chip) {
+            <p class="delta" [attr.data-tone]="chip.tone" data-cy="kpi-spending-change">
+              {{ chip.text }}
+            </p>
+          } @else if (monthlyStatus() === 'loading') {
+            <p class="delta delta--skeleton sk" aria-hidden="true"></p>
+          }
+        </section>
 
-      <section class="kpi" aria-labelledby="kpi-income-title" data-cy="kpi-income">
-        <h3 class="kpi__label" id="kpi-income-title">{{ t().dashboard.kpis.income.title }}</h3>
-        <p class="kpi__value" data-cy="kpi-income-value">
-          <app-money [value]="summary().month.income" />
-        </p>
-        <p class="kpi__caption">{{ caption() }}</p>
-        @if (incomeChip(); as chip) {
-          <p class="delta" [attr.data-tone]="chip.tone" data-cy="kpi-income-change">
-            {{ chip.text }}
+        <section class="kpi" aria-labelledby="kpi-income-title" data-cy="kpi-income">
+          <h3 class="kpi__label" id="kpi-income-title">{{ t().dashboard.kpis.income.title }}</h3>
+          <p class="kpi__value" data-cy="kpi-income-value">
+            <app-money [value]="summary().month.income" />
           </p>
-        } @else if (monthlyStatus() === 'loading') {
-          <p class="delta delta--skeleton" aria-hidden="true"></p>
-        }
-      </section>
+          <p class="kpi__caption">{{ caption() }}</p>
+          @if (incomeChip(); as chip) {
+            <p class="delta" [attr.data-tone]="chip.tone" data-cy="kpi-income-change">
+              {{ chip.text }}
+            </p>
+          } @else if (monthlyStatus() === 'loading') {
+            <p class="delta delta--skeleton sk" aria-hidden="true"></p>
+          }
+        </section>
+      }
 
-      <section class="kpi kpi--gauge" aria-labelledby="kpi-savings-title" data-cy="kpi-savings">
-        <h3 class="kpi__label" id="kpi-savings-title">{{ t().dashboard.kpis.savings.title }}</h3>
-        <!-- O arco só desenha a razão do backend (savingsRate); o número está em texto, dentro do medidor. -->
-        <app-gauge [share]="ringShare()" data-cy="kpi-savings-ring">
-          @switch (monthlyStatus()) {
-            @case ('ready') {
-              @if (monthly(); as m) {
-                <p
-                  class="kpi__value kpi__value--gauge"
-                  [class.is-negative]="m.savingsRate !== null && negative(m.savingsRate)"
-                  data-cy="kpi-savings-value"
-                >
-                  {{ savingsText() }}
+      @if (part() !== 'flow') {
+        <section
+          class="kpi kpi--gauge glass glass--halo"
+          aria-labelledby="kpi-savings-title"
+          data-cy="kpi-savings"
+        >
+          <h3 class="kpi__label" id="kpi-savings-title">{{ t().dashboard.kpis.savings.title }}</h3>
+          <!-- O arco só desenha a razão do backend (savingsRate); o número está em texto, dentro do medidor. -->
+          <app-gauge [share]="ringShare()" data-cy="kpi-savings-ring">
+            @switch (monthlyStatus()) {
+              @case ('ready') {
+                @if (monthly(); as m) {
+                  <p
+                    class="kpi__value kpi__value--gauge"
+                    [class.is-negative]="m.savingsRate !== null && negative(m.savingsRate)"
+                    data-cy="kpi-savings-value"
+                  >
+                    {{ savingsText() }}
+                  </p>
+                }
+              }
+              @case ('error') {
+                <p class="kpi__value kpi__value--gauge" data-cy="kpi-savings-value">—</p>
+              }
+              @default {
+                <p class="kpi__skeleton sk" aria-hidden="true"></p>
+              }
+            }
+          </app-gauge>
+          <div class="kpi__text kpi__text--center">
+            @switch (monthlyStatus()) {
+              @case ('ready') {
+                @if (monthly(); as m) {
+                  @if (m.savingsRate === null) {
+                    <p class="kpi__caption" data-cy="kpi-savings-empty">
+                      {{ t().dashboard.kpis.savings.noIncome }}
+                    </p>
+                  } @else {
+                    <p class="kpi__caption">{{ caption() }}</p>
+                  }
+                  @if (savingsChip(); as chip) {
+                    <p class="delta" [attr.data-tone]="chip.tone" data-cy="kpi-savings-change">
+                      {{ chip.text }}
+                    </p>
+                  }
+                }
+              }
+              @case ('error') {
+                <p class="kpi__caption" role="status" data-cy="kpi-savings-error">
+                  {{ t().dashboard.kpis.unavailable }}
                 </p>
+                <button type="button" class="kpi__retry" data-cy="kpi-retry" (click)="retry.emit()">
+                  {{ t().dashboard.kpis.retry }}
+                </button>
+              }
+              @default {
+                <p class="visually-hidden" role="status">{{ t().dashboard.kpis.loading }}</p>
               }
             }
-            @case ('error') {
-              <p class="kpi__value kpi__value--gauge" data-cy="kpi-savings-value">—</p>
-            }
-            @default {
-              <p class="kpi__skeleton" aria-hidden="true"></p>
-            }
-          }
-        </app-gauge>
-        <div class="kpi__text kpi__text--center">
-          @switch (monthlyStatus()) {
-            @case ('ready') {
-              @if (monthly(); as m) {
-                @if (m.savingsRate === null) {
-                  <p class="kpi__caption" data-cy="kpi-savings-empty">
-                    {{ t().dashboard.kpis.savings.noIncome }}
-                  </p>
-                } @else {
-                  <p class="kpi__caption">{{ caption() }}</p>
-                }
-                @if (savingsChip(); as chip) {
-                  <p class="delta" [attr.data-tone]="chip.tone" data-cy="kpi-savings-change">
-                    {{ chip.text }}
-                  </p>
-                }
-              }
-            }
-            @case ('error') {
-              <p class="kpi__caption" role="status" data-cy="kpi-savings-error">
-                {{ t().dashboard.kpis.unavailable }}
-              </p>
-              <button type="button" class="kpi__retry" data-cy="kpi-retry" (click)="retry.emit()">
-                {{ t().dashboard.kpis.retry }}
-              </button>
-            }
-            @default {
-              <p class="visually-hidden" role="status">{{ t().dashboard.kpis.loading }}</p>
-            }
-          }
-        </div>
-      </section>
+          </div>
+        </section>
+      }
     </div>
   `,
   styleUrl: './kpi-cards.component.css',
@@ -155,6 +173,11 @@ export class KpiCardsComponent {
   readonly monthly = input<MonthlySummary | null>(null);
   readonly monthlyStatus = input<KpiMonthlyStatus>('loading');
   readonly retry = output<void>();
+  /**
+   * Quais KPIs desenhar: `balance` (saldo em contas e taxa de poupança, coluna lateral do Início), `flow` (gasto e
+   * receita do mês, sob o gráfico) ou `all` (os quatro, como antes).
+   */
+  readonly part = input<'all' | 'balance' | 'flow'>('all');
 
   private readonly locale = computed(() => HTML_LANG[this.i18n.language()]);
 

@@ -70,7 +70,7 @@
 
 .row:hover,
 .row:focus-visible {
-  background-color: var(--color-surface-muted);
+  background-color: var(--color-hover-soft);
 }
 
 @media (width >= 768px) {

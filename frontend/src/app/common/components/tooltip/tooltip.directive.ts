@@ -2,6 +2,7 @@ import { DOCUMENT } from '@angular/common';
 import { DestroyRef, Directive, effect, ElementRef, inject, input } from '@angular/core';
 
 import { computePosition } from '~/app/common/components/overlay/popover-positioner';
+import { motionEnabled } from '~/app/common/motion/motion';
 
 const HOVER_DELAY_MS = 400;
 const LONG_PRESS_MS = 500;
@@ -150,7 +151,16 @@ export class TooltipDirective {
     clearTimeout(this.timer);
     clearTimeout(this.graceTimer);
     if (!this.bubble) return;
-    this.bubble.remove();
+    const bubble = this.bubble;
+    if (motionEnabled(this.document)) {
+      // Saída curta (opacity/transform): o balão já não é o "atual", só termina de sair.
+      bubble.classList.add('tooltip--out');
+      bubble.removeAttribute('id');
+      bubble.removeAttribute('role');
+      setTimeout(() => bubble.remove(), 110);
+    } else {
+      bubble.remove();
+    }
     this.bubble = null;
     if (current === this.handle) {
       current = null;
