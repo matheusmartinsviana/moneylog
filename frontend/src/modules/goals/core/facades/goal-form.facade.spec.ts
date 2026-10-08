@@ -58,7 +58,7 @@ describe('GoalFormFacade', () => {
   it('Dado editar, então envia a version e não leva chave', () => {
     const { facade, gateway } = setup();
 
-    facade.save({ kind: 'update', id: 'goal-1', input: { ...INPUT, version: 4 } });
+    facade.save({ kind: 'update', id: 'goal-1', input: { ...INPUT, planNote: null, version: 4 } });
 
     expect(gateway.calls).toContain('update:goal-1:4');
     expect(gateway.createKeys).toHaveLength(0);
@@ -81,7 +81,7 @@ describe('GoalFormFacade', () => {
     const gateway = new GoalsGatewayStub();
     gateway.next = failWith(409, 'VERSION_CONFLICT');
     const { facade } = setup(gateway);
-    facade.save({ kind: 'update', id: 'goal-1', input: { ...INPUT, version: 1 } });
+    facade.save({ kind: 'update', id: 'goal-1', input: { ...INPUT, planNote: null, version: 1 } });
 
     facade.dismissProblem();
 

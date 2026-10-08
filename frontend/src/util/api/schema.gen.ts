@@ -1545,7 +1545,7 @@ export interface paths {
         put?: never;
         /**
          * Cria uma meta
-         * @description Nasce sem reservas (`current` 0,00, `progress` `0.0000`). `Idempotency-Key` opcional (escopo `POST /v1/goals`, 24 h): repetir o
+         * @description Nasce sem reservas (`current` 0,00, `progress` `0.0000`). `kind = METRIC` (ADR-016) exige `metric` e `target` (pode ser 0.00), aceita `name` ausente e captura o `baseline` agora; alvo igual ao valor atual → `422 GOAL_METRIC_TARGET_EQUALS_BASELINE`; mesma medida e mesmo alvo ativos → `409 GOAL_METRIC_DUPLICATE`. `Idempotency-Key` opcional (escopo `POST /v1/goals`, 24 h): repetir o
          *     mesmo corpo devolve a mesma meta; outro corpo com a mesma chave é `409 IDEMPOTENCY_KEY_REUSED`.
          */
         post: operations["createGoal"];
@@ -1568,7 +1568,7 @@ export interface paths {
         get: operations["getGoal"];
         /**
          * Edita os dados da meta
-         * @description Nome, alvo, prazo, prioridade e descrição; as reservas não mudam. Meta arquivada → `422 GOAL_ARCHIVED`. `version` desatualizada → `409 VERSION_CONFLICT`.
+         * @description Nome, alvo, prazo, prioridade, descrição e `planNote`; as reservas não mudam. `name` e `target` só são exigidos em `SAVINGS` (ausentes → `422`); em `METRIC` o nome é opcional (ausente apaga) e o alvo ausente mantém o atual (mudar o alvo re-deriva `direction`; igual ao `baseline` → `422 GOAL_METRIC_TARGET_EQUALS_BASELINE`; duplicata ativa → `409 GOAL_METRIC_DUPLICATE`); em `DEBT_PAYOFF` ausentes mantêm os atuais. `planNote` ausente apaga o texto do plano. Remover o `deadline` rebaixa o `stage` para `FANTASY`. Meta arquivada → `422 GOAL_ARCHIVED`. `version` desatualizada → `409 VERSION_CONFLICT`.
          */
         put: operations["updateGoal"];
         post?: never;
@@ -1620,12 +1620,88 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * "Cadastrei tudo": fixa a baseline da meta de quitar dívidas
-         * @description Só para `kind = DEBT_PAYOFF`. Grava `baseline` = total de dívidas de hoje (o mesmo de `GET /v1/debts/overview`) e `baselineAt`;
+         * "Cadastrei tudo": fixa a baseline da meta de quitar dívidas (ou re-ancora a meta de medida)
+         * @description Em `kind = METRIC` (ADR-016): re-ancora `baseline` com o valor atual da medida (qualquer valor vale) e re-deriva `direction`; alvo igual ao valor atual → `422 GOAL_METRIC_TARGET_EQUALS_BASELINE` e a meta não muda.
+         *
+         *     Em `kind = DEBT_PAYOFF`: Grava `baseline` = total de dívidas de hoje (o mesmo de `GET /v1/debts/overview`) e `baselineAt`;
          *     `target` passa a ser a baseline. Pode ser repetido (re-ancorar) e é sempre ação explícita: nada muda sozinho quando aparece dívida
-         *     nova (`grewSinceBaseline`). Total 0 → `422 DEBT_PAYOFF_NOTHING_TO_BASELINE`. Meta de guardar dinheiro → `422 GOAL_KIND_MISMATCH`.
+         *     nova (`grewSinceBaseline`). Total 0 → `422 DEBT_PAYOFF_NOTHING_TO_BASELINE`. Meta de guardar dinheiro (`SAVINGS`) → `422 GOAL_KIND_MISMATCH`.
          */
         post: operations["anchorGoalBaseline"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/goals/{id}/actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Acrescenta uma ação ao plano declarado da meta
+         * @description Plano declarado (ADR-016): até 10 ações por meta (`422 GOAL_ACTION_LIMIT`), sem efeito em contas, razão ou saldos. Meta arquivada
+         *     → `422 GOAL_ARCHIVED`. Devolve a meta atualizada (`201`, `Location` da meta); a ação nova é a última de `actions`.
+         */
+        post: operations["addGoalAction"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/goals/{id}/actions/{actionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+                actionId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Edita uma ação do plano
+         * @description Troca título e frequência. Mudar a frequência apaga os check-ins (os períodos têm outro formato). Ação inexistente → `404 GOAL_ACTION_NOT_FOUND`.
+         */
+        put: operations["updateGoalAction"];
+        post?: never;
+        /**
+         * Remove uma ação do plano
+         * @description Apaga a ação e seus check-ins. Devolve a meta atualizada (`200`).
+         */
+        delete: operations["deleteGoalAction"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/goals/{id}/actions/{actionId}/check-in": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+                actionId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Marca (ou desmarca) o período de uma ação
+         * @description Idempotente. `period`: `MONTHLY` = `YYYY-MM`, `WEEKLY` = `YYYY-Www` (ISO), `ONE_TIME` = ausente ou `ONCE`; fora do formato da
+         *     frequência → `422 GOAL_CHECKIN_PERIOD_INVALID`. `done` ausente = `true`; `false` desmarca. Devolve a meta atualizada.
+         */
+        post: operations["checkInGoalAction"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5028,15 +5104,69 @@ export interface components {
          *     progresso vindo do total de dívidas em relação à `baseline`). Não entra em `balances.reserved` nem em `uncovered`.
          * @enum {string}
          */
-        GoalKind: "SAVINGS" | "DEBT_PAYOFF";
+        GoalKind: "SAVINGS" | "DEBT_PAYOFF" | "METRIC";
         /**
-         * @description `kind` ausente = `SAVINGS`: `name` e `target` obrigatórios. `kind = DEBT_PAYOFF`: `target` é ignorado (sem alvo), `name` é opcional
+         * @description Medida acompanhada por uma meta `METRIC` (ADR-016), sempre na mesma fonte da tela: `TOTAL_DEBT`, `CARD_DEBT`, `PEOPLE_DEBT`,
+         *     `OTHER_DEBT` = `total` e `parts` de `GET /v1/debts/overview`; `ACCOUNTS_BALANCE`, `AVAILABLE_BALANCE` = `balances.inAccounts` e
+         *     `balances.available` do dashboard; `FIXED_COSTS_MONTHLY` = `fixedCosts` de `GET /v1/recurrences/summary`. Sem dado, a medida vale 0,00.
+         * @enum {string}
+         */
+        GoalMetric: "TOTAL_DEBT" | "CARD_DEBT" | "PEOPLE_DEBT" | "OTHER_DEBT" | "ACCOUNTS_BALANCE" | "AVAILABLE_BALANCE" | "FIXED_COSTS_MONTHLY";
+        /**
+         * @description Derivada na criação (e ao mudar alvo ou baseline): `DECREASE` se `target` < `baseline`, `INCREASE` se `target` > `baseline`.
+         * @enum {string}
+         */
+        GoalDirection: "DECREASE" | "INCREASE";
+        /**
+         * @description Derivado em toda leitura (ADR-016): `FANTASY` sem `deadline`; `OBJECTIVE` com prazo; `STRATEGY` com prazo, plano automático válido e
+         *     plano declarado (`planNote` ou ao menos uma ação); `CONSISTENT` = `STRATEGY` com `streak` >= 2; `ACHIEVED` (meta atingida) prevalece.
+         * @enum {string}
+         */
+        GoalStage: "FANTASY" | "OBJECTIVE" | "STRATEGY" | "CONSISTENT" | "ACHIEVED";
+        /** @enum {string} */
+        GoalActionFrequency: "MONTHLY" | "WEEKLY" | "ONE_TIME";
+        GoalActionInput: {
+            title: string;
+            frequency: components["schemas"]["GoalActionFrequency"];
+        };
+        GoalCheckInInput: {
+            /** @description `MONTHLY` `YYYY-MM`; `WEEKLY` `YYYY-Www`; `ONE_TIME` ausente ou `ONCE`. */
+            period?: string | null;
+            /** @description Ausente = `true`; `false` desmarca. */
+            done?: boolean | null;
+        };
+        GoalAction: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            frequency: components["schemas"]["GoalActionFrequency"];
+            /** @description Períodos com check-in (`YYYY-MM`, `YYYY-Www` ou `ONCE`), em ordem. */
+            doneIn: string[];
+            /** Format: date-time */
+            createdAt: string;
+        };
+        /** @description Mês sem instantâneo da medida é "sem dado" (`actual` e `met` nulos), nunca "cumprido". Não há histórico anterior à criação da meta. */
+        GoalConsistencyMonth: {
+            month: string;
+            /** @description Valor esperado no fim do mês na trajetória linear. */
+            expected: components["schemas"]["Money"];
+            actual: components["schemas"]["Money"] | null;
+            met: boolean | null;
+            /** @description O mês já terminou; só os meses fechados contam em `streak` e `consistencyRate`. */
+            closed: boolean;
+        };
+        /**
+         * @description `kind` ausente = `SAVINGS`: `name` e `target` obrigatórios. `kind = METRIC` (ADR-016): `metric` e `target` obrigatórios (`target` pode ser
+         *     0.00), `name` opcional (sem nome, o front mostra o rótulo gerado pela medida), `deadline` e `priority` opcionais; o servidor captura o
+         *     `baseline` (valor atual da medida) e deriva `direction`. `kind = DEBT_PAYOFF`: `target` é ignorado (sem alvo), `name` é opcional
          *     (padrão "Quitar todas as dívidas"), `deadline` e `priority` opcionais; só uma meta `DEBT_PAYOFF` ativa por usuário
          *     (`422 DEBT_PAYOFF_GOAL_EXISTS`). A meta nasce "montando" (`baselineSet = false`, `progress` `0.0000`) até `POST /v1/goals/{id}/baseline`.
          */
         GoalInput: {
             kind?: components["schemas"]["GoalKind"];
             name?: string;
+            /** @description Obrigatório em `kind = METRIC`; ignorado nos demais. */
+            metric?: components["schemas"]["GoalMetric"];
             target?: components["schemas"]["AmountInput"];
             /**
              * Format: date
@@ -5047,8 +5177,12 @@ export interface components {
             description?: string | null;
         };
         GoalUpdate: {
-            name: string;
-            target: components["schemas"]["AmountInput"];
+            /** @description Obrigatório em `SAVINGS` (`422` se ausente); opcional em `METRIC`; ausente em `DEBT_PAYOFF` mantém o nome. */
+            name?: string | null;
+            /** @description Obrigatório em `SAVINGS`; em `METRIC` e `DEBT_PAYOFF` ausente mantém o atual. */
+            target?: components["schemas"]["AmountInput"] | null;
+            /** @description Texto curto do plano declarado (ADR-016). Ausente ou vazio apaga. */
+            planNote?: string | null;
             /** Format: date */
             deadline?: string | null;
             /** @description Opcional (alinhado ao `GoalInput`); ausente mantém a prioridade atual da meta. */
@@ -5136,6 +5270,30 @@ export interface components {
          *       "baseline": null,
          *       "baselineAt": null,
          *       "grewSinceBaseline": false,
+         *       "metric": null,
+         *       "direction": null,
+         *       "reached": false,
+         *       "metricAsOf": null,
+         *       "stage": "OBJECTIVE",
+         *       "requiredPace": {
+         *         "amount": "766.67",
+         *         "currency": "BRL"
+         *       },
+         *       "monthsLeft": 15,
+         *       "nextMilestone": {
+         *         "amount": "1000.00",
+         *         "currency": "BRL"
+         *       },
+         *       "onTrack": true,
+         *       "gap": {
+         *         "amount": "0.00",
+         *         "currency": "BRL"
+         *       },
+         *       "planNote": null,
+         *       "actions": [],
+         *       "consistency": [],
+         *       "streak": 0,
+         *       "consistencyRate": null,
          *       "version": 1,
          *       "createdAt": "2026-10-10T12:00:00Z",
          *       "updatedAt": "2026-10-10T13:00:00Z"
@@ -5145,15 +5303,26 @@ export interface components {
             /** Format: uuid */
             id: string;
             kind: components["schemas"]["GoalKind"];
-            name: string;
+            /** @description Nulo só em `METRIC` sem nome (o front mostra o rótulo gerado pela medida). */
+            name: string | null;
             /** @description Em `DEBT_PAYOFF`, a `baseline` (0,00 enquanto "montando"). */
             target: components["schemas"]["Money"];
-            /** @description Em `DEBT_PAYOFF`, `max(0, baseline − remaining)` (quanto já foi quitado). */
-            current: components["schemas"]["Money"];
-            /** @description Em `DEBT_PAYOFF`, `current / baseline` limitado a 0..1 (`0.0000` sem baseline); dívida nova nunca deixa negativo. */
+            /**
+             * @description Em `DEBT_PAYOFF`, `max(0, baseline − remaining)` (quanto já foi quitado). Em `METRIC`, o valor ATUAL da medida (ao vivo);
+             *     nulo em `METRIC` arquivada (meta arquivada não calcula).
+             */
+            current: components["schemas"]["Money"] | null;
+            /**
+             * @description Em `DEBT_PAYOFF`, `current / baseline` limitado a 0..1 (`0.0000` sem baseline); dívida nova nunca deixa negativo. Em `METRIC`,
+             *     limitado a 0..1: `DECREASE` = (baseline − current) ÷ (baseline − target); `INCREASE` = (current − baseline) ÷ (target − baseline);
+             *     só chega a `1.0000` quando `reached`; `0.0000` se arquivada.
+             */
             progress: components["schemas"]["Ratio"];
-            /** @description Em `DEBT_PAYOFF`, o total de dívidas hoje (o mesmo de `GET /v1/debts/overview`), mesmo acima da baseline. */
-            remaining: components["schemas"]["Money"];
+            /**
+             * @description Em `DEBT_PAYOFF`, o total de dívidas hoje (o mesmo de `GET /v1/debts/overview`), mesmo acima da baseline. Em `METRIC`, a distância
+             *     até o alvo (0,00 se atingida; nulo se arquivada).
+             */
+            remaining: components["schemas"]["Money"] | null;
             status: components["schemas"]["GoalStatus"];
             /** Format: date */
             deadline: string | null;
@@ -5170,6 +5339,34 @@ export interface components {
             baseline: components["schemas"]["Money"] | null;
             /** Format: date-time */
             baselineAt: string | null;
+            metric: components["schemas"]["GoalMetric"] | null;
+            direction: components["schemas"]["GoalDirection"] | null;
+            /** @description A meta foi atingida (`status = ACHIEVED`). */
+            reached: boolean;
+            /**
+             * Format: date
+             * @description Data de referência do cálculo de `current` (só `METRIC` ativa).
+             */
+            metricAsOf: string | null;
+            stage: components["schemas"]["GoalStage"];
+            /** @description Plano automático (prazo + alvo). Ritmo necessário por mês = distância que falta ÷ `monthsLeft`, para cima ao centavo; 0,00 se atingida; nulo sem prazo ou com prazo vencido. */
+            requiredPace: components["schemas"]["Money"] | null;
+            /** @description Meses-calendário do mês de hoje ao mês do prazo (inclusive); 0 com prazo vencido; nulo sem plano automático. */
+            monthsLeft: number | null;
+            /** @description Valor esperado no fim do mês atual na trajetória linear (nulo sem plano automático). */
+            nextMilestone: components["schemas"]["Money"] | null;
+            /** @description A medida está melhor ou igual à trajetória esperada até o fim do mês passado (ou já foi atingida). */
+            onTrack: boolean | null;
+            /** @description Diferença para a trajetória (positivo = adiantado, negativo = atrasado). */
+            gap: components["schemas"]["Money"] | null;
+            planNote: string | null;
+            actions: components["schemas"]["GoalAction"][];
+            /** @description Histórico mensal do mês de início ao mês corrente (vazio sem prazo). */
+            consistency: components["schemas"]["GoalConsistencyMonth"][];
+            /** @description Meses fechados seguidos cumprindo o ritmo. */
+            streak: number;
+            /** @description Cumpridos ÷ meses fechados com dado (nulo sem nenhum). */
+            consistencyRate: components["schemas"]["Ratio"] | null;
             /**
              * @description `DEBT_PAYOFF`: o total de dívidas passou da baseline (dívida nova depois de ancorar). Nada é re-ancorado sozinho; o aviso é
              *     da UI e re-ancorar é `POST /v1/goals/{id}/baseline`. `ACHIEVED` só com baseline e total 0,00; total 0 sem baseline não é conquista.
@@ -9222,6 +9419,129 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
+            422: components["responses"]["UnprocessableEntity"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    addGoalAction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GoalActionInput"];
+            };
+        };
+        responses: {
+            /** @description Meta com a ação incluída. */
+            201: {
+                headers: {
+                    Location: components["headers"]["Location"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Goal"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    updateGoalAction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+                actionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GoalActionInput"];
+            };
+        };
+        responses: {
+            /** @description Meta atualizada. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Goal"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    deleteGoalAction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+                actionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Meta atualizada. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Goal"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    checkInGoalAction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+                actionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GoalCheckInInput"];
+            };
+        };
+        responses: {
+            /** @description Meta atualizada. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Goal"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
             422: components["responses"]["UnprocessableEntity"];
             500: components["responses"]["InternalServerError"];
         };

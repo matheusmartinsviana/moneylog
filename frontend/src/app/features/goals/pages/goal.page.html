@@ -1,5 +1,5 @@
 <app-page-layout
-  [heading]="goal()?.name ?? t().nav.goals"
+  [heading]="goal() ? name() : t().nav.goals"
   [description]="goal()?.description ?? undefined"
 >
   @if (goal(); as g) {
@@ -42,6 +42,15 @@
       @if (goal(); as g) {
         <section class="summary surface" data-cy="goal-summary">
           <p class="summary__tags">
+            <app-goal-stage-badge [stage]="g.stage" cy="goal-stage-badge" />
+            @if (g.kind === 'METRIC' && g.metric) {
+              <span class="tag" data-cy="goal-metric">{{ t().goals.metric[g.metric] }}</span>
+              @if (g.direction) {
+                <span class="tag" data-cy="goal-direction">
+                  {{ t().goals.direction[g.direction] }}
+                </span>
+              }
+            }
             <span class="tag" data-cy="goal-priority">{{ priority() }}</span>
             <span class="tag" [class.tag--done]="g.status === 'ACHIEVED'" data-cy="goal-status">
               {{ t().goals.status[g.status] }}
@@ -60,8 +69,18 @@
               <div class="fact">
                 <dt class="fact__label">{{ t().goals.payoff.remainingLabel }}</dt>
                 <dd class="fact__value" data-cy="goal-remaining">
-                  <app-money [value]="g.remaining" />
+                  @if (g.remaining; as remaining) {
+                    <app-money [value]="remaining" />
+                  }
                 </dd>
+              </div>
+            </dl>
+          } @else if (notCalculated()) {
+            <p class="note" data-cy="goal-not-calculated">{{ t().goals.archivedMetric }}</p>
+            <dl class="facts">
+              <div class="fact">
+                <dt class="fact__label">{{ t().goals.metricDetail.targetLabel }}</dt>
+                <dd class="fact__value" data-cy="goal-target"><app-money [value]="g.target" /></dd>
               </div>
             </dl>
           } @else {
@@ -83,7 +102,9 @@
                   {{
                     g.kind === 'DEBT_PAYOFF'
                       ? t().goals.payoff.baselineLabel
-                      : t().goals.form.target
+                      : g.kind === 'METRIC'
+                        ? t().goals.metricDetail.targetLabel
+                        : t().goals.form.target
                   }}
                 </dt>
                 <dd class="fact__value" data-cy="goal-target"><app-money [value]="g.target" /></dd>
@@ -93,11 +114,15 @@
                   {{
                     g.kind === 'DEBT_PAYOFF'
                       ? t().goals.payoff.paidLabel
-                      : t().goals.card.currentLabel
+                      : g.kind === 'METRIC'
+                        ? t().goals.metricDetail.currentLabel
+                        : t().goals.card.currentLabel
                   }}
                 </dt>
                 <dd class="fact__value" data-cy="goal-current">
-                  <app-money [value]="g.current" />
+                  @if (g.current; as current) {
+                    <app-money [value]="current" />
+                  }
                 </dd>
               </div>
               <div class="fact">
@@ -109,9 +134,19 @@
                   }}
                 </dt>
                 <dd class="fact__value" data-cy="goal-remaining">
-                  <app-money [value]="g.remaining" />
+                  @if (g.remaining; as remaining) {
+                    <app-money [value]="remaining" />
+                  }
                 </dd>
               </div>
+              @if (g.kind === 'METRIC' && g.baseline; as baseline) {
+                <div class="fact">
+                  <dt class="fact__label">{{ t().goals.metricDetail.baselineLabel }}</dt>
+                  <dd class="fact__value" data-cy="goal-baseline-value">
+                    <app-money [value]="baseline" />
+                  </dd>
+                </div>
+              }
             </dl>
           }
 
@@ -166,11 +201,15 @@
 
         @if (g.status === 'ARCHIVED') {
           <p class="banner" role="status" data-cy="goal-archived-note">
-            {{ t().goals.detail.archivedNote }}
+            {{ g.kind === 'METRIC' ? t().goals.archivedMetric : t().goals.detail.archivedNote }}
           </p>
         } @else if (g.kind === 'DEBT_PAYOFF') {
           <p class="summary__note" data-cy="goal-payoff-note">
             {{ t().goals.payoff.progressNote }}
+          </p>
+        } @else if (g.kind === 'METRIC') {
+          <p class="summary__note" data-cy="goal-metric-note">
+            {{ t().goals.metricDetail.note }}
           </p>
         } @else {
           <p class="summary__note" data-cy="goal-not-money">{{ t().goals.detail.notMoney }}</p>
@@ -197,6 +236,10 @@
               }
               <a class="button" routerLink="/planning/debts" data-cy="goal-view-debts">
                 {{ t().goals.payoff.viewDebts }}
+              </a>
+            } @else if (g.kind === 'METRIC') {
+              <a class="button" [routerLink]="['/goals', g.id, 'edit']" data-cy="goal-edit">
+                {{ t().goals.detail.edit }}
               </a>
             } @else {
               <button
@@ -242,7 +285,29 @@
           }
         </div>
 
-        @if (g.kind !== 'DEBT_PAYOFF') {
+        <app-section-container [heading]="t().goals.ladder.title" data-cy="goal-ladder-section">
+          <app-goal-stage-ladder [stage]="g.stage" />
+        </app-section-container>
+
+        <app-section-container [heading]="t().goals.plan.title">
+          <app-goal-plan
+            [goal]="g"
+            [busy]="detail.planBusy()"
+            [locked]="g.status === 'ARCHIVED'"
+            [problem]="planError()"
+            (noteSaved)="savePlanNote($event)"
+            (actionAdded)="addAction($event)"
+            (actionUpdated)="updateAction($event)"
+            (actionRemoved)="removeAction($event)"
+            (checkedIn)="checkIn($event)"
+          />
+        </app-section-container>
+
+        <app-section-container [heading]="t().goals.consistency.title">
+          <app-goal-consistency [goal]="g" />
+        </app-section-container>
+
+        @if (g.kind === 'SAVINGS') {
           <app-section-container [heading]="t().goals.detail.reservations">
             @if (g.reservations.length === 0) {
               <p class="empty-note" data-cy="goal-no-reservations">
@@ -262,7 +327,7 @@
           type="GOAL"
           cy="goal-notes"
           [entityId]="g.id"
-          [label]="g.name"
+          [label]="name()"
           [status]="g.status === 'ARCHIVED' ? 'ARCHIVED' : null"
         />
 

@@ -14,8 +14,76 @@ export const GOAL_STATUSES = [
   'ARCHIVED',
 ] as const satisfies readonly GoalStatus[];
 
-/** `SAVINGS` = reserva (padrão); `DEBT_PAYOFF` = "quitar todas as dívidas" (sem reservas, progresso do servidor). */
-export type GoalKind = 'SAVINGS' | 'DEBT_PAYOFF';
+/**
+ * `SAVINGS` = reserva (padrão); `DEBT_PAYOFF` = "quitar todas as dívidas" (sem reservas, progresso do
+ * servidor); `METRIC` = meta inteligente: acompanha uma medida do sistema até um alvo (ADR-016).
+ */
+export type GoalKind = 'SAVINGS' | 'DEBT_PAYOFF' | 'METRIC';
+
+/** Medidas que uma meta `METRIC` acompanha: o valor atual vem sempre do servidor. */
+export type GoalMetric =
+  | 'TOTAL_DEBT'
+  | 'CARD_DEBT'
+  | 'PEOPLE_DEBT'
+  | 'OTHER_DEBT'
+  | 'ACCOUNTS_BALANCE'
+  | 'AVAILABLE_BALANCE'
+  | 'FIXED_COSTS_MONTHLY';
+export const GOAL_METRICS = [
+  'TOTAL_DEBT',
+  'CARD_DEBT',
+  'PEOPLE_DEBT',
+  'OTHER_DEBT',
+  'ACCOUNTS_BALANCE',
+  'AVAILABLE_BALANCE',
+  'FIXED_COSTS_MONTHLY',
+] as const satisfies readonly GoalMetric[];
+
+/** Derivada no servidor: `DECREASE` se o alvo é menor que o ponto de partida. */
+export type GoalDirection = 'DECREASE' | 'INCREASE';
+
+/** Escada de maturidade, derivada no servidor em toda leitura (ADR-016). */
+export type GoalStage = 'FANTASY' | 'OBJECTIVE' | 'STRATEGY' | 'CONSISTENT' | 'ACHIEVED';
+export const GOAL_STAGES = [
+  'FANTASY',
+  'OBJECTIVE',
+  'STRATEGY',
+  'CONSISTENT',
+  'ACHIEVED',
+] as const satisfies readonly GoalStage[];
+
+export type GoalActionFrequency = 'MONTHLY' | 'WEEKLY' | 'ONE_TIME';
+export const GOAL_ACTION_FREQUENCIES = [
+  'MONTHLY',
+  'WEEKLY',
+  'ONE_TIME',
+] as const satisfies readonly GoalActionFrequency[];
+/** Limite de ações por meta (o servidor também recusa: `GOAL_ACTION_LIMIT`). */
+export const GOAL_ACTION_MAX = 10;
+export const GOAL_PLAN_NOTE_MAX = 500;
+
+/** Ação do plano declarado. `doneIn`: períodos com check-in (`YYYY-MM`, `YYYY-Www` ou `ONCE`). */
+export interface GoalAction {
+  readonly id: string;
+  readonly title: string;
+  readonly frequency: GoalActionFrequency;
+  readonly doneIn: readonly string[];
+}
+
+export interface GoalActionInput {
+  readonly title: string;
+  readonly frequency: GoalActionFrequency;
+}
+
+/** Mês da linha do tempo de consistência. `actual` e `met` nulos = "sem dado". */
+export interface GoalConsistencyMonth {
+  /** `YYYY-MM`. */
+  readonly month: string;
+  readonly expected: Money;
+  readonly actual: Money | null;
+  readonly met: boolean | null;
+  readonly closed: boolean;
+}
 
 export interface Ref {
   readonly id: string;
@@ -42,12 +110,15 @@ export interface GoalReservation {
 export interface Goal {
   readonly id: string;
   readonly kind: GoalKind;
-  readonly name: string;
+  /** Nulo só em `METRIC` sem nome: a tela mostra o rótulo gerado pela medida. */
+  readonly name: string | null;
   readonly target: Money;
-  readonly current: Money;
+  /** Nulo em `METRIC` arquivada (meta arquivada não calcula). */
+  readonly current: Money | null;
   /** Razão do backend (`Ratio`): pode passar de 1. Só se formata. */
   readonly progress: string;
-  readonly remaining: Money;
+  /** Nulo em `METRIC` arquivada. */
+  readonly remaining: Money | null;
   readonly status: GoalStatus;
   readonly deadline: string | null;
   readonly priority: GoalPriority;
@@ -64,6 +135,29 @@ export interface Goal {
   readonly baseline: Money | null;
   /** `DEBT_PAYOFF`: dívida nova depois de ancorar; a UI avisa e oferece re-ancorar. */
   readonly grewSinceBaseline: boolean;
+  /** `METRIC`: a medida acompanhada. */
+  readonly metric: GoalMetric | null;
+  readonly direction: GoalDirection | null;
+  /** Meta atingida (`status = ACHIEVED`). */
+  readonly reached: boolean;
+  /** `METRIC` ativa: ponto de partida e data do cálculo. */
+  readonly metricAsOf: string | null;
+  readonly stage: GoalStage;
+  /** Plano automático (tudo do servidor): ritmo por mês, meses restantes e marco do mês. */
+  readonly requiredPace: Money | null;
+  readonly monthsLeft: number | null;
+  readonly nextMilestone: Money | null;
+  /** `null` sem plano automático. */
+  readonly onTrack: boolean | null;
+  /** Positivo = adiantado, negativo = atrasado. */
+  readonly gap: Money | null;
+  readonly planNote: string | null;
+  readonly actions: readonly GoalAction[];
+  readonly consistency: readonly GoalConsistencyMonth[];
+  /** Meses fechados seguidos cumprindo o ritmo. */
+  readonly streak: number;
+  /** Razão (`0.6667`) ou nula sem meses fechados com dado. */
+  readonly consistencyRate: string | null;
   readonly version: number;
 }
 
@@ -71,6 +165,9 @@ export interface Goal {
 export interface GoalInput {
   /** Omitido = `SAVINGS`. `DEBT_PAYOFF` não leva `name` nem `target` (nome padrão do servidor). */
   readonly kind?: GoalKind;
+  /** `METRIC`: a medida acompanhada (obrigatória). */
+  readonly metric?: GoalMetric;
+  /** `METRIC` aceita nome vazio (o servidor guarda nulo). */
   readonly name: string;
   readonly target: string;
   readonly deadline: string | null;
@@ -79,8 +176,10 @@ export interface GoalInput {
   readonly description: string | null;
 }
 
-/** Edição (`PUT /v1/goals/{id}`): os mesmos campos mais a `version`. */
+/** Edição (`PUT /v1/goals/{id}`): os mesmos campos mais `planNote` e a `version`. */
 export interface GoalUpdate extends GoalInput {
+  /** O `PUT` apaga o que não vai: reenvie sempre o texto atual do plano (`null` apaga de propósito). */
+  readonly planNote: string | null;
   readonly version: number;
 }
 

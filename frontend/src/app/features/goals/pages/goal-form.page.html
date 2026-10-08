@@ -57,13 +57,15 @@
         fieldId="goal-name"
         autocomplete="off"
         [maxlength]="100"
-        [label]="t().goals.form.name"
+        [mandatory]="!isMetric()"
+        [label]="isMetric() ? t().goals.form.nameOptional : t().goals.form.name"
       />
       <app-money-input
         formControlName="target"
         fieldId="goal-target"
         [currency]="currency"
-        [label]="t().goals.form.target"
+        [allowZero]="isMetric()"
+        [label]="isMetric() ? t().goals.smart.target : t().goals.form.target"
       />
       <app-date-picker
         formControlName="deadline"

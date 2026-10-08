@@ -2,12 +2,15 @@ import { Observable } from 'rxjs';
 
 import type {
   Goal,
+  GoalMetric,
+  GoalActionInput,
   GoalInput,
   GoalStatus,
   GoalUpdate,
   ReservationInput,
 } from '~/modules/goals/core/types/goal';
 import type { Slice } from '~/util/api/slice';
+import type { Money } from '~/util/money';
 
 export interface GoalsQuery {
   /** Sem o parâmetro, devolve todas (ativas, atingidas e arquivadas). */
@@ -30,6 +33,17 @@ export abstract class GoalsGateway {
   abstract reserve(id: string, input: ReservationInput, idempotencyKey: string): Observable<Goal>;
   /** "Cadastrei tudo" (`DEBT_PAYOFF`): fixa o total atual como base; repetir re-ancora. Devolve a meta. */
   abstract baseline(id: string): Observable<Goal>;
+  /** Plano declarado (ADR-016): sem efeito em contas nem no razão. Cada chamada devolve a meta. */
+  abstract addAction(id: string, input: GoalActionInput): Observable<Goal>;
+  abstract updateAction(id: string, actionId: string, input: GoalActionInput): Observable<Goal>;
+  abstract deleteAction(id: string, actionId: string): Observable<Goal>;
+  /** Idempotente. `period`: `YYYY-MM` (mensal), `YYYY-Www` (semanal) ou `ONCE`; `done=false` desmarca. */
+  abstract checkIn(id: string, actionId: string, period: string, done: boolean): Observable<Goal>;
+  /**
+   * Valor atual da medida, **lido da mesma fonte da tela** (visão de dívidas, painel, custos fixos). Só
+   * leitura para mostrar antes de criar a meta: o front nunca calcula a medida.
+   */
+  abstract metricValue(metric: GoalMetric): Observable<Money>;
   abstract archive(id: string): Observable<Goal>;
   abstract unarchive(id: string): Observable<Goal>;
 }

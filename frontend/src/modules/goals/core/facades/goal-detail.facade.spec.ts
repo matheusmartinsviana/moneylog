@@ -1,10 +1,10 @@
 import { TestBed } from '@angular/core/testing';
-import { Subject } from 'rxjs';
+import { of, Subject } from 'rxjs';
 
 import { GoalDetailFacade } from '~/modules/goals/core/facades/goal-detail.facade';
 import type { Goal } from '~/modules/goals/core/types/goal';
 import { failWith } from '~/testing/accounts-testing';
-import { aGoal, GoalsGatewayStub, provideGoalsStub } from '~/testing/goals-testing';
+import { aGoal, aMetricGoal, GoalsGatewayStub, provideGoalsStub } from '~/testing/goals-testing';
 
 function setup(gateway = new GoalsGatewayStub()) {
   TestBed.configureTestingModule({ providers: [provideGoalsStub(gateway), GoalDetailFacade] });
@@ -114,7 +114,7 @@ describe('GoalDetailFacade', () => {
     facade.apply(aGoal({ current: { amount: '9500.00', currency: 'BRL' }, progress: '0.4750' }));
 
     expect(facade.goal()).toMatchObject({ progress: '0.4750' });
-    expect(facade.goal()?.current.amount).toBe('9500.00');
+    expect(facade.goal()?.current?.amount).toBe('9500.00');
   });
 
   it('Dado "Cadastrei tudo", então a meta devolvida pelo servidor vira o estado e o evento sai', () => {
@@ -139,5 +139,63 @@ describe('GoalDetailFacade', () => {
 
     expect(facade.problem()).toMatchObject({ code: 'DEBT_PAYOFF_NOTHING_TO_BASELINE' });
     expect(facade.goal()).toMatchObject({ kind: 'SAVINGS' });
+  });
+  describe('plano declarado', () => {
+    it('Dado salvar o plano, então o PUT reenvia os valores atuais da meta e a resposta vira o estado', () => {
+      const { facade, gateway } = setup();
+      const done: string[] = [];
+      facade.planDone$.subscribe((kind) => done.push(kind));
+      gateway.next = of(aMetricGoal({ planNote: 'Pagar em dia' }));
+      facade.apply(aMetricGoal({ version: 3 }));
+
+      facade.savePlanNote('Pagar em dia');
+
+      expect(gateway.updates[0]).toMatchObject({
+        kind: 'METRIC',
+        name: '',
+        target: '4000.00',
+        deadline: '2027-04-30',
+        planNote: 'Pagar em dia',
+        version: 3,
+      });
+      expect(facade.goal()?.planNote).toBe('Pagar em dia');
+      expect(done).toEqual(['note']);
+    });
+
+    it('Dado ações e check-in, então chamam a porta em ordem e cada resposta vira o estado', () => {
+      const { facade, gateway } = setup();
+      facade.load('goal-1');
+
+      facade.addAction({ title: 'Revisar', frequency: 'WEEKLY' });
+      facade.updateAction('a-1', { title: 'Revisar tudo', frequency: 'MONTHLY' });
+      facade.checkIn('a-1', '2026-10', true);
+      facade.checkIn('a-1', '2026-10', false);
+      facade.removeAction('a-1');
+
+      expect(gateway.actionCalls).toEqual([
+        'add:goal-1:Revisar:WEEKLY',
+        'update:goal-1:a-1:Revisar tudo:MONTHLY',
+        'check-in:goal-1:a-1:2026-10:true',
+        'check-in:goal-1:a-1:2026-10:false',
+        'delete:goal-1:a-1',
+      ]);
+      expect(facade.planBusy()).toBe(false);
+    });
+
+    it('Dado falha no limite de ações, então mostra o código, relê a meta do servidor e libera a fila', () => {
+      const { facade, gateway } = setup();
+      facade.load('goal-1');
+      gateway.next = failWith(422, 'GOAL_ACTION_LIMIT');
+      gateway.calls.length = 0;
+
+      facade.addAction({ title: 'Mais uma', frequency: 'MONTHLY' });
+
+      expect(facade.planProblem()).toMatchObject({ code: 'GOAL_ACTION_LIMIT' });
+      expect(gateway.calls).toContain('get:goal-1');
+      expect(facade.planBusy()).toBe(false);
+
+      facade.clearPlanProblem();
+      expect(facade.planProblem()).toBeNull();
+    });
   });
 });

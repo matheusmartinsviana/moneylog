@@ -13,7 +13,7 @@ import {
   provideAccountsStub,
 } from '~/testing/accounts-testing';
 import { axeViolations, describeViolations } from '~/testing/axe';
-import { aGoal, GoalsGatewayStub, provideGoalsStub } from '~/testing/goals-testing';
+import { aGoal, aMetricGoal, GoalsGatewayStub, provideGoalsStub } from '~/testing/goals-testing';
 import { provideI18nTesting } from '~/testing/i18n-testing';
 
 vi.setConfig({ testTimeout: 30_000 });
@@ -186,5 +186,33 @@ describe('GoalsPage', () => {
     expect(screen.queryByTestId('goal-reserve-goal-9')).not.toBeInTheDocument();
     expect(screen.getByTestId('goal-building-goal-9')).toHaveTextContent(pt.goals.payoff.building);
     expect(screen.queryByTestId('goal-percent-goal-9')).not.toBeInTheDocument();
+  });
+  it('Dado metas de reserva e de medida, então cada card mostra o degrau; só a de reserva tem "Reservar"; e há o atalho de meta inteligente', async () => {
+    const gateway = new GoalsGatewayStub();
+    gateway.goals = [
+      aGoal({ id: 'g-1', stage: 'FANTASY', deadline: null }),
+      aMetricGoal({ id: 'g-2' }),
+    ];
+    await setup(gateway);
+
+    expect(screen.getByTestId('goals-add-smart')).toHaveAttribute('href', '/goals/new-smart');
+    expect(screen.getByTestId('goal-stage-g-1')).toHaveTextContent('Fantasia');
+    expect(screen.getByTestId('goal-stage-g-2')).toHaveTextContent('Objetivo');
+    expect(screen.getByTestId('goal-open-g-2')).toHaveTextContent(/Total de dívidas até/);
+    expect(text(screen.getByTestId('goal-current-g-2'))).toBe('R$ 8.000,00');
+    expect(screen.getByTestId('goal-reserve-g-1')).toBeInTheDocument();
+    expect(screen.queryByTestId('goal-reserve-g-2')).toBeNull();
+  });
+
+  it('Dado meta de medida arquivada, então o card diz que não é calculada', async () => {
+    const gateway = new GoalsGatewayStub();
+    gateway.goals = [
+      aMetricGoal({ id: 'g-2', status: 'ARCHIVED', current: null, remaining: null }),
+    ];
+    await setup(gateway, 'ARCHIVED');
+
+    expect(screen.getByTestId('goal-not-calculated-g-2')).toHaveTextContent(
+      pt.goals.archivedMetric,
+    );
   });
 });

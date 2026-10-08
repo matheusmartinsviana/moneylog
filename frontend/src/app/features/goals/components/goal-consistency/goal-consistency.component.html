@@ -1,0 +1,57 @@
+<div class="consistency" data-cy="goal-consistency">
+  <p class="consistency__muted">{{ t().goals.consistency.description }}</p>
+  <dl class="consistency__summary">
+    <div class="consistency__fact">
+      <dt>{{ t().goals.consistency.streak }}</dt>
+      <dd class="num" data-cy="goal-streak">{{ goal().streak }}</dd>
+    </div>
+    <div class="consistency__fact">
+      <dt>{{ t().goals.consistency.rate }}</dt>
+      <dd class="num" data-cy="goal-consistency-rate">{{ rate() }}</dd>
+    </div>
+  </dl>
+
+  @if (months().length === 0) {
+    <p class="consistency__muted" data-cy="goal-consistency-empty">
+      {{ t().goals.consistency.empty }}
+    </p>
+  } @else {
+    <ol
+      class="consistency__months"
+      [attr.aria-label]="t().goals.consistency.timelineLabel"
+      data-cy="goal-consistency-months"
+    >
+      @for (month of months(); track month.month) {
+        <li
+          class="consistency__month row-card"
+          [attr.data-state]="month.state"
+          [attr.data-cy]="'goal-month-' + month.month"
+        >
+          <span class="consistency__label">{{ month.label }}</span>
+          <span class="consistency__values">
+            <span class="consistency__muted">{{ t().goals.consistency.expected }}</span>
+            <app-money [value]="month.expected" />
+            <span class="consistency__muted">{{ t().goals.consistency.actual }}</span>
+            @if (month.actual; as actual) {
+              <app-money [value]="actual" />
+            } @else {
+              <span data-cy="goal-month-nodata">{{ t().goals.consistency.noData }}</span>
+            }
+          </span>
+          <span
+            class="status"
+            [attr.data-tone]="
+              month.state === 'met' ? 'positive' : month.state === 'missed' ? 'warning' : null
+            "
+          >
+            @if (month.state === 'met') {
+              <app-icon name="check" [size]="14" />
+            }
+            {{ month.stateLabel }}
+          </span>
+        </li>
+      }
+    </ol>
+    <p class="consistency__muted">{{ t().goals.consistency.note }}</p>
+  }
+</div>

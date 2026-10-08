@@ -85,6 +85,8 @@ export class GoalFormPage {
   protected readonly moreOpen = signal(false);
   protected readonly goal = this.facade.goal;
   protected readonly archived = computed(() => this.goal()?.status === 'ARCHIVED');
+  /** Meta de medida: nome opcional e alvo que aceita zero (ADR-016). */
+  protected readonly isMetric = computed(() => this.goal()?.kind === 'METRIC');
 
   protected readonly form = new FormGroup({
     name: new FormControl('', {
@@ -142,9 +144,16 @@ export class GoalFormPage {
         this.moreOpen.set(true);
         const keep = this.keepTyped;
         this.keepTyped = false;
+        const name = this.form.controls.name;
+        name.setValidators(
+          goal.kind === 'METRIC'
+            ? [Validators.maxLength(100)]
+            : [requiredTrimmed, Validators.maxLength(100)],
+        );
+        name.updateValueAndValidity({ emitEvent: false });
         if (!keep)
           this.form.patchValue({
-            name: goal.name,
+            name: goal.name ?? '',
             target: goal.target.amount,
             deadline: goal.deadline,
             priority: goal.priority,
@@ -184,17 +193,23 @@ export class GoalFormPage {
     this.form.markAllAsTouched();
     if (this.form.invalid || this.archived()) return;
     const value = this.form.getRawValue();
+    const id = this.id();
+    const goal = this.goal();
     const input: GoalInput = {
+      ...(goal ? { kind: goal.kind } : {}),
       name: value.name.trim(),
       target: value.target ?? '',
       deadline: value.deadline,
       ...(value.priority ? { priority: value.priority as GoalPriority } : {}),
       description: value.description.trim() === '' ? null : value.description.trim(),
     };
-    const id = this.id();
-    const goal = this.goal();
     if (id !== undefined && goal) {
-      this.facade.save({ kind: 'update', id, input: { ...input, version: goal.version } });
+      // O `PUT` apaga o que não vai: o texto do plano segue como está (ele é editado no detalhe).
+      this.facade.save({
+        kind: 'update',
+        id,
+        input: { ...input, planNote: goal.planNote, version: goal.version },
+      });
     } else {
       this.facade.save({ kind: 'create', input });
     }

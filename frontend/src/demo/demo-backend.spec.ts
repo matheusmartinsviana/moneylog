@@ -40,6 +40,31 @@ describe('modo demonstração (backend de exemplo)', () => {
     expect(cents(spending.total)).toBe(cents(dash.month.consumption));
   });
 
+  it('Dado as metas de exemplo, então há uma sem prazo (Fantasia), uma de dívidas com plano e uma atingida, com a medida igual à visão de dívidas', async () => {
+    const goals = await get<{
+      items: {
+        kind: string;
+        stage: string;
+        name: string | null;
+        metric: string | null;
+        current: { amount: string } | null;
+        planNote: string | null;
+        streak: number;
+        reached: boolean;
+        consistency: { met: boolean | null }[];
+      }[];
+    }>('/v1/goals');
+    const debts = await get<{ total: { amount: string } }>('/v1/debts/overview?months=6');
+
+    expect(goals.items.some((g) => g.stage === 'FANTASY')).toBe(true);
+    const plan = goals.items.find((g) => g.metric === 'TOTAL_DEBT')!;
+    expect(plan).toMatchObject({ kind: 'METRIC', name: null, stage: 'STRATEGY', streak: 1 });
+    expect(plan.planNote).not.toBeNull();
+    expect(plan.consistency.map((m) => m.met)).toEqual([true, false, true, null]);
+    expect(cents(plan.current!)).toBe(cents(debts.total));
+    expect(goals.items.find((g) => g.reached)).toMatchObject({ stage: 'ACHIEVED' });
+  });
+
   it('Dado qualquer alteração, então responde erro de modo demonstração', async () => {
     const backend = new DemoHttpBackend();
     await expect(

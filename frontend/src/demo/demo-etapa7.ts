@@ -233,7 +233,7 @@ export function notificationList(w: World): S['Notification'][] {
   const invoice = w.invoices.find((i) => i.status !== 'PAID' && i.total - i.paid > 0);
   const receivable = w.debts.find((d) => d.direction === 'RECEIVABLE');
   const recurrence = w.recurrences[0];
-  const goal = w.goals.find((g) => g.deadline !== null);
+  const goal = w.goals.find((g) => g.deadline !== null && !g.metric);
   const available = dailyMessage(w).params['available'] ?? '0.00';
   const committed7d = dailyMessage(w).params['committed7d'] ?? '0.00';
   const list: S['Notification'][] = [];
@@ -302,7 +302,7 @@ export function notificationList(w: World): S['Notification'][] {
       kind: 'GOAL_DEADLINE',
       titleKey: 'notification.goal.deadline30',
       params: {
-        name: goal.name,
+        name: goal.name ?? '',
         deadline: goal.deadline ?? w.today,
         progress: ratio(reserved, goal.target),
       },

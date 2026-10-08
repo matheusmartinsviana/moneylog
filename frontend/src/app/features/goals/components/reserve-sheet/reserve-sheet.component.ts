@@ -27,6 +27,7 @@ import { I18nService } from '~/app/common/i18n/i18n.service';
 import { interpolate } from '~/app/common/i18n/interpolate';
 import { problemMessage } from '~/app/common/i18n/problem-message';
 import { ToastService } from '~/app/common/services/toast.service';
+import { goalName } from '~/app/features/goals/services/goal-name';
 import { AccountsListFacade } from '~/modules/accounts/core/facades/accounts-list.facade';
 import type { Account } from '~/modules/accounts/core/types/account';
 import { GoalReserveFacade } from '~/modules/goals/core/facades/goal-reserve.facade';
@@ -119,7 +120,8 @@ export class ReserveSheetComponent {
   protected readonly manyGoals = computed(() => this.goals().length > 1);
   protected readonly heading = computed(() => {
     const copy = this.t().goals.reserve;
-    const name = this.selectedGoal()?.name ?? '';
+    const goal = this.selectedGoal();
+    const name = goal ? goalName(goal, this.t().goals) : '';
     return interpolate(this.isRelease() ? copy.releaseTitle : copy.reserveTitle, { name });
   });
 
@@ -128,7 +130,7 @@ export class ReserveSheetComponent {
     { value: 'release', label: this.t().goals.detail.release },
   ]);
   protected readonly goalOptions = computed<readonly ChoiceOption[]>(() =>
-    this.goals().map((goal) => ({ value: goal.id, label: goal.name })),
+    this.goals().map((goal) => ({ value: goal.id, label: goalName(goal, this.t().goals) })),
   );
   protected readonly accountOptions = computed<readonly ChoiceOption[]>(() => {
     if (this.isRelease()) {

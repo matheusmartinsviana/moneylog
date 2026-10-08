@@ -227,6 +227,9 @@
 
               <div class="area-debts stack">
                 <app-debt-summary-card />
+                @if (goals.data(); as activeGoals) {
+                  <app-goals-summary [goals]="activeGoals" />
+                }
                 @defer (on idle) {
                   <app-third-party-summary-card />
                 }
@@ -292,6 +295,9 @@
                 </button>
                 <a class="button" routerLink="/transactions" data-cy="home-action-transactions">
                   {{ t().home.actions.transactions }}
+                </a>
+                <a class="button" routerLink="/goals/new-smart" data-cy="home-action-smart-goal">
+                  {{ t().home.actions.smartGoal }}
                 </a>
                 <a class="button" routerLink="/goals" data-cy="home-action-goals">
                   {{ t().home.actions.goals }}

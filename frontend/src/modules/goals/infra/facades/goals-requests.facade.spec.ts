@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
 
 import { GoalsGateway } from '~/modules/goals/core/interfaces/goals.gateway';
-import { GOALS_ENDPOINTS } from '~/modules/goals/infra/endpoints';
+import { GOALS_ENDPOINTS, METRIC_SOURCES } from '~/modules/goals/infra/endpoints';
 import { GoalsRequestsFacade } from '~/modules/goals/infra/facades/goals-requests.facade';
 import { provideGoals } from '~/modules/goals/infra/goals.providers';
 import { aGoalResponse } from '~/testing/goals-testing';
@@ -56,7 +56,7 @@ describe('GoalsRequestsFacade', () => {
       status: 'ACTIVE',
       reservations: [],
     });
-    expect(created.current.amount).toBe('0.00');
+    expect(created.current?.amount).toBe('0.00');
     await expect(firstValueFrom(gateway.get('g'))).rejects.toMatchObject({
       problem: { status: 404, code: 'GOAL_NOT_FOUND' },
     });
@@ -123,7 +123,9 @@ describe('GoalsRequestsFacade', () => {
     it('Dado editar, então o corpo leva a version', async () => {
       const { gateway, http } = setup(false);
 
-      const result = firstValueFrom(gateway.update('goal-1', { ...INPUT, version: 3 }));
+      const result = firstValueFrom(
+        gateway.update('goal-1', { ...INPUT, planNote: null, version: 3 }),
+      );
       const req = http.expectOne(GOALS_ENDPOINTS.item('goal-1'));
       expect(req.request.method).toBe('PUT');
       expect(req.request.body).toMatchObject({ version: 3 });
@@ -256,24 +258,166 @@ describe('GoalsRequestsFacade', () => {
       expect((await result).baselineSet).toBe(true);
     });
 
-    it('Dado resposta sem os campos novos, então o mapper tolera: SAVINGS, sem base e sem aviso', async () => {
+    it('Dado o PUT, então reenvia planNote e prazo explícitos e omite nome e alvo vazios', async () => {
+      const { gateway, http } = setup(false);
+
+      const result = firstValueFrom(
+        gateway.update('g-1', {
+          kind: 'METRIC',
+          name: '  ',
+          target: '',
+          deadline: '2027-04-30',
+          description: null,
+          planNote: '  pagar em dia  ',
+          version: 2,
+        }),
+      );
+      const req = http.expectOne(GOALS_ENDPOINTS.item('g-1'));
+      expect(req.request.body).toEqual({
+        deadline: '2027-04-30',
+        description: null,
+        planNote: 'pagar em dia',
+        version: 2,
+      });
+      req.flush(aGoalResponse());
+      await result;
+    });
+
+    it('Dado criar meta de medida, então manda kind, metric, alvo zero e omite o nome vazio', async () => {
+      const { gateway, http } = setup(false);
+
+      const result = firstValueFrom(
+        gateway.create(
+          {
+            kind: 'METRIC',
+            metric: 'TOTAL_DEBT',
+            name: ' ',
+            target: '0.00',
+            deadline: null,
+            description: null,
+          },
+          'k-1',
+        ),
+      );
+      const req = http.expectOne(GOALS_ENDPOINTS.collection);
+      expect(req.request.body).toEqual({
+        kind: 'METRIC',
+        metric: 'TOTAL_DEBT',
+        target: '0.00',
+        deadline: null,
+        description: null,
+      });
+      req.flush(aGoalResponse({ kind: 'METRIC', name: null, metric: 'TOTAL_DEBT' }));
+      expect(await result).toMatchObject({ kind: 'METRIC', name: null, metric: 'TOTAL_DEBT' });
+    });
+
+    it('Dado meta de medida arquivada, então current e remaining nulos chegam como null', async () => {
       const { gateway, http } = setup(false);
 
       const result = firstValueFrom(gateway.get('g-1'));
-      const raw = aGoalResponse();
-      delete raw.kind;
-      delete raw.baselineSet;
-      delete raw.baseline;
-      delete raw.baselineAt;
-      delete raw.grewSinceBaseline;
-      http.expectOne(GOALS_ENDPOINTS.item('g-1')).flush(raw);
+      http
+        .expectOne(GOALS_ENDPOINTS.item('g-1'))
+        .flush(aGoalResponse({ kind: 'METRIC', name: null, current: null, remaining: null }));
 
-      expect(await result).toMatchObject({
-        kind: 'SAVINGS',
-        baselineSet: false,
-        baseline: null,
-        grewSinceBaseline: false,
+      expect(await result).toMatchObject({ current: null, remaining: null, name: null });
+    });
+
+    it('Dado a resposta com plano, então mapeia estágio, ritmo, ações e consistência sem recalcular', async () => {
+      const { gateway, http } = setup(false);
+
+      const result = firstValueFrom(gateway.get('g-1'));
+      http.expectOne(GOALS_ENDPOINTS.item('g-1')).flush(
+        aGoalResponse({
+          stage: 'CONSISTENT',
+          streak: 2,
+          consistencyRate: '1.0000',
+          planNote: 'Pagar em dia',
+          actions: [
+            {
+              id: 'a-1',
+              title: 'Pagar a fatura',
+              frequency: 'MONTHLY',
+              doneIn: ['2026-09'],
+              createdAt: '2026-10-01T12:00:00Z',
+            },
+          ],
+          consistency: [
+            {
+              month: '2026-09',
+              expected: { amount: '100.00', currency: 'BRL' },
+              actual: null,
+              met: null,
+              closed: true,
+            },
+          ],
+        }),
+      );
+
+      const goal = await result;
+      expect(goal.stage).toBe('CONSISTENT');
+      expect(goal.actions).toEqual([
+        { id: 'a-1', title: 'Pagar a fatura', frequency: 'MONTHLY', doneIn: ['2026-09'] },
+      ]);
+      expect(goal.consistency[0]).toMatchObject({ actual: null, met: null, closed: true });
+      expect(goal.consistencyRate).toBe('1.0000');
+    });
+
+    it('Dado as ações do plano, então usa as rotas de ações e check-in', async () => {
+      const { gateway, http } = setup(false);
+
+      const add = firstValueFrom(
+        gateway.addAction('g-1', { title: ' Revisar ', frequency: 'WEEKLY' }),
+      );
+      const addReq = http.expectOne(GOALS_ENDPOINTS.actions('g-1'));
+      expect(addReq.request.method).toBe('POST');
+      expect(addReq.request.body).toEqual({ title: 'Revisar', frequency: 'WEEKLY' });
+      addReq.flush(aGoalResponse());
+      await add;
+
+      const edit = firstValueFrom(
+        gateway.updateAction('g-1', 'a-1', { title: 'X', frequency: 'MONTHLY' }),
+      );
+      const editReq = http.expectOne(GOALS_ENDPOINTS.action('g-1', 'a-1'));
+      expect(editReq.request.method).toBe('PUT');
+      editReq.flush(aGoalResponse());
+      await edit;
+
+      const check = firstValueFrom(gateway.checkIn('g-1', 'a-1', '2026-10', false));
+      const checkReq = http.expectOne(GOALS_ENDPOINTS.checkIn('g-1', 'a-1'));
+      expect(checkReq.request.method).toBe('POST');
+      expect(checkReq.request.body).toEqual({ period: '2026-10', done: false });
+      checkReq.flush(aGoalResponse());
+      await check;
+
+      const remove = firstValueFrom(gateway.deleteAction('g-1', 'a-1'));
+      const removeReq = http.expectOne(GOALS_ENDPOINTS.action('g-1', 'a-1'));
+      expect(removeReq.request.method).toBe('DELETE');
+      removeReq.flush(aGoalResponse());
+      await remove;
+    });
+
+    it('Dado o valor atual de cada medida, então lê da fonte da tela e escolhe o campo, sem somar', async () => {
+      const { gateway, http } = setup(false);
+      const m = (amount: string) => ({ amount, currency: 'BRL' });
+
+      const debts = firstValueFrom(gateway.metricValue('CARD_DEBT'));
+      http
+        .expectOne((r) => r.url === METRIC_SOURCES.debts)
+        .flush({
+          total: m('900.00'),
+          parts: { cards: m('500.00'), people: m('100.00'), other: m('300.00') },
+        });
+      expect(await debts).toEqual(m('500.00'));
+
+      const balance = firstValueFrom(gateway.metricValue('AVAILABLE_BALANCE'));
+      http.expectOne(METRIC_SOURCES.dashboard).flush({
+        balances: { inAccounts: m('1000.00'), available: m('700.00') },
       });
+      expect(await balance).toEqual(m('700.00'));
+
+      const fixed = firstValueFrom(gateway.metricValue('FIXED_COSTS_MONTHLY'));
+      http.expectOne(METRIC_SOURCES.recurrences).flush({ fixedCosts: m('250.00') });
+      expect(await fixed).toEqual(m('250.00'));
     });
 
     it('Dado o PUT de uma meta, então ainda manda name e target (o servidor ignora o alvo na quitação)', async () => {
@@ -286,6 +430,7 @@ describe('GoalsRequestsFacade', () => {
           target: '0.00',
           deadline: null,
           description: null,
+          planNote: null,
           version: 2,
         }),
       );

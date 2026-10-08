@@ -9,7 +9,6 @@ import {
   type AccountDef,
   type ConsumptionEntry,
   type DebtDef,
-  type GoalDef,
   type InvoiceDef,
   type NoteDef,
   type PersonDef,
@@ -75,7 +74,7 @@ const catRef = (w: World, id: string | null): S['CategoryRef'] | null => {
   const c = w.categories.find((x) => x.id === id);
   return c ? { id: c.id, name: c.name } : null;
 };
-const accRef = (w: World, id: string | null): S['AccountRef'] | null => {
+export const accRef = (w: World, id: string | null): S['AccountRef'] | null => {
   const a = w.accounts.find((x) => x.id === id);
   return a ? { id: a.id, name: a.name } : null;
 };
@@ -599,55 +598,6 @@ export function listOccurrences(
   return items.sort((a, b) => (a.date < b.date ? -1 : 1));
 }
 
-// ---------- Metas ----------
-
-export function goalView(w: World, g: GoalDef): S['Goal'] {
-  const current = g.reservations.reduce((s, r) => s + r.cents, 0);
-  const remaining = Math.max(g.target - current, 0);
-  let monthly: S['Money'] | null = null;
-  if (g.deadline) {
-    const months = Math.max(
-      1,
-      (Number(g.deadline.slice(0, 4)) - Number(w.today.slice(0, 4))) * 12 +
-        Number(g.deadline.slice(5, 7)) -
-        Number(w.today.slice(5, 7)),
-    );
-    monthly = money(Math.ceil(remaining / months));
-  }
-  return {
-    id: g.id,
-    kind: 'SAVINGS',
-    name: g.name,
-    target: money(g.target),
-    current: money(current),
-    progress: ratio(current, g.target),
-    remaining: money(remaining),
-    status: current >= g.target ? 'ACHIEVED' : 'ACTIVE',
-    deadline: g.deadline,
-    priority: g.priority,
-    description: g.description,
-    monthlyNeeded: monthly,
-    uncovered: false,
-    reservations: [...g.reservations]
-      .sort((a, b) => (a.date < b.date ? 1 : -1))
-      .map((r) => ({
-        id: r.id,
-        account: accRef(w, r.accountId)!,
-        amount: money(r.cents),
-        date: r.date,
-        note: r.note,
-        createdAt: ts(r.date),
-      })),
-    baselineSet: false,
-    baseline: null,
-    baselineAt: null,
-    grewSinceBaseline: false,
-    version: 0,
-    createdAt: ts(g.reservations[0]?.date ?? w.today),
-    updatedAt: ts(g.reservations[0]?.date ?? w.today),
-  };
-}
-
 // ---------- Compromissos, painel e projeção ----------
 
 interface Commit {
@@ -938,12 +888,14 @@ export function projectionView(
     ],
     goals: {
       reserved: money(reserved),
-      items: w.goals.map((g) => ({
-        goalId: g.id,
-        name: g.name,
-        current: money(g.reservations.reduce((s, r) => s + r.cents, 0)),
-        target: money(g.target),
-      })),
+      items: w.goals
+        .filter((g) => !g.metric)
+        .map((g) => ({
+          goalId: g.id,
+          name: g.name ?? '',
+          current: money(g.reservations.reduce((s, r) => s + r.cents, 0)),
+          target: money(g.target),
+        })),
     },
     ...(includeTrend ? { trend } : {}),
   };

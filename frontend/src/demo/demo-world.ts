@@ -150,10 +150,27 @@ export interface RecurrenceDef {
   startDate: string;
 }
 
+/** Ação do plano declarado de uma meta (demo). `doneIn`: períodos com check-in. */
+export interface GoalActionDef {
+  id: string;
+  title: string;
+  frequency: S['GoalActionFrequency'];
+  doneIn: string[];
+}
+
 export interface GoalDef {
   id: string;
-  name: string;
+  /** Nulo em meta de medida sem nome (a tela mostra o rótulo gerado). */
+  name: string | null;
   target: number;
+  /** Meta de medida (`METRIC`): a medida, o valor de partida e o mês de criação. */
+  metric?: S['GoalMetric'];
+  baseline?: number;
+  startMonth?: string;
+  /** Valor da medida no fim de cada mês fechado desde `startMonth` (instantâneos). */
+  history?: number[];
+  planNote?: string | null;
+  actions?: GoalActionDef[];
   deadline: string | null;
   priority: S['GoalPriority'];
   description: string | null;
@@ -686,6 +703,49 @@ export function buildWorld(today: string): World {
           note: 'Primeira parte',
         },
       ],
+    },
+    {
+      id: demoId('goal', 3),
+      name: null,
+      metric: 'TOTAL_DEBT',
+      baseline: 1_200_000,
+      startMonth: addMonthsKey(month, -3),
+      history: [1_100_000, 1_050_000, 950_000],
+      target: 400_000,
+      deadline: dateIn(addMonthsKey(month, 6), 30),
+      priority: 'HIGH',
+      description: null,
+      planNote: 'Pagar as parcelas em dia e usar o que sobrar do mês no financiamento da moto.',
+      actions: [
+        {
+          id: demoId('act', 1),
+          title: 'Pagar a fatura inteira no vencimento',
+          frequency: 'MONTHLY',
+          doneIn: [addMonthsKey(month, -2), addMonthsKey(month, -1)],
+        },
+        {
+          id: demoId('act', 2),
+          title: 'Revisar as dívidas',
+          frequency: 'WEEKLY',
+          doneIn: [],
+        },
+      ],
+      reservations: [],
+    },
+    {
+      id: demoId('goal', 4),
+      name: 'Acertar com as pessoas',
+      metric: 'PEOPLE_DEBT',
+      baseline: 100_000,
+      startMonth: addMonthsKey(month, -2),
+      history: [80_000, 55_000],
+      target: 60_000,
+      deadline: dateIn(addMonthsKey(month, 2), 15),
+      priority: 'MEDIUM',
+      description: null,
+      planNote: null,
+      actions: [],
+      reservations: [],
     },
   ];
 

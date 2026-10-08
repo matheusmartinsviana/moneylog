@@ -1,0 +1,56 @@
+:host {
+  display: block;
+}
+
+.ladder {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.ladder__intro,
+.ladder__desc {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.ladder__steps {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ladder__step {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+}
+
+/* O degrau atual ganha borda mais grossa e fundo de destaque, além do texto "Você está aqui". */
+.ladder__step[data-state='current'] {
+  border-width: 2px;
+  border-color: var(--color-accent);
+  background-color: var(--color-accent-soft);
+}
+
+.ladder__step[data-state='todo'] {
+  opacity: 0.85;
+}
+
+.ladder__text {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.ladder__label {
+  font-weight: var(--weight-semibold);
+}
+
+.ladder__hint {
+  margin: 0;
+  font-weight: var(--weight-medium);
+}

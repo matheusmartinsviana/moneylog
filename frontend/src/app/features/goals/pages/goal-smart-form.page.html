@@ -1,0 +1,109 @@
+<app-form-modal
+  #modal
+  [heading]="t().goals.smart.createTitle"
+  [dirty]="dirty()"
+  [busy]="facade.saving()"
+  (closed)="close()"
+>
+  <form
+    class="form"
+    [formGroup]="form"
+    (ngSubmit)="onSubmit()"
+    novalidate
+    data-cy="goal-smart-form"
+  >
+    <p class="form__intro">{{ t().goals.smart.intro }}</p>
+    @if (banner(); as message) {
+      <p class="banner" role="alert" data-cy="goal-smart-error">{{ message }}</p>
+    }
+
+    <app-select
+      formControlName="metric"
+      fieldId="goal-smart-metric"
+      [options]="metricOptions()"
+      [placeholder]="t().goals.smart.metricPlaceholder"
+      [label]="t().goals.smart.metric"
+    />
+
+    <div class="current" aria-live="polite" data-cy="goal-smart-current">
+      @switch (current.state().status) {
+        @case ('loading') {
+          <span class="current__muted" data-cy="goal-smart-current-loading">
+            {{ t().goals.smart.currentLoading }}
+          </span>
+        }
+        @case ('error') {
+          <span class="current__muted" data-cy="goal-smart-current-error">
+            {{ t().goals.smart.currentError }}
+          </span>
+          <button
+            type="button"
+            class="button"
+            data-cy="goal-smart-current-retry"
+            (click)="retryCurrent()"
+          >
+            {{ t().goals.smart.retry }}
+          </button>
+        }
+        @case ('ready') {
+          @if (current.value(); as value) {
+            <span class="current__muted">{{ t().goals.smart.currentLabel }}</span>
+            <strong class="current__value" data-cy="goal-smart-current-value">
+              <app-money [value]="value" />
+            </strong>
+          }
+        }
+      }
+    </div>
+
+    <app-money-input
+      formControlName="target"
+      fieldId="goal-smart-target"
+      [currency]="currency"
+      [allowZero]="true"
+      [label]="t().goals.smart.target"
+    />
+    <p class="form__hint">{{ t().goals.smart.targetHint }}</p>
+
+    <app-date-picker
+      formControlName="deadline"
+      fieldId="goal-smart-deadline"
+      [mandatory]="false"
+      [label]="t().goals.smart.deadline"
+    />
+    @if (showNoDeadline()) {
+      <p class="form__warning" role="note" data-cy="goal-smart-no-deadline">
+        {{ t().goals.smart.noDeadlineWarning }}
+      </p>
+    }
+
+    <app-text-field
+      formControlName="name"
+      fieldId="goal-smart-name"
+      autocomplete="off"
+      [maxlength]="100"
+      [mandatory]="false"
+      [label]="t().goals.smart.name"
+    />
+
+    <div class="form__actions">
+      <button
+        type="button"
+        class="button"
+        data-cy="goal-smart-cancel"
+        (click)="modal.requestClose()"
+      >
+        {{ t().goals.smart.cancel }}
+      </button>
+      <button
+        type="submit"
+        class="button button--primary"
+        data-cy="goal-smart-save"
+        [disabled]="facade.saving()"
+        [attr.aria-busy]="facade.saving()"
+      >
+        {{ facade.saving() ? t().goals.smart.saving : t().goals.smart.save }}
+      </button>
+    </div>
+  </form>
+</app-form-modal>

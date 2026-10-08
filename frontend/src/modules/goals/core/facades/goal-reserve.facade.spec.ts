@@ -23,7 +23,7 @@ describe('GoalReserveFacade', () => {
   it('Dado reservar, então envia uma Idempotency-Key e emite a meta da resposta', () => {
     const { facade, gateway } = setup();
     const reserved: string[] = [];
-    facade.reserved$.subscribe((goal) => reserved.push(goal.current.amount));
+    facade.reserved$.subscribe((goal) => reserved.push(goal.current?.amount ?? ''));
 
     facade.reserve('goal-1', INPUT);
 

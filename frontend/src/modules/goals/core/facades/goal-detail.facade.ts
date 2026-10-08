@@ -1,9 +1,20 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { catchError, exhaustMap, map, of, startWith, Subject, switchMap, tap } from 'rxjs';
+import {
+  catchError,
+  concatMap,
+  exhaustMap,
+  map,
+  Observable,
+  of,
+  startWith,
+  Subject,
+  switchMap,
+  tap,
+} from 'rxjs';
 
 import { GoalsGateway } from '~/modules/goals/core/interfaces/goals.gateway';
-import type { Goal } from '~/modules/goals/core/types/goal';
+import type { Goal, GoalActionInput } from '~/modules/goals/core/types/goal';
 import { Problem, problemOf } from '~/util/api/problem';
 
 export type GoalDetailState =
@@ -12,6 +23,9 @@ export type GoalDetailState =
   | { readonly status: 'ready'; readonly goal: Goal };
 
 type GoalAction = 'archive' | 'unarchive' | 'baseline';
+
+/** Escritas do plano declarado; o `done$` do plano avisa a página para o aviso de sucesso. */
+export type GoalPlanChange = 'note' | 'add' | 'update' | 'remove' | 'check-in';
 
 /** O código que o backend devolve quando a meta já está no estado pedido (`baseline` pode repetir). */
 const ALREADY_DONE: Readonly<Partial<Record<GoalAction, string>>> = {
@@ -29,6 +43,14 @@ export class GoalDetailFacade {
   private readonly gateway = inject(GoalsGateway);
   private readonly loads = new Subject<string>();
   private readonly actions = new Subject<{ kind: GoalAction; id: string }>();
+  /** Plano declarado: em fila (`concatMap`), porque a ordem dos check-ins e edições importa. */
+  private readonly planCommands = new Subject<{
+    kind: GoalPlanChange;
+    run: () => Observable<Goal>;
+  }>();
+  private readonly planDoneEvents = new Subject<GoalPlanChange>();
+  private readonly planBusyState = signal(false);
+  private readonly planProblemState = signal<Problem | null>(null);
   private readonly doneEvents = new Subject<{ kind: GoalAction; goal: Goal }>();
   private readonly current = signal<GoalDetailState>({ status: 'loading' });
   private readonly busyState = signal(false);
@@ -46,6 +68,11 @@ export class GoalDetailFacade {
   readonly busy = this.busyState.asReadonly();
   /** Falha do último arquivar/desarquivar. */
   readonly problem = this.problemState.asReadonly();
+  /** Há uma escrita do plano (nota, ação ou check-in) em andamento. */
+  readonly planBusy = this.planBusyState.asReadonly();
+  /** Falha da última escrita do plano (`GOAL_ACTION_LIMIT`, `GOAL_CHECKIN_PERIOD_INVALID`...). */
+  readonly planProblem = this.planProblemState.asReadonly();
+  readonly planDone$ = this.planDoneEvents.asObservable();
   readonly done$ = this.doneEvents.asObservable();
 
   constructor() {
@@ -102,6 +129,38 @@ export class GoalDetailFacade {
         this.busyState.set(false);
         this.problemState.set(problem);
       });
+
+    this.planCommands
+      .pipe(
+        concatMap(({ kind, run }) => {
+          this.planBusyState.set(true);
+          this.planProblemState.set(null);
+          return run().pipe(
+            tap((goal) => {
+              this.apply(goal);
+              this.planDoneEvents.next(kind);
+            }),
+            map(() => null),
+            // Falha: o servidor é a fonte da verdade; relê a meta (a ação pode ter mudado em outro lugar)
+            // e mostra o motivo.
+            catchError((error: unknown) => {
+              const problem = problemOf(error);
+              const id = this.goal()?.id;
+              if (id === undefined) return of(problem);
+              return this.gateway.get(id).pipe(
+                tap((goal) => this.apply(goal)),
+                map(() => problem),
+                catchError(() => of(problem)),
+              );
+            }),
+          );
+        }),
+        takeUntilDestroyed(),
+      )
+      .subscribe((problem) => {
+        this.planBusyState.set(false);
+        this.planProblemState.set(problem);
+      });
   }
 
   load(id: string): void {
@@ -124,6 +183,71 @@ export class GoalDetailFacade {
   /** A meta devolvida pelo backend (reserva, arquivar...) vira o estado: nada é chutado. */
   apply(goal: Goal): void {
     this.current.set({ status: 'ready', goal });
+  }
+
+  /**
+   * Salva o texto do plano. O `PUT` apaga o que não vai, então reenvia os valores atuais da meta
+   * (nome, alvo, prazo, prioridade, descrição) e troca só o `planNote`.
+   */
+  savePlanNote(note: string): void {
+    const goal = this.goal();
+    if (!goal) return;
+    this.planCommands.next({
+      kind: 'note',
+      run: () =>
+        this.gateway.update(goal.id, {
+          kind: goal.kind,
+          name: goal.name ?? '',
+          target: goal.kind === 'METRIC' || goal.kind === 'SAVINGS' ? goal.target.amount : '',
+          deadline: goal.deadline,
+          priority: goal.priority,
+          description: goal.description,
+          planNote: note,
+          version: goal.version,
+        }),
+    });
+  }
+
+  addAction(input: GoalActionInput): void {
+    const id = this.goal()?.id;
+    if (id !== undefined) {
+      this.planCommands.next({ kind: 'add', run: () => this.gateway.addAction(id, input) });
+    }
+  }
+
+  updateAction(actionId: string, input: GoalActionInput): void {
+    const id = this.goal()?.id;
+    if (id !== undefined) {
+      this.planCommands.next({
+        kind: 'update',
+        run: () => this.gateway.updateAction(id, actionId, input),
+      });
+    }
+  }
+
+  removeAction(actionId: string): void {
+    const id = this.goal()?.id;
+    if (id !== undefined) {
+      this.planCommands.next({
+        kind: 'remove',
+        run: () => this.gateway.deleteAction(id, actionId),
+      });
+    }
+  }
+
+  /** Marca (`done`) ou desmarca o período de uma ação; idempotente no servidor. */
+  checkIn(actionId: string, period: string, done: boolean): void {
+    const id = this.goal()?.id;
+    if (id !== undefined) {
+      this.planCommands.next({
+        kind: 'check-in',
+        run: () => this.gateway.checkIn(id, actionId, period, done),
+      });
+    }
+  }
+
+  clearPlanProblem(): void {
+    this.planProblemState.set(null);
   }
 
   clearProblem(): void {

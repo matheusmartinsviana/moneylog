@@ -4,6 +4,7 @@ import { map, Observable } from 'rxjs';
 import { HTML_LANG } from '~/app/common/i18n/i18n';
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { interpolate } from '~/app/common/i18n/interpolate';
+import { goalName } from '~/app/features/goals/services/goal-name';
 import { CardsGateway } from '~/modules/cards/core/interfaces/cards.gateway';
 import { DebtsGateway } from '~/modules/debts/core/interfaces/debts.gateway';
 import { GoalsGateway } from '~/modules/goals/core/interfaces/goals.gateway';
@@ -83,9 +84,13 @@ export class LinkTargetSearchService {
         return this.goals.list({ page: 1, pageSize: MAX_PAGE_SIZE }).pipe(
           map((slice) =>
             slice.items
-              .filter((item) => fold(item.name).includes(fold(q)))
-              .slice(0, RESULT_LIMIT)
-              .map((item) => ({ type: 'GOAL' as const, id: item.id, label: item.name })),
+              .map((item) => ({
+                type: 'GOAL' as const,
+                id: item.id,
+                label: goalName(item, this.i18n.t().goals),
+              }))
+              .filter((item) => fold(item.label).includes(fold(q)))
+              .slice(0, RESULT_LIMIT),
           ),
         );
       case 'DEBT':

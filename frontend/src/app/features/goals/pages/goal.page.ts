@@ -24,11 +24,19 @@ import { interpolate } from '~/app/common/i18n/interpolate';
 import { problemMessage } from '~/app/common/i18n/problem-message';
 import { EntityChanges } from '~/app/common/services/entity-changes';
 import { ToastService } from '~/app/common/services/toast.service';
+import { GoalConsistencyComponent } from '~/app/features/goals/components/goal-consistency/goal-consistency.component';
+import {
+  ActionCheckIn,
+  GoalPlanComponent,
+} from '~/app/features/goals/components/goal-plan/goal-plan.component';
+import { GoalStageBadgeComponent } from '~/app/features/goals/components/goal-stage-badge/goal-stage-badge.component';
+import { GoalStageLadderComponent } from '~/app/features/goals/components/goal-stage-ladder/goal-stage-ladder.component';
 import { ReservationRowComponent } from '~/app/features/goals/components/reservation-row/reservation-row.component';
 import { ReserveSheetComponent } from '~/app/features/goals/components/reserve-sheet/reserve-sheet.component';
+import { goalName } from '~/app/features/goals/services/goal-name';
 import { LinkedNotesComponent } from '~/app/features/notes/components/linked-notes/linked-notes.component';
 import { GoalDetailFacade } from '~/modules/goals/core/facades/goal-detail.facade';
-import type { Goal } from '~/modules/goals/core/types/goal';
+import type { Goal, GoalActionInput } from '~/modules/goals/core/types/goal';
 import { formatIsoDate } from '~/util/date';
 import { formatMoney } from '~/util/money';
 import { formatRatio, ratioForBar } from '~/util/ratio';
@@ -54,6 +62,10 @@ import { formatRatio, ratioForBar } from '~/util/ratio';
     ProgressBarComponent,
     ReservationRowComponent,
     ReserveSheetComponent,
+    GoalStageBadgeComponent,
+    GoalStageLadderComponent,
+    GoalPlanComponent,
+    GoalConsistencyComponent,
   ],
   providers: [GoalDetailFacade],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -71,6 +83,16 @@ export class GoalPage {
   readonly id = input.required<string>();
 
   protected readonly goal = this.detail.goal;
+  protected readonly name = computed(() => {
+    const goal = this.goal();
+    return goal ? goalName(goal, this.t().goals) : '';
+  });
+  /** Meta de medida arquivada não calcula: `current` e `remaining` vêm nulos. */
+  protected readonly notCalculated = computed(() => this.goal()?.current === null);
+  protected readonly planError = computed(() => {
+    const problem = this.detail.planProblem();
+    return problem ? problemMessage(problem, this.t().errors) : null;
+  });
   protected readonly notFound = computed(() => this.detail.error()?.status === 404);
 
   protected readonly reserveOpen = signal(false);
@@ -91,13 +113,13 @@ export class GoalPage {
     const goal = this.goal();
     return goal
       ? interpolate(this.t().goals.card.progressText, {
-          current: formatMoney(goal.current),
+          current: goal.current ? formatMoney(goal.current) : '',
           target: formatMoney(goal.target),
         })
       : '';
   });
   protected readonly progressLabel = computed(() =>
-    interpolate(this.t().goals.card.progressLabel, { name: this.goal()?.name ?? '' }),
+    interpolate(this.t().goals.card.progressLabel, { name: this.name() }),
   );
   protected readonly deadline = computed(() => {
     const deadline = this.goal()?.deadline ?? null;
@@ -116,7 +138,7 @@ export class GoalPage {
       : '';
   });
   protected readonly archiveTitle = computed(() =>
-    interpolate(this.t().goals.archiveConfirm.title, { name: this.goal()?.name ?? '' }),
+    interpolate(this.t().goals.archiveConfirm.title, { name: this.name() }),
   );
   protected readonly actionError = computed(() => {
     const problem = this.detail.problem();
@@ -133,6 +155,20 @@ export class GoalPage {
     effect(() => {
       const id = this.id();
       untracked(() => this.detail.load(id));
+    });
+    this.detail.planDone$.pipe(takeUntilDestroyed()).subscribe((kind) => {
+      const copy = this.t().goals.plan.toast;
+      const text =
+        kind === 'note'
+          ? copy.noteSaved
+          : kind === 'add'
+            ? copy.added
+            : kind === 'update'
+              ? copy.updated
+              : kind === 'remove'
+                ? copy.removed
+                : null;
+      if (text !== null) this.toast.show(text);
     });
     this.detail.done$.pipe(takeUntilDestroyed()).subscribe(({ kind }) => {
       this.confirmingArchive.set(false);
@@ -189,6 +225,31 @@ export class GoalPage {
 
   protected cancelReanchor(): void {
     if (!this.detail.busy()) this.confirmingReanchor.set(false);
+  }
+
+  protected savePlanNote(note: string): void {
+    this.detail.clearPlanProblem();
+    this.detail.savePlanNote(note);
+  }
+
+  protected addAction(input: GoalActionInput): void {
+    this.detail.clearPlanProblem();
+    this.detail.addAction(input);
+  }
+
+  protected updateAction(event: { id: string; input: GoalActionInput }): void {
+    this.detail.clearPlanProblem();
+    this.detail.updateAction(event.id, event.input);
+  }
+
+  protected removeAction(actionId: string): void {
+    this.detail.clearPlanProblem();
+    this.detail.removeAction(actionId);
+  }
+
+  protected checkIn(event: ActionCheckIn): void {
+    this.detail.clearPlanProblem();
+    this.detail.checkIn(event.actionId, event.period, event.done);
   }
 
   protected unarchive(): void {

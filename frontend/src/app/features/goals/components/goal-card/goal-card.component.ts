@@ -6,6 +6,8 @@ import { ProgressBarComponent } from '~/app/common/components/progress-bar/progr
 import { HTML_LANG } from '~/app/common/i18n/i18n';
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { interpolate } from '~/app/common/i18n/interpolate';
+import { GoalStageBadgeComponent } from '~/app/features/goals/components/goal-stage-badge/goal-stage-badge.component';
+import { goalName } from '~/app/features/goals/services/goal-name';
 import type { Goal } from '~/modules/goals/core/types/goal';
 import { formatIsoDate } from '~/util/date';
 import { formatMoney } from '~/util/money';
@@ -19,7 +21,7 @@ import { formatRatio, ratioForBar } from '~/util/ratio';
  */
 @Component({
   selector: 'li[app-goal-card]',
-  imports: [RouterLink, MoneyComponent, ProgressBarComponent],
+  imports: [RouterLink, MoneyComponent, ProgressBarComponent, GoalStageBadgeComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './goal-card.component.html',
   styleUrl: './goal-card.component.css',
@@ -32,12 +34,15 @@ export class GoalCardComponent {
   readonly goal = input.required<Goal>();
 
   private readonly locale = computed(() => HTML_LANG[this.i18n.language()]);
+  protected readonly name = computed(() => goalName(this.goal(), this.t().goals));
+  /** Meta de medida arquivada não calcula: `current` vem nulo e a barra não aparece. */
+  protected readonly notCalculated = computed(() => this.goal().current === null);
   protected readonly bar = computed(() => ratioForBar(this.goal().progress));
   protected readonly percent = computed(() => formatRatio(this.goal().progress, this.locale()));
   protected readonly progressText = computed(() => {
     const goal = this.goal();
     return interpolate(this.t().goals.card.progressText, {
-      current: formatMoney(goal.current),
+      current: goal.current ? formatMoney(goal.current) : '',
       target: formatMoney(goal.target),
     });
   });
@@ -50,10 +55,10 @@ export class GoalCardComponent {
         });
   });
   protected readonly openLabel = computed(() =>
-    interpolate(this.t().goals.card.open, { name: this.goal().name }),
+    interpolate(this.t().goals.card.open, { name: this.name() }),
   );
   protected readonly progressLabel = computed(() =>
-    interpolate(this.t().goals.card.progressLabel, { name: this.goal().name }),
+    interpolate(this.t().goals.card.progressLabel, { name: this.name() }),
   );
   protected readonly priority = computed(() =>
     interpolate(this.t().goals.priorityTag, {

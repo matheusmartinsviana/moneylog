@@ -2,6 +2,9 @@
   <a pageActions class="button button--primary" routerLink="/goals/new" data-cy="goals-add">
     {{ t().goals.add }}
   </a>
+  <a pageActions class="button" routerLink="/goals/new-smart" data-cy="goals-add-smart">
+    {{ t().goals.addSmart }}
+  </a>
   @if (!hasPayoff()) {
     <button
       pageActions
@@ -85,7 +88,7 @@
         <ul class="list" data-cy="goals-list">
           @for (goal of data; track goal.id) {
             <li app-goal-card [goal]="goal">
-              @if (goal.status !== 'ARCHIVED' && goal.kind !== 'DEBT_PAYOFF') {
+              @if (goal.status !== 'ARCHIVED' && goal.kind === 'SAVINGS') {
                 <button
                   type="button"
                   class="button"

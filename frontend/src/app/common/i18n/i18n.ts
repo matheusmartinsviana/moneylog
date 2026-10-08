@@ -322,6 +322,7 @@ export abstract class AppI18n {
       readonly projections: string;
       /** Atalho "Meta" (T101): reserva rápida ou nova meta. */
       readonly goalQuick: string;
+      readonly smartGoal: string;
     };
     /** Reservado em metas (T101): o texto da fórmula e o caminho para as metas. */
     readonly reservedNote: {
@@ -1891,6 +1892,151 @@ export abstract class AppI18n {
     };
     readonly emptyAchieved: string;
     readonly emptyArchived: string;
+    readonly addSmart: string;
+    readonly metricTag: string;
+    readonly metric: Readonly<
+      Record<
+        | 'TOTAL_DEBT'
+        | 'CARD_DEBT'
+        | 'PEOPLE_DEBT'
+        | 'OTHER_DEBT'
+        | 'ACCOUNTS_BALANCE'
+        | 'AVAILABLE_BALANCE'
+        | 'FIXED_COSTS_MONTHLY',
+        string
+      >
+    >;
+    readonly metricFallback: string;
+    readonly generatedName: string;
+    readonly archivedMetric: string;
+    readonly direction: Readonly<Record<'DECREASE' | 'INCREASE', string>>;
+    readonly stage: Readonly<
+      Record<'FANTASY' | 'OBJECTIVE' | 'STRATEGY' | 'CONSISTENT' | 'ACHIEVED', string>
+    >;
+    readonly stageDescription: Readonly<
+      Record<'FANTASY' | 'OBJECTIVE' | 'STRATEGY' | 'CONSISTENT' | 'ACHIEVED', string>
+    >;
+    readonly stageHint: Readonly<
+      Record<'FANTASY' | 'OBJECTIVE' | 'STRATEGY' | 'CONSISTENT' | 'ACHIEVED', string>
+    >;
+    readonly stageBadge: string;
+    readonly ladder: {
+      readonly title: string;
+      readonly intro: string;
+      readonly here: string;
+      readonly done: string;
+      readonly todo: string;
+      readonly next: string;
+    };
+    readonly smart: {
+      readonly createTitle: string;
+      readonly intro: string;
+      readonly metric: string;
+      readonly metricPlaceholder: string;
+      readonly currentLabel: string;
+      readonly currentLoading: string;
+      readonly currentError: string;
+      readonly retry: string;
+      readonly target: string;
+      readonly targetHint: string;
+      readonly deadline: string;
+      readonly noDeadlineWarning: string;
+      readonly name: string;
+      readonly save: string;
+      readonly saving: string;
+      readonly cancel: string;
+    };
+    readonly metricDetail: {
+      readonly currentLabel: string;
+      readonly targetLabel: string;
+      readonly baselineLabel: string;
+      readonly remainingLabel: string;
+      readonly note: string;
+    };
+    readonly plan: {
+      readonly title: string;
+      readonly suggestionTitle: string;
+      readonly suggestion: string;
+      readonly suggestionNote: string;
+      readonly noPace: string;
+      readonly overdue: string;
+      readonly reachedNote: string;
+      readonly monthsLeft: string;
+      readonly milestone: string;
+      readonly status: string;
+      readonly onTrack: string;
+      readonly behind: string;
+      readonly noteLabel: string;
+      readonly noteHint: string;
+      readonly noteSave: string;
+      readonly noteSaving: string;
+      readonly actionsTitle: string;
+      readonly actionsHint: string;
+      readonly actionsEmpty: string;
+      readonly actionTitle: string;
+      readonly actionFrequency: string;
+      readonly frequency: {
+        readonly MONTHLY: string;
+        readonly WEEKLY: string;
+        readonly ONE_TIME: string;
+      };
+      readonly edit: string;
+      readonly remove: string;
+      readonly addAction: string;
+      readonly addTitle: string;
+      readonly editTitle: string;
+      readonly saveAction: string;
+      readonly savingAction: string;
+      readonly cancel: string;
+      readonly editAction: string;
+      readonly removeAction: string;
+      readonly limit: string;
+      readonly checkIn: {
+        readonly MONTHLY: string;
+        readonly WEEKLY: string;
+        readonly ONE_TIME: string;
+      };
+      readonly checkInAria: string;
+      readonly doneIn: string;
+      readonly noneDone: string;
+      readonly period: {
+        readonly week: string;
+        readonly once: string;
+      };
+      readonly removeConfirm: {
+        readonly title: string;
+        readonly description: string;
+        readonly confirm: string;
+      };
+      readonly toast: {
+        readonly noteSaved: string;
+        readonly added: string;
+        readonly updated: string;
+        readonly removed: string;
+      };
+    };
+    readonly consistency: {
+      readonly title: string;
+      readonly description: string;
+      readonly timelineLabel: string;
+      readonly streak: string;
+      readonly rate: string;
+      readonly noRate: string;
+      readonly expected: string;
+      readonly actual: string;
+      readonly met: string;
+      readonly notMet: string;
+      readonly noData: string;
+      readonly inProgress: string;
+      readonly empty: string;
+      readonly note: string;
+    };
+    readonly summary: {
+      readonly title: string;
+      readonly description: string;
+      readonly viewAll: string;
+      readonly add: string;
+    };
     readonly status: Readonly<Record<'ACTIVE' | 'ACHIEVED' | 'ARCHIVED', string>>;
     readonly priority: Readonly<Record<'HIGH' | 'MEDIUM' | 'LOW', string>>;
     /** `{priority}`. */
@@ -1973,6 +2119,7 @@ export abstract class AppI18n {
       readonly confirm: string;
     };
     readonly form: {
+      readonly nameOptional: string;
       readonly createTitle: string;
       readonly editTitle: string;
       readonly name: string;

@@ -1,0 +1,209 @@
+@let g = goal();
+<div class="plan" data-cy="goal-plan">
+  <section class="plan__block" aria-labelledby="goal-plan-suggestion-title">
+    <h3 class="plan__heading" id="goal-plan-suggestion-title">
+      {{ t().goals.plan.suggestionTitle }}
+    </h3>
+    @if (g.reached) {
+      <p class="plan__muted" data-cy="goal-plan-reached">{{ t().goals.plan.reachedNote }}</p>
+    } @else if (suggestion(); as text) {
+      <p class="plan__lead" data-cy="goal-plan-suggestion">{{ text }}</p>
+      <dl class="plan__facts">
+        @if (g.monthsLeft !== null) {
+          <div class="plan__fact">
+            <dt>{{ t().goals.plan.monthsLeft }}</dt>
+            <dd class="num" data-cy="goal-plan-months">{{ g.monthsLeft }}</dd>
+          </div>
+        }
+        @if (g.nextMilestone; as milestone) {
+          <div class="plan__fact">
+            <dt>{{ t().goals.plan.milestone }}</dt>
+            <dd data-cy="goal-plan-milestone"><app-money [value]="milestone" /></dd>
+          </div>
+        }
+        @if (g.onTrack !== null) {
+          <div class="plan__fact">
+            <dt>{{ t().goals.plan.status }}</dt>
+            <dd>
+              @if (g.onTrack) {
+                <span class="status" data-tone="positive" data-cy="goal-plan-on-track">
+                  <app-icon name="check" [size]="14" />
+                  {{ t().goals.plan.onTrack }}
+                </span>
+              } @else {
+                <span class="status" data-tone="warning" data-cy="goal-plan-behind">
+                  {{ behind() ?? t().goals.plan.status }}
+                </span>
+              }
+            </dd>
+          </div>
+        }
+      </dl>
+      <p class="plan__muted">{{ t().goals.plan.suggestionNote }}</p>
+    } @else if (overdue()) {
+      <p class="plan__muted" data-cy="goal-plan-overdue">{{ t().goals.plan.overdue }}</p>
+    } @else {
+      <p class="plan__muted" data-cy="goal-plan-no-pace">{{ t().goals.plan.noPace }}</p>
+    }
+  </section>
+
+  <section class="plan__block">
+    <app-text-area
+      fieldId="goal-plan-note"
+      [formControl]="note"
+      [rows]="3"
+      [maxlength]="noteMax"
+      [mandatory]="false"
+      [label]="t().goals.plan.noteLabel"
+    />
+    <p class="plan__muted">{{ t().goals.plan.noteHint }}</p>
+    @if (!locked()) {
+      <div class="plan__row">
+        <button
+          type="button"
+          class="button button--primary"
+          data-cy="goal-plan-note-save"
+          [disabled]="busy() || !noteChanged() || note.invalid"
+          [attr.aria-busy]="busy()"
+          (click)="saveNote()"
+        >
+          {{ busy() ? t().goals.plan.noteSaving : t().goals.plan.noteSave }}
+        </button>
+      </div>
+    }
+  </section>
+
+  <section class="plan__block" aria-labelledby="goal-plan-actions-title">
+    <h3 class="plan__heading" id="goal-plan-actions-title">{{ t().goals.plan.actionsTitle }}</h3>
+    <p class="plan__muted">{{ t().goals.plan.actionsHint }}</p>
+    @if (problem(); as message) {
+      <p class="banner" role="alert" data-cy="goal-plan-error">{{ message }}</p>
+    }
+    @if (g.actions.length === 0) {
+      <p class="plan__muted" data-cy="goal-plan-actions-empty">{{ t().goals.plan.actionsEmpty }}</p>
+    } @else {
+      <ul class="plan__actions" appStagger data-cy="goal-plan-actions">
+        @for (action of g.actions; track action.id) {
+          <li class="plan__action row-card" [attr.data-cy]="'goal-action-' + action.id">
+            <div class="plan__action-head">
+              <div class="plan__action-text">
+                <span class="plan__action-title">{{ action.title }}</span>
+                <span class="plan__muted">{{ t().goals.plan.frequency[action.frequency] }}</span>
+              </div>
+              <button
+                type="button"
+                class="pill"
+                [attr.aria-pressed]="isDone(action)"
+                [attr.aria-label]="checkAria(action)"
+                [attr.data-cy]="'goal-action-check-' + action.id"
+                [disabled]="busy() || locked()"
+                (click)="toggle(action)"
+              >
+                @if (isDone(action)) {
+                  <app-icon name="check" [size]="16" />
+                }
+                {{ checkLabel(action) }}
+              </button>
+            </div>
+            <p class="plan__done" [attr.data-cy]="'goal-action-done-' + action.id">
+              <span class="plan__muted">{{ t().goals.plan.doneIn }}</span>
+              @for (period of action.doneIn; track period) {
+                <span class="status">{{ periodLabel(period) }}</span>
+              } @empty {
+                <span class="plan__muted">{{ t().goals.plan.noneDone }}</span>
+              }
+            </p>
+            @if (!locked()) {
+              <div class="plan__row">
+                <button
+                  type="button"
+                  class="button"
+                  [attr.aria-label]="editLabel(action)"
+                  [attr.data-cy]="'goal-action-edit-' + action.id"
+                  [disabled]="busy()"
+                  (click)="openEdit(action)"
+                >
+                  {{ t().goals.plan.edit }}
+                </button>
+                <button
+                  type="button"
+                  class="button"
+                  [attr.aria-label]="removeLabel(action)"
+                  [attr.data-cy]="'goal-action-remove-' + action.id"
+                  [disabled]="busy()"
+                  (click)="removing.set(action)"
+                >
+                  {{ t().goals.plan.remove }}
+                </button>
+              </div>
+            }
+          </li>
+        }
+      </ul>
+    }
+    @if (!locked()) {
+      <div class="plan__row">
+        <button
+          type="button"
+          class="button"
+          data-cy="goal-action-add"
+          [disabled]="busy() || atLimit()"
+          (click)="openAdd()"
+        >
+          {{ t().goals.plan.addAction }}
+        </button>
+        @if (atLimit()) {
+          <span class="plan__muted" data-cy="goal-action-limit">{{ limitText() }}</span>
+        }
+      </div>
+    }
+  </section>
+</div>
+
+@if (editing() !== null) {
+  <app-form-modal #modal [heading]="modalTitle()" [dirty]="actionDirty()" (closed)="closeAction()">
+    <form
+      class="plan__form"
+      [formGroup]="actionForm"
+      (ngSubmit)="submitAction()"
+      novalidate
+      data-cy="goal-action-form"
+    >
+      <app-text-field
+        formControlName="title"
+        fieldId="goal-action-title"
+        autocomplete="off"
+        [maxlength]="100"
+        [label]="t().goals.plan.actionTitle"
+      />
+      <app-segmented-control
+        formControlName="frequency"
+        fieldId="goal-action-frequency"
+        [options]="frequencyOptions()"
+        [label]="t().goals.plan.actionFrequency"
+      />
+      <div class="plan__row plan__row--end">
+        <button
+          type="button"
+          class="button"
+          data-cy="goal-action-cancel"
+          (click)="modal.requestClose()"
+        >
+          {{ t().goals.plan.cancel }}
+        </button>
+        <button type="submit" class="button button--primary" data-cy="goal-action-save">
+          {{ t().goals.plan.saveAction }}
+        </button>
+      </div>
+    </form>
+  </app-form-modal>
+}
+
+<app-confirm-dialog
+  [open]="removing() !== null"
+  [heading]="removeTitle()"
+  [description]="t().goals.plan.removeConfirm.description"
+  [confirmLabel]="t().goals.plan.removeConfirm.confirm"
+  (confirmed)="confirmRemove()"
+  (cancelled)="removing.set(null)"
+/>

@@ -14,7 +14,13 @@ import {
   provideAccountsStub,
 } from '~/testing/accounts-testing';
 import { axeViolations, describeViolations } from '~/testing/axe';
-import { aGoal, aReservation, GoalsGatewayStub, provideGoalsStub } from '~/testing/goals-testing';
+import {
+  aGoal,
+  aMetricGoal,
+  aReservation,
+  GoalsGatewayStub,
+  provideGoalsStub,
+} from '~/testing/goals-testing';
 import { provideI18nTesting } from '~/testing/i18n-testing';
 import { provideNotesStub } from '~/testing/notes-testing';
 
@@ -374,6 +380,113 @@ describe('GoalPage', () => {
       expect(screen.getByTestId('goal-edit')).toBeInTheDocument();
       expect(screen.queryByTestId('goal-baseline')).not.toBeInTheDocument();
       expect(screen.queryByTestId('goal-building')).not.toBeInTheDocument();
+    });
+  });
+  describe('meta de medida e plano', () => {
+    async function setupMetric(goal: Goal) {
+      const gateway = new GoalsGatewayStub();
+      gateway.getResult = of(goal);
+      gateway.next = of(goal);
+      return setup(gateway);
+    }
+
+    it('Dado meta de medida sem nome, então mostra o rótulo gerado, o valor atual, o que falta, a escada e o plano, sem reservas', async () => {
+      await setupMetric(aMetricGoal());
+
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+        /Total de dívidas até R\$\s4\.000,00/,
+      );
+      expect(text(screen.getByTestId('goal-current'))).toBe('R$ 8.000,00');
+      expect(text(screen.getByTestId('goal-remaining'))).toBe('R$ 4.000,00');
+      expect(text(screen.getByTestId('goal-percent'))).toBe('33,3%');
+      expect(text(screen.getByTestId('goal-baseline-value'))).toBe('R$ 10.000,00');
+      expect(screen.getByTestId('goal-stage-badge')).toHaveTextContent('Objetivo');
+      expect(screen.getByTestId('goal-stage-OBJECTIVE')).toHaveAttribute('aria-current', 'step');
+      expect(screen.getByTestId('goal-plan-suggestion')).toBeInTheDocument();
+      expect(screen.getByTestId('goal-consistency')).toBeInTheDocument();
+      expect(screen.queryByTestId('goal-reserve')).toBeNull();
+      expect(screen.queryByTestId('goal-release')).toBeNull();
+      expect(screen.queryByTestId('goal-reservations')).toBeNull();
+      expect(screen.getByTestId('goal-edit')).toBeInTheDocument();
+    });
+
+    it('Dado meta de medida arquivada, então não calcula: mostra "arquivada" e não o valor atual', async () => {
+      await setupMetric(aMetricGoal({ status: 'ARCHIVED', current: null, remaining: null }));
+
+      expect(screen.getByTestId('goal-not-calculated')).toHaveTextContent(pt.goals.archivedMetric);
+      expect(screen.queryByTestId('goal-current')).toBeNull();
+    });
+
+    it('Dado a meta atingida, então a escada termina em Sucesso', async () => {
+      await setupMetric(
+        aMetricGoal({ status: 'ACHIEVED', reached: true, stage: 'ACHIEVED', progress: '1.0000' }),
+      );
+
+      expect(screen.getByTestId('goal-stage-badge')).toHaveTextContent('Sucesso');
+      expect(screen.getByTestId('goal-stage-ACHIEVED')).toHaveTextContent('Concluído');
+    });
+
+    it('Dado adicionar uma ação, então manda ao servidor, mostra a meta devolvida e avisa', async () => {
+      const gateway = new GoalsGatewayStub();
+      const goal = aMetricGoal();
+      gateway.getResult = of(goal);
+      gateway.next = of(
+        aMetricGoal({
+          stage: 'STRATEGY',
+          actions: [{ id: 'a-1', title: 'Revisar as dívidas', frequency: 'WEEKLY', doneIn: [] }],
+        }),
+      );
+      await setup(gateway);
+
+      await userEvent.click(screen.getByTestId('goal-action-add'));
+      await userEvent.type(screen.getByTestId('goal-action-title'), 'Revisar as dívidas');
+      await userEvent.click(screen.getByTestId('goal-action-save'));
+
+      expect(gateway.actionCalls).toEqual(['add:goal-metric:Revisar as dívidas:MONTHLY']);
+      expect(await screen.findByTestId('goal-action-a-1')).toHaveTextContent('Revisar as dívidas');
+      expect(screen.getByTestId('goal-stage-badge')).toHaveTextContent('Estratégia');
+    });
+
+    it('Dado o limite de ações no servidor, então mostra o erro traduzido no plano', async () => {
+      const gateway = new GoalsGatewayStub();
+      gateway.getResult = of(aMetricGoal());
+      gateway.next = failWith(422, 'GOAL_ACTION_LIMIT');
+      await setup(gateway);
+
+      await userEvent.click(screen.getByTestId('goal-action-add'));
+      await userEvent.type(screen.getByTestId('goal-action-title'), 'Mais uma');
+      await userEvent.click(screen.getByTestId('goal-action-save'));
+
+      expect(await screen.findByTestId('goal-plan-error')).toHaveTextContent('limite de 10 ações');
+    });
+
+    it('Dado salvar o texto do plano, então o PUT reenvia os valores atuais para não apagar o prazo', async () => {
+      const gateway = new GoalsGatewayStub();
+      gateway.getResult = of(aMetricGoal());
+      gateway.next = of(aMetricGoal({ planNote: 'Pagar em dia', stage: 'STRATEGY' }));
+      await setup(gateway);
+
+      await userEvent.type(screen.getByTestId('goal-plan-note'), 'Pagar em dia');
+      await userEvent.click(screen.getByTestId('goal-plan-note-save'));
+
+      expect(gateway.updates[0]).toMatchObject({
+        deadline: '2027-04-30',
+        target: '4000.00',
+        planNote: 'Pagar em dia',
+      });
+      expect(await screen.findByTestId('goal-stage-badge')).toHaveTextContent('Estratégia');
+    });
+
+    it('Dado a meta de medida com plano, então não tem violações de acessibilidade', async () => {
+      const { container } = await setupMetric(
+        aMetricGoal({
+          planNote: 'Pagar em dia',
+          actions: [{ id: 'a-1', title: 'Revisar', frequency: 'WEEKLY', doneIn: [] }],
+        }),
+      );
+
+      const violations = await axeViolations(container);
+      expect(violations, describeViolations(violations)).toEqual([]);
     });
   });
 });

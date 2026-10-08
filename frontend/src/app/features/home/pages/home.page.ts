@@ -31,6 +31,7 @@ import { CardsSummaryComponent } from '~/app/features/home/components/cards-summ
 import { CategorySpendingComponent } from '~/app/features/home/components/category-spending/category-spending.component';
 import { CommitmentsComponent } from '~/app/features/home/components/commitments/commitments.component';
 import { DebtSummaryCardComponent } from '~/app/features/home/components/debt-summary-card/debt-summary-card.component';
+import { GoalsSummaryComponent } from '~/app/features/home/components/goals-summary/goals-summary.component';
 import {
   hasInsight,
   InsightCardComponent,
@@ -104,6 +105,7 @@ import { formatCompetence, formatIsoDate } from '~/util/date';
     CardsSummaryComponent,
     RealizeSheetComponent,
     ReserveSheetComponent,
+    GoalsSummaryComponent,
   ],
   providers: [
     // Uma fila por visita: no máximo 2 leituras do razão em voo (R13, ADR-008).

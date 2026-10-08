@@ -6,11 +6,17 @@
     [attr.aria-label]="openLabel()"
     [attr.data-cy]="'goal-open-' + g.id"
   >
-    {{ g.name }}
+    {{ name() }}
   </a>
   <p class="card__tags">
     @if (g.kind === 'DEBT_PAYOFF') {
       <span class="tag" [attr.data-cy]="'goal-kind-' + g.id">{{ t().goals.payoff.tag }}</span>
+    }
+    <app-goal-stage-badge [stage]="g.stage" [cy]="'goal-stage-' + g.id" />
+    @if (g.kind === 'METRIC' && g.metric) {
+      <span class="tag" [attr.data-cy]="'goal-metric-' + g.id">{{
+        t().goals.metric[g.metric]
+      }}</span>
     }
     <span class="tag" [attr.data-cy]="'goal-priority-' + g.id">{{ priority() }}</span>
     @if (g.status !== 'ACTIVE') {
@@ -30,6 +36,10 @@
     <span class="tag">{{ t().goals.payoff.building }}</span>
     {{ t().goals.payoff.buildingCard }}
   </p>
+} @else if (notCalculated()) {
+  <p class="card__meta" [attr.data-cy]="'goal-not-calculated-' + g.id">
+    {{ t().goals.archivedMetric }}
+  </p>
 } @else {
   <app-progress-bar
     [fieldId]="'goal-progress-' + g.id"
@@ -41,22 +51,32 @@
 }
 
 <dl class="card__facts">
-  @if (g.kind !== 'DEBT_PAYOFF' || g.baselineSet) {
+  @if (!notCalculated() && (g.kind !== 'DEBT_PAYOFF' || g.baselineSet)) {
     <div class="fact">
       <dt class="fact__label">{{ t().goals.card.percentLabel }}</dt>
       <dd class="fact__value num" [attr.data-cy]="'goal-percent-' + g.id">{{ percent() }}</dd>
     </div>
   }
-  <div class="fact">
-    <dt class="fact__label">
-      {{
-        g.kind === 'DEBT_PAYOFF' ? t().goals.payoff.remainingLabel : t().goals.card.remainingLabel
-      }}
-    </dt>
-    <dd class="fact__value" [attr.data-cy]="'goal-remaining-' + g.id">
-      <app-money [value]="g.remaining" />
-    </dd>
-  </div>
+  @if (g.kind === 'METRIC' && g.current; as current) {
+    <div class="fact">
+      <dt class="fact__label">{{ t().goals.metricDetail.currentLabel }}</dt>
+      <dd class="fact__value" [attr.data-cy]="'goal-current-' + g.id">
+        <app-money [value]="current" />
+      </dd>
+    </div>
+  }
+  @if (g.remaining; as remaining) {
+    <div class="fact">
+      <dt class="fact__label">
+        {{
+          g.kind === 'DEBT_PAYOFF' ? t().goals.payoff.remainingLabel : t().goals.card.remainingLabel
+        }}
+      </dt>
+      <dd class="fact__value" [attr.data-cy]="'goal-remaining-' + g.id">
+        <app-money [value]="remaining" />
+      </dd>
+    </div>
+  }
 </dl>
 
 <p class="card__meta" [attr.data-cy]="'goal-deadline-' + g.id">{{ deadline() }}</p>
@@ -68,7 +88,7 @@
     <app-money [value]="monthly" />
   </p>
 }
-@if (g.status === 'ACHIEVED') {
+@if (g.status === 'ACHIEVED' || g.reached) {
   <p class="card__done" [attr.data-cy]="'goal-achieved-' + g.id">{{ t().goals.card.achieved }}</p>
 }
 @if (g.uncovered) {

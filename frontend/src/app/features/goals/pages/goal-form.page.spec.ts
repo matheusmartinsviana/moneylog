@@ -10,7 +10,7 @@ import { ToastService } from '~/app/common/services/toast.service';
 import { GoalFormPage } from '~/app/features/goals/pages/goal-form.page';
 import { failWith } from '~/testing/accounts-testing';
 import { axeViolations, describeViolations } from '~/testing/axe';
-import { aGoal, GoalsGatewayStub, provideGoalsStub } from '~/testing/goals-testing';
+import { aGoal, aMetricGoal, GoalsGatewayStub, provideGoalsStub } from '~/testing/goals-testing';
 import { provideI18nTesting } from '~/testing/i18n-testing';
 
 vi.setConfig({ testTimeout: 30_000 });
@@ -148,6 +148,26 @@ describe('GoalFormPage', () => {
     await fixture.whenStable();
 
     expect(gateway.updates[0]).toMatchObject({ name: 'Reserva', version: 5, target: '20000.00' });
+  });
+
+  it('Dado editar meta de medida, então o nome é opcional e o PUT reenvia prazo e texto do plano para não apagá-los', async () => {
+    const gateway = new GoalsGatewayStub();
+    gateway.goals = [aMetricGoal({ id: 'goal-1', planNote: 'Pagar em dia', version: 7 })];
+    const { fixture } = await setup(gateway, 'goal-1');
+
+    expect(field('goal-name').value).toBe('');
+    await type('goal-target', '3000,00');
+    await userEvent.click(screen.getByTestId('goal-form-save'));
+    await fixture.whenStable();
+
+    expect(gateway.updates[0]).toMatchObject({
+      kind: 'METRIC',
+      name: '',
+      target: '3000.00',
+      deadline: '2027-04-30',
+      planNote: 'Pagar em dia',
+      version: 7,
+    });
   });
 
   it('Dado VERSION_CONFLICT, então oferece recarregar sem perder o digitado antes da escolha', async () => {

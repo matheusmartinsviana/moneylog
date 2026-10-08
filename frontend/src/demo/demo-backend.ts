@@ -19,6 +19,7 @@ import {
   notificationSettings,
   reminderList,
 } from '~/demo/demo-etapa7';
+import { goalView } from '~/demo/demo-goals';
 import { commitmentViews, thirdPartyReceivablesView } from '~/demo/demo-third-parties';
 import {
   accountView,
@@ -29,7 +30,6 @@ import {
   dashboardView,
   debtView,
   futureInstallments,
-  goalView,
   incomeExpenses,
   invoiceSummary,
   invoiceView,
