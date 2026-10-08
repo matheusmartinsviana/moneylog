@@ -1094,6 +1094,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/third-party-receipts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove um recebimento de terceiro registrado sem movimento (correção de vínculo)
+         * @description Não há movimento a desfazer (o recebimento nunca tocou conta, renda ou consumo).
+         */
+        delete: operations["deleteThirdPartyReceipt"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/third-party-expenses/{id}": {
         parameters: {
             query?: never;
@@ -3873,15 +3895,16 @@ export interface components {
             id: string;
             name: string;
             institution: string | null;
-            limit: components["schemas"]["Money"];
-            /** @description limite + saldo do livro `CARD` em todas as datas (S-46); pode ser negativo ou passar do limite. */
-            availableLimit: components["schemas"]["Money"];
+            /** @description Limite do cartão; `null` ou ausente = ainda não definido (2.14.0). Sem limite: `availableLimit` e `usedRatio` também ficam nulos/ausentes e `overLimit` é `false`. */
+            limit?: components["schemas"]["Money"] | null;
+            /** @description limite + saldo do livro `CARD` em todas as datas (S-46); pode ser negativo ou passar do limite. Nulo/ausente sem limite definido. */
+            availableLimit?: components["schemas"]["Money"] | null;
             /** @description Disponível negativo. Sinalizado, nunca bloqueia (S-11). */
             overLimit: boolean;
             /** @description Crédito no cartão = `creditCarry` da última fatura da cadeia (0,00 se não houver). */
             creditBalance: components["schemas"]["Money"];
             /** @description Razão do limite usado, 0..1 (4 casas), calculada no backend só para a largura da barra. Com `overLimit` vale 1. */
-            usedRatio: number;
+            usedRatio?: number | null;
             /** @description Dia de fechamento da regra mais recente. */
             closingDay: number;
             /** @description Dia de vencimento da regra mais recente. */
@@ -3914,8 +3937,8 @@ export interface components {
             name: string;
             /** @description Até 100 caracteres (senão `422 CARD_INSTITUTION_TOO_LONG`). */
             institution?: string | null;
-            /** @description Maior que zero e até R$ 999.999.999,99 (senão `422 CARD_INVALID_LIMIT` / `AMOUNT_ABOVE_LIMIT`). */
-            limit: components["schemas"]["Money"];
+            /** @description Opcional (2.14.0), ausente ou `null` = limite ainda não definido. Informado, maior que zero e até R$ 999.999.999,99 (senão `422 CARD_INVALID_LIMIT` / `AMOUNT_ABOVE_LIMIT`). */
+            limit?: components["schemas"]["Money"] | null;
             /** @description 1..31 (senão `422 CARD_INVALID_BILLING_DAY`); em mês curto vale o último dia. */
             closingDay: number;
             /** @description 1..31 (senão `422 CARD_INVALID_BILLING_DAY`). */
@@ -3931,7 +3954,8 @@ export interface components {
             name: string;
             /** @description Até 100 caracteres (senão `422 CARD_INSTITUTION_TOO_LONG`). */
             institution?: string | null;
-            limit: components["schemas"]["Money"];
+            /** @description Opcional (2.14.0), `null`/ausente = sem limite (a edição é substituição completa). */
+            limit?: components["schemas"]["Money"] | null;
             closingDay: number;
             dueDay: number;
             /** Format: uuid */
@@ -4012,8 +4036,8 @@ export interface components {
         PurchasePreview: {
             installments: components["schemas"]["PurchasePreviewInstallment"][];
             total: components["schemas"]["Money"];
-            /** @description Limite disponível depois da compra (pode ser negativo). */
-            availableLimitAfter: components["schemas"]["Money"];
+            /** @description Limite disponível depois da compra (pode ser negativo); nulo/ausente sem limite definido. */
+            availableLimitAfter?: components["schemas"]["Money"] | null;
             overLimit: boolean;
             warnings: ("LATE_ENTRY" | "OVER_LIMIT" | "FUTURE_DATE")[];
         };
@@ -5498,7 +5522,7 @@ export interface components {
             id: string;
             name: string;
             institution: string | null;
-            limit: components["schemas"]["Money"];
+            limit?: components["schemas"]["Money"] | null;
             closingDay: number;
             dueDay: number;
             /** Format: uuid */
@@ -8344,6 +8368,29 @@ export interface operations {
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
             422: components["responses"]["UnprocessableEntity"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    deleteThirdPartyReceipt: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Recebimento removido. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
             500: components["responses"]["InternalServerError"];
         };
     };
