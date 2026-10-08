@@ -618,6 +618,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/cards/{id}/historical-invoices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Registra o valor de uma fatura passada conhecida só pelo pagamento
+         * @description Para pagamentos de fatura de meses anteriores ao app: cria um item `CARD -X / EQUITY +X` na fatura que fechou em `closingDate`, **sem categoria e sem
+         *     consumo**, com `source: HISTORICAL`. Depois, `POST /v1/invoices/{id}/payments` com a data real quita a fatura (resultado final: `CARD 0`,
+         *     conta `-X`). O limite, a dívida e o patrimônio só se movem pelo caixa que saiu. `closingDate` que não é fechamento do calendário do cartão
+         *     → `404/422 INVOICE_NOT_FOUND`; fatura que ainda não fechou → `422 HISTORICAL_INVOICE_NOT_CLOSED`; cartão arquivado → `422 CARD_ARCHIVED`.
+         *     Sem idempotência: repetir cria outro item (o script de carga controla por estado).
+         */
+        post: operations["createHistoricalInvoice"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/cards/{id}/ongoing-installments": {
         parameters: {
             query?: never;
@@ -2943,10 +2969,10 @@ export interface components {
         /** @enum {string} */
         TransactionStatus: "ACTIVE" | "VOIDED";
         /**
-         * @description Como nasceu. `RECURRENCE` quando a movimentação confirma uma ocorrência (Etapa 4). `ONGOING` (2.13.0) é a compra parcelada cadastrada já em andamento.
+         * @description Como nasceu. `RECURRENCE` quando a movimentação confirma uma ocorrência (Etapa 4). `ONGOING` (2.13.0) é a compra parcelada cadastrada já em andamento. `HISTORICAL` (2.16.0) é o item de fatura histórica.
          * @enum {string}
          */
-        TransactionSource: "MANUAL" | "IMPORT" | "RECURRENCE" | "ONGOING";
+        TransactionSource: "MANUAL" | "IMPORT" | "RECURRENCE" | "ONGOING" | "HISTORICAL";
         /** @enum {string} */
         EntryLens: "CONSUMPTION" | "INCOME";
         /** @enum {string} */
@@ -4431,6 +4457,15 @@ export interface components {
             other: components["schemas"]["Money"];
             total: components["schemas"]["Money"];
             remainingAfter: components["schemas"]["Money"];
+        };
+        HistoricalInvoiceRequest: {
+            /**
+             * Format: date
+             * @description Fechamento da fatura (data de fechamento do calendário do cartão, já passada).
+             */
+            closingDate: string;
+            amount: components["schemas"]["AmountInput"];
+            description: string;
         };
         CardClosingConfirmationInput: {
             confirmed: boolean;
@@ -7691,6 +7726,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PurchasePreview"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    createHistoricalInvoice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HistoricalInvoiceRequest"];
+            };
+        };
+        responses: {
+            /** @description Item criado. */
+            201: {
+                headers: {
+                    Location: components["headers"]["Location"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Transaction"];
                 };
             };
             400: components["responses"]["BadRequest"];
