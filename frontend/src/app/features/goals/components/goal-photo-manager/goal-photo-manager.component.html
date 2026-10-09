@@ -1,0 +1,214 @@
+<section class="pm" aria-labelledby="goal-photos-title" data-cy="goal-photos">
+  <div class="pm__head">
+    <h3 class="pm__title" id="goal-photos-title">{{ t().goals.photos.title }}</h3>
+    <span
+      class="pm__count num"
+      role="img"
+      data-cy="goal-photos-count"
+      [attr.aria-label]="t().goals.photos.counterLabel + ': ' + counter()"
+      >{{ counter() }}</span
+    >
+  </div>
+  <p class="pm__hint">{{ t().goals.photos.hint }}</p>
+  <p class="pm__hint" data-cy="goal-photos-note">
+    {{ editing() ? t().goals.photos.editNote : t().goals.photos.createNote }}
+  </p>
+
+  <div class="pm__add">
+    <app-files-button
+      cy="goal-photos-add"
+      icon="image"
+      [label]="t().goals.photos.add"
+      [accept]="accept"
+      [disabled]="locked() || full()"
+      (picked)="filesPicked.emit($event)"
+    />
+    @if (full()) {
+      <span class="pm__hint" data-cy="goal-photos-full">{{ fullText() }}</span>
+    }
+  </div>
+
+  @if (problem(); as message) {
+    <p class="pm__error" role="alert" data-cy="goal-photos-error">{{ message }}</p>
+  }
+  @if (rejectionTexts().length > 0) {
+    <ul class="pm__rejections" role="alert" data-cy="goal-photos-rejected">
+      @for (text of rejectionTexts(); track $index) {
+        <li class="pm__error">{{ text }}</li>
+      }
+    </ul>
+  }
+
+  @if (count() === 0) {
+    <p class="pm__empty" data-cy="goal-photos-empty">{{ t().goals.photos.empty }}</p>
+  } @else {
+    <ul class="pm__grid" data-cy="goal-photos-grid">
+      @for (photo of photos(); track photo.id; let i = $index; let last = $last) {
+        <li class="tile" [attr.data-cy]="'goal-photo-' + i">
+          <div class="tile__image">
+            <app-goal-photo
+              variant="thumb"
+              [goalId]="goalId() ?? ''"
+              [photoId]="photo.id"
+              [width]="photo.width"
+              [height]="photo.height"
+              [alt]="alt(i)"
+              [cy]="'goal-photo-img-' + i"
+            />
+            @if (photo.id === cover()) {
+              <span class="tile__cover" data-cy="goal-photo-cover">{{
+                t().goals.photos.cover
+              }}</span>
+            }
+          </div>
+          <div class="tile__actions" role="group" [attr.aria-label]="alt(i)">
+            <button
+              type="button"
+              class="icon-button tile__btn"
+              [attr.aria-label]="t().goals.photos.moveLeft"
+              [attr.aria-disabled]="locked() || i === 0 ? 'true' : null"
+              [attr.data-cy]="'goal-photo-left-' + i"
+              (click)="move(photo, i, -1)"
+            >
+              <app-icon name="chevronLeft" [size]="16" />
+            </button>
+            <button
+              type="button"
+              class="icon-button tile__btn"
+              [attr.aria-label]="t().goals.photos.moveRight"
+              [attr.aria-disabled]="locked() || last ? 'true' : null"
+              [attr.data-cy]="'goal-photo-right-' + i"
+              (click)="move(photo, i, 1)"
+            >
+              <app-icon name="chevronRight" [size]="16" />
+            </button>
+            <button
+              type="button"
+              class="icon-button tile__btn"
+              [attr.aria-label]="t().goals.photos.makeCover"
+              [attr.aria-pressed]="photo.id === cover()"
+              [attr.aria-disabled]="locked() ? 'true' : null"
+              [attr.data-cy]="'goal-photo-cover-' + i"
+              (click)="makeCover(photo)"
+            >
+              <app-icon name="star" [size]="16" />
+            </button>
+            <button
+              type="button"
+              class="icon-button tile__btn"
+              [attr.aria-label]="t().goals.photos.remove"
+              [attr.aria-disabled]="locked() ? 'true' : null"
+              [attr.data-cy]="'goal-photo-remove-' + i"
+              (click)="locked() || removeRequested.emit(photo.id)"
+            >
+              <app-icon name="trash" [size]="16" />
+            </button>
+          </div>
+        </li>
+      }
+      @for (item of queue(); track item.localId; let q = $index; let lastQueued = $last) {
+        <li
+          class="tile tile--queued"
+          [attr.data-cy]="'goal-queued-' + q"
+          [attr.data-status]="item.status"
+        >
+          <div class="tile__image">
+            @if (previewUrls().get(item.localId); as preview) {
+              <img
+                class="tile__preview"
+                decoding="async"
+                [src]="preview"
+                [alt]="queuedAlt(q, item)"
+              />
+            }
+            @if (!editing() && q === 0) {
+              <span class="tile__cover" data-cy="goal-queued-cover">{{
+                t().goals.photos.cover
+              }}</span>
+            }
+          </div>
+          <p
+            class="tile__status"
+            [class.tile__status--failed]="item.status === 'failed'"
+            [attr.role]="item.status === 'failed' ? 'alert' : null"
+            [attr.data-cy]="'goal-queued-status-' + q"
+          >
+            {{ statusText(item) }}
+          </p>
+          <div class="tile__actions" role="group" [attr.aria-label]="queuedAlt(q, item)">
+            @if (!editing()) {
+              <button
+                type="button"
+                class="icon-button tile__btn"
+                [attr.aria-label]="t().goals.photos.moveLeft"
+                [attr.aria-disabled]="locked() || q === 0 ? 'true' : null"
+                [attr.data-cy]="'goal-queued-left-' + q"
+                (click)="moveQueued(item, q, -1)"
+              >
+                <app-icon name="chevronLeft" [size]="16" />
+              </button>
+              <button
+                type="button"
+                class="icon-button tile__btn"
+                [attr.aria-label]="t().goals.photos.moveRight"
+                [attr.aria-disabled]="locked() || lastQueued ? 'true' : null"
+                [attr.data-cy]="'goal-queued-right-' + q"
+                (click)="moveQueued(item, q, 1)"
+              >
+                <app-icon name="chevronRight" [size]="16" />
+              </button>
+              <button
+                type="button"
+                class="icon-button tile__btn"
+                [attr.aria-label]="t().goals.photos.makeCover"
+                [attr.aria-pressed]="q === 0"
+                [attr.aria-disabled]="locked() || q === 0 ? 'true' : null"
+                [attr.data-cy]="'goal-queued-cover-' + q"
+                (click)="makeQueuedCover(item, q)"
+              >
+                <app-icon name="star" [size]="16" />
+              </button>
+            }
+            @if (item.status === 'failed') {
+              <button
+                type="button"
+                class="button tile__text-btn"
+                [attr.data-cy]="'goal-queued-retry-' + q"
+                (click)="retried.emit(item.localId)"
+              >
+                {{ t().goals.photos.retry }}
+              </button>
+            }
+            <button
+              type="button"
+              class="icon-button tile__btn"
+              [attr.aria-label]="
+                item.status === 'failed' || item.status === 'waiting'
+                  ? t().goals.photos.remove
+                  : t().goals.photos.cancel
+              "
+              [attr.data-cy]="'goal-queued-cancel-' + q"
+              (click)="cancelled.emit(item.localId)"
+            >
+              <app-icon [name]="item.status === 'uploading' ? 'close' : 'trash'" [size]="16" />
+            </button>
+          </div>
+        </li>
+      }
+    </ul>
+    @if (failedCount() > 1) {
+      <button
+        type="button"
+        class="button"
+        data-cy="goal-photos-retry-all"
+        (click)="retriedAll.emit()"
+      >
+        {{ t().goals.photos.retryAll }}
+      </button>
+    }
+  }
+
+  <p class="visually-hidden" role="status" aria-live="polite" data-cy="goal-photos-announce">
+    {{ announcement() }}
+  </p>
+</section>

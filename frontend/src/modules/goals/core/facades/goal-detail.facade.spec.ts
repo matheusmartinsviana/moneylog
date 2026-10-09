@@ -198,4 +198,33 @@ describe('GoalDetailFacade', () => {
       expect(facade.planProblem()).toBeNull();
     });
   });
+
+  describe('destaque da Home', () => {
+    it('Dado marcar, então a meta da resposta vira o estado e o evento sai', () => {
+      const { facade, gateway } = setup();
+      const done: boolean[] = [];
+      facade.featuredDone$.subscribe((goal) => done.push(goal.featured));
+      facade.load('goal-1');
+
+      facade.setFeatured('goal-1', true);
+
+      expect(gateway.calls).toContain('featured:goal-1:true');
+      expect(facade.goal()?.featured).toBe(true);
+      expect(done).toEqual([true]);
+      expect(facade.featuredBusy()).toBe(false);
+    });
+
+    it('Dado falha (meta arquivada), então guarda o motivo e relê a meta', () => {
+      const gateway = new GoalsGatewayStub();
+      const { facade } = setup(gateway);
+      facade.load('goal-1');
+      gateway.next = failWith(422, 'GOAL_ARCHIVED');
+
+      facade.setFeatured('goal-1', true);
+
+      expect(facade.featuredProblem()).toMatchObject({ code: 'GOAL_ARCHIVED' });
+      expect(gateway.calls.filter((call) => call === 'get:goal-1')).toHaveLength(2);
+      expect(facade.goal()?.featured).toBe(false);
+    });
+  });
 });

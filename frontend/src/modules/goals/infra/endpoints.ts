@@ -9,6 +9,15 @@ export const GOALS_ENDPOINTS = {
     `/v1/goals/${encodeURIComponent(id)}/actions/${encodeURIComponent(actionId)}`,
   checkIn: (id: string, actionId: string) =>
     `/v1/goals/${encodeURIComponent(id)}/actions/${encodeURIComponent(actionId)}/check-in`,
+  featured: (id: string) => `/v1/goals/${encodeURIComponent(id)}/featured`,
+  photos: (id: string) => `/v1/goals/${encodeURIComponent(id)}/photos`,
+  photosOrder: (id: string) => `/v1/goals/${encodeURIComponent(id)}/photos/order`,
+  photo: (id: string, photoId: string) =>
+    `/v1/goals/${encodeURIComponent(id)}/photos/${encodeURIComponent(photoId)}`,
+  photoContent: (id: string, photoId: string) =>
+    `/v1/goals/${encodeURIComponent(id)}/photos/${encodeURIComponent(photoId)}/content`,
+  photoCover: (id: string, photoId: string) =>
+    `/v1/goals/${encodeURIComponent(id)}/photos/${encodeURIComponent(photoId)}/cover`,
   archive: (id: string) => `/v1/goals/${encodeURIComponent(id)}/archive`,
   unarchive: (id: string) => `/v1/goals/${encodeURIComponent(id)}/unarchive`,
 } as const;

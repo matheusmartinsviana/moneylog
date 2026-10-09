@@ -51,7 +51,8 @@ async function installDetector(page: Page): Promise<void> {
         const pickerInput =
           type === 'file' &&
           (!el.isConnected ||
-            (el.closest('app-file-picker') !== null && el.hasAttribute('hidden')));
+            ((el.closest('app-file-picker') !== null || el.closest('app-files-button') !== null) &&
+              el.hasAttribute('hidden')));
         if (!ALLOWED_TYPES.includes(type) && !pickerInput) {
           problems.push(`input nativo ${describe(el)}`);
         }

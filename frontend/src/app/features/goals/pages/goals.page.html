@@ -1,4 +1,4 @@
-<app-page-layout [heading]="t().nav.goals">
+<app-page-layout fit [heading]="t().nav.goals">
   <a pageActions class="button button--primary" routerLink="/goals/new" data-cy="goals-add">
     {{ t().goals.add }}
   </a>
@@ -18,92 +18,101 @@
       {{ creating.saving() ? t().goals.payoff.creating : t().goals.payoff.add }}
     </button>
   }
-  @if (createError(); as message) {
-    <p class="banner" role="alert" data-cy="goals-payoff-error">{{ message }}</p>
-  }
+  <div class="fit-stack">
+    @if (createError(); as message) {
+      <p class="banner" role="alert" data-cy="goals-payoff-error">{{ message }}</p>
+    }
 
-  <nav class="tabs" appSlideIndicator [attr.aria-label]="t().goals.tabsLabel" data-cy="goals-tabs">
-    <a
-      class="tab"
-      routerLink="/goals"
-      data-cy="goals-tab-active"
-      [attr.aria-current]="filter() === 'ACTIVE' ? 'page' : null"
+    <nav
+      class="tabs"
+      appSlideIndicator
+      [attr.aria-label]="t().goals.tabsLabel"
+      data-cy="goals-tabs"
     >
-      {{ t().goals.tabs.active }}
-    </a>
-    <a
-      class="tab"
-      routerLink="/goals"
-      [queryParams]="{ status: 'ACHIEVED' }"
-      data-cy="goals-tab-achieved"
-      [attr.aria-current]="filter() === 'ACHIEVED' ? 'page' : null"
-    >
-      {{ t().goals.tabs.achieved }}
-    </a>
-    <a
-      class="tab"
-      routerLink="/goals"
-      [queryParams]="{ status: 'ARCHIVED' }"
-      data-cy="goals-tab-archived"
-      [attr.aria-current]="filter() === 'ARCHIVED' ? 'page' : null"
-    >
-      {{ t().goals.tabs.archived }}
-    </a>
-  </nav>
+      <a
+        class="tab"
+        routerLink="/goals"
+        data-cy="goals-tab-active"
+        [attr.aria-current]="filter() === 'ACTIVE' ? 'page' : null"
+      >
+        {{ t().goals.tabs.active }}
+      </a>
+      <a
+        class="tab"
+        routerLink="/goals"
+        [queryParams]="{ status: 'ACHIEVED' }"
+        data-cy="goals-tab-achieved"
+        [attr.aria-current]="filter() === 'ACHIEVED' ? 'page' : null"
+      >
+        {{ t().goals.tabs.achieved }}
+      </a>
+      <a
+        class="tab"
+        routerLink="/goals"
+        [queryParams]="{ status: 'ARCHIVED' }"
+        data-cy="goals-tab-archived"
+        [attr.aria-current]="filter() === 'ARCHIVED' ? 'page' : null"
+      >
+        {{ t().goals.tabs.archived }}
+      </a>
+    </nav>
 
-  @switch (goals.state().status) {
-    @case ('loading') {
-      <div data-cy="goals-loading">
-        <p class="visually-hidden" role="status">{{ t().goals.loading }}</p>
-        <div class="list-skeleton" aria-hidden="true">
-          <div class="list-skeleton__row"></div>
-          <div class="list-skeleton__row"></div>
-          <div class="list-skeleton__row"></div>
-        </div>
-      </div>
-    }
-    @case ('empty') {
-      @switch (filter()) {
-        @case ('ACTIVE') {
-          <app-empty-state
-            [heading]="t().emptyState.goals.title"
-            [description]="t().emptyState.goals.description"
-            [actions]="emptyActions()"
-            illustration="timeline"
-          />
+    <div class="fit-scroll">
+      @switch (goals.state().status) {
+        @case ('loading') {
+          <div data-cy="goals-loading">
+            <p class="visually-hidden" role="status">{{ t().goals.loading }}</p>
+            <div class="list-skeleton" aria-hidden="true">
+              <div class="list-skeleton__row"></div>
+              <div class="list-skeleton__row"></div>
+              <div class="list-skeleton__row"></div>
+            </div>
+          </div>
         }
-        @case ('ACHIEVED') {
-          <p class="empty-note" data-cy="goals-empty-achieved">{{ t().goals.emptyAchieved }}</p>
-        }
-        @default {
-          <p class="empty-note" data-cy="goals-empty-archived">{{ t().goals.emptyArchived }}</p>
-        }
-      }
-    }
-    @case ('error') {
-      <app-error-state [problem]="goals.error()" (retry)="retry()" />
-    }
-    @case ('ready') {
-      @if (goals.data(); as data) {
-        <ul class="list" data-cy="goals-list">
-          @for (goal of data; track goal.id) {
-            <li app-goal-card [goal]="goal">
-              @if (goal.status !== 'ARCHIVED' && goal.kind === 'SAVINGS') {
-                <button
-                  type="button"
-                  class="button"
-                  [attr.data-cy]="'goal-reserve-' + goal.id"
-                  (click)="openReserve(goal)"
-                >
-                  {{ t().goals.detail.reserve }}
-                </button>
-              }
-            </li>
+        @case ('empty') {
+          @switch (filter()) {
+            @case ('ACTIVE') {
+              <app-empty-state
+                [heading]="t().emptyState.goals.title"
+                [description]="t().emptyState.goals.description"
+                [actions]="emptyActions()"
+                illustration="timeline"
+              />
+            }
+            @case ('ACHIEVED') {
+              <p class="empty-note" data-cy="goals-empty-achieved">{{ t().goals.emptyAchieved }}</p>
+            }
+            @default {
+              <p class="empty-note" data-cy="goals-empty-archived">{{ t().goals.emptyArchived }}</p>
+            }
           }
-        </ul>
+        }
+        @case ('error') {
+          <app-error-state [problem]="goals.error()" (retry)="retry()" />
+        }
+        @case ('ready') {
+          @if (goals.data(); as data) {
+            <ul class="list" data-cy="goals-list">
+              @for (goal of data; track goal.id) {
+                <li app-goal-card [goal]="goal">
+                  @if (goal.status !== 'ARCHIVED' && goal.kind === 'SAVINGS') {
+                    <button
+                      type="button"
+                      class="button"
+                      [attr.data-cy]="'goal-reserve-' + goal.id"
+                      (click)="openReserve(goal)"
+                    >
+                      {{ t().goals.detail.reserve }}
+                    </button>
+                  }
+                </li>
+              }
+            </ul>
+          }
+        }
       }
-    }
-  }
+    </div>
+  </div>
 
   @if (reserving(); as goal) {
     <app-reserve-sheet

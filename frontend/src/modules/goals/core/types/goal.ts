@@ -102,6 +102,26 @@ export interface GoalReservation {
   readonly createdAt: string;
 }
 
+/** Limites das fotos do sonho. O servidor decide; o front só avisa antes (conforto). */
+export const GOAL_PHOTO_MAX = 8;
+export const GOAL_PHOTO_MAX_BYTES = 8 * 1024 * 1024;
+export const GOAL_PHOTO_TYPES = ['image/jpeg', 'image/png'] as const;
+/** Extensões aceitas no seletor (`accept`). */
+export const GOAL_PHOTO_ACCEPT = '.jpg,.jpeg,.png';
+
+/** Metadados de uma foto (os bytes vêm de `GET .../content`). `position` 0 = capa. */
+export interface GoalPhoto {
+  readonly id: string;
+  readonly position: number;
+  readonly width: number;
+  readonly height: number;
+  /** Instante ISO-8601 UTC. */
+  readonly createdAt: string;
+}
+
+/** Versão da imagem: miniatura (≤ 320 px) ou exibição (≤ 1280 px). */
+export type GoalPhotoVariant = 'thumb' | 'display';
+
 /**
  * Meta como a API devolve. **Tudo vem calculado pelo backend**: `current` (Σ reservas), `progress` (razão
  * decimal em string, `0.4250`), `remaining`, `monthlyNeeded` (estimativa, S-156) e `uncovered` (S-148). O
@@ -159,6 +179,12 @@ export interface Goal {
   /** Razão (`0.6667`) ou nula sem meses fechados com dado. */
   readonly consistencyRate: string | null;
   readonly version: number;
+  /** Meta em destaque na Home (só uma por usuário). */
+  readonly featured: boolean;
+  /** Foto da capa (posição 0) ou `null`. */
+  readonly coverPhotoId: string | null;
+  /** Só metadados, em ordem; vazio fora de `SAVINGS`. */
+  readonly photos: readonly GoalPhoto[];
 }
 
 /** Criação (`POST /v1/goals`). `target` é a string decimal digitada. */

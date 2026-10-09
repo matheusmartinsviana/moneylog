@@ -43,6 +43,7 @@ const KIND_CODE: Record<string, string> = {
   line: 'd',
   ntf: 'e',
   rem: 'f',
+  photo: '0',
 };
 
 export function demoId(kind: keyof typeof KIND_CODE, n: number): string {
@@ -173,6 +174,10 @@ export interface GoalDef {
   history?: number[];
   planNote?: string | null;
   actions?: GoalActionDef[];
+  /** Meta de sonho em destaque na Home (só uma). */
+  featured?: boolean;
+  /** Quantidade de fotos SINTÉTICAS (geradas por código em `demo-photos.ts`; nenhum binário versionado). */
+  photos?: number;
   deadline: string | null;
   priority: S['GoalPriority'];
   description: string | null;
@@ -749,6 +754,35 @@ export function buildWorld(today: string): World {
       description: null,
       planNote: null,
       actions: [],
+      reservations: [],
+    },
+    {
+      id: demoId('goal', 5),
+      name: 'Carro de exemplo',
+      target: 1_000_000,
+      deadline: dateIn(addMonthsKey(month, 14), 20),
+      priority: 'MEDIUM',
+      description: 'Meta de sonho de exemplo, com fotos sintéticas.',
+      featured: true,
+      photos: 3,
+      reservations: [
+        {
+          id: demoId('res', 4),
+          accountId: savings,
+          cents: 250_000,
+          date: dateIn(addMonthsKey(month, -1), 12),
+          note: null,
+        },
+      ],
+    },
+    {
+      id: demoId('goal', 6),
+      name: 'Casa na praia de exemplo',
+      target: 8_000_000,
+      deadline: null,
+      priority: 'LOW',
+      description: null,
+      photos: 2,
       reservations: [],
     },
   ];

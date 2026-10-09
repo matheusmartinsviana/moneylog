@@ -172,6 +172,40 @@
               }
             </section>
 
+            @if (g.kind === 'SAVINGS') {
+              <app-section-container
+                [heading]="t().goals.photos.title"
+                data-cy="goal-photos-section"
+              >
+                @if (g.photos.length > 0) {
+                  <app-goal-gallery [goalId]="g.id" [goalName]="name()" [photos]="g.photos" />
+                } @else {
+                  <p class="empty-note" data-cy="goal-gallery-empty">
+                    {{ t().goals.photos.gallery.empty }}
+                  </p>
+                }
+                @if (g.status !== 'ARCHIVED') {
+                  <div class="photos-actions">
+                    <a
+                      class="button"
+                      [routerLink]="['/goals', g.id, 'edit']"
+                      data-cy="goal-photos-edit"
+                    >
+                      {{ t().goals.photos.gallery.add }}
+                    </a>
+                  </div>
+                  <app-goal-featured-switch
+                    cy="goal-featured"
+                    [featured]="g.featured"
+                    (changed)="detail.setFeatured(g.id, $event)"
+                  />
+                  @if (featuredError(); as message) {
+                    <p class="banner" role="alert" data-cy="goal-featured-error">{{ message }}</p>
+                  }
+                }
+              </app-section-container>
+            }
+
             @if (g.uncovered) {
               <div class="alert" role="status" data-cy="goal-uncovered">
                 <p class="alert__title">{{ t().goals.uncovered.title }}</p>

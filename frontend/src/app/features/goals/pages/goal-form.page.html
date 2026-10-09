@@ -1,8 +1,8 @@
 <app-form-modal
   #modal
   [heading]="editing() ? t().goals.form.editTitle : t().goals.form.createTitle"
-  [dirty]="dirty()"
-  [busy]="facade.saving()"
+  [dirty]="modalDirty()"
+  [busy]="modalBusy()"
   (closed)="close()"
 >
   @if (editing() && !goal() && facade.loadStatus().status !== 'error') {
@@ -98,6 +98,41 @@
         [label]="t().goals.form.description"
       />
 
+      @if (showPhotos()) {
+        <app-goal-photo-manager
+          [goalId]="photos.goal()?.id ?? null"
+          [goalName]="photos.goal()?.name ?? form.controls.name.value"
+          [photos]="photos.photos()"
+          [queue]="photos.queue()"
+          [coverPhotoId]="photos.coverPhotoId()"
+          [count]="photos.count()"
+          [max]="photos.max"
+          [problem]="photoProblem()"
+          [rejections]="photos.rejections()"
+          [lastMove]="photos.lastMove()"
+          (filesPicked)="photos.add($event)"
+          (moved)="photos.move($event.id, $event.delta)"
+          (coverRequested)="photos.makeCover($event)"
+          (removeRequested)="askRemovePhoto($event)"
+          (queuedMoved)="photos.moveQueued($event.id, $event.delta)"
+          (queuedCoverRequested)="photos.makeQueuedCover($event)"
+          (cancelled)="photos.cancel($event)"
+          (retried)="photos.retry($event)"
+          (retriedAll)="photos.retryAll()"
+        />
+        <app-goal-featured-switch
+          cy="goal-featured"
+          [featured]="photos.featured()"
+          [disabled]="archived()"
+          (changed)="photos.setFeatured($event)"
+        />
+        @if (uploadsFailed()) {
+          <p class="banner" role="alert" data-cy="goal-photos-failed">
+            {{ t().goals.photos.someFailed }}
+          </p>
+        }
+      }
+
       <div class="form__actions">
         <button
           type="button"
@@ -111,12 +146,28 @@
           type="submit"
           class="button button--primary"
           data-cy="goal-form-save"
-          [disabled]="facade.saving() || archived()"
+          [disabled]="facade.saving() || archived() || (created() !== null && photos.busy())"
           [attr.aria-busy]="facade.saving()"
         >
-          {{ facade.saving() ? t().goals.form.saving : t().goals.form.save }}
+          {{
+            created() !== null
+              ? t().goals.photos.finish
+              : facade.saving()
+                ? t().goals.form.saving
+                : t().goals.form.save
+          }}
         </button>
       </div>
     </form>
   }
 </app-form-modal>
+<app-confirm-dialog
+  [open]="confirmingRemove() !== null"
+  [heading]="t().goals.photos.removeConfirm.title"
+  [description]="t().goals.photos.removeConfirm.description"
+  [confirmLabel]="t().goals.photos.removeConfirm.confirm"
+  tone="risk"
+  [busy]="photos.busy()"
+  (confirmed)="confirmRemovePhoto()"
+  (cancelled)="confirmingRemove.set(null)"
+/>

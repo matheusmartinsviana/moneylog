@@ -66,6 +66,7 @@ export class GoalsRequestsFacade extends GoalsGateway {
     if (this.useMocks) return of(this.toSlice(EMPTY_GOALS));
     let params = new HttpParams().set('page', query.page).set('pageSize', query.pageSize);
     if (query.status) params = params.set('status', query.status);
+    if (query.featured !== undefined) params = params.set('featured', query.featured);
     return this.http.get<GoalSliceResponse>(GOALS_ENDPOINTS.collection, { params }).pipe(
       map((slice) => this.toSlice(slice)),
       catchError(fail),
@@ -175,6 +176,13 @@ export class GoalsRequestsFacade extends GoalsGateway {
             catchError(fail),
           );
     }
+  }
+
+  setFeatured(id: string, featured: boolean): Observable<Goal> {
+    if (this.useMocks) return notFound();
+    return this.http
+      .put<GoalResponse>(GOALS_ENDPOINTS.featured(id), { featured })
+      .pipe(map(toGoal), catchError(fail));
   }
 
   archive(id: string): Observable<Goal> {

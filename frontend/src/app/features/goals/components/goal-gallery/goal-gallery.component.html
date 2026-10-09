@@ -1,0 +1,86 @@
+<section
+  class="gal"
+  role="group"
+  aria-roledescription="carousel"
+  data-cy="goal-gallery"
+  [attr.aria-label]="label()"
+  (keydown)="onKey($event)"
+>
+  <div class="gal__stage">
+    @if (multiple()) {
+      <button
+        type="button"
+        class="icon-button gal__nav gal__nav--prev"
+        data-cy="goal-gallery-prev"
+        [attr.aria-label]="t().goals.photos.gallery.previous"
+        (click)="step(-1)"
+      >
+        <app-icon name="chevronLeft" [size]="18" />
+      </button>
+    }
+    <div class="gal__photo" tabindex="0" data-cy="goal-gallery-viewer">
+      @if (current(); as photo) {
+        @for (shown of [photo]; track shown.id) {
+          <app-goal-photo
+            variant="display"
+            [eager]="true"
+            [goalId]="goalId()"
+            [photoId]="shown.id"
+            [width]="shown.width"
+            [height]="shown.height"
+            [alt]="currentAlt()"
+            cy="goal-gallery-image"
+          />
+        }
+      }
+    </div>
+    @if (multiple()) {
+      <button
+        type="button"
+        class="icon-button gal__nav gal__nav--next"
+        data-cy="goal-gallery-next"
+        [attr.aria-label]="t().goals.photos.gallery.next"
+        (click)="step(1)"
+      >
+        <app-icon name="chevronRight" [size]="18" />
+      </button>
+    }
+  </div>
+  <p
+    class="visually-hidden"
+    [attr.aria-live]="navigated() ? 'polite' : 'off'"
+    data-cy="goal-gallery-announce"
+  >
+    {{ currentAlt() }}
+  </p>
+  @if (multiple()) {
+    <ul
+      class="gal__thumbs"
+      [attr.aria-label]="t().goals.photos.gallery.thumbs"
+      data-cy="goal-gallery-thumbs"
+    >
+      @for (photo of photos(); track photo.id; let i = $index) {
+        <li>
+          <button
+            type="button"
+            class="gal__thumb"
+            [attr.aria-label]="showLabel(i)"
+            [attr.aria-current]="i === index() ? 'true' : null"
+            [attr.data-cy]="'goal-gallery-thumb-' + i"
+            (click)="go(i)"
+          >
+            <app-goal-photo
+              variant="thumb"
+              [goalId]="goalId()"
+              [photoId]="photo.id"
+              [width]="photo.width"
+              [height]="photo.height"
+              [alt]="altOf(i)"
+              [cy]="'goal-gallery-thumb-img-' + i"
+            />
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</section>

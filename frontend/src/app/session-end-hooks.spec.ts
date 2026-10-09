@@ -1,6 +1,11 @@
-import { firstValueFrom, throwError } from 'rxjs';
+import { firstValueFrom, of, throwError } from 'rxjs';
 
-import { cancelPushHook, clearPrivateCachesHook } from '~/app/session-end-hooks';
+import {
+  cancelPushHook,
+  clearPrivateCachesHook,
+  revokeGoalPhotosHook,
+} from '~/app/session-end-hooks';
+import { GoalPhotoCache } from '~/modules/goals/core/facades/goal-photo-cache';
 import { PUSH_SUBSCRIPTION_KEY } from '~/modules/notifications/core/facades/push.facade';
 import { NotificationsGatewayStub } from '~/testing/notifications-testing';
 
@@ -57,5 +62,24 @@ describe('clearPrivateCachesHook (T177)', () => {
     await expect(firstValueFrom(clearPrivateCachesHook(undefined)())).resolves.toBeUndefined();
     const broken = { keys: () => Promise.reject(new Error('x')) } as unknown as CacheStorage;
     await expect(firstValueFrom(clearPrivateCachesHook(broken)())).resolves.toBeUndefined();
+  });
+});
+
+describe('revokeGoalPhotosHook (ADR-018)', () => {
+  it('Dado fotos em memória, quando sai, então revoga todos os blob URLs e esvazia o cache', async () => {
+    const revoked: string[] = [];
+    let n = 0;
+    URL.createObjectURL = vi.fn(() => `blob:sintetico-${++n}`);
+    URL.revokeObjectURL = vi.fn((url: string) => {
+      revoked.push(url);
+    });
+    const cache = new GoalPhotoCache();
+    cache.fetch('g/a/thumb', () => of(new Blob(['x']))).subscribe();
+    cache.fetch('g/b/display', () => of(new Blob(['y']))).subscribe();
+
+    await firstValueFrom(revokeGoalPhotosHook(cache)());
+
+    expect(revoked.sort()).toEqual(['blob:sintetico-1', 'blob:sintetico-2']);
+    expect(cache.size).toBe(0);
   });
 });

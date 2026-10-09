@@ -5,6 +5,7 @@ import {
   SESSION_END_HOOKS,
   type SessionEndHook,
 } from '~/modules/auth/core/interfaces/session-end-hook';
+import { GoalPhotoCache } from '~/modules/goals/core/facades/goal-photo-cache';
 import { PUSH_SUBSCRIPTION_KEY } from '~/modules/notifications/core/facades/push.facade';
 import { NotificationsGateway } from '~/modules/notifications/core/interfaces/notifications.gateway';
 import { readStorage, removeStorage } from '~/util/safe-storage';
@@ -43,12 +44,21 @@ export function clearPrivateCachesHook(cacheStorage: CacheStorage | undefined): 
     ).pipe(catchError(() => of(undefined)));
 }
 
+/** No logout: revoga todos os `blob:` URLs das fotos das metas e esvazia o cache em memória (ADR-018). */
+export function revokeGoalPhotosHook(cache: GoalPhotoCache): SessionEndHook {
+  return (): Observable<unknown> => {
+    cache.clear();
+    return of(undefined);
+  };
+}
+
 export function provideSessionEndHooks(): Provider[] {
   return [
     {
       provide: SESSION_END_HOOKS,
       useFactory: () => [
         cancelPushHook(inject(NotificationsGateway)),
+        revokeGoalPhotosHook(inject(GoalPhotoCache)),
         clearPrivateCachesHook(typeof caches === 'undefined' ? undefined : caches),
       ],
     },

@@ -134,7 +134,7 @@ export class HomePage implements OnInit {
 
   ngOnInit(): void {
     this.dashboard.load();
-    this.goals.load('ACTIVE');
+    this.goals.load('ACTIVE', true);
   }
 
   /**

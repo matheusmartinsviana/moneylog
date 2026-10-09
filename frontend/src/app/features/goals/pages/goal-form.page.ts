@@ -12,6 +12,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 
+import { ConfirmDialogComponent } from '~/app/common/components/confirm-dialog/confirm-dialog.component';
 import { DisclosureComponent } from '~/app/common/components/disclosure/disclosure.component';
 import { EmptyStateComponent } from '~/app/common/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '~/app/common/components/error-state/error-state.component';
@@ -27,11 +28,15 @@ import { I18nService } from '~/app/common/i18n/i18n.service';
 import { problemMessage } from '~/app/common/i18n/problem-message';
 import { EntityChanges } from '~/app/common/services/entity-changes';
 import { ToastService } from '~/app/common/services/toast.service';
+import { GoalFeaturedSwitchComponent } from '~/app/features/goals/components/goal-featured-switch/goal-featured-switch.component';
+import { GoalPhotoManagerComponent } from '~/app/features/goals/components/goal-photo-manager/goal-photo-manager.component';
 import { requiredTrimmed } from '~/app/features/quick-add/components/requirements';
 import { GoalFormFacade } from '~/modules/goals/core/facades/goal-form.facade';
+import { GoalPhotosFacade } from '~/modules/goals/core/facades/goal-photos.facade';
 import {
   GOAL_CURRENCY,
   GOAL_PRIORITIES,
+  type Goal,
   type GoalInput,
   type GoalPriority,
 } from '~/modules/goals/core/types/goal';
@@ -63,8 +68,11 @@ const CODE_TO_FIELD: Readonly<Record<string, string>> = {
     DatePickerComponent,
     SegmentedControlComponent,
     DisclosureComponent,
+    ConfirmDialogComponent,
+    GoalPhotoManagerComponent,
+    GoalFeaturedSwitchComponent,
   ],
-  providers: [GoalFormFacade],
+  providers: [GoalFormFacade, GoalPhotosFacade],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './goal-form.page.html',
   styleUrl: './goal-form.page.css',
@@ -75,6 +83,7 @@ export class GoalFormPage {
   private readonly toast = inject(ToastService);
   protected readonly t = inject(I18nService).t;
   protected readonly facade = inject(GoalFormFacade);
+  protected readonly photos = inject(GoalPhotosFacade);
   protected readonly currency = GOAL_CURRENCY;
 
   /** `:id` da rota; ausente em `/goals/new`. */
@@ -87,6 +96,23 @@ export class GoalFormPage {
   protected readonly archived = computed(() => this.goal()?.status === 'ARCHIVED');
   /** Meta de medida: nome opcional e alvo que aceita zero (ADR-016). */
   protected readonly isMetric = computed(() => this.goal()?.kind === 'METRIC');
+  /** Fotos e destaque só em meta de reserva (`SAVINGS`); ao criar, a meta nasce como reserva. */
+  protected readonly showPhotos = computed(() =>
+    this.editing() ? this.goal()?.kind === 'SAVINGS' && !this.archived() : true,
+  );
+  /** Meta criada com fotos ou destaque ainda por enviar: a tela espera a fila e só então fecha. */
+  protected readonly created = signal<Goal | null>(null);
+  protected readonly confirmingRemove = signal<string | null>(null);
+  protected readonly photoProblem = computed(() => {
+    const problem = this.photos.problem();
+    return problem ? problemMessage(problem, this.t().errors) : null;
+  });
+  protected readonly modalBusy = computed(
+    () => this.facade.saving() || (this.created() !== null && this.photos.busy()),
+  );
+  protected readonly uploadsFailed = computed(
+    () => this.created() !== null && this.photos.failed().length > 0,
+  );
 
   protected readonly form = new FormGroup({
     name: new FormControl('', {
@@ -104,6 +130,10 @@ export class GoalFormPage {
 
   /** Alterações digitadas e não salvas: fechar pede confirmação. */
   protected readonly dirty = dirtySignal(this.form);
+  /** Fotos escolhidas e ainda não enviadas também contam como alteração não salva. */
+  protected readonly modalDirty = computed(
+    () => this.dirty() || (this.created() === null && this.photos.hasPending()),
+  );
 
   protected readonly priorityOptions = computed<readonly ChoiceOption[]>(() =>
     GOAL_PRIORITIES.map((priority) => ({
@@ -163,6 +193,23 @@ export class GoalFormPage {
         else this.form.enable({ emitEvent: false });
       });
     });
+    // Meta de reserva carregada: o gerenciador de fotos passa a refletir a meta (uma vez por meta).
+    effect(() => {
+      const goal = this.goal();
+      if (goal?.kind !== 'SAVINGS') return;
+      untracked(() => {
+        if (this.photos.goal()?.id !== goal.id) this.photos.setGoal(goal);
+      });
+    });
+    // Fotos mudaram a meta no servidor (versão nova): o próximo "Salvar" usa a versão certa e o digitado fica.
+    this.photos.goalChanged$.pipe(takeUntilDestroyed()).subscribe((goal) => {
+      this.keepTyped = true;
+      this.facade.adopt(goal);
+    });
+    // Criação com fotos: terminou a fila; se nada falhou, conclui (senão fica para "tentar de novo").
+    this.photos.settled$.pipe(takeUntilDestroyed()).subscribe(() => {
+      if (this.created() !== null && this.photos.failed().length === 0) this.finish();
+    });
     effect(() => {
       const problem = this.facade.problem();
       if (!problem) {
@@ -172,11 +219,35 @@ export class GoalFormPage {
       // Conflito de versão: nada é recarregado sozinho (o digitado fica); o usuário escolhe recarregar.
       untracked(() => this.fieldHandled.set(applyProblemToForm(this.form, problem, CODE_TO_FIELD)));
     });
-    this.facade.saved$.pipe(takeUntilDestroyed()).subscribe(() => {
-      this.toast.show(this.editing() ? this.t().goals.toast.updated : this.t().goals.toast.created);
-      this.changes.notify('goals');
-      void this.router.navigate(this.backUrl());
+    this.facade.saved$.pipe(takeUntilDestroyed()).subscribe((goal) => {
+      if (!this.editing() && goal.kind === 'SAVINGS' && this.photos.hasPending()) {
+        // A meta existe; as fotos (e o destaque) vão em seguida, uma por vez.
+        this.created.set(goal);
+        this.form.disable({ emitEvent: false });
+        this.changes.notify('goals');
+        this.photos.setGoal(goal);
+        return;
+      }
+      this.finish();
     });
+  }
+
+  /** Fim do fluxo: aviso, lista atualizada e volta para onde o modal abriu. */
+  protected finish(): void {
+    this.toast.show(this.editing() ? this.t().goals.toast.updated : this.t().goals.toast.created);
+    this.changes.notify('goals');
+    void this.router.navigate(this.backUrl());
+  }
+
+  protected askRemovePhoto(photoId: string): void {
+    this.photos.clearProblem();
+    this.confirmingRemove.set(photoId);
+  }
+
+  protected confirmRemovePhoto(): void {
+    const id = this.confirmingRemove();
+    this.confirmingRemove.set(null);
+    if (id !== null) this.photos.remove(id);
   }
 
   /** Para onde o modal volta: a lista (criar) ou a página de origem (editar). */
@@ -190,6 +261,10 @@ export class GoalFormPage {
   }
 
   protected onSubmit(): void {
+    if (this.created() !== null) {
+      this.finish();
+      return;
+    }
     this.form.markAllAsTouched();
     if (this.form.invalid || this.archived()) return;
     const value = this.form.getRawValue();

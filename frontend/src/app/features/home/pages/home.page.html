@@ -89,7 +89,7 @@
             class="home__goal"
             [goals]="goals.data() ?? []"
             [status]="goalsStatus()"
-            (retry)="goals.reload('ACTIVE')"
+            (retry)="goals.reload('ACTIVE', true)"
           />
         </div>
       }

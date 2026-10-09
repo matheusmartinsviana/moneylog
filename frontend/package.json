@@ -23,7 +23,7 @@
     "test:watch": "ng test",
     "e2e": "playwright test",
     "e2e:integration": "E2E_INTEGRATION=1 playwright test --project=integration",
-    "lint": "ng lint && node scripts/check-styles.mjs && node scripts/check-brand.mjs && node scripts/check-native-controls.mjs && node --test scripts/check-native-controls.test.mjs && node scripts/check-contrast.mjs --quiet",
+    "lint": "ng lint && node scripts/check-styles.mjs && node scripts/check-brand.mjs && node scripts/check-native-controls.mjs && node --test scripts/check-native-controls.test.mjs && node scripts/check-contrast.mjs --quiet && node scripts/check-photo-cache.mjs && node --test scripts/check-photo-cache.test.mjs",
     "lint:deps": "depcruise src --config .dependency-cruiser.cjs",
     "typecheck": "ngc -p tsconfig.app.json --noEmit && tsc -p tsconfig.worker.json --noEmit && tsc -p tsconfig.spec.json --noEmit",
     "api:types": "openapi-typescript ../contracts/openapi.yaml -o src/util/api/schema.gen.ts",

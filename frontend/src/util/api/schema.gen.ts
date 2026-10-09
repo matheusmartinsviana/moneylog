@@ -1752,6 +1752,154 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/goals/{id}/photos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Envia uma foto da meta de sonho
+         * @description Só `SAVINGS` (outro tipo → `422 GOAL_PHOTOS_KIND_NOT_SUPPORTED`; arquivada → `422 GOAL_ARCHIVED`). A foto entra no **fim** da lista
+         *     (o primeiro envio vira a capa). O servidor confere os magic bytes (JPEG ou PNG; outro conteúdo → `422 GOAL_PHOTO_UNSUPPORTED_TYPE`,
+         *     qualquer que seja o nome ou o `Content-Type` enviados), lê as dimensões do cabeçalho antes de decodificar (acima de 24 megapixels ou
+         *     8000 px → `422 GOAL_PHOTO_DIMENSIONS_EXCEEDED`), recodifica sempre (derruba EXIF/GPS e qualquer dado anexado) e guarda a exibição
+         *     (até 1280 px) e a miniatura (até 320 px). Imagem ilegível ou truncada → `422 GOAL_PHOTO_INVALID_IMAGE`. Acima de 8 MB →
+         *     `422 GOAL_PHOTO_TOO_LARGE`. Já com 8 fotos na meta → `422 GOAL_PHOTO_LIMIT_REACHED`; 40 fotos ou 40 MB do usuário →
+         *     `422 GOAL_PHOTO_QUOTA_EXCEEDED`. O nome do arquivo é ignorado. `Idempotency-Key` opcional (escopo próprio, 24 h): repetir o mesmo
+         *     arquivo na mesma meta devolve a mesma foto; outro arquivo com a mesma chave é `409 IDEMPOTENCY_KEY_REUSED`. Limite de envios por
+         *     minuto → `429`.
+         */
+        post: operations["uploadGoalPhoto"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/goals/{id}/photos/{photoId}/content": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+                photoId: string;
+            };
+            cookie?: never;
+        };
+        /**
+         * Bytes da foto (JPEG), autenticado
+         * @description Rota protegida por Bearer: `<img src>` não envia o header, então o front busca com o `HttpClient` (interceptor) como `Blob` e usa
+         *     `URL.createObjectURL`. Sem URL assinada e sem token na query. Resposta com `Cache-Control: no-store`, `X-Content-Type-Options: nosniff`
+         *     e `Content-Type: image/jpeg` fixo. Foto de outra meta ou de outro usuário → `404 GOAL_PHOTO_NOT_FOUND`.
+         */
+        get: operations["getGoalPhotoContent"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/goals/{id}/photos/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Reordena as fotos da meta
+         * @description `photoIds` precisa ser exatamente o conjunto de fotos da meta, sem faltar nem repetir (senão `422 GOAL_PHOTOS_ORDER_MISMATCH`). A
+         *     primeira vira a capa. Devolve a meta atualizada.
+         */
+        put: operations["reorderGoalPhotos"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/goals/{id}/photos/{photoId}/cover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+                photoId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Define a capa da meta
+         * @description A foto vai para a posição 0 e as demais descem uma posição. Devolve a meta atualizada.
+         */
+        put: operations["setGoalPhotoCover"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/goals/{id}/photos/{photoId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+                photoId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove uma foto da meta
+         * @description Apaga os metadados e os bytes. Se era a capa, a próxima assume (`coverPhotoId` acompanha). Devolve a meta atualizada.
+         */
+        delete: operations["deleteGoalPhoto"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/goals/{id}/featured": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Marca ou desmarca a meta em destaque da Home
+         * @description Só `SAVINGS` ativa. **Uma só meta em destaque por usuário**: marcar esta desmarca a anterior na mesma transação. Meta arquivada →
+         *     `422 GOAL_ARCHIVED`; outro tipo → `422 GOAL_FEATURED_KIND_NOT_SUPPORTED`. Arquivar a meta em destaque limpa o destaque. Devolve a
+         *     meta atualizada.
+         */
+        put: operations["setGoalFeatured"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/summaries/{month}": {
         parameters: {
             query?: never;
@@ -5224,6 +5372,25 @@ export interface components {
             /** Format: int64 */
             version: number;
         };
+        /** @description Metadados de uma foto da meta (ADR-018). Os bytes vêm de `GET /v1/goals/{id}/photos/{photoId}/content`. */
+        GoalPhoto: {
+            /** Format: uuid */
+            id: string;
+            /** @description Ordem de exibição; 0 é a capa. */
+            position: number;
+            /** @description Largura da versão de exibição, em pixels. */
+            width: number;
+            /** @description Altura da versão de exibição, em pixels. */
+            height: number;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        GoalPhotoOrderInput: {
+            photoIds: string[];
+        };
+        GoalFeaturedInput: {
+            featured: boolean;
+        };
         GoalReservationInput: {
             /**
              * Format: uuid
@@ -5327,6 +5494,9 @@ export interface components {
          *       "consistency": [],
          *       "streak": 0,
          *       "consistencyRate": null,
+         *       "featured": false,
+         *       "coverPhotoId": null,
+         *       "photos": [],
          *       "version": 1,
          *       "createdAt": "2026-10-10T12:00:00Z",
          *       "updatedAt": "2026-10-10T13:00:00Z"
@@ -5400,6 +5570,15 @@ export interface components {
             streak: number;
             /** @description Cumpridos ÷ meses fechados com dado (nulo sem nenhum). */
             consistencyRate: components["schemas"]["Ratio"] | null;
+            /** @description Meta em destaque da Home (ADR-018). No máximo uma por usuário; só `SAVINGS` ativa. */
+            featured: boolean;
+            /**
+             * Format: uuid
+             * @description Id da capa (a primeira de `photos`); `null` sem fotos.
+             */
+            coverPhotoId: string | null;
+            /** @description Fotos da meta na ordem de exibição (só metadados; só `SAVINGS`, vazio nos demais tipos). */
+            photos: components["schemas"]["GoalPhoto"][];
             /**
              * @description `DEBT_PAYOFF`: o total de dívidas passou da baseline (dívida nova depois de ancorar). Nada é re-ancorado sozinho; o aviso é
              *     da UI e re-ancorar é `POST /v1/goals/{id}/baseline`. `ACHIEVED` só com baseline e total 0,00; total 0 sem baseline não é conquista.
@@ -9281,6 +9460,8 @@ export interface operations {
         parameters: {
             query?: {
                 status?: components["schemas"]["GoalStatus"];
+                /** @description `true` devolve só a meta em destaque da Home (no máximo uma; ADR-018); `false`, as demais. Ausente = todas. */
+                featured?: boolean;
                 /** @description Página (1-indexada). */
                 page?: components["parameters"]["Page"];
                 /** @description Itens por página. */
@@ -9637,6 +9818,202 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
+            422: components["responses"]["UnprocessableEntity"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    uploadGoalPhoto: {
+        parameters: {
+            query?: never;
+            header?: {
+                /**
+                 * @description UUID gerado por tentativa de envio (S-72, S-87, S-237, S-244). **Opcional**: com a chave, repetir o mesmo corpo devolve o mesmo
+                 *     recurso (`201`, sem criar outro nem novo lançamento; vale 24 h, escopo por rota) e a mesma chave com outro corpo é
+                 *     `409 IDEMPOTENCY_KEY_REUSED`. Sem a chave, cada chamada cria um recurso novo. Em `POST /v1/debts`, `POST /v1/people` e
+                 *     `POST /v1/recurrences`. Envie sempre que o cliente puder repetir a chamada (duplo clique, retry de rede, resposta perdida).
+                 */
+                "Idempotency-Key"?: components["parameters"]["IdempotencyKeyOptional"];
+            };
+            path: {
+                id: components["parameters"]["IdPath"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /**
+                     * Format: binary
+                     * @description A imagem (JPEG ou PNG, até 8 MB).
+                     */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Foto guardada. */
+            201: {
+                headers: {
+                    Location: components["headers"]["Location"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GoalPhoto"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["UnprocessableEntity"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    getGoalPhotoContent: {
+        parameters: {
+            query?: {
+                /** @description `display` (até 1280 px, padrão) ou `thumb` (até 320 px). Outro valor → `400`. */
+                variant?: "thumb" | "display";
+            };
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+                photoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A imagem. */
+            200: {
+                headers: {
+                    "Cache-Control"?: string;
+                    "X-Content-Type-Options"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/jpeg": string;
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    reorderGoalPhotos: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GoalPhotoOrderInput"];
+            };
+        };
+        responses: {
+            /** @description Meta com as fotos na nova ordem. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Goal"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    setGoalPhotoCover: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+                photoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Meta com a nova capa. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Goal"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    deleteGoalPhoto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+                photoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Meta sem a foto. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Goal"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            422: components["responses"]["UnprocessableEntity"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    setGoalFeatured: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GoalFeaturedInput"];
+            };
+        };
+        responses: {
+            /** @description Meta com o destaque atualizado. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Goal"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
             422: components["responses"]["UnprocessableEntity"];
             500: components["responses"]["InternalServerError"];
         };

@@ -26,6 +26,8 @@ import { problemMessage } from '~/app/common/i18n/problem-message';
 import { EntityChanges } from '~/app/common/services/entity-changes';
 import { ToastService } from '~/app/common/services/toast.service';
 import { GoalConsistencyComponent } from '~/app/features/goals/components/goal-consistency/goal-consistency.component';
+import { GoalFeaturedSwitchComponent } from '~/app/features/goals/components/goal-featured-switch/goal-featured-switch.component';
+import { GoalGalleryComponent } from '~/app/features/goals/components/goal-gallery/goal-gallery.component';
 import {
   ActionCheckIn,
   GoalPlanComponent,
@@ -68,6 +70,8 @@ import { formatRatio, ratioForBar } from '~/util/ratio';
     GoalStageLadderComponent,
     GoalPlanComponent,
     GoalConsistencyComponent,
+    GoalGalleryComponent,
+    GoalFeaturedSwitchComponent,
   ],
   providers: [GoalDetailFacade],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -93,6 +97,10 @@ export class GoalPage {
   protected readonly notCalculated = computed(() => this.goal()?.current === null);
   protected readonly planError = computed(() => {
     const problem = this.detail.planProblem();
+    return problem ? problemMessage(problem, this.t().errors) : null;
+  });
+  protected readonly featuredError = computed(() => {
+    const problem = this.detail.featuredProblem();
     return problem ? problemMessage(problem, this.t().errors) : null;
   });
   protected readonly notFound = computed(() => this.detail.error()?.status === 404);
@@ -171,6 +179,10 @@ export class GoalPage {
                 ? copy.removed
                 : null;
       if (text !== null) this.toast.show(text);
+    });
+    this.detail.featuredDone$.pipe(takeUntilDestroyed()).subscribe((goal) => {
+      const copy = this.t().goals.photos.featured;
+      this.toast.show(goal.featured ? copy.on : copy.off);
     });
     this.detail.done$.pipe(takeUntilDestroyed()).subscribe(({ kind }) => {
       this.confirmingArchive.set(false);

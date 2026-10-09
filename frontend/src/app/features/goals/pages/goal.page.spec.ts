@@ -15,6 +15,7 @@ import {
 } from '~/testing/accounts-testing';
 import { axeViolations, describeViolations } from '~/testing/axe';
 import {
+  aDreamGoal,
   aGoal,
   aMetricGoal,
   aReservation,
@@ -484,6 +485,81 @@ describe('GoalPage', () => {
           actions: [{ id: 'a-1', title: 'Revisar', frequency: 'WEEKLY', doneIn: [] }],
         }),
       );
+
+      const violations = await axeViolations(container);
+      expect(violations, describeViolations(violations)).toEqual([]);
+    });
+  });
+
+  describe('fotos e destaque', () => {
+    beforeEach(() => {
+      URL.createObjectURL = vi.fn(() => 'blob:sintetico');
+      URL.revokeObjectURL = vi.fn();
+    });
+
+    it('Dado uma meta de reserva com fotos, então mostra a galeria e o progresso do servidor', async () => {
+      const gateway = new GoalsGatewayStub();
+      gateway.goals = [aDreamGoal(3, { id: 'goal-1' })];
+      await setup(gateway);
+
+      expect(await screen.findByTestId('goal-gallery')).toBeInTheDocument();
+      expect(screen.getByTestId('goal-gallery-image')).toHaveAttribute(
+        'alt',
+        'Foto 1 de 3 da meta Carro de exemplo',
+      );
+      expect(screen.getByTestId('goal-percent')).toHaveTextContent('25%');
+    });
+
+    it('Dado uma meta de reserva sem fotos, então mostra o estado vazio com o caminho para adicionar', async () => {
+      await setup();
+
+      expect(await screen.findByTestId('goal-gallery-empty')).toHaveTextContent(
+        pt.goals.photos.gallery.empty,
+      );
+      expect(screen.getByTestId('goal-photos-edit')).toHaveAttribute('href', '/goals/goal-1/edit');
+    });
+
+    it('Dado ligar o destaque, então a meta da resposta atualiza a tela e avisa', async () => {
+      const gateway = new GoalsGatewayStub();
+      gateway.goals = [aGoal({ featured: false })];
+      await setup(gateway);
+
+      await userEvent.click(await screen.findByTestId('goal-featured'));
+
+      expect(gateway.calls).toContain('featured:goal-1:true');
+      expect(screen.getByTestId('goal-featured')).toHaveAttribute('aria-checked', 'true');
+    });
+
+    it('Dado destaque recusado pelo servidor, então mostra o motivo e o interruptor volta ao estado real', async () => {
+      const gateway = new GoalsGatewayStub();
+      gateway.goals = [aGoal({ featured: false })];
+      await setup(gateway);
+      await screen.findByTestId('goal-featured');
+      gateway.next = failWith(422, 'GOAL_ARCHIVED');
+
+      await userEvent.click(screen.getByTestId('goal-featured'));
+
+      expect(await screen.findByTestId('goal-featured-error')).toHaveTextContent(
+        pt.errors.codes['GOAL_ARCHIVED']!,
+      );
+      expect(screen.getByTestId('goal-featured')).toHaveAttribute('aria-checked', 'false');
+    });
+
+    it('Dado uma meta de medida, então não há galeria nem destaque', async () => {
+      const gateway = new GoalsGatewayStub();
+      gateway.goals = [aMetricGoal({ id: 'goal-1' })];
+      await setup(gateway);
+
+      await screen.findByTestId('goal-summary');
+      expect(screen.queryByTestId('goal-photos-section')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('goal-featured')).not.toBeInTheDocument();
+    });
+
+    it('Dado a meta com fotos, então não há violações de acessibilidade', async () => {
+      const gateway = new GoalsGatewayStub();
+      gateway.goals = [aDreamGoal(3, { id: 'goal-1' })];
+      const { container } = await setup(gateway);
+      await screen.findByTestId('goal-gallery');
 
       const violations = await axeViolations(container);
       expect(violations, describeViolations(violations)).toEqual([]);

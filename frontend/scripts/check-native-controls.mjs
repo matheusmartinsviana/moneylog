@@ -21,7 +21,7 @@
  *    `accent-color`, `resize` diferente de `none`.
  * Alternativas: Select, DatePicker, MonthPicker, Checkbox, Switch, Disclosure, Tooltip, ConfirmDialog
  * (src/app/common/components). Permitidos: <input> de texto (text, email, password), <textarea>, <button>.
- * Única exceção (ALLOWLIST, FE-S-119): o <input type="file"> escondido do FilePicker.
+ * Única exceção (ALLOWLIST, FE-S-119): o <input type="file"> escondido do FilePicker e do FilesButton (fotos das metas).
  * O teste de runtime `e2e/native-controls.e2e.ts` cobre o que nenhuma análise estática alcança.
  *
  * Exceção: só por entrada em ALLOWLIST (arquivo, regra, motivo). Sem baseline: o conjunto é vazio.
@@ -91,6 +91,13 @@ export const ALLOWLIST = [
     detail: '<input type="file">',
     reason:
       'FE-S-119: única exceção nativa. O seletor de arquivos é do sistema operacional e não tem substituto; o <input type="file"> fica escondido (hidden, fora da tabulação) dentro do FilePicker e é acionado pelo botão próprio.',
+  },
+  {
+    file: 'src/app/common/components/forms/files-button/files-button.component.ts',
+    rule: 'input-type',
+    detail: '<input type="file">',
+    reason:
+      'ADR-018: mesma exceção do FilePicker para escolher várias fotos de uma vez; o <input type="file" multiple> fica escondido (hidden, fora da tabulação) dentro do FilesButton e é acionado pelo botão próprio.',
   },
 ];
 

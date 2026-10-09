@@ -99,6 +99,11 @@ export class GoalFormFacade {
     this.loads.next(id);
   }
 
+  /** A meta devolvida por outra escrita (ex.: fotos) vira a atual, para o próximo "Salvar" usar a versão certa. */
+  adopt(goal: Goal): void {
+    if (this.loaded()?.id === goal.id) this.loaded.set(goal);
+  }
+
   dismissProblem(): void {
     this.problemState.set(null);
   }

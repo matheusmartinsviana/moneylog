@@ -1,5 +1,6 @@
 import { addMonthsKey } from '~/demo/demo-dates';
 import { debtOverviewView } from '~/demo/demo-debts';
+import { DEMO_PHOTO_HEIGHT, DEMO_PHOTO_WIDTH, demoPhotoId } from '~/demo/demo-photos';
 import { accRef, dashboardView, recurrenceSummary } from '~/demo/demo-views';
 import { money, ratio, type GoalDef, type S, type World } from '~/demo/demo-world';
 
@@ -155,6 +156,13 @@ export function goalView(w: World, g: GoalDef): S['Goal'] {
           : 'STRATEGY'
         : 'OBJECTIVE';
 
+  const photos: S['GoalPhoto'][] = Array.from({ length: g.photos ?? 0 }, (_, i) => ({
+    id: demoPhotoId(g.id, i),
+    position: i,
+    width: DEMO_PHOTO_WIDTH,
+    height: DEMO_PHOTO_HEIGHT,
+    createdAt: ts(w.today),
+  }));
   const monthlyNeeded = !isMetric && g.deadline ? money(requiredPace ?? 0) : null;
   return {
     id: g.id,
@@ -200,6 +208,9 @@ export function goalView(w: World, g: GoalDef): S['Goal'] {
     streak,
     consistencyRate,
     version: 0,
+    featured: g.featured ?? false,
+    coverPhotoId: photos[0]?.id ?? null,
+    photos,
     createdAt: ts(g.reservations[0]?.date ?? `${g.startMonth ?? w.today.slice(0, 7)}-01`),
     updatedAt: ts(g.reservations[0]?.date ?? w.today),
   };

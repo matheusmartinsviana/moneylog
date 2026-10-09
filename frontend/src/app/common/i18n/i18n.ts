@@ -2064,6 +2064,71 @@ export abstract class AppI18n {
       /** Conflito de versão: atualiza só a versão e mantém o digitado (FE-S-170). */
       readonly keepTyped: string;
     };
+    readonly photos: {
+      readonly title: string;
+      readonly hint: string;
+      readonly add: string;
+      /** `{count}`, `{max}`. */
+      readonly counter: string;
+      readonly counterLabel: string;
+      /** `{max}`. */
+      readonly full: string;
+      readonly empty: string;
+      readonly editNote: string;
+      readonly createNote: string;
+      readonly cover: string;
+      readonly makeCover: string;
+      readonly moveLeft: string;
+      readonly moveRight: string;
+      readonly remove: string;
+      readonly cancel: string;
+      readonly retry: string;
+      readonly retryAll: string;
+      readonly waiting: string;
+      /** `{percent}`. */
+      readonly uploading: string;
+      readonly failed: string;
+      /** `{n}`, `{total}`, `{name}`. */
+      readonly alt: string;
+      /** `{n}`, `{file}`. */
+      readonly queuedAlt: string;
+      /** `{position}`, `{total}`. */
+      readonly moved: string;
+      readonly loading: string;
+      readonly unavailable: string;
+      readonly reloadPhoto: string;
+      readonly removeConfirm: {
+        readonly title: string;
+        readonly description: string;
+        readonly confirm: string;
+      };
+      /** `{name}`, `{max}`. */
+      readonly rejected: {
+        readonly type: string;
+        readonly size: string;
+        readonly empty: string;
+        readonly limit: string;
+      };
+      readonly someFailed: string;
+      readonly finish: string;
+      readonly featured: {
+        readonly label: string;
+        readonly hint: string;
+        readonly on: string;
+        readonly off: string;
+      };
+      readonly gallery: {
+        /** `{name}`. */
+        readonly label: string;
+        readonly previous: string;
+        readonly next: string;
+        readonly thumbs: string;
+        /** `{n}`. */
+        readonly show: string;
+        readonly empty: string;
+        readonly add: string;
+      };
+    };
     readonly reserve: {
       /** `{name}`. */
       readonly reserveTitle: string;
@@ -3275,8 +3340,19 @@ export abstract class AppI18n {
     readonly featuredGoal: {
       readonly title: string;
       readonly empty: string;
-      readonly create: string;
+      readonly choose: string;
+      /** `{name}`. */
       readonly open: string;
+      readonly price: string;
+      /** `{name}`. */
+      readonly photosLabel: string;
+      readonly previous: string;
+      readonly next: string;
+      readonly pause: string;
+      readonly play: string;
+      readonly indicators: string;
+      /** `{n}`, `{total}`. */
+      readonly goTo: string;
     };
     readonly viewTransactions: string;
     readonly panorama: {

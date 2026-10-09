@@ -18,6 +18,8 @@ const PROPER_NOUNS = new Set([
   'Markdown',
   'Monelog',
   'CSV',
+  'JPEG',
+  'PNG',
   'JSON',
   'OFX',
   'IA',

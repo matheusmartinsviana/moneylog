@@ -52,6 +52,11 @@ export class GoalDetailFacade {
   private readonly planBusyState = signal(false);
   private readonly planProblemState = signal<Problem | null>(null);
   private readonly doneEvents = new Subject<{ kind: GoalAction; goal: Goal }>();
+  /** Destaque da Home: `exhaustMap` (um pedido por vez); a meta da resposta vira o estado. */
+  private readonly featuredCommands = new Subject<{ id: string; featured: boolean }>();
+  private readonly featuredDoneEvents = new Subject<Goal>();
+  private readonly featuredBusyState = signal(false);
+  private readonly featuredProblemState = signal<Problem | null>(null);
   private readonly current = signal<GoalDetailState>({ status: 'loading' });
   private readonly busyState = signal(false);
   private readonly problemState = signal<Problem | null>(null);
@@ -74,6 +79,10 @@ export class GoalDetailFacade {
   readonly planProblem = this.planProblemState.asReadonly();
   readonly planDone$ = this.planDoneEvents.asObservable();
   readonly done$ = this.doneEvents.asObservable();
+  readonly featuredBusy = this.featuredBusyState.asReadonly();
+  readonly featuredProblem = this.featuredProblemState.asReadonly();
+  /** A meta devolvida depois de marcar ou desmarcar o destaque. */
+  readonly featuredDone$ = this.featuredDoneEvents.asObservable();
 
   constructor() {
     this.loads
@@ -130,6 +139,35 @@ export class GoalDetailFacade {
         this.problemState.set(problem);
       });
 
+    this.featuredCommands
+      .pipe(
+        exhaustMap(({ id, featured }) => {
+          this.featuredBusyState.set(true);
+          this.featuredProblemState.set(null);
+          return this.gateway.setFeatured(id, featured).pipe(
+            tap((goal) => {
+              this.apply(goal);
+              this.featuredDoneEvents.next(goal);
+            }),
+            map(() => null),
+            // Falha: o servidor é a fonte da verdade; relê a meta e mostra o motivo.
+            catchError((error: unknown) => {
+              const problem = problemOf(error);
+              return this.gateway.get(id).pipe(
+                tap((goal) => this.apply(goal)),
+                map(() => problem),
+                catchError(() => of(problem)),
+              );
+            }),
+          );
+        }),
+        takeUntilDestroyed(),
+      )
+      .subscribe((problem) => {
+        this.featuredBusyState.set(false);
+        this.featuredProblemState.set(problem);
+      });
+
     this.planCommands
       .pipe(
         concatMap(({ kind, run }) => {
@@ -178,6 +216,11 @@ export class GoalDetailFacade {
   /** "Cadastrei tudo" (ou re-ancorar): o servidor fixa o total atual; a meta da resposta vira o estado. */
   baseline(id: string): void {
     this.actions.next({ kind: 'baseline', id });
+  }
+
+  /** Marca ou desmarca a meta como destaque da Home (só uma por vez: marcar move a anterior). */
+  setFeatured(id: string, featured: boolean): void {
+    this.featuredCommands.next({ id, featured });
   }
 
   /** A meta devolvida pelo backend (reserva, arquivar...) vira o estado: nada é chutado. */

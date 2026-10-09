@@ -48,6 +48,9 @@ export function newMockGoal(id: string, body: GoalCreateRequest): GoalResponse {
     streak: 0,
     consistencyRate: null,
     version: 1,
+    featured: false,
+    coverPhotoId: null,
+    photos: [],
     createdAt: '1970-01-01T00:00:00Z',
     updatedAt: '1970-01-01T00:00:00Z',
   };

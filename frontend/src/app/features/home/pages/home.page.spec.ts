@@ -27,7 +27,7 @@ import {
   MonthlySummaryGatewayStub,
   provideMonthlySummaryStub,
 } from '~/testing/etapa5-testing';
-import { aGoal, GoalsGatewayStub, provideGoalsStub } from '~/testing/goals-testing';
+import { aDreamGoal, aGoal, GoalsGatewayStub, provideGoalsStub } from '~/testing/goals-testing';
 import { provideI18nTesting } from '~/testing/i18n-testing';
 import {
   anIncomeExpenseSeries,
@@ -263,10 +263,16 @@ describe('HomePage (Início sucinto)', () => {
       expect(screen.getByTestId('home-debts-open')).toHaveAttribute('href', '/planning/debts');
     });
 
-    it('Dado metas ativas, então a meta em destaque é a primeira, com o selo do degrau e o progresso do servidor', async () => {
+    it('Dado uma meta marcada como destaque, então mostra só ela, com o selo do degrau, o preço e o progresso do servidor', async () => {
       const s = stubs();
       s.goals.goals = [
-        aGoal({ id: 'g-1', name: 'Reserva', stage: 'STRATEGY', progress: '0.4250' }),
+        aGoal({
+          id: 'g-1',
+          name: 'Reserva',
+          stage: 'STRATEGY',
+          progress: '0.4250',
+          featured: true,
+        }),
         aGoal({ id: 'g-2', name: 'Viagem' }),
       ];
       await setup(s);
@@ -275,19 +281,18 @@ describe('HomePage (Início sucinto)', () => {
       expect(screen.getByTestId('home-featured-goal-open')).toHaveAttribute('href', '/goals/g-1');
       expect(screen.getByTestId('home-featured-goal-stage')).toHaveTextContent('Estratégia');
       expect(screen.getByTestId('home-featured-goal-percent')).toHaveTextContent('42,5%');
+      expect(screen.getByTestId('home-featured-goal-price')).toHaveTextContent('20.000,00');
+      expect(s.goals.queries[0]).toMatchObject({ status: 'ACTIVE', featured: true });
       expect(screen.queryByText('Viagem')).not.toBeInTheDocument();
     });
 
-    it('Dado nenhuma meta, então convida a criar uma', async () => {
+    it('Dado nenhuma meta em destaque, então convida a marcar uma', async () => {
       await setup();
 
       expect(await screen.findByTestId('home-featured-goal-empty')).toHaveTextContent(
         pt.brief.featuredGoal.empty,
       );
-      expect(screen.getByTestId('home-featured-goal-create')).toHaveAttribute(
-        'href',
-        '/goals/new-smart',
-      );
+      expect(screen.getByTestId('home-featured-goal-choose')).toHaveAttribute('href', '/goals');
     });
 
     it('Dado o Início, então os blocos que saíram (contas, categorias, recentes, insights, legado, captura) não estão aqui', async () => {
@@ -372,7 +377,7 @@ describe('HomePage (Início sucinto)', () => {
 
   it('Dado o Início completo, então não há violações de acessibilidade', async () => {
     const s = stubs();
-    s.goals.goals = [aGoal()];
+    s.goals.goals = [aDreamGoal(3)];
     s.monthly.result = () => of(aSummary({ partial: false }));
     const { container } = await setup(s);
     await screen.findByTestId('home-featured-goal-open');

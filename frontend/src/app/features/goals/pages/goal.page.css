@@ -113,3 +113,10 @@
   gap: var(--section-gap);
   padding-top: var(--space-3);
 }
+
+.photos-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-block: var(--space-3);
+}

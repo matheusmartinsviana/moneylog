@@ -36,6 +36,7 @@ export class GoalsListFacade {
   private readonly gateway = inject(GoalsGateway);
   private readonly loads = new Subject<{
     readonly status: GoalStatus | undefined;
+    readonly featured: boolean | undefined;
     readonly silent: boolean;
   }>();
   private readonly current = signal<GoalsListState>(LOADING);
@@ -53,8 +54,8 @@ export class GoalsListFacade {
   constructor() {
     this.loads
       .pipe(
-        switchMap(({ status, silent }) =>
-          this.loadAll(status).pipe(
+        switchMap(({ status, featured, silent }) =>
+          this.loadAll(status, featured).pipe(
             map((data): GoalsListState =>
               data.length === 0 ? { status: 'empty' } : { status: 'ready', data },
             ),
@@ -74,23 +75,24 @@ export class GoalsListFacade {
   }
 
   /** Carrega (ou recarrega, no "tentar de novo") as metas de um status; sem status, todas. */
-  load(status?: GoalStatus): void {
-    this.loads.next({ status, silent: false });
+  load(status?: GoalStatus, featured?: boolean): void {
+    this.loads.next({ status, featured, silent: false });
   }
 
   /**
    * Recarrega sem trocar `ready` por `loading` e sem trocar `ready` por erro se a rede falhar: quem já tem
    * dados (o Início com a folha de reserva aberta) não perde a tela. Sem dados anteriores, comporta-se como `load`.
    */
-  reload(status?: GoalStatus): void {
-    this.loads.next({ status, silent: this.current().status === 'ready' });
+  reload(status?: GoalStatus, featured?: boolean): void {
+    this.loads.next({ status, featured, silent: this.current().status === 'ready' });
   }
 
   /** Todas as metas do status, paginando até o fim (como S-91). */
-  loadAll(status?: GoalStatus): Observable<readonly Goal[]> {
+  loadAll(status?: GoalStatus, featured?: boolean): Observable<readonly Goal[]> {
     const page = (n: number) =>
       this.gateway.list({
         ...(status ? { status } : {}),
+        ...(featured === undefined ? {} : { featured }),
         page: n,
         pageSize: MAX_PAGE_SIZE,
       });

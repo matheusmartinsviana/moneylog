@@ -4,12 +4,14 @@ import type {
   GoalActionInput,
   GoalConsistencyMonth,
   GoalInput,
+  GoalPhoto,
   GoalReservation,
   GoalUpdate,
   ReservationInput,
 } from '~/modules/goals/core/types/goal';
 import type {
   GoalActionRequest,
+  GoalPhotoResponse,
   GoalCreateRequest,
   GoalReservationRequest,
   GoalReservationResponse,
@@ -57,7 +59,19 @@ function toConsistencyMonth(response: GoalResponse['consistency'][number]): Goal
   };
 }
 
+export function toPhoto(response: GoalPhotoResponse): GoalPhoto {
+  return {
+    id: response.id,
+    position: response.position,
+    width: response.width,
+    height: response.height,
+    createdAt: response.createdAt,
+  };
+}
+
 export function toGoal(response: GoalResponse): Goal {
+  // Resposta de servidor antigo (sem os campos de fotos): o tipo gerado os exige, o runtime pode não trazer.
+  const legacy: Partial<Pick<GoalResponse, 'featured' | 'coverPhotoId' | 'photos'>> = response;
   return {
     id: response.id,
     kind: response.kind,
@@ -92,6 +106,10 @@ export function toGoal(response: GoalResponse): Goal {
     streak: response.streak,
     consistencyRate: response.consistencyRate,
     version: response.version,
+    // Respostas antigas (sem os campos de fotos) viram "sem destaque e sem fotos".
+    featured: legacy.featured ?? false,
+    coverPhotoId: legacy.coverPhotoId ?? null,
+    photos: (legacy.photos ?? []).map(toPhoto),
   };
 }
 

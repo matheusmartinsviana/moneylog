@@ -269,3 +269,11 @@ test('FilePicker: a exceção é só para type="file", não para a regra input-t
     'dynamic-input-type',
   ]);
 });
+
+test('FilesButton: o input file múltiplo só passa dentro do componente (ADR-018)', () => {
+  const button = 'src/app/common/components/forms/files-button/files-button.component.ts';
+  assert.ok(ALLOWLIST.some((entry) => entry.file === button && entry.rule === 'input-type'));
+  const template = '@Component({ template: `<input type="file" multiple hidden />` })';
+  assert.deepEqual(rules(button, template), []);
+  assert.deepEqual(rules('src/app/features/goals/x.component.ts', template), ['input-type']);
+});

@@ -156,4 +156,82 @@ describe('modo demonstração (backend de exemplo)', () => {
       ),
     ).rejects.toMatchObject({ status: 409 });
   });
+
+  describe('metas de sonho com fotos sintéticas', () => {
+    interface DemoGoal {
+      id: string;
+      name: string | null;
+      kind: string;
+      featured: boolean;
+      coverPhotoId: string | null;
+      photos: { id: string; position: number }[];
+    }
+
+    it('Dado o demo, então há duas metas de sonho e a que está em destaque tem 3 fotos geradas por código', async () => {
+      const goals = await get<{ items: DemoGoal[] }>('/v1/goals');
+      const dreams = goals.items.filter((g) => g.photos.length > 0);
+      const featured = goals.items.filter((g) => g.featured);
+
+      expect(dreams).toHaveLength(2);
+      expect(featured).toHaveLength(1);
+      expect(featured[0]).toMatchObject({ name: 'Carro de exemplo', kind: 'SAVINGS' });
+      expect(featured[0]!.photos).toHaveLength(3);
+      expect(featured[0]!.coverPhotoId).toBe(featured[0]!.photos[0]!.id);
+      expect(
+        goals.items.filter((g) => g.kind === 'METRIC').every((g) => g.photos.length === 0),
+      ).toBe(true);
+    });
+
+    it('Dado featured=true, então a lista traz só a meta em destaque', async () => {
+      const goals = await get<{ items: DemoGoal[] }>('/v1/goals?status=ACTIVE&featured=true');
+
+      expect(goals.items.map((g) => g.name)).toEqual(['Carro de exemplo']);
+    });
+
+    it('Dado o conteúdo da foto, então devolve uma imagem SVG sintética (Blob), nunca um arquivo real', async () => {
+      const goals = await get<{ items: DemoGoal[] }>('/v1/goals?featured=true');
+      const goal = goals.items[0]!;
+
+      const blob = await get<Blob>(
+        `/v1/goals/${goal.id}/photos/${goal.photos[0]!.id}/content?variant=thumb`,
+      );
+
+      expect(blob).toBeInstanceOf(Blob);
+      expect(blob.type).toBe('image/svg+xml');
+    });
+
+    it('Dado uma foto que não existe, então 404', async () => {
+      const goals = await get<{ items: DemoGoal[] }>('/v1/goals?featured=true');
+      const backend = new DemoHttpBackend();
+
+      await expect(
+        firstValueFrom(
+          backend.handle(
+            new HttpRequest('GET', `/v1/goals/${goals.items[0]!.id}/photos/nao-existe/content`),
+          ),
+        ),
+      ).rejects.toMatchObject({ status: 404 });
+    });
+
+    it('Dado enviar, reordenar, definir capa, remover ou destacar, então todas as escritas respondem 409 DEMO_MODE', async () => {
+      const goals = await get<{ items: DemoGoal[] }>('/v1/goals?featured=true');
+      const goal = goals.items[0]!;
+      const photo = goal.photos[0]!.id;
+      const backend = new DemoHttpBackend();
+      const writes = [
+        new HttpRequest('POST', `/v1/goals/${goal.id}/photos`, new FormData()),
+        new HttpRequest('PUT', `/v1/goals/${goal.id}/photos/order`, { photoIds: [photo] }),
+        new HttpRequest('PUT', `/v1/goals/${goal.id}/photos/${photo}/cover`, null),
+        new HttpRequest('DELETE', `/v1/goals/${goal.id}/photos/${photo}`),
+        new HttpRequest('PUT', `/v1/goals/${goal.id}/featured`, { featured: false }),
+      ];
+
+      for (const request of writes) {
+        await expect(firstValueFrom(backend.handle(request))).rejects.toMatchObject({
+          status: 409,
+          error: { code: 'DEMO_MODE' },
+        });
+      }
+    });
+  });
 });

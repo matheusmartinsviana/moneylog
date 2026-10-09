@@ -1,12 +1,18 @@
 import { Provider } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Observable, of, Subject } from 'rxjs';
 
+import {
+  GoalPhotosGateway,
+  type PhotoUploadEvent,
+} from '~/modules/goals/core/interfaces/goal-photos.gateway';
 import { GoalsGateway, GoalsQuery } from '~/modules/goals/core/interfaces/goals.gateway';
 import type {
   Goal,
   GoalActionInput,
   GoalInput,
   GoalMetric,
+  GoalPhoto,
+  GoalPhotoVariant,
   GoalReservation,
   GoalUpdate,
   ReservationInput,
@@ -67,8 +73,42 @@ export function aGoal(overrides: Partial<Goal> = {}): Goal {
     streak: 0,
     consistencyRate: null,
     version: 1,
+    featured: false,
+    coverPhotoId: null,
+    photos: [],
     ...overrides,
   };
+}
+
+/** Foto de teste (metadados). */
+export function aGoalPhoto(overrides: Partial<GoalPhoto> = {}): GoalPhoto {
+  return {
+    id: 'photo-1',
+    position: 0,
+    width: 640,
+    height: 360,
+    createdAt: '2026-10-10T12:00:00Z',
+    ...overrides,
+  };
+}
+
+/** Meta de sonho (SAVINGS) sintética com fotos; a primeira é a capa. */
+export function aDreamGoal(photoCount = 3, overrides: Partial<Goal> = {}): Goal {
+  const photos = Array.from({ length: photoCount }, (_, i) =>
+    aGoalPhoto({ id: `photo-${i + 1}`, position: i }),
+  );
+  return aGoal({
+    id: 'goal-dream',
+    name: 'Carro de exemplo',
+    target: brl('10000.00'),
+    current: brl('2500.00'),
+    progress: '0.2500',
+    remaining: brl('7500.00'),
+    featured: true,
+    coverPhotoId: photos[0]?.id ?? null,
+    photos,
+    ...overrides,
+  });
 }
 
 /** Meta inteligente (sintética): total de dívidas de 10.000,00 para 4.000,00. */
@@ -118,7 +158,9 @@ export class GoalsGatewayStub extends GoalsGateway {
   list(query: GoalsQuery): Observable<Slice<Goal>> {
     this.queries.push(query);
     if (this.listError) return this.listError;
-    const filtered = this.goals.filter((g) => !query.status || g.status === query.status);
+    const filtered = this.goals
+      .filter((g) => !query.status || g.status === query.status)
+      .filter((g) => query.featured === undefined || g.featured === query.featured);
     const start = (query.page - 1) * query.pageSize;
     const items = filtered.slice(start, start + query.pageSize);
     return of({ items, hasNext: start + query.pageSize < filtered.length });
@@ -181,6 +223,11 @@ export class GoalsGatewayStub extends GoalsGateway {
     return this.metricValue$ ?? of(this.metricValues[metric] ?? brl('0.00'));
   }
 
+  setFeatured(id: string, featured: boolean): Observable<Goal> {
+    this.calls.push(`featured:${id}:${featured}`);
+    return this.next ?? of(aGoal({ id, featured }));
+  }
+
   archive(id: string): Observable<Goal> {
     this.calls.push(`archive:${id}`);
     return this.next ?? of(aGoal({ id, status: 'ARCHIVED' }));
@@ -192,8 +239,75 @@ export class GoalsGatewayStub extends GoalsGateway {
   }
 }
 
-export function provideGoalsStub(stub: GoalsGatewayStub = new GoalsGatewayStub()): Provider[] {
-  return [{ provide: GoalsGateway, useValue: stub }];
+/**
+ * Porta das fotos para os testes. `uploads` registra cada envio; por padrão o envio termina na hora com uma
+ * foto nova. Use `uploadResults` para controlar (ex.: um `Subject` por arquivo, falha de rede).
+ */
+export class GoalPhotosGatewayStub extends GoalPhotosGateway {
+  readonly uploads: { goalId: string; fileName: string; key: string }[] = [];
+  readonly contentCalls: string[] = [];
+  readonly calls: string[] = [];
+  /** Resultado do próximo envio (consumido em ordem); sem item, termina com sucesso. */
+  uploadResults: Observable<PhotoUploadEvent>[] = [];
+  /** Corpo devolvido pelo conteúdo; erro opcional. */
+  content$: Observable<Blob> | null = null;
+  /** Meta devolvida pelas escritas; padrão = meta com as fotos pedidas. */
+  next: Observable<Goal> | null = null;
+  private sequence = 0;
+
+  upload(goalId: string, _file: Blob, fileName: string, key: string): Observable<PhotoUploadEvent> {
+    this.uploads.push({ goalId, fileName, key });
+    const planned = this.uploadResults.shift();
+    if (planned) return planned;
+    const photo = aGoalPhoto({ id: `uploaded-${++this.sequence}`, position: this.sequence - 1 });
+    return of({ kind: 'progress', percent: 100 } as const, { kind: 'done', photo } as const);
+  }
+
+  content(goalId: string, photoId: string, variant: GoalPhotoVariant): Observable<Blob> {
+    this.contentCalls.push(`${goalId}/${photoId}/${variant}`);
+    return this.content$ ?? of(new Blob(['x'], { type: 'image/jpeg' }));
+  }
+
+  reorder(goalId: string, photoIds: readonly string[]): Observable<Goal> {
+    this.calls.push(`reorder:${goalId}:${photoIds.join(',')}`);
+    return (
+      this.next ??
+      of(
+        aGoal({
+          id: goalId,
+          photos: photoIds.map((id, position) => aGoalPhoto({ id, position })),
+          coverPhotoId: photoIds[0] ?? null,
+        }),
+      )
+    );
+  }
+
+  setCover(goalId: string, photoId: string): Observable<Goal> {
+    this.calls.push(`cover:${goalId}:${photoId}`);
+    return this.next ?? of(aGoal({ id: goalId, coverPhotoId: photoId }));
+  }
+
+  remove(goalId: string, photoId: string): Observable<Goal> {
+    this.calls.push(`remove:${goalId}:${photoId}`);
+    return this.next ?? of(aGoal({ id: goalId }));
+  }
+
+  /** Atalho: um envio controlado à mão (emita progresso e `done`/erro quando quiser). */
+  controlUpload(): Subject<PhotoUploadEvent> {
+    const subject = new Subject<PhotoUploadEvent>();
+    this.uploadResults.push(subject);
+    return subject;
+  }
+}
+
+export function provideGoalsStub(
+  stub: GoalsGatewayStub = new GoalsGatewayStub(),
+  photos: GoalPhotosGatewayStub = new GoalPhotosGatewayStub(),
+): Provider[] {
+  return [
+    { provide: GoalsGateway, useValue: stub },
+    { provide: GoalPhotosGateway, useValue: photos },
+  ];
 }
 
 /** Resposta crua da API (como `schema.gen.ts`), para os testes da infra. */
@@ -247,6 +361,9 @@ export function aGoalResponse(overrides: Partial<GoalResponse> = {}): GoalRespon
     streak: 0,
     consistencyRate: null,
     version: 1,
+    featured: false,
+    coverPhotoId: null,
+    photos: [],
     createdAt: '2026-10-10T12:00:00Z',
     updatedAt: '2026-10-10T13:00:00Z',
     ...overrides,

@@ -15,6 +15,8 @@ import type { Money } from '~/util/money';
 export interface GoalsQuery {
   /** Sem o parâmetro, devolve todas (ativas, atingidas e arquivadas). */
   readonly status?: GoalStatus;
+  /** `true` = só a meta em destaque da Home. */
+  readonly featured?: boolean;
   readonly page: number;
   readonly pageSize: number;
 }
@@ -44,6 +46,8 @@ export abstract class GoalsGateway {
    * leitura para mostrar antes de criar a meta: o front nunca calcula a medida.
    */
   abstract metricValue(metric: GoalMetric): Observable<Money>;
+  /** Marca ou desmarca o destaque da Home (só uma por usuário: marcar move a anterior). Devolve a meta. */
+  abstract setFeatured(id: string, featured: boolean): Observable<Goal>;
   abstract archive(id: string): Observable<Goal>;
   abstract unarchive(id: string): Observable<Goal>;
 }

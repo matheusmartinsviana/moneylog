@@ -20,6 +20,7 @@ import {
   reminderList,
 } from '~/demo/demo-etapa7';
 import { goalView } from '~/demo/demo-goals';
+import { demoPhotoBlob } from '~/demo/demo-photos';
 import { commitmentViews, thirdPartyReceivablesView } from '~/demo/demo-third-parties';
 import {
   accountView,
@@ -313,8 +314,19 @@ export class DemoHttpBackend extends HttpBackend {
     // ---- Metas
     if (path === '/v1/goals') {
       const status = q.get('status');
-      const list = w.goals.map((g) => goalView(w, g)).filter((g) => !status || g.status === status);
+      const featured = q.get('featured');
+      const list = w.goals
+        .map((g) => goalView(w, g))
+        .filter((g) => !status || g.status === status)
+        .filter((g) => featured === null || g.featured === (featured === 'true'));
       return paged(list, page, pageSize);
+    }
+    // Bytes da foto sintética (SVG gerado por código); escritas de fotos caem no 409 DEMO_MODE.
+    const photo = /^\/v1\/goals\/([^/]+)\/photos\/([^/]+)\/content$/.exec(path);
+    if (photo) {
+      const found = goalView(w, this.find(w.goals, photo[1]!));
+      if (!found.photos.some((p) => p.id === photo[2])) throw new NotFound();
+      return demoPhotoBlob(photo[2]!, found.name ?? '');
     }
     const goal = /^\/v1\/goals\/([^/]+)$/.exec(path);
     if (goal) return goalView(w, this.find(w.goals, goal[1]!));
