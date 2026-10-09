@@ -129,6 +129,54 @@ describe('RecurrencesRequestsFacade', () => {
       await result;
     });
 
+    it('Dado criar receita com deslocamento 1, então o corpo leva incomeCompetenceOffsetMonths; 0 é omitido', async () => {
+      const { gateway, http } = setup(false);
+
+      const result = firstValueFrom(
+        gateway.create({ ...INPUT, type: 'INCOME', incomeCompetenceOffsetMonths: 1 }, 'key-i'),
+      );
+      const req = http.expectOne(RECURRENCES_ENDPOINTS.collection);
+      expect(req.request.body).toMatchObject({ type: 'INCOME', incomeCompetenceOffsetMonths: 1 });
+      req.flush(aRecurrenceResponse({ type: 'INCOME', incomeCompetenceOffsetMonths: 1 }));
+      expect((await result).incomeCompetenceOffsetMonths).toBe(1);
+
+      const zero = firstValueFrom(
+        gateway.create({ ...INPUT, type: 'INCOME', incomeCompetenceOffsetMonths: 0 }, 'key-z'),
+      );
+      const reqZero = http.expectOne(RECURRENCES_ENDPOINTS.collection);
+      expect(reqZero.request.body).not.toHaveProperty('incomeCompetenceOffsetMonths');
+      reqZero.flush(aRecurrenceResponse());
+      expect((await zero).incomeCompetenceOffsetMonths).toBe(0);
+    });
+
+    it('Dado editar receita, então o deslocamento atual é reenviado; sem o campo, nada vai', async () => {
+      const { gateway, http } = setup(false);
+      const update = {
+        amount: '10.00',
+        description: 'Salário',
+        categoryId: 'cat-1',
+        accountId: 'acc-1',
+        method: 'PIX' as const,
+        cardId: null,
+        endDate: null,
+        version: 1,
+      };
+
+      const withOffset = firstValueFrom(
+        gateway.update('rec-1', { ...update, incomeCompetenceOffsetMonths: 0 }),
+      );
+      const req = http.expectOne(RECURRENCES_ENDPOINTS.item('rec-1'));
+      expect(req.request.body).toMatchObject({ incomeCompetenceOffsetMonths: 0 });
+      req.flush(aRecurrenceResponse());
+      await withOffset;
+
+      const without = firstValueFrom(gateway.update('rec-1', update));
+      const reqWithout = http.expectOne(RECURRENCES_ENDPOINTS.item('rec-1'));
+      expect(reqWithout.request.body).not.toHaveProperty('incomeCompetenceOffsetMonths');
+      reqWithout.flush(aRecurrenceResponse());
+      await without;
+    });
+
     it('Dado criar sem conta ("conta a definir"), então o corpo não leva conta nem método', async () => {
       const { gateway, http } = setup(false);
 

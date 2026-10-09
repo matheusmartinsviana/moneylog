@@ -81,6 +81,8 @@ export interface Rec {
   invoiceId: string | null;
   recurrenceId: string | null;
   notes: string | null;
+  /** Receita cuja renda pertence a outro mês (`YYYY-MM`, ADR-017); o caixa fica na data. */
+  incomeCompetence?: string | null;
 }
 
 export interface InstallmentDef {
@@ -413,6 +415,8 @@ export function buildWorld(today: string): World {
         categoryId: cat(CAT.freelance),
         accountId: checking,
         method: 'PIX',
+        // Adiantamento (sintético): caiu neste mês, mas é a renda do mês seguinte.
+        ...(off === -1 ? { incomeCompetence: addMonthsKey(key, 1) } : {}),
       });
     }
     add({

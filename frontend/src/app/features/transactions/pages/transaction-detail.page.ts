@@ -38,6 +38,7 @@ import { InstallmentsListComponent } from '~/app/features/transactions/component
 import { ThirdPartyBadgeComponent } from '~/app/features/transactions/components/third-party-badge/third-party-badge.component';
 import { ThirdPartyMarkModalComponent } from '~/app/features/transactions/components/third-party-mark-modal/third-party-mark-modal.component';
 import { VoidActionComponent } from '~/app/features/transactions/components/void-action/void-action.component';
+import { incomeMonthNote } from '~/app/features/transactions/transaction-competence';
 import { flowOf, flowSign } from '~/app/features/transactions/transaction-flow';
 import { transactionLabel } from '~/app/features/transactions/transaction-label';
 import {
@@ -131,6 +132,13 @@ export class TransactionDetailPage {
   protected readonly canEdit = computed(() => {
     const tx = this.transaction();
     return tx !== null && tx.status === 'ACTIVE' && tx.editable;
+  });
+  /** "Renda de <mês> (recebida em <data>)": só quando a competência difere do mês da data (ADR-017). */
+  protected readonly incomeMonth = computed(() => {
+    const tx = this.transaction();
+    return tx
+      ? incomeMonthNote(tx, this.t().transactions.incomeOf, HTML_LANG[this.i18n.language()])
+      : null;
   });
   protected readonly voidedOn = computed(() => {
     const tx = this.transaction();

@@ -74,6 +74,8 @@ export interface DebtPaymentInput extends BaseInput {
 
 export interface IncomeInput extends BaseInput {
   readonly type: 'INCOME';
+  /** `YYYY-MM` a que a renda pertence (ADR-017); vazio/nulo = o mês da data. No `PUT`, ausente limpa. */
+  readonly incomeCompetence?: string | null;
   readonly accountId: string;
   /** Vazio = omitido: o servidor usa "Outras receitas". */
   readonly categoryId: string;

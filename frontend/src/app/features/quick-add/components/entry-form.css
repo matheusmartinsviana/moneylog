@@ -6,3 +6,13 @@
   display: grid;
   gap: var(--space-3);
 }
+
+.income-month {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}
+
+.income-month app-month-picker {
+  justify-self: stretch;
+}

@@ -382,6 +382,10 @@ export const pt: AppI18n = {
       title: 'Entradas e saídas',
       periodLabel: 'Período',
       periods: { D7: '7 dias', D30: '30 dias', M3: '3 meses', M12: '12 meses' },
+      basis: {
+        DATE: 'Dias e semanas mostram o dinheiro que entrou em cada período.',
+        COMPETENCE: 'Os meses mostram a renda que pertence a cada mês.',
+      },
       income: 'Entradas',
       expenses: 'Saídas',
       empty: 'Sem entradas nem saídas neste período.',
@@ -773,6 +777,7 @@ export const pt: AppI18n = {
       REFUND_EXCEEDS_ORIGINAL: 'O reembolso passa do valor da despesa original.',
       REFUND_INVALID_ORIGINAL: 'A despesa original escolhida não serve para este reembolso.',
       REFUND_CATEGORY_LOCKED: 'A categoria não muda enquanto a despesa tem reembolsos.',
+      INCOME_COMPETENCE_INVALID: 'Escolha um mês entre 2000 e 2100.',
       TRANSACTION_ALREADY_VOIDED: 'Esta movimentação já foi estornada.',
       TRANSACTION_VOID_REASON_REQUIRED: 'Explique o motivo do estorno.',
       TRANSACTION_HAS_ACTIVE_REFUNDS: 'Estorne antes os reembolsos desta despesa.',
@@ -1067,6 +1072,7 @@ export const pt: AppI18n = {
   },
 
   transactions: {
+    incomeOf: 'Renda de {month} (recebida em {date})',
     thirdParty: {
       badge: 'De terceiro',
       badgeFor: 'De terceiro: {name}',
@@ -1341,6 +1347,11 @@ export const pt: AppI18n = {
     cancel: 'Cancelar',
     descriptionHint: 'Opcional. Se ficar vazio, usamos “{default}”.',
     optionalHint: 'Opcional.',
+    incomeMonth: {
+      label: 'Pertence ao mês',
+      hint: 'Se esta renda é do mês seguinte, escolha o mês; o dinheiro continua na data em que caiu.',
+      next: 'Mês seguinte',
+    },
     noCategory: 'Sem categoria (outros)',
     investment: {
       cashAccount: 'Conta',
@@ -1925,6 +1936,7 @@ export const pt: AppI18n = {
       ended: 'Encerrada',
       on: 'Em {name}',
       monthly: 'Estimativa mensal',
+      nextMonthIncome: 'Renda do mês seguinte',
       edit: 'Editar',
       end: 'Encerrar',
       deactivate: 'Desativar',
@@ -1971,6 +1983,8 @@ export const pt: AppI18n = {
       intervalValue: '{count}',
       startDate: 'Começa em',
       endMode: 'Termina',
+      nextMonthIncome: 'Pertence ao mês seguinte',
+      nextMonthIncomeHint: 'A renda de cada ocorrência conta no mês seguinte à data em que cai.',
       endNone: 'Nunca',
       endDate: 'Em uma data',
       endMax: 'Após um número de vezes',

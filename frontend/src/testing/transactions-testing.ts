@@ -36,6 +36,7 @@ export function aTransaction(overrides: Partial<Transaction> = {}): Transaction 
     shares: [],
     recurrenceId: null,
     occurrenceDate: null,
+    incomeCompetence: null,
     impact: {
       cash: brl('-35.00'),
       consumption: [{ competence: '2026-10', amount: brl('35.00') }],

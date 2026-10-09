@@ -205,7 +205,11 @@ export class TransactionEditPage {
   protected markDirty(event: Event): void {
     if (event.type === 'click') {
       const target = event.target as HTMLElement | null;
-      if (!target?.closest('[role="option"], [role="radio"], [role="switch"], [role="checkbox"]'))
+      if (
+        !target?.closest(
+          '[role="option"], [role="radio"], [role="switch"], [role="checkbox"], [data-marks-dirty]',
+        )
+      )
         return;
     }
     this.dirty.set(true);

@@ -13,6 +13,11 @@
     @if (destination(); as text) {
       <span>{{ text }}</span>
     }
+    @if (r.incomeCompetenceOffsetMonths === 1) {
+      <span class="status" [attr.data-cy]="'recurrence-next-month-' + r.id">{{
+        t().recurrences.row.nextMonthIncome
+      }}</span>
+    }
     @if (accountToDefine()) {
       <span class="status" [attr.data-cy]="'recurrence-account-tbd-' + r.id">{{
         t().recurrences.row.accountTbd

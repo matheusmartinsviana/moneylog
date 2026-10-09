@@ -26,6 +26,7 @@ export const TRANSACTION_CODE_TO_FIELD: Readonly<Record<string, string>> = {
   REFUND_EXCEEDS_ORIGINAL: 'amount',
   TRANSACTION_AMOUNT_NOT_POSITIVE: 'amount',
   REFUND_CATEGORY_LOCKED: 'categoryId',
+  INCOME_COMPETENCE_INVALID: 'incomeCompetence',
   CATEGORY_KIND_MISMATCH: 'categoryId',
   CATEGORY_ARCHIVED: 'categoryId',
   CATEGORY_NOT_FOUND: 'categoryId',

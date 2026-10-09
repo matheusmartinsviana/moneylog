@@ -20,7 +20,14 @@ describe('toFormValue (mapa resposta → entrada de S-90)', () => {
     [
       'INCOME',
       aResponse({ type: 'INCOME', method: 'TRANSFER', category: ref('cat-2') }),
-      { ...common, type: 'INCOME', accountId: 'acc-1', categoryId: 'cat-2', method: 'TRANSFER' },
+      {
+        ...common,
+        type: 'INCOME',
+        accountId: 'acc-1',
+        categoryId: 'cat-2',
+        method: 'TRANSFER',
+        incomeCompetence: null,
+      },
     ],
     [
       'TRANSFER: account → fromAccountId, counterpartAccount → toAccountId',
@@ -390,5 +397,45 @@ describe('corpos de requisição', () => {
       fromAccountId: 'a',
       toAccountId: 'b',
     });
+  });
+});
+
+describe('competência da renda (ADR-017)', () => {
+  const base = { amount: '1000.00', date: '2026-09-16', description: 'Adiantamento', notes: null };
+  const income = { ...base, type: 'INCOME' as const, accountId: 'a', categoryId: 'c' };
+
+  it('Dado uma renda de outro mês, quando mapeia a resposta, então a competência vai ao tipo e ao formulário', () => {
+    const tx = toTransaction(aResponse({ type: 'INCOME', incomeCompetence: '2026-10' }));
+    expect(tx.incomeCompetence).toBe('2026-10');
+    expect(tx.formValue).toMatchObject({ type: 'INCOME', incomeCompetence: '2026-10' });
+  });
+
+  it('Dado a resposta sem competência, então fica nula', () => {
+    expect(toTransaction(aResponse()).incomeCompetence).toBeNull();
+  });
+
+  it('Dado criar ou editar a receita com competência, então o corpo leva AAAA-MM', () => {
+    expect(toRequestBody({ ...income, incomeCompetence: '2026-10' })).toMatchObject({
+      incomeCompetence: '2026-10',
+    });
+    expect(toUpdateBody({ ...income, incomeCompetence: '2026-10' }, 2)).toMatchObject({
+      incomeCompetence: '2026-10',
+      version: 2,
+    });
+  });
+
+  it('Dado sem competência ou despesa, então o campo é omitido', () => {
+    expect(toRequestBody({ ...income, incomeCompetence: null })).not.toHaveProperty(
+      'incomeCompetence',
+    );
+    expect(
+      toRequestBody({
+        ...base,
+        type: 'EXPENSE',
+        accountId: 'a',
+        categoryId: 'c',
+        incomeCompetence: '2026-10',
+      } as never),
+    ).not.toHaveProperty('incomeCompetence');
   });
 });

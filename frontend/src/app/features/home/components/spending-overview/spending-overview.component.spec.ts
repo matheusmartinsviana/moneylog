@@ -38,6 +38,32 @@ async function setup(
 }
 
 describe('SpendingOverviewComponent', () => {
+  it('Dado a série por data ou por competência, então a legenda diz o que cada ponto mostra', async () => {
+    await render(SpendingOverviewComponent, {
+      inputs: { state: { status: 'ready', data: anIncomeExpenseSeries() }, period: 'D7' },
+      providers: [provideI18nTesting('pt'), provideRouter([])],
+    });
+    expect(screen.getByTestId('home-overview-hint')).toHaveTextContent(
+      pt.dashboard.overview.basis.DATE,
+    );
+  });
+
+  it('Dado a série por competência, então a legenda fala da renda do mês', async () => {
+    await render(SpendingOverviewComponent, {
+      inputs: {
+        state: {
+          status: 'ready',
+          data: anIncomeExpenseSeries({ period: 'M12', basis: 'COMPETENCE', granularity: 'MONTH' }),
+        },
+        period: 'M12',
+      },
+      providers: [provideI18nTesting('pt'), provideRouter([])],
+    });
+    expect(screen.getByTestId('home-overview-hint')).toHaveTextContent(
+      pt.dashboard.overview.basis.COMPETENCE,
+    );
+  });
+
   it('Dado a série, então mostra só 7 dias, 30 dias e 12 meses (o atual marcado) e o link para as movimentações', async () => {
     await setup();
 

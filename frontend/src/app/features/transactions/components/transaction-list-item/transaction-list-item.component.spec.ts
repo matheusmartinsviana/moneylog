@@ -35,6 +35,20 @@ describe('TransactionListItemComponent', () => {
     expect(row.textContent).toContain('4 de out.');
   });
 
+  it('Dado uma renda de outro mês, então mostra "Renda de <mês> (recebida em <data>)" com ícone; sem competência, nada', async () => {
+    await setup({ transaction: aTransaction({ type: 'INCOME', incomeCompetence: '2026-11' }) });
+
+    const note = screen.getByTestId('transaction-income-month-tx-1');
+    expect(note).toHaveTextContent(/Renda de novembro de 2026 \(recebida em 4 de out\.\)/);
+    expect(note.querySelector('svg')).not.toBeNull();
+  });
+
+  it('Dado competência igual ao mês da data, então não mostra o rótulo', async () => {
+    await setup({ transaction: aTransaction({ type: 'INCOME', incomeCompetence: '2026-10' }) });
+
+    expect(screen.queryByTestId('transaction-income-month-tx-1')).not.toBeInTheDocument();
+  });
+
   it('Dado a variante do Início, então mostra o glifo com a inicial da categoria e o rótulo de data recebido', async () => {
     await setup({ glyph: true, dateLabel: 'Hoje' });
 

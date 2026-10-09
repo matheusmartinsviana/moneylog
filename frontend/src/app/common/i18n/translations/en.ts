@@ -378,6 +378,10 @@ export const en: AppI18n = {
       title: 'Income and expenses',
       periodLabel: 'Period',
       periods: { D7: '7 days', D30: '30 days', M3: '3 months', M12: '12 months' },
+      basis: {
+        DATE: 'Days and weeks show the money that came in during each period.',
+        COMPETENCE: 'Months show the income that belongs to each month.',
+      },
       income: 'Income',
       expenses: 'Expenses',
       empty: 'No income or expenses in this period.',
@@ -764,6 +768,7 @@ export const en: AppI18n = {
       REFUND_EXCEEDS_ORIGINAL: 'The refund is above the original expense.',
       REFUND_INVALID_ORIGINAL: 'The chosen original expense does not fit this refund.',
       REFUND_CATEGORY_LOCKED: 'The category cannot change while the expense has refunds.',
+      INCOME_COMPETENCE_INVALID: 'Choose a month between 2000 and 2100.',
       TRANSACTION_ALREADY_VOIDED: 'This transaction was already voided.',
       TRANSACTION_VOID_REASON_REQUIRED: 'Explain the reason for voiding.',
       TRANSACTION_HAS_ACTIVE_REFUNDS: 'Void the refunds of this expense first.',
@@ -1060,6 +1065,7 @@ export const en: AppI18n = {
   },
 
   transactions: {
+    incomeOf: 'Income of {month} (received on {date})',
     thirdParty: {
       badge: 'Third-party',
       badgeFor: 'Third-party: {name}',
@@ -1334,6 +1340,11 @@ export const en: AppI18n = {
     cancel: 'Cancel',
     descriptionHint: 'Optional. If left empty, we use “{default}”.',
     optionalHint: 'Optional.',
+    incomeMonth: {
+      label: 'Belongs to month',
+      hint: 'If this income is for the next month, pick the month; the money stays on the date it arrived.',
+      next: 'Next month',
+    },
     noCategory: 'No category (other)',
     investment: {
       cashAccount: 'Account',
@@ -1916,6 +1927,7 @@ export const en: AppI18n = {
       ended: 'Ended',
       on: 'On {name}',
       monthly: 'Monthly estimate',
+      nextMonthIncome: 'Next-month income',
       edit: 'Edit',
       end: 'End',
       deactivate: 'Deactivate',
@@ -1963,6 +1975,9 @@ export const en: AppI18n = {
       intervalValue: '{count}',
       startDate: 'Starts on',
       endMode: 'Ends',
+      nextMonthIncome: 'Belongs to the next month',
+      nextMonthIncomeHint:
+        'The income of each occurrence counts in the month after the date it arrives.',
       endNone: 'Never',
       endDate: 'On a date',
       endMax: 'After a number of times',

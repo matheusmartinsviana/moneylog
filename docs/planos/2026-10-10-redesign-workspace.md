@@ -934,3 +934,12 @@ Pedido do dono (4 imagens de referência + vidro líquido do portfólio). Sem co
 - **Início:** novo bloco "Metas" (até 3, com degrau e progresso); o atalho "Meta" segue só para reserva (`SAVINGS`).
 - **Demo (sintético):** meta de dívidas sem nome com plano e 3 meses fechados (Estratégia), reserva sem prazo (Fantasia), meta de dívida com pessoas atingida (Sucesso); demo segue só leitura.
 - **Testes:** facades (detalhe/plano, valor da medida), requests facade, escada, plano, consistência, formulário inteligente, detalhe, lista, resumo do Início, demo. **Pendências:** sem e2e; "re-ancorar" de METRIC (`POST .../baseline`) sem botão; backup JSON ainda sem os campos novos (backend).
+
+### Registro de execução: competência da renda (frontend, modo rápido, contrato 2.18.0, ADR-017)
+
+- **Tipos e mappers:** `Transaction.incomeCompetence` (nulo = mês da data), `IncomeInput.incomeCompetence`, `Recurrence.incomeCompetenceOffsetMonths` (0|1). O corpo da receita só leva `incomeCompetence` quando difere do mês da data; recorrência só manda `1` na criação; no `PUT` de receita reenvia 0|1 e a competência atual (ausente limparia no servidor).
+- **Formulário de receita** (Novo registro e edição, mesmos modais): `app-month-picker` opcional "Pertence ao mês" com dica e atalho "Mês seguinte" (calendário puro, `nextMonthOf`); `INCOME_COMPETENCE_INVALID` vai no campo.
+- **Detalhe, lista e tabela:** rótulo "Renda de <mês> (recebida em <data>)" com ícone, só quando a competência do servidor difere do mês da data (`incomeMonthNote`).
+- **Recorrência:** interruptor "Pertence ao mês seguinte" (só receita, criar e editar) e selo "Renda do mês seguinte" na lista.
+- **Início:** legenda sob o seletor do gráfico conforme `basis` (DATE: dinheiro que entrou; COMPETENCE: renda do mês). Resumo mensal, painel e `income-expenses` exibem o que o servidor devolve, sem conta no front. Exportação CSV: nada a fazer.
+- **Demo (sintético):** o "Projeto de design" do mês anterior tem competência do mês seguinte (só no detalhe/lista; os agregados da demo não a refletem). **Testes:** mappers, recorrência (requests e formulário), formulário de receita, item da lista, legenda do gráfico, `nextMonthOf`. **Pendências:** sem e2e; imagem do backup/CSV não tocada.

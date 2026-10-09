@@ -368,6 +368,7 @@ export abstract class AppI18n {
     readonly overview: {
       readonly title: string;
       readonly periodLabel: string;
+      readonly basis: { readonly DATE: string; readonly COMPETENCE: string };
       readonly periods: {
         readonly D7: string;
         readonly D30: string;
@@ -805,6 +806,7 @@ export abstract class AppI18n {
   /** Movimentações: lista, filtros e totais (T39). Valores vêm da API; aqui só rótulos. */
   abstract readonly transactions: {
     /** Despesa de terceiro (2.14.0): selo, marca e vínculo com o reembolso. */
+    readonly incomeOf: string;
     readonly thirdParty: {
       readonly badge: string;
       /** `{name}`: pessoa responsável. */
@@ -1078,6 +1080,11 @@ export abstract class AppI18n {
     /** `{default}`: a descrição usada quando o campo fica vazio. */
     readonly descriptionHint: string;
     readonly optionalHint: string;
+    readonly incomeMonth: {
+      readonly label: string;
+      readonly hint: string;
+      readonly next: string;
+    };
     readonly noCategory: string;
     readonly investment: {
       readonly cashAccount: string;
@@ -1693,6 +1700,7 @@ export abstract class AppI18n {
       /** `{name}`: conta ou cartão. */
       readonly on: string;
       readonly monthly: string;
+      readonly nextMonthIncome: string;
       readonly edit: string;
       readonly end: string;
       readonly deactivate: string;
@@ -1740,6 +1748,8 @@ export abstract class AppI18n {
       readonly intervalValue: string;
       readonly startDate: string;
       readonly endMode: string;
+      readonly nextMonthIncome: string;
+      readonly nextMonthIncomeHint: string;
       readonly endNone: string;
       readonly endDate: string;
       readonly endMax: string;

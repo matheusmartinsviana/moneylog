@@ -382,6 +382,10 @@ export const es: AppI18n = {
       title: 'Ingresos y gastos',
       periodLabel: 'Período',
       periods: { D7: '7 días', D30: '30 días', M3: '3 meses', M12: '12 meses' },
+      basis: {
+        DATE: 'Los días y las semanas muestran el dinero que entró en cada período.',
+        COMPETENCE: 'Los meses muestran el ingreso que pertenece a cada mes.',
+      },
       income: 'Ingresos',
       expenses: 'Gastos',
       empty: 'Sin ingresos ni gastos en este período.',
@@ -774,6 +778,7 @@ export const es: AppI18n = {
       REFUND_EXCEEDS_ORIGINAL: 'El reembolso supera el valor del gasto original.',
       REFUND_INVALID_ORIGINAL: 'El gasto original elegido no sirve para este reembolso.',
       REFUND_CATEGORY_LOCKED: 'La categoría no cambia mientras el gasto tenga reembolsos.',
+      INCOME_COMPETENCE_INVALID: 'Elige un mes entre 2000 y 2100.',
       TRANSACTION_ALREADY_VOIDED: 'Este movimiento ya fue anulado.',
       TRANSACTION_VOID_REASON_REQUIRED: 'Explica el motivo de la anulación.',
       TRANSACTION_HAS_ACTIVE_REFUNDS: 'Anula antes los reembolsos de este gasto.',
@@ -1074,6 +1079,7 @@ export const es: AppI18n = {
   },
 
   transactions: {
+    incomeOf: 'Ingreso de {month} (recibido el {date})',
     thirdParty: {
       badge: 'De terceros',
       badgeFor: 'De terceros: {name}',
@@ -1349,6 +1355,11 @@ export const es: AppI18n = {
     cancel: 'Cancelar',
     descriptionHint: 'Opcional. Si queda vacío, usamos “{default}”.',
     optionalHint: 'Opcional.',
+    incomeMonth: {
+      label: 'Pertenece al mes',
+      hint: 'Si este ingreso es del mes siguiente, elige el mes; el dinero sigue en la fecha en que llegó.',
+      next: 'Mes siguiente',
+    },
     noCategory: 'Sin categoría (otros)',
     investment: {
       cashAccount: 'Cuenta',
@@ -1930,6 +1941,7 @@ export const es: AppI18n = {
       ended: 'Finalizada',
       on: 'En {name}',
       monthly: 'Estimación mensual',
+      nextMonthIncome: 'Ingreso del mes siguiente',
       edit: 'Editar',
       end: 'Terminar',
       deactivate: 'Desactivar',
@@ -1977,6 +1989,9 @@ export const es: AppI18n = {
       intervalValue: '{count}',
       startDate: 'Empieza el',
       endMode: 'Termina',
+      nextMonthIncome: 'Pertenece al mes siguiente',
+      nextMonthIncomeHint:
+        'El ingreso de cada ocurrencia cuenta en el mes siguiente a la fecha en que llega.',
       endNone: 'Nunca',
       endDate: 'En una fecha',
       endMax: 'Después de cierto número de veces',

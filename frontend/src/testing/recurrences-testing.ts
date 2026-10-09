@@ -36,6 +36,7 @@ export function aRecurrence(overrides: Partial<Recurrence> = {}): Recurrence {
     endDate: null,
     maxOccurrences: null,
     active: true,
+    incomeCompetenceOffsetMonths: 0,
     ended: false,
     nextOccurrence: '2026-10-10',
     monthlyEstimate: brl('119.00'),

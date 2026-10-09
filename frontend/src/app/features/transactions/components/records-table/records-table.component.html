@@ -25,6 +25,12 @@
           <td class="num">{{ date(tx) }}</td>
           <td class="row__description">
             {{ title(tx) }}
+            @if (incomeMonth(tx); as note) {
+              <span class="row__income-month" [attr.data-cy]="'transaction-income-month-' + tx.id">
+                <app-icon name="calendar" [size]="14" />
+                {{ note }}
+              </span>
+            }
             @if (tx.status === 'VOIDED') {
               <span class="row__tag status" data-tone="warning">{{ t().transactions.voided }}</span>
             }

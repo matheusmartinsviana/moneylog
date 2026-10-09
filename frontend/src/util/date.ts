@@ -21,6 +21,15 @@ export function formatIsoDate(value: string, locale: string, style: DateStyle = 
   return new Intl.DateTimeFormat(locale, { ...DATE_OPTIONS[style], timeZone: 'UTC' }).format(date);
 }
 
+/** Mês seguinte (`YYYY-MM`) ao mês de uma data `YYYY-MM-DD` ou de uma competência `YYYY-MM`; só calendário. */
+export function nextMonthOf(value: string): string {
+  const year = Number(value.slice(0, 4));
+  const month = Number(value.slice(5, 7));
+  return month === 12
+    ? `${String(year + 1).padStart(4, '0')}-01`
+    : `${String(year).padStart(4, '0')}-${String(month + 1).padStart(2, '0')}`;
+}
+
 export function formatCompetence(value: string, locale: string): string {
   const match = ISO_MONTH.exec(value);
   if (!match) return value;

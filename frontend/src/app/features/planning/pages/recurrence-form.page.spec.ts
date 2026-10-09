@@ -177,6 +177,26 @@ describe('RecurrenceFormPage', () => {
       expect(screen.queryByTestId('recurrence-category-option-cat-home')).not.toBeInTheDocument();
     });
 
+    it('Dado Receita, quando liga "Pertence ao mês seguinte", então cria com incomeCompetenceOffsetMonths 1; despesa não mostra a opção', async () => {
+      const { gateway, fixture } = await setup();
+      expect(screen.queryByTestId('recurrence-next-month-income')).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getByTestId('recurrence-type-INCOME'));
+      await type('recurrence-amount', '1500,00');
+      await type('recurrence-description', 'Adiantamento');
+      await pick('recurrence-category', 'cat-salary');
+      await pick('recurrence-account', 'acc-1');
+      await pick('recurrence-method', 'PIX');
+      await userEvent.click(screen.getByTestId('recurrence-next-month-income'));
+      await userEvent.click(screen.getByTestId('recurrence-form-save'));
+      await fixture.whenStable();
+
+      expect(gateway.creates[0]).toMatchObject({
+        type: 'INCOME',
+        incomeCompetenceOffsetMonths: 1,
+      });
+    });
+
     it('Dado Compra no cartão, então pede o cartão (à vista, sem parcelas) e não a conta nem o método', async () => {
       const { gateway, fixture } = await setup();
 
@@ -342,6 +362,27 @@ describe('RecurrenceFormPage', () => {
       expect(screen.queryByTestId('recurrence-end-mode')).not.toBeInTheDocument();
       expect(field('recurrence-amount').value).toBe('119,00');
       expect(field('recurrence-description').value).toBe('Internet');
+    });
+
+    it('Dado editar uma receita com deslocamento 1, então a opção vem ligada e o PUT reenvia o valor atual', async () => {
+      const gateway = new RecurrencesGatewayStub();
+      gateway.recurrences = [
+        existing({
+          type: 'INCOME',
+          incomeCompetenceOffsetMonths: 1,
+          category: { id: 'cat-salary', name: 'Salário' },
+        }),
+      ];
+      const { fixture } = await setup({ gateway, id: 'rec-1' });
+
+      expect(screen.getByTestId('recurrence-next-month-income')).toHaveAttribute(
+        'aria-checked',
+        'true',
+      );
+      await userEvent.click(screen.getByTestId('recurrence-form-save'));
+      await fixture.whenStable();
+
+      expect(gateway.updates[0]).toMatchObject({ incomeCompetenceOffsetMonths: 1 });
     });
 
     it('Dado salvar, então o corpo só tem os dados do modelo e a version (sem frequência nem início)', async () => {

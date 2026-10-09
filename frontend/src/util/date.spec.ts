@@ -4,6 +4,7 @@ import {
   formatInstant,
   formatIsoDate,
   isIsoDate,
+  nextMonthOf,
   relativeDay,
   todayIso,
   USER_TIME_ZONE,
@@ -89,6 +90,13 @@ describe('formatCompetenceShort e formatInstant', () => {
   it('Dado um instante UTC de madrugada, então mostra a data no fuso de São Paulo', () => {
     // 02:30 UTC de 05/10 ainda é 23:30 de 04/10 em São Paulo.
     expect(formatInstant('2026-10-05T02:30:00Z', 'pt-BR')).toMatch(/4 de outubro de 2026/);
+  });
+});
+
+describe('nextMonthOf', () => {
+  it('Dado uma data ou competência, então devolve o mês seguinte, inclusive na virada do ano', () => {
+    expect(nextMonthOf('2026-09-16')).toBe('2026-10');
+    expect(nextMonthOf('2026-12')).toBe('2027-01');
   });
 });
 

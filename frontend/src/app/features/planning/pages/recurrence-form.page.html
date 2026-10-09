@@ -159,6 +159,14 @@
           />
         </div>
       }
+      @if (isIncome()) {
+        <app-switch
+          formControlName="nextMonthIncome"
+          fieldId="recurrence-next-month-income"
+          [label]="t().recurrences.form.nextMonthIncome"
+          [hint]="t().recurrences.form.nextMonthIncomeHint"
+        />
+      }
       <app-date-picker
         formControlName="startDate"
         fieldId="recurrence-start"

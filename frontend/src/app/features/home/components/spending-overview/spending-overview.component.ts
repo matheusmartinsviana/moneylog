@@ -80,6 +80,9 @@ const HOME_PERIODS = ['D7', 'D30', 'M12'] as const satisfies readonly ReportPeri
           <p class="so__state" data-cy="home-overview-empty">{{ t().dashboard.overview.empty }}</p>
         }
         @default {
+          @if (basisHint(); as hint) {
+            <p class="so__basis" data-cy="home-overview-hint">{{ hint }}</p>
+          }
           @if (chart(); as view) {
             <!-- O gráfico (SVG próprio) é um chunk à parte: o Início abre sem esperar o código do desenho (T200). -->
             @defer (on immediate) {
@@ -124,6 +127,12 @@ export class SpendingOverviewComponent {
       income: overview.income,
       expenses: overview.expenses,
     });
+  });
+
+  /** Dia e semana = dinheiro que entrou (`DATE`); mês = renda do mês (`COMPETENCE`). O rótulo é do backend. */
+  protected readonly basisHint = computed(() => {
+    const state = this.state();
+    return state.status === 'ready' ? this.t().dashboard.overview.basis[state.data.basis] : null;
   });
 
   constructor() {

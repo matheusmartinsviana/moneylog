@@ -22,6 +22,7 @@ import { MoneyInputComponent } from '~/app/common/components/forms/money-input/m
 import { NumberStepperComponent } from '~/app/common/components/forms/number-stepper/number-stepper.component';
 import { SegmentedControlComponent } from '~/app/common/components/forms/segmented-control/segmented-control.component';
 import { SelectComponent } from '~/app/common/components/forms/select/select.component';
+import { SwitchComponent } from '~/app/common/components/forms/switch/switch.component';
 import { TextFieldComponent } from '~/app/common/components/forms/text-field/text-field.component';
 import { valueSignal } from '~/app/common/forms/control-signal';
 import { dirtySignal } from '~/app/common/forms/dirty-signal';
@@ -95,6 +96,7 @@ const PAYMENT_METHODS: readonly RecurrenceMethod[] = [
     TextFieldComponent,
     MoneyInputComponent,
     SelectComponent,
+    SwitchComponent,
     DatePickerComponent,
     NumberStepperComponent,
     SegmentedControlComponent,
@@ -140,6 +142,8 @@ export class RecurrenceFormPage {
     endMode: new FormControl<string | null>('none'),
     endDate: new FormControl<string | null>(null),
     maxOccurrences: new FormControl<number | null>(null),
+    /** Só receita (ADR-017): a renda de cada ocorrência pertence ao mês seguinte à data. */
+    nextMonthIncome: new FormControl(false, { nonNullable: true }),
   });
 
   /** Alterações digitadas e não salvas: fechar pede confirmação. */
@@ -151,6 +155,7 @@ export class RecurrenceFormPage {
   private readonly accountValue = valueSignal(this.form.controls.accountId);
   /** Com conta escolhida o meio de pagamento vale; sem ela, a conta e o meio ficam para a confirmação. */
   protected readonly hasAccount = computed(() => this.accountValue() !== null);
+  protected readonly isIncome = computed(() => this.typeValue() === 'INCOME');
   protected readonly isCard = computed(() => this.typeValue() === 'CARD_PURCHASE');
   protected readonly isCustom = computed(() => this.frequencyValue() === 'CUSTOM');
   protected readonly endMode = computed<EndMode>(() => {
@@ -293,6 +298,7 @@ export class RecurrenceFormPage {
           startDate: recurrence.startDate,
           endDate: recurrence.endDate,
           maxOccurrences: recurrence.maxOccurrences,
+          nextMonthIncome: recurrence.incomeCompetenceOffsetMonths === 1,
         });
       });
     });
@@ -348,6 +354,10 @@ export class RecurrenceFormPage {
             card || value.accountId === null ? null : (value.method as RecurrenceMethod | null),
           cardId: card ? value.cardId : null,
           endDate: value.endDate,
+          // Ausente mantém o atual no servidor; em receita mandamos o que o formulário mostra.
+          ...(recurrence.type === 'INCOME'
+            ? { incomeCompetenceOffsetMonths: value.nextMonthIncome ? (1 as const) : (0 as const) }
+            : {}),
           version: recurrence.version,
         },
       });
@@ -368,6 +378,9 @@ export class RecurrenceFormPage {
       startDate: value.startDate ?? todayIso(),
       endDate: mode === 'date' ? value.endDate : null,
       maxOccurrences: mode === 'max' ? value.maxOccurrences : null,
+      ...(value.type === 'INCOME' && value.nextMonthIncome
+        ? { incomeCompetenceOffsetMonths: 1 as const }
+        : {}),
     };
     this.facade.save({ kind: 'create', input });
   }

@@ -305,6 +305,7 @@ export function txView(w: World, rec: Rec): S['Transaction'] {
     ...(debt ? { debt: debtSummary(w, debt) } : {}),
     recurrenceId: rec.recurrenceId,
     occurrenceDate: rec.recurrenceId ? rec.date : null,
+    incomeCompetence: rec.type === 'INCOME' ? (rec.incomeCompetence ?? null) : null,
     impact: {
       cash: sign(cash),
       consumption,
@@ -548,6 +549,7 @@ export function recurrenceView(w: World, r: RecurrenceDef): S['Recurrence'] {
     endDate: null,
     maxOccurrences: null,
     active: true,
+    incomeCompetenceOffsetMonths: 0,
     ended: false,
     nextOccurrence: nextDateOf(r, w.today),
     monthlyEstimate: money(r.cents),

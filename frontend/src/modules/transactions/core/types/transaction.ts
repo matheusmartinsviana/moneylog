@@ -93,6 +93,11 @@ export interface Transaction {
   /** As dívidas que nasceram das partes de uma `EXPENSE` dividida (uma por parte); vazio nas demais. */
   readonly shares: readonly DebtSummary[];
   /** Recorrência de origem (`source: RECURRENCE`) e a data da ocorrência realizada. */
+  /**
+   * Competência da renda (`YYYY-MM`, ADR-017): só em receita, quando o dinheiro caiu em um mês e a renda é de
+   * outro. `null` = o mês de `date`. Vem do backend; o front não decide.
+   */
+  readonly incomeCompetence: string | null;
   readonly recurrenceId: string | null;
   readonly occurrenceDate: string | null;
   readonly impact: Impact;

@@ -58,6 +58,8 @@ export interface Recurrence {
   readonly endDate: string | null;
   readonly maxOccurrences: number | null;
   readonly active: boolean;
+  /** Só em receita: `1` = a renda de cada ocorrência pertence ao mês seguinte (ADR-017); `0` = o mês da data. */
+  readonly incomeCompetenceOffsetMonths: 0 | 1;
   /**
    * Derivado pelo backend (S-235): sem ocorrência hoje nem depois (fim passado ou número de
    * ocorrências esgotado). Encerrada: `monthlyEstimate` 0,00 e fora do custo fixo. Só exibe.
@@ -86,6 +88,8 @@ export interface RecurrenceInput {
   readonly startDate: string;
   readonly endDate: string | null;
   readonly maxOccurrences: number | null;
+  /** Só em receita (`0` padrão). */
+  readonly incomeCompetenceOffsetMonths?: 0 | 1;
 }
 
 /** Edição: só os dados do modelo (S-139); frequência e início não mudam. */
@@ -97,6 +101,8 @@ export interface RecurrenceUpdate {
   readonly method: RecurrenceMethod | null;
   readonly cardId: string | null;
   readonly endDate: string | null;
+  /** Só em receita; ausente mantém o atual no servidor. */
+  readonly incomeCompetenceOffsetMonths?: 0 | 1;
   readonly version: number;
 }
 

@@ -44,6 +44,26 @@
     [label]="t().entryForm.account"
   />
   <app-date-picker formControlName="date" fieldId="entry-date" [label]="t().entryForm.date" />
+  @if (type() === 'INCOME') {
+    <div class="income-month">
+      <app-month-picker
+        formControlName="incomeCompetence"
+        fieldId="entry-income-month"
+        [mandatory]="false"
+        [hint]="t().entryForm.incomeMonth.hint"
+        [label]="t().entryForm.incomeMonth.label"
+      />
+      <button
+        type="button"
+        class="button"
+        data-cy="entry-income-next-month"
+        data-marks-dirty
+        (click)="useNextMonth()"
+      >
+        {{ t().entryForm.incomeMonth.next }}
+      </button>
+    </div>
+  }
   @if (fixedMethod() === null) {
     <app-select
       formControlName="method"

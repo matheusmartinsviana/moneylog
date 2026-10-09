@@ -47,6 +47,7 @@ export function toRecurrence(response: RecurrenceResponse): Recurrence {
     endDate: response.endDate,
     maxOccurrences: response.maxOccurrences,
     active: response.active,
+    incomeCompetenceOffsetMonths: response.incomeCompetenceOffsetMonths === 1 ? 1 : 0,
     ended: response.ended ?? false,
     nextOccurrence: response.nextOccurrence,
     monthlyEstimate: money(response.monthlyEstimate),
@@ -132,6 +133,9 @@ export function toCreateRequest(input: RecurrenceInput): RecurrenceCreateRequest
     startDate: input.startDate,
     endDate: input.endDate,
     maxOccurrences: input.maxOccurrences,
+    ...(input.type === 'INCOME' && input.incomeCompetenceOffsetMonths === 1
+      ? { incomeCompetenceOffsetMonths: 1 }
+      : {}),
   };
 }
 
@@ -142,6 +146,9 @@ export function toUpdateRequest(input: RecurrenceUpdate): RecurrenceUpdateReques
     categoryId: input.categoryId,
     ...destination(input),
     endDate: input.endDate,
+    ...(input.incomeCompetenceOffsetMonths !== undefined
+      ? { incomeCompetenceOffsetMonths: input.incomeCompetenceOffsetMonths }
+      : {}),
     version: input.version,
   };
 }

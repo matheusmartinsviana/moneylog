@@ -41,6 +41,13 @@
             {{ amountSign() }}<app-money [value]="tx.amount" />
           </p>
 
+          @if (incomeMonth(); as note) {
+            <p class="detail__income-month" data-cy="detail-income-month">
+              <app-icon name="calendar" [size]="16" />
+              <span>{{ note }}</span>
+            </p>
+          }
+
           @if (tx.status === 'VOIDED') {
             <section class="voided" data-cy="detail-voided">
               <p class="voided__title">{{ t().transactions.voided }}</p>

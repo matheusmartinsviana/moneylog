@@ -14,6 +14,7 @@ import { Observable, startWith } from 'rxjs';
 import type { ChoiceOption } from '~/app/common/components/forms/choice-option';
 import { DatePickerComponent } from '~/app/common/components/forms/date-picker/date-picker.component';
 import { MoneyInputComponent } from '~/app/common/components/forms/money-input/money-input.component';
+import { MonthPickerComponent } from '~/app/common/components/forms/month-picker/month-picker.component';
 import { SelectComponent } from '~/app/common/components/forms/select/select.component';
 import { SwitchComponent } from '~/app/common/components/forms/switch/switch.component';
 import { TextFieldComponent } from '~/app/common/components/forms/text-field/text-field.component';
@@ -38,7 +39,7 @@ import type {
   IncomeInput,
   TransactionInput,
 } from '~/modules/transactions/core/types/transaction-input';
-import { todayIso } from '~/util/date';
+import { nextMonthOf, todayIso } from '~/util/date';
 import type { PersonRef } from '~/util/debt';
 
 /**
@@ -55,6 +56,7 @@ import type { PersonRef } from '~/util/debt';
     TextFieldComponent,
     SelectComponent,
     DatePickerComponent,
+    MonthPickerComponent,
     SwitchComponent,
     SharesFieldComponent,
     FormActionsComponent,
@@ -96,6 +98,8 @@ export class CashEntryFormComponent extends TransactionFormBase {
     personId: new FormControl<string | null>(null),
     accountId: new FormControl<string | null>(null),
     date: new FormControl<string | null>(todayIso()),
+    /** Só receita (ADR-017): vazio = o mês da data. */
+    incomeCompetence: new FormControl<string | null>(null),
     method: new FormControl<string | null>(null),
     shares: new FormArray<ShareGroup>([]),
   });
@@ -195,6 +199,8 @@ export class CashEntryFormComponent extends TransactionFormBase {
           accountId: initial.accountId,
           date: initial.date,
           method: initial.method,
+          incomeCompetence:
+            'incomeCompetence' in initial ? (initial.incomeCompetence ?? null) : null,
         }),
       );
     });
@@ -236,12 +242,26 @@ export class CashEntryFormComponent extends TransactionFormBase {
         ? { method: (this.fixedMethod() ?? value.method) as PaymentMethod }
         : {}),
       ...(shares.length > 0 && this.type() === 'EXPENSE' ? { shares } : {}),
+      // No PUT, ausente limpa a competência no servidor: reenviamos o valor atual (só se difere do mês da data).
+      ...(this.type() === 'INCOME' &&
+      value.incomeCompetence &&
+      value.incomeCompetence !== (value.date ?? todayIso()).slice(0, 7)
+        ? { incomeCompetence: value.incomeCompetence }
+        : {}),
     } as TransactionInput;
+  }
+
+  /** Atalho de um toque: a renda pertence ao mês seguinte ao da data. */
+  protected useNextMonth(): void {
+    const date = this.form.controls.date.value ?? todayIso();
+    this.form.controls.incomeCompetence.setValue(nextMonthOf(date));
+    this.form.controls.incomeCompetence.markAsDirty();
   }
 
   protected clearAfterSave(): void {
     this.form.controls.amount.reset(null);
     this.form.controls.description.reset('');
+    this.form.controls.incomeCompetence.reset(null);
     this.split.setValue(false);
     this.loan.setValue(false);
   }

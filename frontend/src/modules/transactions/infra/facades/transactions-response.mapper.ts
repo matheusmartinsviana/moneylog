@@ -70,6 +70,9 @@ export function toFormValue(response: TransactionResponse): TransactionInput | n
         accountId,
         categoryId: categoryId ?? '',
         method: response.method ?? 'OTHER',
+        ...(response.type === 'INCOME'
+          ? { incomeCompetence: response.incomeCompetence ?? null }
+          : {}),
       };
     case 'TRANSFER':
       if (!accountId || !counterpartId) return null;
@@ -161,6 +164,7 @@ export function toTransaction(response: TransactionResponse): Transaction {
       : null,
     debt: response.debt ? toDebtSummary(response.debt) : null,
     shares: (response.shares ?? []).map(toDebtSummary),
+    incomeCompetence: response.incomeCompetence ?? null,
     recurrenceId: response.recurrenceId ?? null,
     occurrenceDate: response.occurrenceDate ?? null,
     impact: {
@@ -264,6 +268,10 @@ export function toRequestBody(input: TransactionInput): TransactionCreateRequest
         accountId: input.accountId,
         ...category(input.categoryId),
         ...(input.method ? { method: input.method } : {}),
+        // Só a receita leva a competência; vazia é omitida (no PUT, ausente limpa no servidor).
+        ...(input.type === 'INCOME' && input.incomeCompetence
+          ? { incomeCompetence: input.incomeCompetence }
+          : {}),
         ...(input.type === 'EXPENSE' && input.shares && input.shares.length > 0
           ? {
               shares: input.shares.map((share) => ({

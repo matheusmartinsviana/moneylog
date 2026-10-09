@@ -1,10 +1,12 @@
 import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 
+import { IconComponent } from '~/app/common/components/icon/icon.component';
 import { MoneyComponent } from '~/app/common/components/money/money.component';
 import { HTML_LANG } from '~/app/common/i18n/i18n';
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { interpolate } from '~/app/common/i18n/interpolate';
 import { TransactionListItemComponent } from '~/app/features/transactions/components/transaction-list-item/transaction-list-item.component';
+import { incomeMonthNote } from '~/app/features/transactions/transaction-competence';
 import { Flow, flowOf, flowSign } from '~/app/features/transactions/transaction-flow';
 import { transactionLabel } from '~/app/features/transactions/transaction-label';
 import type { Transaction } from '~/modules/transactions/core/types/transaction';
@@ -16,7 +18,7 @@ import { formatIsoDate } from '~/util/date';
  */
 @Component({
   selector: 'app-records-table',
-  imports: [MoneyComponent, TransactionListItemComponent],
+  imports: [MoneyComponent, IconComponent, TransactionListItemComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './records-table.component.html',
   styleUrl: './records-table.component.css',
@@ -29,6 +31,10 @@ export class RecordsTableComponent {
   /** Filtro de conta ativo (define o sentido da transferência). */
   readonly accountId = input<string | null>(null);
   readonly open = output<Transaction>();
+
+  protected incomeMonth(tx: Transaction): string | null {
+    return incomeMonthNote(tx, this.t().transactions.incomeOf, HTML_LANG[this.i18n.language()]);
+  }
 
   protected date(tx: Transaction): string {
     return formatIsoDate(tx.date, HTML_LANG[this.i18n.language()]);

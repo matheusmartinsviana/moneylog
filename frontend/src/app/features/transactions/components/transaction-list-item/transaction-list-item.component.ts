@@ -1,9 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 
+import { IconComponent } from '~/app/common/components/icon/icon.component';
 import { MoneyComponent } from '~/app/common/components/money/money.component';
 import { HTML_LANG } from '~/app/common/i18n/i18n';
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { interpolate } from '~/app/common/i18n/interpolate';
+import { incomeMonthNote } from '~/app/features/transactions/transaction-competence';
 import { flowOf, flowSign } from '~/app/features/transactions/transaction-flow';
 import { transactionLabel } from '~/app/features/transactions/transaction-label';
 import type { Transaction } from '~/modules/transactions/core/types/transaction';
@@ -12,7 +14,7 @@ import { formatIsoDate } from '~/util/date';
 /** Uma movimentação como item de lista (celular). Presentational: o valor é o que a API devolveu. */
 @Component({
   selector: 'li[app-transaction-list-item]',
-  imports: [MoneyComponent],
+  imports: [MoneyComponent, IconComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     class: 'item row-hover',
@@ -39,6 +41,12 @@ import { formatIsoDate } from '~/util/date';
           · {{ dateLabel() ?? date() }}
         }
       </span>
+      @if (incomeMonth(); as note) {
+        <span class="item__income-month" [attr.data-cy]="'transaction-income-month-' + tx.id">
+          <app-icon name="calendar" [size]="14" />
+          <span>{{ note }}</span>
+        </span>
+      }
       @if (tx.status === 'VOIDED') {
         <span class="item__tag status" data-tone="warning">{{ t().transactions.voided }}</span>
       }
@@ -100,6 +108,13 @@ import { formatIsoDate } from '~/util/date';
       color: var(--color-text-muted);
       font-size: var(--text-xs);
     }
+    .item__income-month {
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+      color: var(--color-text-muted);
+      font-size: var(--text-xs);
+    }
     .item__tag {
       width: fit-content;
     }
@@ -138,6 +153,13 @@ export class TransactionListItemComponent {
   protected readonly sign = computed(() => flowSign(this.flow()));
   protected readonly date = computed(() =>
     formatIsoDate(this.transaction().date, HTML_LANG[this.i18n.language()]),
+  );
+  protected readonly incomeMonth = computed(() =>
+    incomeMonthNote(
+      this.transaction(),
+      this.t().transactions.incomeOf,
+      HTML_LANG[this.i18n.language()],
+    ),
   );
   protected readonly initial = computed(() => {
     const name = this.title();
