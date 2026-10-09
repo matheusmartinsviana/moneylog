@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { DisclosureComponent } from '~/app/common/components/disclosure/disclosure.component';
 import { PageLayoutComponent } from '~/app/common/components/page-layout/page-layout.component';
 import { SectionContainerComponent } from '~/app/common/components/section-container/section-container.component';
 import { I18nService } from '~/app/common/i18n/i18n.service';
@@ -18,6 +19,7 @@ import { AiStatusFacade } from '~/modules/ai/core/facades/ai-status.facade';
 @Component({
   selector: 'app-ai-page',
   imports: [
+    DisclosureComponent,
     RouterLink,
     PageLayoutComponent,
     SectionContainerComponent,
@@ -38,32 +40,36 @@ import { AiStatusFacade } from '~/modules/ai/core/facades/ai-status.facade';
           <app-ai-actions />
         </app-section-container>
 
-        <app-section-container [heading]="t().ai.history.title">
-          <app-ai-history />
-        </app-section-container>
+        <app-disclosure fieldId="ai-more" [heading]="t().brief.more" [headingLevel]="2">
+          <div class="ai__more">
+            <app-section-container [heading]="t().ai.history.title">
+              <app-ai-history />
+            </app-section-container>
 
-        <app-section-container [heading]="t().ai.settings.title">
-          <app-ai-settings-card />
-        </app-section-container>
+            <app-section-container [heading]="t().ai.settings.title">
+              <app-ai-settings-card />
+            </app-section-container>
 
-        <app-section-container [heading]="t().workspacePages.ai.howTitle">
-          <div class="ai__how" data-cy="ai-how">
-            <p>{{ t().workspacePages.ai.howIntro }}</p>
-            <dl class="ai__vars">
-              <dt><code>AI_PROVIDER</code></dt>
-              <dd>{{ t().workspacePages.ai.varProvider }}</dd>
-              <dt><code>AI_API_KEY</code></dt>
-              <dd>{{ t().workspacePages.ai.varKey }}</dd>
-              <dt><code>AI_MODEL</code></dt>
-              <dd>{{ t().workspacePages.ai.varModel }}</dd>
-            </dl>
-            <p class="ai__muted">{{ t().workspacePages.ai.howNote }}</p>
+            <app-section-container [heading]="t().workspacePages.ai.howTitle">
+              <div class="ai__how" data-cy="ai-how">
+                <p>{{ t().workspacePages.ai.howIntro }}</p>
+                <dl class="ai__vars">
+                  <dt><code>AI_PROVIDER</code></dt>
+                  <dd>{{ t().workspacePages.ai.varProvider }}</dd>
+                  <dt><code>AI_API_KEY</code></dt>
+                  <dd>{{ t().workspacePages.ai.varKey }}</dd>
+                  <dt><code>AI_MODEL</code></dt>
+                  <dd>{{ t().workspacePages.ai.varModel }}</dd>
+                </dl>
+                <p class="ai__muted">{{ t().workspacePages.ai.howNote }}</p>
+              </div>
+            </app-section-container>
+
+            <app-section-container [heading]="t().workspacePages.ai.privacyTitle">
+              <p data-cy="ai-privacy">{{ t().workspacePages.ai.privacyText }}</p>
+            </app-section-container>
           </div>
-        </app-section-container>
-
-        <app-section-container [heading]="t().workspacePages.ai.privacyTitle">
-          <p data-cy="ai-privacy">{{ t().workspacePages.ai.privacyText }}</p>
-        </app-section-container>
+        </app-disclosure>
 
         <a class="ai__link" routerLink="/settings" data-cy="ai-settings-link">{{
           t().nav.settings
@@ -76,6 +82,12 @@ import { AiStatusFacade } from '~/modules/ai/core/facades/ai-status.facade';
       display: grid;
       gap: var(--space-5);
       max-width: 44rem;
+    }
+
+    .ai__more {
+      display: grid;
+      gap: var(--space-5);
+      padding-top: var(--space-3);
     }
 
     .ai__how {

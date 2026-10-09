@@ -12,6 +12,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 
+import { DisclosureComponent } from '~/app/common/components/disclosure/disclosure.component';
 import {
   EmptyStateAction,
   EmptyStateComponent,
@@ -46,6 +47,7 @@ import { formatCompetenceShort } from '~/util/date';
 @Component({
   selector: 'app-invoice-page',
   imports: [
+    DisclosureComponent,
     LinkedNotesComponent,
     RouterLink,
     PageLayoutComponent,

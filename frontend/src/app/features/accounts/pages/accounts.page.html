@@ -1,83 +1,89 @@
-<app-page-layout [heading]="t().nav.accounts">
+<app-page-layout fit [heading]="t().nav.accounts">
   <a pageActions class="button button--primary" routerLink="/accounts/new" data-cy="accounts-add">
     {{ t().accounts.add }}
   </a>
 
-  <nav
-    class="tabs"
-    appSlideIndicator
-    [attr.aria-label]="t().accounts.tabsLabel"
-    data-cy="accounts-tabs"
-  >
-    <a
-      class="tab"
-      routerLink="/accounts"
-      data-cy="accounts-tab-active"
-      [attr.aria-current]="filter() === 'ACTIVE' ? 'page' : null"
+  <div class="fit-stack">
+    <nav
+      class="tabs"
+      appSlideIndicator
+      [attr.aria-label]="t().accounts.tabsLabel"
+      data-cy="accounts-tabs"
     >
-      {{ t().accounts.active }}
-    </a>
-    <a
-      class="tab"
-      routerLink="/accounts"
-      [queryParams]="{ status: 'ARCHIVED' }"
-      data-cy="accounts-tab-archived"
-      [attr.aria-current]="filter() === 'ARCHIVED' ? 'page' : null"
-    >
-      {{ t().accounts.archivedTab }}
-    </a>
-  </nav>
-
-  @if (reservationsBlocked()) {
-    <p class="banner" role="alert" data-cy="accounts-reservations-blocked">
-      {{ t().errors.codes['ACCOUNT_HAS_RESERVATIONS'] }}
-      <a class="button" routerLink="/goals" data-cy="accounts-reservations-goals">
-        {{ t().accounts.reservationsGoalsLink }}
+      <a
+        class="tab"
+        routerLink="/accounts"
+        data-cy="accounts-tab-active"
+        [attr.aria-current]="filter() === 'ACTIVE' ? 'page' : null"
+      >
+        {{ t().accounts.active }}
       </a>
-    </p>
-  }
+      <a
+        class="tab"
+        routerLink="/accounts"
+        [queryParams]="{ status: 'ARCHIVED' }"
+        data-cy="accounts-tab-archived"
+        [attr.aria-current]="filter() === 'ARCHIVED' ? 'page' : null"
+      >
+        {{ t().accounts.archivedTab }}
+      </a>
+    </nav>
 
-  @switch (accounts.state().status) {
-    @case ('loading') {
-      <div data-cy="accounts-loading">
-        <p class="visually-hidden" role="status">{{ t().accounts.loading }}</p>
-        <div class="list-skeleton" aria-hidden="true">
-          <div class="list-skeleton__row"></div>
-          <div class="list-skeleton__row"></div>
-          <div class="list-skeleton__row"></div>
-        </div>
-      </div>
-    }
-    @case ('empty') {
-      @if (filter() === 'ACTIVE') {
-        <app-empty-state
-          [heading]="t().emptyState.accounts.title"
-          [description]="t().emptyState.accounts.description"
-          [actions]="emptyActions()"
-          illustration="grid"
-        />
-      } @else {
-        <p class="empty-note" data-cy="accounts-empty-archived">{{ t().accounts.emptyArchived }}</p>
+    <div class="fit-scroll">
+      @if (reservationsBlocked()) {
+        <p class="banner" role="alert" data-cy="accounts-reservations-blocked">
+          {{ t().errors.codes['ACCOUNT_HAS_RESERVATIONS'] }}
+          <a class="button" routerLink="/goals" data-cy="accounts-reservations-goals">
+            {{ t().accounts.reservationsGoalsLink }}
+          </a>
+        </p>
       }
-    }
-    @case ('error') {
-      <app-error-state [problem]="accounts.error()" (retry)="retry()" />
-    }
-    @case ('ready') {
-      @if (accounts.data(); as data) {
-        <ul class="list" data-cy="accounts-list">
-          @for (account of data; track account.id) {
-            <li
-              app-account-row
-              [account]="account"
-              (archive)="askArchive($event)"
-              (unarchive)="unarchive($event)"
-            ></li>
+
+      @switch (accounts.state().status) {
+        @case ('loading') {
+          <div data-cy="accounts-loading">
+            <p class="visually-hidden" role="status">{{ t().accounts.loading }}</p>
+            <div class="list-skeleton" aria-hidden="true">
+              <div class="list-skeleton__row"></div>
+              <div class="list-skeleton__row"></div>
+              <div class="list-skeleton__row"></div>
+            </div>
+          </div>
+        }
+        @case ('empty') {
+          @if (filter() === 'ACTIVE') {
+            <app-empty-state
+              [heading]="t().emptyState.accounts.title"
+              [description]="t().emptyState.accounts.description"
+              [actions]="emptyActions()"
+              illustration="grid"
+            />
+          } @else {
+            <p class="empty-note" data-cy="accounts-empty-archived">
+              {{ t().accounts.emptyArchived }}
+            </p>
           }
-        </ul>
+        }
+        @case ('error') {
+          <app-error-state [problem]="accounts.error()" (retry)="retry()" />
+        }
+        @case ('ready') {
+          @if (accounts.data(); as data) {
+            <ul class="list" data-cy="accounts-list">
+              @for (account of data; track account.id) {
+                <li
+                  app-account-row
+                  [account]="account"
+                  (archive)="askArchive($event)"
+                  (unarchive)="unarchive($event)"
+                ></li>
+              }
+            </ul>
+          }
+        }
       }
-    }
-  }
+    </div>
+  </div>
 
   <app-confirm-dialog
     [open]="pendingArchive() !== null"

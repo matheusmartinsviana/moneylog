@@ -107,3 +107,9 @@
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
+
+.more {
+  display: grid;
+  gap: var(--section-gap);
+  padding-top: var(--space-3);
+}

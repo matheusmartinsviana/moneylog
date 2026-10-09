@@ -315,15 +315,6 @@ export abstract class AppI18n {
       readonly cardFutureInstallments: string;
       readonly cardFutureInstallmentsNote: string;
     };
-    readonly actions: {
-      readonly transactions: string;
-      readonly goals: string;
-      readonly summary: string;
-      readonly projections: string;
-      /** Atalho "Meta" (T101): reserva rápida ou nova meta. */
-      readonly goalQuick: string;
-      readonly smartGoal: string;
-    };
     /** Reservado em metas (T101): o texto da fórmula e o caminho para as metas. */
     readonly reservedNote: {
       readonly formula: string;
@@ -350,31 +341,6 @@ export abstract class AppI18n {
 
   /** Início redesenhado (fatia C1): KPIs, contas, gráficos, recentes, insight e orçamento "em breve". */
   abstract readonly dashboard: {
-    readonly legacyTitle: string;
-    readonly legacyDescription: string;
-    readonly quickCapture: {
-      readonly title: string;
-      readonly description: string;
-      readonly descriptionPlaceholder: string;
-      readonly typeLabel: string;
-      readonly expense: string;
-      readonly income: string;
-      readonly loan: string;
-      readonly moreOptions: string;
-      readonly loading: string;
-      readonly error: string;
-      readonly retry: string;
-      readonly empty: {
-        readonly title: string;
-        readonly description: string;
-        readonly action: string;
-      };
-      readonly ai: {
-        readonly title: string;
-        readonly hint: string;
-        readonly learnMore: string;
-      };
-    };
     readonly kpis: {
       readonly label: string;
       readonly thisMonth: string;
@@ -399,27 +365,8 @@ export abstract class AppI18n {
       readonly retry: string;
       readonly loading: string;
     };
-    readonly accounts: {
-      readonly title: string;
-      readonly description: string;
-      readonly listLabel: string;
-      /** `{name}`: nome da conta. */
-      readonly open: string;
-      readonly reserved: string;
-      readonly invoiceTitle: string;
-      readonly noInvoice: string;
-      readonly limitAvailable: string;
-      readonly overLimit: string;
-      readonly loading: string;
-      readonly error: string;
-      readonly retry: string;
-      readonly empty: { readonly title: string; readonly description: string };
-      readonly create: string;
-      readonly viewAll: string;
-    };
     readonly overview: {
       readonly title: string;
-      readonly description: string;
       readonly periodLabel: string;
       readonly periods: {
         readonly D7: string;
@@ -427,10 +374,8 @@ export abstract class AppI18n {
         readonly M3: string;
         readonly M12: string;
       };
-      readonly basis: { readonly DATE: string; readonly COMPETENCE: string };
       readonly income: string;
       readonly expenses: string;
-      readonly net: string;
       readonly empty: string;
       readonly error: string;
       readonly retry: string;
@@ -446,28 +391,6 @@ export abstract class AppI18n {
       readonly error: string;
       readonly retry: string;
       readonly loading: string;
-    };
-    readonly recent: {
-      readonly title: string;
-      readonly viewAll: string;
-      readonly today: string;
-      readonly yesterday: string;
-      readonly empty: string;
-      readonly error: string;
-      readonly retry: string;
-      readonly loading: string;
-    };
-    readonly insight: {
-      readonly title: string;
-      readonly viewAll: string;
-      readonly askAi: string;
-      readonly askAiHint: string;
-    };
-    readonly budget: {
-      readonly title: string;
-      readonly description: string;
-      readonly soon: string;
-      readonly learnMore: string;
     };
   };
 
@@ -1738,6 +1661,7 @@ export abstract class AppI18n {
       readonly debts: string;
       readonly thirdParties: string;
       readonly commitments: string;
+      readonly overview: string;
     };
     /** Custo fixo e receita recorrente mensais: sempre rotulados como estimativa (S-146). */
     readonly summary: {
@@ -2030,12 +1954,6 @@ export abstract class AppI18n {
       readonly inProgress: string;
       readonly empty: string;
       readonly note: string;
-    };
-    readonly summary: {
-      readonly title: string;
-      readonly description: string;
-      readonly viewAll: string;
-      readonly add: string;
     };
     readonly status: Readonly<Record<'ACTIVE' | 'ACHIEVED' | 'ARCHIVED', string>>;
     readonly priority: Readonly<Record<'HIGH' | 'MEDIUM' | 'LOW', string>>;
@@ -3199,7 +3117,6 @@ export abstract class AppI18n {
         readonly cancel: string;
       };
     };
-    readonly home: { readonly title: string; readonly open: string };
     readonly month: {
       readonly title: string;
       readonly description: string;
@@ -3331,6 +3248,32 @@ export abstract class AppI18n {
       readonly cancel: string;
       readonly toast: string;
     };
+  };
+
+  /** Telas "sucintas" (Início e demais): só o essencial acima da dobra. */
+  abstract readonly brief: {
+    readonly register: string;
+    readonly registerMore: string;
+    readonly result: string;
+    readonly resultCaption: string;
+    readonly savings: string;
+    readonly upcoming: {
+      readonly title: string;
+      readonly empty: string;
+      readonly viewAll: string;
+    };
+    readonly featuredGoal: {
+      readonly title: string;
+      readonly empty: string;
+      readonly create: string;
+      readonly open: string;
+    };
+    readonly viewTransactions: string;
+    readonly panorama: {
+      readonly description: string;
+    };
+    readonly settingsLinks: string;
+    readonly more: string;
   };
 
   abstract readonly notFound: EmptyStateCopy & {

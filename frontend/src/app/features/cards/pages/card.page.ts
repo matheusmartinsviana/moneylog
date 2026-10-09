@@ -12,6 +12,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
 
+import { DisclosureComponent } from '~/app/common/components/disclosure/disclosure.component';
 import {
   EmptyStateAction,
   EmptyStateComponent,
@@ -51,6 +52,7 @@ type ActionId = 'pay' | 'purchase' | 'ongoing' | 'edit';
 @Component({
   selector: 'app-card-page',
   imports: [
+    DisclosureComponent,
     RouterOutlet,
     LinkedNotesComponent,
     RouterLink,

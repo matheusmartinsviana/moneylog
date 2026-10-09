@@ -12,6 +12,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink, RouterOutlet } from '@angular/router';
 
 import { ConfirmDialogComponent } from '~/app/common/components/confirm-dialog/confirm-dialog.component';
+import { DisclosureComponent } from '~/app/common/components/disclosure/disclosure.component';
 import { EmptyStateComponent } from '~/app/common/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '~/app/common/components/error-state/error-state.component';
 import { MoneyComponent } from '~/app/common/components/money/money.component';
@@ -50,6 +51,7 @@ import { formatRatio, ratioForBar } from '~/util/ratio';
 @Component({
   selector: 'app-goal-page',
   imports: [
+    DisclosureComponent,
     RouterOutlet,
     LinkedNotesComponent,
     RouterLink,

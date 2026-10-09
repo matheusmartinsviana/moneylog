@@ -1,184 +1,194 @@
-<app-page-layout [heading]="t().nav.planning">
-  <app-planning-nav current="thirdParties" />
+<app-page-layout fit [heading]="t().nav.planning">
+  <div class="fit-stack">
+    <app-planning-nav current="thirdParties" />
 
-  <header class="intro">
-    <h2 class="intro__title">{{ t().thirdParties.title }}</h2>
-    <p class="note" data-cy="tp-description">{{ t().thirdParties.description }}</p>
-    @if (receivables.data()) {
-      <button type="button" class="button" data-cy="tp-register-receipt" (click)="openRegister()">
-        {{ t().thirdParties.receipts.register }}
-      </button>
-    }
-  </header>
-  @if (removeError(); as message) {
-    <p class="banner" role="alert" data-cy="tp-remove-error">{{ message }}</p>
-  }
+    <header class="intro">
+      <h2 class="intro__title">{{ t().thirdParties.title }}</h2>
+      <p class="note" data-cy="tp-description">{{ t().thirdParties.description }}</p>
+      @if (receivables.data()) {
+        <button type="button" class="button" data-cy="tp-register-receipt" (click)="openRegister()">
+          {{ t().thirdParties.receipts.register }}
+        </button>
+      }
+    </header>
+    <div class="fit-scroll">
+      @if (removeError(); as message) {
+        <p class="banner" role="alert" data-cy="tp-remove-error">{{ message }}</p>
+      }
 
-  @switch (receivables.state().status) {
-    @case ('loading') {
-      <div data-cy="third-parties-loading">
-        <p class="visually-hidden" role="status">{{ t().thirdParties.loading }}</p>
-        <div class="list-skeleton" aria-hidden="true">
-          <div class="list-skeleton__row"></div>
-          <div class="list-skeleton__row"></div>
-          <div class="list-skeleton__row"></div>
-        </div>
-      </div>
-    }
-    @case ('error') {
-      <app-error-state [problem]="receivables.error()" (retry)="retry()" />
-    }
-    @case ('empty') {
-      <app-empty-state
-        [heading]="t().thirdParties.empty.title"
-        [description]="t().thirdParties.empty.description"
-        [actions]="emptyActions()"
-        illustration="timeline"
-      />
-    }
-    @case ('ready') {
-      @if (receivables.data(); as data) {
-        <section class="total surface" aria-labelledby="tp-total-title" data-cy="tp-total">
-          <h2 class="total__title" id="tp-total-title">{{ t().thirdParties.total.title }}</h2>
-          <p class="total__value" data-cy="tp-total-pending">
-            <span class="total__label">{{ t().thirdParties.total.pending }}</span>
-            <app-money [value]="data.pending" />
-          </p>
-          <dl class="facts">
-            <div class="fact">
-              <dt>{{ t().thirdParties.total.owed }}</dt>
-              <dd data-cy="tp-total-owed"><app-money [value]="data.owed" /></dd>
+      @switch (receivables.state().status) {
+        @case ('loading') {
+          <div data-cy="third-parties-loading">
+            <p class="visually-hidden" role="status">{{ t().thirdParties.loading }}</p>
+            <div class="list-skeleton" aria-hidden="true">
+              <div class="list-skeleton__row"></div>
+              <div class="list-skeleton__row"></div>
+              <div class="list-skeleton__row"></div>
             </div>
-            <div class="fact">
-              <dt>{{ t().thirdParties.total.received }}</dt>
-              <dd data-cy="tp-total-received"><app-money [value]="data.received" /></dd>
-            </div>
-          </dl>
-          <p class="note" data-cy="tp-as-of">{{ asOf(data.asOf) }}</p>
-          <p class="note">{{ t().thirdParties.total.note }}</p>
-        </section>
+          </div>
+        }
+        @case ('error') {
+          <app-error-state [problem]="receivables.error()" (retry)="retry()" />
+        }
+        @case ('empty') {
+          <app-empty-state
+            [heading]="t().thirdParties.empty.title"
+            [description]="t().thirdParties.empty.description"
+            [actions]="emptyActions()"
+            illustration="timeline"
+          />
+        }
+        @case ('ready') {
+          @if (receivables.data(); as data) {
+            <section class="total surface" aria-labelledby="tp-total-title" data-cy="tp-total">
+              <h2 class="total__title" id="tp-total-title">{{ t().thirdParties.total.title }}</h2>
+              <p class="total__value" data-cy="tp-total-pending">
+                <span class="total__label">{{ t().thirdParties.total.pending }}</span>
+                <app-money [value]="data.pending" />
+              </p>
+              <dl class="facts">
+                <div class="fact">
+                  <dt>{{ t().thirdParties.total.owed }}</dt>
+                  <dd data-cy="tp-total-owed"><app-money [value]="data.owed" /></dd>
+                </div>
+                <div class="fact">
+                  <dt>{{ t().thirdParties.total.received }}</dt>
+                  <dd data-cy="tp-total-received"><app-money [value]="data.received" /></dd>
+                </div>
+              </dl>
+              <p class="note" data-cy="tp-as-of">{{ asOf(data.asOf) }}</p>
+              <p class="note">{{ t().thirdParties.total.note }}</p>
+            </section>
 
-        <app-section-container [heading]="t().thirdParties.people.title">
-          @if (data.people.length === 0) {
-            <p class="note" data-cy="tp-people-empty">{{ t().thirdParties.people.none }}</p>
-          } @else {
-            <ul class="people" data-cy="tp-people">
-              @for (person of data.people; track person.personId) {
-                <li class="person row-card" [attr.data-cy]="'tp-person-' + person.personId">
-                  <div class="person__head">
-                    <a class="link" [routerLink]="['/people', person.personId]">{{
-                      person.name
-                    }}</a>
-                    <strong [attr.data-cy]="'tp-person-pending-' + person.personId"
-                      ><app-money [value]="person.pending"
-                    /></strong>
+            <app-section-container [heading]="t().thirdParties.people.title">
+              @if (data.people.length === 0) {
+                <p class="note" data-cy="tp-people-empty">{{ t().thirdParties.people.none }}</p>
+              } @else {
+                <ul class="people" data-cy="tp-people">
+                  @for (person of data.people; track person.personId) {
+                    <li class="person row-card" [attr.data-cy]="'tp-person-' + person.personId">
+                      <div class="person__head">
+                        <a class="link" [routerLink]="['/people', person.personId]">{{
+                          person.name
+                        }}</a>
+                        <strong [attr.data-cy]="'tp-person-pending-' + person.personId"
+                          ><app-money [value]="person.pending"
+                        /></strong>
+                      </div>
+                      <dl class="mini">
+                        <div>
+                          <dt>{{ t().thirdParties.people.owed }}</dt>
+                          <dd><app-money [value]="person.owed" /></dd>
+                        </div>
+                        <div>
+                          <dt>{{ t().thirdParties.people.received }}</dt>
+                          <dd><app-money [value]="person.received" /></dd>
+                        </div>
+                      </dl>
+                      <ul class="items">
+                        @for (item of person.items; track item.refId) {
+                          <li class="item" [attr.data-cy]="'tp-item-' + item.refId">
+                            <div class="person__head">
+                              @if (link(item); as target) {
+                                <a class="link" [routerLink]="target">{{
+                                  item.description ?? t().thirdParties.people.noDescription
+                                }}</a>
+                              } @else {
+                                <span>{{
+                                  item.description ?? t().thirdParties.people.noDescription
+                                }}</span>
+                              }
+                              <span><app-money [value]="item.pending" /></span>
+                            </div>
+                            <p class="note">
+                              <span class="status">{{
+                                t().thirdParties.people.source[item.source]
+                              }}</span>
+                              @if (expected(item.expectedDate); as text) {
+                                {{ text }}
+                              }
+                            </p>
+                            @if (item.source === 'RECEIPT') {
+                              <p class="note" [attr.data-cy]="'tp-receipt-note-' + item.refId">
+                                {{ t().thirdParties.receipts.reflected }}
+                              </p>
+                              <button
+                                type="button"
+                                class="button"
+                                [attr.data-cy]="'tp-receipt-remove-' + item.refId"
+                                [attr.aria-label]="t().thirdParties.receipts.removeLabel"
+                                (click)="askRemove(item.refId)"
+                              >
+                                {{ t().thirdParties.receipts.remove }}
+                              </button>
+                            }
+                          </li>
+                        }
+                      </ul>
+                    </li>
+                  }
+                </ul>
+              }
+            </app-section-container>
+
+            <app-disclosure fieldId="tp-more" [heading]="t().brief.more" [headingLevel]="2">
+              <div class="more">
+                <app-section-container
+                  [heading]="t().thirdParties.month.title"
+                  [description]="t().thirdParties.month.description"
+                >
+                  <div class="picker">
+                    <app-month-picker
+                      [formControl]="picker"
+                      fieldId="tp-month"
+                      [label]="t().thirdParties.month.picker"
+                      [min]="minMonth"
+                      [max]="maxMonth"
+                    />
                   </div>
-                  <dl class="mini">
-                    <div>
-                      <dt>{{ t().thirdParties.people.owed }}</dt>
-                      <dd><app-money [value]="person.owed" /></dd>
+                  <dl class="facts" data-cy="tp-month" [attr.aria-label]="monthLabel()">
+                    <div class="fact">
+                      <dt>{{ t().thirdParties.month.gross }}</dt>
+                      <dd data-cy="tp-gross">
+                        <app-money [value]="data.month.grossConsumption" />
+                      </dd>
                     </div>
-                    <div>
-                      <dt>{{ t().thirdParties.people.received }}</dt>
-                      <dd><app-money [value]="person.received" /></dd>
+                    <div class="fact">
+                      <dt>{{ t().thirdParties.month.thirdParty }}</dt>
+                      <dd data-cy="tp-third-party">
+                        <app-money [value]="data.month.thirdPartyConsumption" />
+                      </dd>
+                    </div>
+                    <div class="fact">
+                      <dt>{{ t().thirdParties.month.reimbursed }}</dt>
+                      <dd data-cy="tp-reimbursed">
+                        <app-money [value]="data.month.thirdPartyReimbursed" />
+                      </dd>
+                    </div>
+                    <div class="fact">
+                      <dt>{{ t().thirdParties.month.pending }}</dt>
+                      <dd data-cy="tp-month-pending">
+                        <app-money [value]="data.month.thirdPartyPending" />
+                      </dd>
+                    </div>
+                    <div class="fact">
+                      <dt>{{ t().thirdParties.month.refunds }}</dt>
+                      <dd data-cy="tp-refunds"><app-money [value]="data.month.refunds" /></dd>
+                    </div>
+                    <div class="fact fact--strong">
+                      <dt>{{ t().thirdParties.month.personalNet }}</dt>
+                      <dd data-cy="tp-net"><app-money [value]="data.month.personalNet" /></dd>
                     </div>
                   </dl>
-                  <ul class="items">
-                    @for (item of person.items; track item.refId) {
-                      <li class="item" [attr.data-cy]="'tp-item-' + item.refId">
-                        <div class="person__head">
-                          @if (link(item); as target) {
-                            <a class="link" [routerLink]="target">{{
-                              item.description ?? t().thirdParties.people.noDescription
-                            }}</a>
-                          } @else {
-                            <span>{{
-                              item.description ?? t().thirdParties.people.noDescription
-                            }}</span>
-                          }
-                          <span><app-money [value]="item.pending" /></span>
-                        </div>
-                        <p class="note">
-                          <span class="status">{{
-                            t().thirdParties.people.source[item.source]
-                          }}</span>
-                          @if (expected(item.expectedDate); as text) {
-                            {{ text }}
-                          }
-                        </p>
-                        @if (item.source === 'RECEIPT') {
-                          <p class="note" [attr.data-cy]="'tp-receipt-note-' + item.refId">
-                            {{ t().thirdParties.receipts.reflected }}
-                          </p>
-                          <button
-                            type="button"
-                            class="button"
-                            [attr.data-cy]="'tp-receipt-remove-' + item.refId"
-                            [attr.aria-label]="t().thirdParties.receipts.removeLabel"
-                            (click)="askRemove(item.refId)"
-                          >
-                            {{ t().thirdParties.receipts.remove }}
-                          </button>
-                        }
-                      </li>
-                    }
-                  </ul>
-                </li>
-              }
-            </ul>
+                  <p class="note">{{ t().thirdParties.month.note }}</p>
+                </app-section-container>
+              </div>
+            </app-disclosure>
           }
-        </app-section-container>
-
-        <app-section-container
-          [heading]="t().thirdParties.month.title"
-          [description]="t().thirdParties.month.description"
-        >
-          <div class="picker">
-            <app-month-picker
-              [formControl]="picker"
-              fieldId="tp-month"
-              [label]="t().thirdParties.month.picker"
-              [min]="minMonth"
-              [max]="maxMonth"
-            />
-          </div>
-          <dl class="facts" data-cy="tp-month" [attr.aria-label]="monthLabel()">
-            <div class="fact">
-              <dt>{{ t().thirdParties.month.gross }}</dt>
-              <dd data-cy="tp-gross"><app-money [value]="data.month.grossConsumption" /></dd>
-            </div>
-            <div class="fact">
-              <dt>{{ t().thirdParties.month.thirdParty }}</dt>
-              <dd data-cy="tp-third-party">
-                <app-money [value]="data.month.thirdPartyConsumption" />
-              </dd>
-            </div>
-            <div class="fact">
-              <dt>{{ t().thirdParties.month.reimbursed }}</dt>
-              <dd data-cy="tp-reimbursed">
-                <app-money [value]="data.month.thirdPartyReimbursed" />
-              </dd>
-            </div>
-            <div class="fact">
-              <dt>{{ t().thirdParties.month.pending }}</dt>
-              <dd data-cy="tp-month-pending">
-                <app-money [value]="data.month.thirdPartyPending" />
-              </dd>
-            </div>
-            <div class="fact">
-              <dt>{{ t().thirdParties.month.refunds }}</dt>
-              <dd data-cy="tp-refunds"><app-money [value]="data.month.refunds" /></dd>
-            </div>
-            <div class="fact fact--strong">
-              <dt>{{ t().thirdParties.month.personalNet }}</dt>
-              <dd data-cy="tp-net"><app-money [value]="data.month.personalNet" /></dd>
-            </div>
-          </dl>
-          <p class="note">{{ t().thirdParties.month.note }}</p>
-        </app-section-container>
+        }
       }
-    }
-  }
+    </div>
+  </div>
 
   <app-confirm-dialog
     [open]="pendingRemove() !== null"

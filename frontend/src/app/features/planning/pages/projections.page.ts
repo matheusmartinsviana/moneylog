@@ -11,6 +11,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
+import { DisclosureComponent } from '~/app/common/components/disclosure/disclosure.component';
 import {
   EmptyStateAction,
   EmptyStateComponent,
@@ -48,6 +49,7 @@ import { formatCompetence, formatIsoDate } from '~/util/date';
 @Component({
   selector: 'app-projections-page',
   imports: [
+    DisclosureComponent,
     ReactiveFormsModule,
     PageLayoutComponent,
     SectionContainerComponent,

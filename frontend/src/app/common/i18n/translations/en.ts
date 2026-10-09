@@ -328,14 +328,6 @@ export const en: AppI18n = {
       cardFutureInstallments: 'Future card installments',
       cardFutureInstallmentsNote: 'Not in the total: they count month by month, as they fall due.',
     },
-    actions: {
-      transactions: 'View transactions',
-      goals: 'View goals',
-      summary: 'Month summary',
-      projections: 'View projections',
-      goalQuick: 'Goal',
-      smartGoal: 'Smart goal',
-    },
     reservedNote: {
       formula:
         'Available = in accounts − committed in 30 days − reserved. The server does the math; nothing is calculated here.',
@@ -359,31 +351,6 @@ export const en: AppI18n = {
     },
   },
   dashboard: {
-    legacyTitle: 'Commitments and net worth',
-    legacyDescription: 'Available, upcoming commitments, month, net worth and cards.',
-    quickCapture: {
-      title: 'Record a transaction',
-      description: 'Amount, description and category in a few taps.',
-      descriptionPlaceholder: 'E.g. lunch',
-      typeLabel: 'Type',
-      expense: 'Expense',
-      income: 'Income',
-      loan: 'I lent',
-      moreOptions: 'More options',
-      loading: 'Loading accounts and categories.',
-      error: 'Could not load accounts and categories.',
-      retry: 'Try again',
-      empty: {
-        title: 'Create an account to record',
-        description: 'A transaction needs a balance account.',
-        action: 'Create account',
-      },
-      ai: {
-        title: 'AI interpretation',
-        hint: 'Available when AI is configured.',
-        learnMore: 'Learn more',
-      },
-    },
     kpis: {
       label: 'Month indicators',
       thisMonth: 'This month',
@@ -407,35 +374,12 @@ export const en: AppI18n = {
       retry: 'Try again',
       loading: 'Loading the indicators.',
     },
-    accounts: {
-      title: 'Accounts',
-      description: 'Current balance of each active account and the invoice of each card.',
-      listLabel: 'Accounts and cards',
-      open: 'Open {name}',
-      reserved: 'Reserved for goals',
-      invoiceTitle: 'Current invoice',
-      noInvoice: 'No open invoice',
-      limitAvailable: 'Available limit',
-      overLimit: 'Over the limit',
-      loading: 'Loading the accounts.',
-      error: 'Could not load the accounts.',
-      retry: 'Try again',
-      empty: {
-        title: 'No active accounts.',
-        description: 'Create an account to see the balances here.',
-      },
-      create: 'Create account',
-      viewAll: 'View accounts',
-    },
     overview: {
       title: 'Income and expenses',
-      description: 'Result of the period: income minus spending. Not the balance of your accounts.',
       periodLabel: 'Period',
       periods: { D7: '7 days', D30: '30 days', M3: '3 months', M12: '12 months' },
-      basis: { DATE: 'By date', COMPETENCE: 'By competence' },
       income: 'Income',
       expenses: 'Expenses',
-      net: 'Result of the period',
       empty: 'No income or expenses in this period.',
       error: 'Could not load the chart.',
       retry: 'Try again',
@@ -450,28 +394,6 @@ export const en: AppI18n = {
       error: 'Could not load the categories.',
       retry: 'Try again',
       loading: 'Loading the categories.',
-    },
-    recent: {
-      title: 'Recent',
-      viewAll: 'View all',
-      today: 'Today',
-      yesterday: 'Yesterday',
-      empty: 'No recent transactions.',
-      error: 'Could not load the transactions.',
-      retry: 'Try again',
-      loading: 'Loading the transactions.',
-    },
-    insight: {
-      title: 'Insight',
-      viewAll: 'See all',
-      askAi: 'Ask AI',
-      askAiHint: 'Available when AI is turned on',
-    },
-    budget: {
-      title: 'Monthly budget',
-      description: 'Budgets by category are coming soon.',
-      soon: 'Coming soon',
-      learnMore: 'Learn more',
     },
   },
   ai: {
@@ -1964,6 +1886,7 @@ export const en: AppI18n = {
       debts: 'Total debts',
       thirdParties: 'To receive',
       commitments: 'Commitments',
+      overview: 'Overview',
     },
     summary: {
       title: 'Monthly estimate',
@@ -2269,12 +2192,6 @@ export const en: AppI18n = {
       inProgress: 'In progress',
       empty: 'The timeline appears when the goal has a deadline.',
       note: 'A month without data never counts as met.',
-    },
-    summary: {
-      title: 'Goals',
-      description: 'Which step each goal is on.',
-      viewAll: 'View goals',
-      add: 'New smart goal',
     },
     status: { ACTIVE: 'Active', ACHIEVED: 'Achieved', ARCHIVED: 'Archived' },
     priority: { HIGH: 'High', MEDIUM: 'Medium', LOW: 'Low' },
@@ -3344,7 +3261,6 @@ export const en: AppI18n = {
         cancel: 'Cancel',
       },
     },
-    home: { title: 'To receive from others', open: 'See details' },
     month: {
       title: 'Month spending: gross, third-party and net',
       description:
@@ -3471,6 +3387,31 @@ export const en: AppI18n = {
       cancel: 'Cancel',
       toast: 'Commitment added.',
     },
+  },
+
+  brief: {
+    register: 'Add entry',
+    registerMore: 'More ways to add',
+    result: 'Result',
+    resultCaption: 'Income minus spending this month',
+    savings: 'Savings',
+    upcoming: {
+      title: 'Upcoming commitments',
+      empty: 'Nothing is due in the next 7 days.',
+      viewAll: 'View all',
+    },
+    featuredGoal: {
+      title: 'Featured goal',
+      empty: 'Create a goal to follow it here.',
+      create: 'Create goal',
+      open: 'Open {name}',
+    },
+    viewTransactions: 'View transactions',
+    panorama: {
+      description: 'Available, commitments, month, net worth and cards in one place.',
+    },
+    settingsLinks: 'Other settings',
+    more: 'More',
   },
 
   notFound: {

@@ -2,22 +2,23 @@ import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/cor
 import { RouterLink } from '@angular/router';
 
 import { MoneyComponent } from '~/app/common/components/money/money.component';
-import { SectionContainerComponent } from '~/app/common/components/section-container/section-container.component';
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { DebtOverviewFacade } from '~/modules/debt-overview/core/facades/debt-overview.facade';
 
 /**
- * "Você deve" no Início (smart): o total e as três partes **como o servidor calculou**, com link para a
- * página de dívidas totais. Nada cadastrado convida a cadastrar, sem número; erro degrada só este cartão
+ * "Você deve" no Início (smart, sucinto): o total **como o servidor calculou**, com link para a página de dívidas
+ * totais (as três partes ficam lá). Nada cadastrado convida a cadastrar, sem número; erro degrada só este cartão
  * (o Início segue de pé) com "Tentar de novo". Escopo próprio: a facade nasce com o cartão.
  */
 @Component({
   selector: 'app-debt-summary-card',
-  imports: [RouterLink, MoneyComponent, SectionContainerComponent],
+  imports: [RouterLink, MoneyComponent],
   providers: [DebtOverviewFacade],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <app-section-container [heading]="t().debtOverview.home.title">
+    <!-- Só o total e o link; as três partes ficam na página de dívidas totais. -->
+    <section class="brief glass" aria-labelledby="home-debts-title" data-cy="home-debts-brief">
+      <h2 class="brief__title" id="home-debts-title">{{ t().debtOverview.home.title }}</h2>
       @switch (overview.state().status) {
         @case ('loading') {
           <p class="note" role="status" data-cy="home-debts-loading">
@@ -34,34 +35,22 @@ import { DebtOverviewFacade } from '~/modules/debt-overview/core/facades/debt-ov
         }
         @case ('empty') {
           <p class="note" data-cy="home-debts-empty">{{ t().debtOverview.home.empty }}</p>
-          <a class="button" routerLink="/planning/debts" data-cy="home-debts-add">
+          <a class="brief__link" routerLink="/planning/debts" data-cy="home-debts-add">
             {{ t().debtOverview.home.emptyAction }}
           </a>
         }
         @case ('ready') {
           @if (overview.data(); as data) {
-            <p class="total" data-cy="home-debts-total"><app-money [value]="data.total" /></p>
-            <dl class="parts" data-cy="home-debts-parts">
-              <div>
-                <dt>{{ t().debtOverview.parts.cards }}</dt>
-                <dd><app-money [value]="data.parts.cards" /></dd>
-              </div>
-              <div>
-                <dt>{{ t().debtOverview.parts.people }}</dt>
-                <dd><app-money [value]="data.parts.people" /></dd>
-              </div>
-              <div>
-                <dt>{{ t().debtOverview.parts.other }}</dt>
-                <dd><app-money [value]="data.parts.other" /></dd>
-              </div>
-            </dl>
-            <a class="button" routerLink="/planning/debts" data-cy="home-debts-open">
+            <p class="brief__total num" data-cy="home-debts-total">
+              <app-money [value]="data.total" />
+            </p>
+            <a class="brief__link" routerLink="/planning/debts" data-cy="home-debts-open">
               {{ t().debtOverview.home.open }}
             </a>
           }
         }
       }
-    </app-section-container>
+    </section>
   `,
   styles: `
     :host {
@@ -73,32 +62,63 @@ import { DebtOverviewFacade } from '~/modules/debt-overview/core/facades/debt-ov
       font-size: var(--text-sm);
     }
 
-    .total {
-      margin: 0 0 var(--space-3);
-      font-size: var(--text-2xl);
-      font-weight: var(--weight-semibold);
-    }
-
-    .parts {
+    .brief {
       display: grid;
-      gap: var(--space-2);
-      margin: 0 0 var(--space-4);
+      align-content: center;
+      gap: var(--space-1);
+      height: 100%;
+      min-height: 0;
+      padding: var(--space-3) var(--space-4);
+      border-radius: var(--radius-panel);
     }
 
-    .parts div {
-      display: flex;
-      justify-content: space-between;
-      gap: var(--space-4);
-    }
-
-    .parts dt {
+    .brief__title {
       color: var(--color-text-muted);
       font-size: var(--text-sm);
+      font-weight: var(--weight-medium);
     }
 
-    .parts dd {
-      margin: 0;
+    .brief__total {
+      font-size: var(--text-xl);
       font-weight: var(--weight-semibold);
+      overflow-wrap: anywhere;
+    }
+
+    .brief__link {
+      width: fit-content;
+      color: var(--color-accent);
+      font-size: var(--text-sm);
+      font-weight: var(--weight-medium);
+      text-decoration: none;
+    }
+
+    .brief__link:hover {
+      text-decoration: underline;
+    }
+
+    .brief__link:focus-visible {
+      border-radius: 4px;
+      outline: none;
+      box-shadow: var(--focus-ring);
+    }
+
+    /* Celular: título, total e link numa linha só (o gráfico fica com a altura). */
+    @container (width < 40rem) {
+      .brief {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: var(--space-1) var(--space-3);
+        padding: var(--space-2) var(--space-3);
+      }
+
+      .brief__total {
+        font-size: var(--text-lg);
+      }
+
+      .brief__link {
+        margin-left: auto;
+      }
     }
   `,
 })

@@ -121,6 +121,7 @@ let nextId = 0;
      * campos de dentro. Folga de 4 px em todos os lados, compensada por margem negativa (o layout não muda).
      */
     .disclosure__inner {
+      position: relative; /* contém (e corta) os elementos só para leitores de tela de dentro: sem altura fantasma na página */
       min-height: 0;
       margin: calc(var(--space-1) * -1);
       padding: var(--space-1);

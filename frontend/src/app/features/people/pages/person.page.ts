@@ -12,6 +12,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
 
 import { ConfirmDialogComponent } from '~/app/common/components/confirm-dialog/confirm-dialog.component';
+import { DisclosureComponent } from '~/app/common/components/disclosure/disclosure.component';
 import {
   EmptyStateAction,
   EmptyStateComponent,
@@ -50,6 +51,7 @@ interface DebtGroup {
 @Component({
   selector: 'app-person-page',
   imports: [
+    DisclosureComponent,
     RouterOutlet,
     LinkedNotesComponent,
     RouterLink,

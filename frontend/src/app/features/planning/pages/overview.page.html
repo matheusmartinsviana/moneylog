@@ -1,0 +1,155 @@
+<app-page-layout fit [heading]="t().nav.planning" [description]="t().brief.panorama.description">
+  <div class="ov">
+    <app-planning-nav current="overview" />
+
+    <div class="ov__body">
+      @switch (dashboard.state().status) {
+        @case ('loading') {
+          <div data-cy="overview-loading">
+            <p class="visually-hidden" role="status">{{ t().home.loading }}</p>
+            <div class="list-skeleton" aria-hidden="true">
+              <div class="list-skeleton__row"></div>
+              <div class="list-skeleton__row"></div>
+            </div>
+          </div>
+        }
+        @case ('empty') {
+          <app-empty-state
+            [heading]="t().emptyState.home.title"
+            [description]="t().emptyState.home.description"
+            [actions]="emptyActions()"
+            illustration="log"
+          />
+        }
+        @case ('error') {
+          <div role="alert" data-cy="overview-error">
+            @if (dashboard.error() === 'forbidden') {
+              <app-empty-state
+                [heading]="t().home.forbidden.title"
+                [description]="t().home.forbidden.description"
+                illustration="document"
+              />
+            } @else {
+              <app-empty-state
+                [heading]="t().home.error.title"
+                [description]="t().home.error.description"
+                [actions]="retryActions()"
+                (action)="onErrorAction($event)"
+                illustration="document"
+              />
+            }
+          </div>
+        }
+        @case ('ready') {
+          @if (dashboard.data(); as data) {
+            @if (dashboard.refreshFailed()) {
+              <p class="banner" role="status" data-cy="home-refresh-failed">
+                {{ t().home.refreshFailed }}
+                <button
+                  type="button"
+                  class="button"
+                  data-cy="home-refresh-retry"
+                  (click)="dashboard.reload()"
+                >
+                  {{ t().home.error.retry }}
+                </button>
+              </p>
+            }
+            <div class="dashboard" data-cy="home-legacy">
+              <div class="col col--main">
+                <app-section-container
+                  fill
+                  scroll
+                  [heading]="t().home.upcoming.title"
+                  [description]="t().home.upcoming.description"
+                >
+                  <app-upcoming-list [upcoming]="data.upcoming" (realize)="openRealize($event)" />
+                </app-section-container>
+              </div>
+
+              <div class="col col--side">
+                <app-available-balance [balances]="data.summary.balances" />
+
+                <app-section-container
+                  [heading]="t().home.committed.title"
+                  [description]="t().home.committed.description"
+                >
+                  <app-commitments
+                    [committed]="data.summary.committed"
+                    [projected]="data.summary.projected"
+                  />
+                </app-section-container>
+
+                <app-disclosure
+                  fieldId="overview-more"
+                  [heading]="t().brief.more"
+                  [headingLevel]="2"
+                >
+                  <div class="more">
+                    <app-section-container
+                      [heading]="t().home.month.title"
+                      [description]="competence()"
+                    >
+                      <app-month-summary [month]="data.summary.month" />
+                    </app-section-container>
+
+                    <app-section-container [heading]="t().home.netWorth.title">
+                      <app-net-worth [netWorth]="data.summary.netWorth" />
+                    </app-section-container>
+
+                    <app-section-container
+                      [heading]="t().home.cards.title"
+                      [description]="t().home.cards.description"
+                    >
+                      @switch (cards.state().status) {
+                        @case ('loading') {
+                          <p class="note" role="status" data-cy="home-cards-loading">
+                            {{ t().home.cards.loading }}
+                          </p>
+                        }
+                        @case ('empty') {
+                          <p class="note" data-cy="home-cards-empty">{{ t().home.cards.empty }}</p>
+                          <a class="button" routerLink="/cards/new" data-cy="home-cards-add">
+                            {{ t().home.cards.add }}
+                          </a>
+                        }
+                        @case ('error') {
+                          <p class="note" role="alert" data-cy="home-cards-error">
+                            {{ t().home.cards.error }}
+                          </p>
+                          <button
+                            type="button"
+                            class="button"
+                            data-cy="home-cards-retry"
+                            (click)="cards.load('ACTIVE')"
+                          >
+                            {{ t().home.cards.retry }}
+                          </button>
+                        }
+                        @case ('ready') {
+                          @if (cards.data(); as list) {
+                            <app-cards-summary [cards]="list" />
+                          }
+                        }
+                      }
+                    </app-section-container>
+                  </div>
+                </app-disclosure>
+              </div>
+            </div>
+          }
+        }
+      }
+    </div>
+  </div>
+
+  @if (realizing(); as target) {
+    <app-realize-sheet
+      [open]="realizeOpen()"
+      [target]="target"
+      (closed)="realizeOpen.set(false)"
+      (realized)="afterRealized()"
+      (stale)="dashboard.reload()"
+    />
+  }
+</app-page-layout>

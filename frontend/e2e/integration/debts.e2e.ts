@@ -85,8 +85,8 @@ test('emprestar 300,00 ao João → ver a dívida nele e no Início → receber 
   expect(await cyText(page, `debt-status-${debtId}`)).toBe('Em aberto');
 
   // 4. O Início mostra a cobrança como "a receber" e os totais são os do /upcoming; cobrança não soma ao a pagar.
-  await open(page, '/');
-  await expect(cy(page, 'home-dashboard')).toBeVisible();
+  await open(page, '/planning/overview');
+  await expect(cy(page, 'home-legacy')).toBeVisible();
   const upcoming = await net.body('GET', '/v1/dashboard/upcoming');
   const item = upcoming.items.find((i: any) => i.refId === debtId);
   expect(item.kind).toBe('DEBT_RECEIVABLE');
@@ -120,7 +120,7 @@ test('emprestar 300,00 ao João → ver a dívida nele e no Início → receber 
   expect(await cyText(page, 'debt-outstanding')).toBe(fmt(apiDebt.outstanding.amount));
   expect(await cyText(page, 'debt-status')).toBe('Parcialmente quitada');
 
-  await open(page, '/');
+  await open(page, '/planning/overview');
   // Espera o Início pintar: sem isso a última resposta capturada ainda é a da visita anterior.
   await expect(cy(page, 'home-dashboard')).toBeVisible();
   const summary = await net.body('GET', '/v1/dashboard/summary');
@@ -199,8 +199,8 @@ test('despesa de 200,00 dividida com o João (100,00): consumo 100,00, caixa −
   await expect(cy(page, `detail-share-link-${shareDebt.id}`)).toBeVisible();
 
   // O Início e a pessoa concordam com a API.
-  await open(page, '/');
-  await expect(cy(page, 'home-dashboard')).toBeVisible();
+  await open(page, '/planning/overview');
+  await expect(cy(page, 'home-legacy')).toBeVisible();
   const summary = await net.body('GET', '/v1/dashboard/summary');
   expect(summary.month.consumption.amount).toBe('100.00');
   expect(await cyText(page, 'home-month-consumption')).toBe(fmt(summary.month.consumption.amount));
@@ -254,8 +254,8 @@ test('dívida sem movimentação (eu devo, com categoria): consumo de dívida no
   // Não mexe no caixa; entra no consumo (e no total do mês) pela dívida.
   const accounts = await api.get('/v1/accounts');
   expect(accounts.body.items[0].currentBalance.amount).toBe('1000.00');
-  await open(page, '/');
-  await expect(cy(page, 'home-dashboard')).toBeVisible();
+  await open(page, '/planning/overview');
+  await expect(cy(page, 'home-legacy')).toBeVisible();
   const summary = await net.body('GET', '/v1/dashboard/summary');
   expect(summary.month.debtConsumption.amount).toBe('80.00');
   expect(await cyText(page, 'home-month-debt-consumption')).toBe(

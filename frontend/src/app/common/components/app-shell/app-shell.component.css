@@ -1,5 +1,8 @@
 :host {
-  display: block;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .skip-link {
@@ -20,14 +23,25 @@
   transform: none;
 }
 
-/* Fundo da página: o canvas (e o halo) são pintados no `body`. */
+/*
+ * Fundo da página: o canvas (e o halo) são pintados no `body`. A altura vem da cadeia flex
+ * body > app-root > app-shell > .shell > janela (nada de `100dvh` somado a uma faixa acima, como a de demonstração):
+ * uma página "sucinta" (`data-fit-page`, regra em `src/styles/README.md`) enche exatamente a tela e não rola.
+ */
 .shell {
-  min-height: 100dvh;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
 }
 
 /* Mobile (< 768 px): sem sidebar; conteúdo direto sobre o canvas, a barra inferior e a safe-area. */
 .shell__window {
-  min-height: 100dvh;
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  min-height: 0;
   padding-top: env(safe-area-inset-top);
 }
 
@@ -36,7 +50,10 @@
 }
 
 .shell__content {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
+  min-height: 0;
   padding-right: env(safe-area-inset-right);
   padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
   padding-left: env(safe-area-inset-left);
@@ -52,8 +69,8 @@
     display: grid;
     grid-template-columns: var(--sidebar-collapsed-width) minmax(0, 1fr);
     gap: var(--space-3);
+    width: 100%;
     max-width: var(--window-max-width);
-    min-height: calc(100dvh - var(--space-3) * 2);
     margin-inline: auto;
     padding-top: 0;
   }
@@ -63,11 +80,15 @@
     border-radius: var(--radius-panel);
   }
 
-  /* A coluna cobre a altura toda; a sidebar acompanha a rolagem (sticky) dentro dela. */
+  /*
+   * A coluna cobre a altura toda; a sidebar acompanha a rolagem (sticky) dentro dela e nunca passa da tela
+   * (nem da altura da janela numa página "sucinta", onde a faixa de demonstração tira espaço da tela).
+   */
   .shell__sidebar {
     position: sticky;
     top: var(--space-3);
-    height: calc(100dvh - var(--space-3) * 2 - var(--border-width) * 2);
+    height: 100%;
+    max-height: calc(100dvh - var(--space-3) * 2 - var(--border-width) * 2);
   }
 
   .shell__content {
@@ -87,11 +108,10 @@
 
   .shell__window {
     gap: var(--space-4);
-    min-height: calc(100dvh - var(--space-4) * 2);
   }
 
   .shell__sidebar {
     top: var(--space-4);
-    height: calc(100dvh - var(--space-4) * 2 - var(--border-width) * 2);
+    max-height: calc(100dvh - var(--space-4) * 2 - var(--border-width) * 2);
   }
 }

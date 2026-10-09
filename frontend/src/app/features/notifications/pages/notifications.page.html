@@ -1,4 +1,5 @@
 <app-page-layout
+  fit
   [heading]="t().nav.notifications"
   [description]="t().notifications.center.subtitle"
 >
@@ -17,182 +18,195 @@
     </button>
   </div>
 
-  <p class="visually-hidden" role="status" data-cy="notifications-live">{{ announcement() }}</p>
+  <div class="fit-stack">
+    <p class="visually-hidden" role="status" data-cy="notifications-live">{{ announcement() }}</p>
 
-  <div class="filters">
-    <app-segmented-control
-      [formControl]="statusControl"
-      fieldId="notifications-status"
-      [label]="t().notifications.center.filterStatus"
-      [options]="statusOptions()"
-    />
-    <app-select
-      [formControl]="kindControl"
-      fieldId="notifications-kind"
-      [label]="t().notifications.center.filterKind"
-      [options]="kindOptions()"
-      [emptyLabel]="t().notifications.center.allKinds"
-      [mandatory]="false"
-    />
-  </div>
-
-  @if (actionError(); as message) {
-    <p class="banner" role="alert" data-cy="notifications-action-error">{{ message }}</p>
-  }
-  @if (center.stale()) {
-    <p class="banner" role="status" data-cy="notifications-offline">
-      {{ t().notifications.center.offline }}
-    </p>
-  }
-
-  @switch (center.state().status) {
-    @case ('loading') {
-      <div data-cy="notifications-loading">
-        <p class="visually-hidden" role="status">{{ t().notifications.center.loading }}</p>
-        <div class="list-skeleton" aria-hidden="true">
-          <div class="list-skeleton__row"></div>
-          <div class="list-skeleton__row"></div>
-          <div class="list-skeleton__row"></div>
-        </div>
-      </div>
-    }
-    @case ('empty') {
-      <app-empty-state
-        [heading]="t().notifications.center.emptyTitle"
-        [description]="t().notifications.center.emptyDescription"
-        [actions]="emptyActions()"
-        illustration="log"
+    <div class="filters">
+      <app-segmented-control
+        [formControl]="statusControl"
+        fieldId="notifications-status"
+        [label]="t().notifications.center.filterStatus"
+        [options]="statusOptions()"
       />
-    }
-    @case ('error') {
-      <app-error-state [problem]="center.error()" (retry)="center.load()" />
-    }
-    @case ('ready') {
-      <div data-cy="notifications-list" [attr.aria-label]="t().notifications.center.listLabel">
-        @for (group of groups(); track group.date) {
-          <section class="day">
-            <h2 class="day__title text-small">{{ dayLabel()(group.date) }}</h2>
-            <ul class="list">
-              @for (item of group.items; track item.id) {
-                <li
-                  app-notification-row
-                  [notification]="item"
-                  (markRead)="center.markRead(item.id)"
-                ></li>
-              }
-            </ul>
-          </section>
-        }
-        @if (center.hasMore()) {
-          <button
-            type="button"
-            class="button"
-            data-cy="notifications-load-more"
-            [disabled]="center.loadingMore()"
-            (click)="center.loadMore()"
-          >
-            {{ t().notifications.center.loadMore }}
-          </button>
-        }
-      </div>
-    }
-  }
-
-  <app-section-container [heading]="t().notifications.reminders.title">
-    <div class="actions">
-      <button
-        type="button"
-        class="button button--primary"
-        data-cy="reminder-add"
-        (click)="newReminder()"
-      >
-        {{ t().notifications.reminders.add }}
-      </button>
-      <button
-        type="button"
-        class="button"
-        data-cy="reminders-toggle-done"
-        [attr.aria-pressed]="showDone()"
-        (click)="toggleDone()"
-      >
-        {{ t().notifications.reminders.showDone }}
-      </button>
+      <app-select
+        [formControl]="kindControl"
+        fieldId="notifications-kind"
+        [label]="t().notifications.center.filterKind"
+        [options]="kindOptions()"
+        [emptyLabel]="t().notifications.center.allKinds"
+        [mandatory]="false"
+      />
     </div>
 
-    @switch (reminders.state().status) {
-      @case ('loading') {
-        <p role="status" data-cy="reminders-loading">{{ t().notifications.reminders.loading }}</p>
+    <div class="fit-scroll">
+      @if (daily(); as message) {
+        <p class="daily" data-cy="home-daily-message">{{ message }}</p>
       }
-      @case ('empty') {
-        <app-empty-state
-          [heading]="t().notifications.reminders.emptyTitle"
-          [description]="t().notifications.reminders.emptyDescription"
-          [actions]="reminderEmptyActions()"
-          (action)="onEmptyAction($event)"
-          illustration="log"
-        />
+      @if (actionError(); as message) {
+        <p class="banner" role="alert" data-cy="notifications-action-error">{{ message }}</p>
       }
-      @case ('error') {
-        <app-error-state (retry)="reminders.load()" />
+      @if (center.stale()) {
+        <p class="banner" role="status" data-cy="notifications-offline">
+          {{ t().notifications.center.offline }}
+        </p>
       }
-      @case ('ready') {
-        @if (reminders.state(); as state) {
-          @if (state.status === 'ready') {
-            <ul class="list" data-cy="reminders-list">
-              @for (reminder of state.data; track reminder.id) {
-                <li class="reminder" data-cy="reminder-row">
-                  <div class="reminder__main">
-                    <p class="reminder__title">{{ reminder.title }}</p>
-                    <p class="reminder__when num">
-                      {{ reminderWhen()(reminder) }}
-                      @if (reminder.done) {
-                        <span class="reminder__done">{{
-                          t().notifications.reminders.doneBadge
-                        }}</span>
-                      }
-                    </p>
-                    @if (reminder.note) {
-                      <p class="reminder__note">{{ reminder.note }}</p>
-                    }
-                  </div>
-                  @if (!reminder.done) {
-                    <div class="reminder__actions">
-                      <button
-                        type="button"
-                        class="button"
-                        data-cy="reminder-done"
-                        [disabled]="reminders.busy()"
-                        (click)="reminders.complete(reminder.id)"
-                      >
-                        {{ t().notifications.reminders.done }}
-                      </button>
-                      <button
-                        type="button"
-                        class="button"
-                        data-cy="reminder-snooze"
-                        [disabled]="reminders.busy()"
-                        (click)="reminders.snooze(reminder.id)"
-                      >
-                        {{ t().notifications.reminders.snooze }}
-                      </button>
-                      <button
-                        type="button"
-                        class="button"
-                        data-cy="reminder-edit"
-                        (click)="editReminder(reminder)"
-                      >
-                        {{ t().notifications.reminders.edit }}
-                      </button>
-                    </div>
+
+      @switch (center.state().status) {
+        @case ('loading') {
+          <div data-cy="notifications-loading">
+            <p class="visually-hidden" role="status">{{ t().notifications.center.loading }}</p>
+            <div class="list-skeleton" aria-hidden="true">
+              <div class="list-skeleton__row"></div>
+              <div class="list-skeleton__row"></div>
+              <div class="list-skeleton__row"></div>
+            </div>
+          </div>
+        }
+        @case ('empty') {
+          <app-empty-state
+            [heading]="t().notifications.center.emptyTitle"
+            [description]="t().notifications.center.emptyDescription"
+            [actions]="emptyActions()"
+            illustration="log"
+          />
+        }
+        @case ('error') {
+          <app-error-state [problem]="center.error()" (retry)="center.load()" />
+        }
+        @case ('ready') {
+          <div data-cy="notifications-list" [attr.aria-label]="t().notifications.center.listLabel">
+            @for (group of groups(); track group.date) {
+              <section class="day">
+                <h2 class="day__title text-small">{{ dayLabel()(group.date) }}</h2>
+                <ul class="list">
+                  @for (item of group.items; track item.id) {
+                    <li
+                      app-notification-row
+                      [notification]="item"
+                      (markRead)="center.markRead(item.id)"
+                    ></li>
                   }
-                </li>
-              }
-            </ul>
-          }
+                </ul>
+              </section>
+            }
+            @if (center.hasMore()) {
+              <button
+                type="button"
+                class="button"
+                data-cy="notifications-load-more"
+                [disabled]="center.loadingMore()"
+                (click)="center.loadMore()"
+              >
+                {{ t().notifications.center.loadMore }}
+              </button>
+            }
+          </div>
         }
       }
-    }
-  </app-section-container>
+
+      <app-disclosure fieldId="notifications-more" [heading]="t().brief.more" [headingLevel]="2">
+        <div class="more">
+          <app-section-container [heading]="t().notifications.reminders.title">
+            <div class="actions">
+              <button
+                type="button"
+                class="button button--primary"
+                data-cy="reminder-add"
+                (click)="newReminder()"
+              >
+                {{ t().notifications.reminders.add }}
+              </button>
+              <button
+                type="button"
+                class="button"
+                data-cy="reminders-toggle-done"
+                [attr.aria-pressed]="showDone()"
+                (click)="toggleDone()"
+              >
+                {{ t().notifications.reminders.showDone }}
+              </button>
+            </div>
+
+            @switch (reminders.state().status) {
+              @case ('loading') {
+                <p role="status" data-cy="reminders-loading">
+                  {{ t().notifications.reminders.loading }}
+                </p>
+              }
+              @case ('empty') {
+                <app-empty-state
+                  [heading]="t().notifications.reminders.emptyTitle"
+                  [description]="t().notifications.reminders.emptyDescription"
+                  [actions]="reminderEmptyActions()"
+                  (action)="onEmptyAction($event)"
+                  illustration="log"
+                />
+              }
+              @case ('error') {
+                <app-error-state (retry)="reminders.load()" />
+              }
+              @case ('ready') {
+                @if (reminders.state(); as state) {
+                  @if (state.status === 'ready') {
+                    <ul class="list" data-cy="reminders-list">
+                      @for (reminder of state.data; track reminder.id) {
+                        <li class="reminder" data-cy="reminder-row">
+                          <div class="reminder__main">
+                            <p class="reminder__title">{{ reminder.title }}</p>
+                            <p class="reminder__when num">
+                              {{ reminderWhen()(reminder) }}
+                              @if (reminder.done) {
+                                <span class="reminder__done">{{
+                                  t().notifications.reminders.doneBadge
+                                }}</span>
+                              }
+                            </p>
+                            @if (reminder.note) {
+                              <p class="reminder__note">{{ reminder.note }}</p>
+                            }
+                          </div>
+                          @if (!reminder.done) {
+                            <div class="reminder__actions">
+                              <button
+                                type="button"
+                                class="button"
+                                data-cy="reminder-done"
+                                [disabled]="reminders.busy()"
+                                (click)="reminders.complete(reminder.id)"
+                              >
+                                {{ t().notifications.reminders.done }}
+                              </button>
+                              <button
+                                type="button"
+                                class="button"
+                                data-cy="reminder-snooze"
+                                [disabled]="reminders.busy()"
+                                (click)="reminders.snooze(reminder.id)"
+                              >
+                                {{ t().notifications.reminders.snooze }}
+                              </button>
+                              <button
+                                type="button"
+                                class="button"
+                                data-cy="reminder-edit"
+                                (click)="editReminder(reminder)"
+                              >
+                                {{ t().notifications.reminders.edit }}
+                              </button>
+                            </div>
+                          }
+                        </li>
+                      }
+                    </ul>
+                  }
+                }
+              }
+            }
+          </app-section-container>
+        </div>
+      </app-disclosure>
+    </div>
+  </div>
 
   <app-reminder-form
     [open]="formOpen()"

@@ -168,9 +168,11 @@
    */
   --page-max-width: 72rem;
   --page-gutter: 1rem; /* 16 px celular; 24 px tablet; 32 px desktop (abaixo) */
-  --page-pad-top: var(--space-6);
-  --page-pad-bottom: var(--space-8);
-  --page-gap: var(--space-6); /* título da página e o conteúdo */
+  --page-pad-top: var(--space-3);
+  --page-pad-bottom: var(--space-6);
+  --page-gap: var(
+    --space-4
+  ); /* título da página e o conteúdo (telas sucintas: pouco respiro vertical) */
   --section-gap: var(--space-4); /* entre blocos do conteúdo */
   --card-padding: var(--space-5);
   --window-max-width: 90rem;
@@ -195,8 +197,8 @@
 @media (width >= 768px) {
   :root {
     --page-gutter: 1.5rem;
-    --page-pad-top: var(--space-10);
-    --page-pad-bottom: var(--space-12);
+    --page-pad-top: var(--space-2);
+    --page-pad-bottom: var(--space-8);
   }
 }
 

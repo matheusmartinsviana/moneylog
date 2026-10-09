@@ -1,4 +1,4 @@
-<app-page-layout [heading]="heading()" [description]="card()?.name">
+<app-page-layout fit [heading]="heading()" [description]="card()?.name">
   @if (invoice(); as inv) {
     <div pageActions class="actions">
       <a class="button" [routerLink]="backLink()" data-cy="invoice-back">
@@ -17,99 +17,113 @@
     </div>
   }
 
-  @switch (state().status) {
-    @case ('notFound') {
-      <app-empty-state
-        [heading]="t().cards.invoice.notFound.title"
-        [description]="t().cards.invoice.notFound.description"
-        [actions]="notFoundActions()"
-        illustration="grid"
-      />
-    }
-    @case ('error') {
-      <app-error-state [problem]="loadProblem()" (retry)="retry()" />
-    }
-    @case ('ready') {
-      @if (invoice(); as inv) {
-        @if (card(); as c) {
-          @if (!c.closingConfirmed) {
-            <div class="closing" data-cy="invoice-closing-unconfirmed">
-              <app-closing-badge [cardId]="c.id" />
-              <p class="hint">{{ t().cards.closing.hint }}</p>
-              <button
-                type="button"
-                class="button"
-                data-cy="invoice-closing-confirm"
-                (click)="closingOpen.set(true)"
-              >
-                {{ t().cards.closing.action }}
-              </button>
+  <div class="fit-stack">
+    <div class="fit-scroll">
+      @switch (state().status) {
+        @case ('notFound') {
+          <app-empty-state
+            [heading]="t().cards.invoice.notFound.title"
+            [description]="t().cards.invoice.notFound.description"
+            [actions]="notFoundActions()"
+            illustration="grid"
+          />
+        }
+        @case ('error') {
+          <app-error-state [problem]="loadProblem()" (retry)="retry()" />
+        }
+        @case ('ready') {
+          @if (invoice(); as inv) {
+            @if (card(); as c) {
+              @if (!c.closingConfirmed) {
+                <div class="closing" data-cy="invoice-closing-unconfirmed">
+                  <app-closing-badge [cardId]="c.id" />
+                  <p class="hint">{{ t().cards.closing.hint }}</p>
+                  <button
+                    type="button"
+                    class="button"
+                    data-cy="invoice-closing-confirm"
+                    (click)="closingOpen.set(true)"
+                  >
+                    {{ t().cards.closing.action }}
+                  </button>
+                </div>
+              }
+            }
+            @if (payBlocked(); as reason) {
+              <p class="hint" id="invoice-pay-hint" data-cy="invoice-pay-blocked">{{ reason }}</p>
+            }
+            @if (inv.status === 'OVERDUE') {
+              <p class="notice" role="status" data-cy="invoice-overdue">
+                {{ t().cards.invoice.overdueWarning }}
+              </p>
+            }
+
+            <app-invoice-totals [invoice]="inv" />
+
+            <section class="section surface" aria-labelledby="invoice-items-title">
+              <h2 class="section__title" id="invoice-items-title">
+                {{ t().cards.invoice.itemsTitle }}
+              </h2>
+              @if (inv.items.length === 0) {
+                <p class="empty" data-cy="invoice-items-empty">
+                  {{ t().cards.invoice.itemsEmpty }}
+                </p>
+              } @else {
+                <app-invoice-items-table [items]="inv.items" />
+              }
+            </section>
+
+            <section class="section surface" aria-labelledby="invoice-payments-title">
+              <h2 class="section__title" id="invoice-payments-title">
+                {{ t().cards.invoice.paymentsTitle }}
+              </h2>
+              @if (inv.payments.length === 0) {
+                <p class="empty" data-cy="invoice-payments-empty">
+                  {{ t().cards.invoice.paymentsEmpty }}
+                </p>
+              } @else {
+                <app-invoice-payments-list [payments]="inv.payments" [accounts]="accounts()" />
+              }
+            </section>
+
+            <app-disclosure
+              fieldId="invoice-more"
+              [heading]="t().brief.more"
+              [headingLevel]="2"
+              [lazy]="true"
+            >
+              <app-linked-notes
+                type="INVOICE"
+                cy="invoice-notes"
+                [entityId]="inv.id"
+                [label]="heading()"
+              />
+            </app-disclosure>
+
+            <app-pay-invoice-sheet
+              [open]="paying()"
+              [invoice]="inv"
+              [accounts]="cashAccounts()"
+              [defaultAccountId]="card()?.defaultPaymentAccountId ?? null"
+              (paid)="onPaid($event)"
+              (closed)="closePay()"
+            />
+          }
+        }
+        @default {
+          <div data-cy="invoice-loading">
+            <p class="visually-hidden" role="status">{{ t().cards.invoice.loading }}</p>
+            <div class="list-skeleton" aria-hidden="true">
+              <div class="list-skeleton__row"></div>
+              <div class="list-skeleton__row"></div>
+              <div class="list-skeleton__row"></div>
             </div>
-          }
+          </div>
         }
-        @if (payBlocked(); as reason) {
-          <p class="hint" id="invoice-pay-hint" data-cy="invoice-pay-blocked">{{ reason }}</p>
-        }
-        @if (inv.status === 'OVERDUE') {
-          <p class="notice" role="status" data-cy="invoice-overdue">
-            {{ t().cards.invoice.overdueWarning }}
-          </p>
-        }
-
-        <app-invoice-totals [invoice]="inv" />
-
-        <section class="section surface" aria-labelledby="invoice-items-title">
-          <h2 class="section__title" id="invoice-items-title">
-            {{ t().cards.invoice.itemsTitle }}
-          </h2>
-          @if (inv.items.length === 0) {
-            <p class="empty" data-cy="invoice-items-empty">{{ t().cards.invoice.itemsEmpty }}</p>
-          } @else {
-            <app-invoice-items-table [items]="inv.items" />
-          }
-        </section>
-
-        <section class="section surface" aria-labelledby="invoice-payments-title">
-          <h2 class="section__title" id="invoice-payments-title">
-            {{ t().cards.invoice.paymentsTitle }}
-          </h2>
-          @if (inv.payments.length === 0) {
-            <p class="empty" data-cy="invoice-payments-empty">
-              {{ t().cards.invoice.paymentsEmpty }}
-            </p>
-          } @else {
-            <app-invoice-payments-list [payments]="inv.payments" [accounts]="accounts()" />
-          }
-        </section>
-
-        <app-linked-notes
-          type="INVOICE"
-          cy="invoice-notes"
-          [entityId]="inv.id"
-          [label]="heading()"
-        />
-
-        <app-pay-invoice-sheet
-          [open]="paying()"
-          [invoice]="inv"
-          [accounts]="cashAccounts()"
-          [defaultAccountId]="card()?.defaultPaymentAccountId ?? null"
-          (paid)="onPaid($event)"
-          (closed)="closePay()"
-        />
       }
-    }
-    @default {
-      <div data-cy="invoice-loading">
-        <p class="visually-hidden" role="status">{{ t().cards.invoice.loading }}</p>
-        <div class="list-skeleton" aria-hidden="true">
-          <div class="list-skeleton__row"></div>
-          <div class="list-skeleton__row"></div>
-          <div class="list-skeleton__row"></div>
-        </div>
-      </div>
-    }
-  }
+    </div>
+  </div>
+
   @if (closingOpen() && card(); as c) {
     <app-closing-confirm-modal
       [card]="c"

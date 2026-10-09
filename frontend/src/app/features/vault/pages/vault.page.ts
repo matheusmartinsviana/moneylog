@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { DisclosureComponent } from '~/app/common/components/disclosure/disclosure.component';
 import { PageLayoutComponent } from '~/app/common/components/page-layout/page-layout.component';
 import { HTML_LANG } from '~/app/common/i18n/i18n';
 import { I18nService } from '~/app/common/i18n/i18n.service';
@@ -32,6 +33,7 @@ import { formatInstant } from '~/util/date';
 @Component({
   selector: 'app-vault-page',
   imports: [
+    DisclosureComponent,
     RouterLink,
     PageLayoutComponent,
     FolderTreeComponent,

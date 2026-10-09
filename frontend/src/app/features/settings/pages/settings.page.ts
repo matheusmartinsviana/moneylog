@@ -11,6 +11,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { exhaustMap, finalize, Subject } from 'rxjs';
 
+import { DisclosureComponent } from '~/app/common/components/disclosure/disclosure.component';
 import {
   EmptyStateAction,
   EmptyStateComponent,
@@ -43,6 +44,7 @@ import { SessionFacade } from '~/modules/auth/core/facades/session.facade';
     SelectComponent,
     PageLayoutComponent,
     SectionContainerComponent,
+    DisclosureComponent,
     EmptyStateComponent,
     ExportSectionComponent,
     VaultSectionComponent,

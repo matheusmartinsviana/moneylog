@@ -26,11 +26,11 @@
   background-image: var(--gradient-stripes);
   touch-action: pan-y;
   user-select: none;
-  /* Para o tooltip se ajustar à largura do próprio gráfico (`@container` abaixo), não à da página. */
+  /* O tooltip se ajusta à largura do gráfico (`@container`). */
   container-type: inline-size;
 }
 
-/* Um ponto não precisa de altura de gráfico; 30 pontos ganham um pouco mais de respiro vertical. */
+/* Um ponto pede pouca altura; 30 pontos, um pouco mais. */
 .lc__plot--single {
   height: 7rem;
 }
@@ -47,7 +47,7 @@
   transition: clip-path var(--duration-slow) var(--ease-emphasized);
 }
 
-/* Revela o traço (o estado final já está no DOM): só até o gráfico entrar na viewport. */
+/* Revela o traço até o gráfico entrar na viewport (o estado final já está no DOM). */
 .lc__svg.is-pending {
   clip-path: inset(-6px 100% -6px -6px);
 }
@@ -87,7 +87,7 @@
   stop-color: var(--color-chart-1);
 }
 
-/* Painel principal: mais alto e com o traço da série primária "brilhando" (halo, decorativo). */
+/* Painel principal: mais alto, com halo decorativo no traço primário. */
 .lc__plot--hero {
   height: 17rem;
 }
@@ -166,10 +166,7 @@
   transform: translateX(calc(-100% - var(--space-3)));
 }
 
-/*
- * Gráfico estreito (celular): não cabe um balão de ~150 px de cada lado do ponto. O balão encosta na borda
- * do gráfico oposta ao ponto, sempre inteiro dentro dele e da tela (BUG-QA-05, WCAG 1.4.10).
- */
+/* Celular: o balão encosta na borda oposta ao ponto, inteiro dentro do gráfico (BUG-QA-05). */
 @container (width < 26rem) {
   .lc__tip {
     right: 0;
@@ -214,7 +211,7 @@
   gap: var(--space-2);
 }
 
-/* O traço do swatch repete a diferença do gráfico: cheio com círculo × tracejado com quadrado. */
+/* Swatch: cheio com círculo × tracejado com quadrado. */
 .lc__swatch {
   flex: none;
   width: 0.75rem;
@@ -236,7 +233,7 @@
   font-size: var(--text-xs);
 }
 
-/* Alvo de toque de 44 px: o seletor do componente vence a regra global de `.button` (revisão A4). */
+/* Alvo de toque de 44 px (revisão A4). */
 @media (width <= 640px), (pointer: coarse) {
   .lc__toggle {
     min-height: 2.75rem;
@@ -283,4 +280,20 @@
   .lc__line {
     stroke: CanvasText;
   }
+}
+
+:host(.compact) {
+  height: 100%;
+  min-height: 0;
+}
+
+:host(.compact) .lc {
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  height: 100%;
+  gap: var(--space-1);
+}
+
+:host(.compact) .lc__plot {
+  height: 100%;
+  min-height: 4rem;
 }

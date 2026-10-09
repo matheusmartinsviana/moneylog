@@ -3,15 +3,14 @@
 }
 
 .vault {
-  display: grid;
-  gap: var(--space-5);
+  gap: var(--space-3);
 }
 
 .vault__card {
   display: grid;
   justify-items: start;
   gap: var(--space-3);
-  padding: var(--space-5);
+  padding: var(--space-3) var(--space-5);
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-card);
   background-color: var(--color-surface);

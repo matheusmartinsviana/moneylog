@@ -26,6 +26,10 @@ export const IMPORT_PROVIDERS: Provider[] = [provideImports()];
 export const SETTINGS_PROVIDERS: Provider[] = [provideExports(), provideNotes()];
 export const PLANNING_PROVIDERS: Provider[] = [
   provideRecurrences(),
+  // Panorama (o que o Início tinha em "Compromissos e patrimônio") e o gasto por categoria do Resumo do mês.
+  provideDashboard(),
+  provideReports(),
+  provideNotes(), // notas ligadas ao resumo do mês e aos compromissos (`LinkedNotes` lê `NotesGateway`)
   provideProjections(),
   provideMonthlySummary(),
   provideDebtOverview(),
@@ -34,7 +38,11 @@ export const PLANNING_PROVIDERS: Provider[] = [
   providePeople(),
 ];
 /** Detalhe da movimentação: marcar como despesa de terceiro (pessoas + terceiros). */
-export const TRANSACTIONS_PROVIDERS: Provider[] = [provideThirdParties(), providePeople()];
+export const TRANSACTIONS_PROVIDERS: Provider[] = [
+  provideThirdParties(),
+  providePeople(),
+  provideNotes(),
+];
 /** Relatórios: só o Início os lê; o UI Kit (dev/mock) usa a porta de demonstração do mesmo provider. */
 export const REPORTS_PROVIDERS: Provider[] = [provideReports()];
 export const HOME_PROVIDERS: Provider[] = [
@@ -46,15 +54,16 @@ export const HOME_PROVIDERS: Provider[] = [
   providePeople(),
   provideThirdParties(),
 ];
-export const CARD_DETAIL_PROVIDERS: Provider[] = [provideDebtOverview()];
-export const GOALS_PROVIDERS: Provider[] = [provideGoals()];
+/** Detalhe do cartão e fatura: dívidas totais e as notas ligadas (`LinkedNotes` lê `NotesGateway`). */
+export const CARD_DETAIL_PROVIDERS: Provider[] = [provideDebtOverview(), provideNotes()];
+export const GOALS_PROVIDERS: Provider[] = [provideGoals(), provideNotes()];
 export const NOTES_PROVIDERS: Provider[] = [
   provideNotes(),
   provideGoals(),
   provideDebts(),
   providePeople(),
 ];
-export const DEBTS_PROVIDERS: Provider[] = [provideDebts()];
-export const PEOPLE_PROVIDERS: Provider[] = [providePeople()];
+export const DEBTS_PROVIDERS: Provider[] = [provideDebts(), provideNotes()];
+export const PEOPLE_PROVIDERS: Provider[] = [providePeople(), provideNotes()];
 export const QUICK_ADD_PROVIDERS: Provider[] = [provideDebts(), providePeople()];
 export const VAULT_PROVIDERS: Provider[] = [provideNotes()];

@@ -1,244 +1,251 @@
-<app-page-layout [heading]="t().nav.planning">
-  <app-planning-nav current="commitments" />
+<app-page-layout fit [heading]="t().nav.planning">
+  <div class="fit-stack">
+    <app-planning-nav current="commitments" />
 
-  <a class="back" routerLink="/planning/commitments" data-cy="commitment-back">
-    {{ t().commitments.detail.back }}
-  </a>
+    <a class="back" routerLink="/planning/commitments" data-cy="commitment-back">
+      {{ t().commitments.detail.back }}
+    </a>
 
-  @switch (facade.state().status) {
-    @case ('notFound') {
-      <app-empty-state
-        [heading]="t().commitments.detail.notFound.title"
-        [description]="t().commitments.detail.notFound.description"
-        [actions]="notFoundActions()"
-        illustration="timeline"
-      />
-    }
-    @case ('error') {
-      <app-error-state [problem]="facade.loadProblem()" (retry)="retry()" />
-    }
-    @case ('ready') {
-      @if (commitment(); as c) {
-        <header class="head">
-          <h2 class="head__title" data-cy="commitment-title">{{ c.name }}</h2>
-          <p class="note">
-            <span class="status">{{ t().commitments.kinds[c.kind] }}</span>
-            @if (c.counterparty; as name) {
-              {{ t().commitments.detail.counterparty }}: {{ name }}
-            }
-          </p>
-          <p class="note" data-cy="commitment-only-tracking">
-            {{ t().commitments.detail.onlyTracking }}
-          </p>
-        </header>
-
-        @if (banner(); as message) {
-          <p class="banner" role="alert" data-cy="commitment-action-error">{{ message }}</p>
+    <div class="fit-scroll">
+      @switch (facade.state().status) {
+        @case ('notFound') {
+          <app-empty-state
+            [heading]="t().commitments.detail.notFound.title"
+            [description]="t().commitments.detail.notFound.description"
+            [actions]="notFoundActions()"
+            illustration="timeline"
+          />
         }
-
-        <app-section-container [heading]="t().commitments.title">
-          <dl class="facts" data-cy="commitment-summary">
-            @if (c.kind === 'LONG_TERM_PROJECT') {
-              @if (c.total; as total) {
-                <div class="fact">
-                  <dt>{{ t().commitments.detail.total }}</dt>
-                  <dd data-cy="commitment-total"><app-money [value]="total" /></dd>
-                </div>
-              }
-              @if (c.paid; as paid) {
-                <div class="fact">
-                  <dt>{{ t().commitments.detail.paid }}</dt>
-                  <dd data-cy="commitment-paid"><app-money [value]="paid" /></dd>
-                </div>
-              }
-              @if (c.nominalBalance; as balance) {
-                <div class="fact">
-                  <dt>{{ t().commitments.detail.balance }}</dt>
-                  <dd data-cy="commitment-balance"><app-money [value]="balance" /></dd>
-                </div>
-              }
-              @if (progressText(); as text) {
-                <div class="fact">
-                  <dt>{{ t().commitments.detail.progress }}</dt>
-                  <dd class="num" data-cy="commitment-progress">{{ text }}</dd>
-                </div>
-              }
-              @if (c.directPending; as pending) {
-                <div class="fact">
-                  <dt>{{ t().commitments.detail.directPending }}</dt>
-                  <dd data-cy="commitment-direct-pending"><app-money [value]="pending" /></dd>
-                </div>
-              }
-              @if (c.financingPending; as financing) {
-                <div class="fact">
-                  <dt>{{ t().commitments.detail.financingPending }}</dt>
-                  <dd data-cy="commitment-financing"><app-money [value]="financing" /></dd>
-                </div>
-              }
-            } @else {
-              <div class="fact">
-                <dt>{{ t().commitments.detail.installments }}</dt>
-                <dd class="num" data-cy="commitment-installments">
-                  {{ installments(c.installmentsPaid, c.installmentsTotal) }}
-                </dd>
-              </div>
-              @if (c.paid; as paid) {
-                <div class="fact">
-                  <dt>{{ t().commitments.detail.paid }}</dt>
-                  <dd data-cy="commitment-paid"><app-money [value]="paid" /></dd>
-                </div>
-              }
-            }
-            @if (c.nextDueDate; as next) {
-              <div class="fact">
-                <dt>{{ t().commitments.detail.nextDue }}</dt>
-                <dd data-cy="commitment-next">{{ date(next) }}</dd>
-              </div>
-            }
-            @if (c.notes; as notes) {
-              <div class="fact">
-                <dt>{{ t().commitments.detail.notes }}</dt>
-                <dd class="fact__text">{{ notes }}</dd>
-              </div>
-            }
-          </dl>
-          @if (c.kind === 'TRACKED_THIRD_PARTY') {
-            <p class="note" data-cy="commitment-tracked-note">
-              {{ t().commitments.detail.trackedNote }}
-            </p>
-          }
-          @if (c.financingPending) {
-            <p class="note">{{ t().commitments.detail.financingNote }}</p>
-          }
-        </app-section-container>
-
-        @if (c.kind === 'TRACKED_THIRD_PARTY') {
-          <app-section-container [heading]="t().commitments.detail.progressForm.title">
-            <form
-              class="form"
-              [formGroup]="progressForm"
-              (ngSubmit)="saveProgress()"
-              novalidate
-              data-cy="commitment-progress-form"
-            >
-              <div class="form__pair">
-                <app-number-stepper
-                  formControlName="installmentsPaid"
-                  fieldId="commitment-progress-paid"
-                  [min]="0"
-                  [max]="c.installmentsTotal"
-                  [label]="t().commitments.detail.progressForm.installmentsPaid"
-                />
-                <app-money-input
-                  formControlName="paidAmount"
-                  fieldId="commitment-progress-amount"
-                  [currency]="currency"
-                  [mandatory]="false"
-                  [allowZero]="true"
-                  [label]="t().commitments.detail.progressForm.paidAmount"
-                />
-              </div>
-              <app-date-picker
-                formControlName="nextDueDate"
-                fieldId="commitment-progress-next"
-                [mandatory]="false"
-                [label]="t().commitments.detail.progressForm.nextDueDate"
-              />
-              <app-text-field
-                formControlName="notes"
-                fieldId="commitment-progress-notes"
-                autocomplete="off"
-                [maxlength]="1000"
-                [mandatory]="false"
-                [label]="t().commitments.detail.progressForm.notes"
-              />
-              <div class="form__actions">
-                <button
-                  type="submit"
-                  class="button button--primary"
-                  data-cy="commitment-progress-save"
-                  [disabled]="facade.busy()"
-                  [attr.aria-busy]="facade.busy()"
-                >
-                  {{
-                    facade.busy()
-                      ? t().commitments.detail.progressForm.saving
-                      : t().commitments.detail.progressForm.save
-                  }}
-                </button>
-              </div>
-            </form>
-          </app-section-container>
+        @case ('error') {
+          <app-error-state [problem]="facade.loadProblem()" (retry)="retry()" />
         }
-
-        @if (c.kind === 'LONG_TERM_PROJECT') {
-          <app-section-container [heading]="t().commitments.detail.schedule.title">
-            @if (c.schedule.length === 0) {
-              <p class="note" data-cy="commitment-schedule-empty">
-                {{ t().commitments.detail.schedule.empty }}
+        @case ('ready') {
+          @if (commitment(); as c) {
+            <header class="head">
+              <h2 class="head__title" data-cy="commitment-title">{{ c.name }}</h2>
+              <p class="note">
+                <span class="status">{{ t().commitments.kinds[c.kind] }}</span>
+                @if (c.counterparty; as name) {
+                  {{ t().commitments.detail.counterparty }}: {{ name }}
+                }
               </p>
-            } @else {
-              <ul class="schedule" data-cy="commitment-schedule">
-                @for (item of c.schedule; track item.position) {
-                  <li class="item row-card" [attr.data-cy]="'commitment-item-' + item.position">
-                    <div class="item__main">
-                      <p class="item__title">{{ item.label }}</p>
-                      <p class="note">
-                        <span class="status">{{ t().commitments.itemTypes[item.type] }}</span>
-                        {{ due(item) }}
-                      </p>
-                    </div>
-                    <div class="item__values">
-                      <p class="item__amount"><app-money [value]="item.amount" /></p>
-                      <p class="note" [attr.data-cy]="'commitment-item-status-' + item.position">
-                        <span class="status" [attr.data-tone]="item.paid ? 'positive' : null">{{
-                          item.paid ? paidOn(item) : t().commitments.detail.schedule.pending
-                        }}</span>
-                      </p>
-                    </div>
-                    @if (!item.paid) {
-                      <button
-                        type="button"
-                        class="button"
-                        [attr.data-cy]="'commitment-pay-' + item.position"
-                        [attr.aria-label]="markLabel(item)"
-                        [disabled]="facade.busy()"
-                        (click)="askPay(item)"
-                      >
-                        {{ t().commitments.detail.schedule.markPaid }}
-                      </button>
-                    }
-                  </li>
-                }
-              </ul>
-            }
-          </app-section-container>
+              <p class="note" data-cy="commitment-only-tracking">
+                {{ t().commitments.detail.onlyTracking }}
+              </p>
+            </header>
 
-          @if (c.pendingByMonth.length > 0) {
-            <app-section-container [heading]="t().commitments.detail.pendingByMonth">
-              <ul class="months" data-cy="commitment-pending-months">
-                @for (entry of c.pendingByMonth; track entry.competence) {
-                  <li class="month">
-                    <span>{{ month(entry.competence) }}</span>
-                    <strong><app-money [value]="entry.amount" /></strong>
-                  </li>
+            @if (banner(); as message) {
+              <p class="banner" role="alert" data-cy="commitment-action-error">{{ message }}</p>
+            }
+
+            <app-section-container [heading]="t().commitments.title">
+              <dl class="facts" data-cy="commitment-summary">
+                @if (c.kind === 'LONG_TERM_PROJECT') {
+                  @if (c.total; as total) {
+                    <div class="fact">
+                      <dt>{{ t().commitments.detail.total }}</dt>
+                      <dd data-cy="commitment-total"><app-money [value]="total" /></dd>
+                    </div>
+                  }
+                  @if (c.paid; as paid) {
+                    <div class="fact">
+                      <dt>{{ t().commitments.detail.paid }}</dt>
+                      <dd data-cy="commitment-paid"><app-money [value]="paid" /></dd>
+                    </div>
+                  }
+                  @if (c.nominalBalance; as balance) {
+                    <div class="fact">
+                      <dt>{{ t().commitments.detail.balance }}</dt>
+                      <dd data-cy="commitment-balance"><app-money [value]="balance" /></dd>
+                    </div>
+                  }
+                  @if (progressText(); as text) {
+                    <div class="fact">
+                      <dt>{{ t().commitments.detail.progress }}</dt>
+                      <dd class="num" data-cy="commitment-progress">{{ text }}</dd>
+                    </div>
+                  }
+                  @if (c.directPending; as pending) {
+                    <div class="fact">
+                      <dt>{{ t().commitments.detail.directPending }}</dt>
+                      <dd data-cy="commitment-direct-pending"><app-money [value]="pending" /></dd>
+                    </div>
+                  }
+                  @if (c.financingPending; as financing) {
+                    <div class="fact">
+                      <dt>{{ t().commitments.detail.financingPending }}</dt>
+                      <dd data-cy="commitment-financing"><app-money [value]="financing" /></dd>
+                    </div>
+                  }
+                } @else {
+                  <div class="fact">
+                    <dt>{{ t().commitments.detail.installments }}</dt>
+                    <dd class="num" data-cy="commitment-installments">
+                      {{ installments(c.installmentsPaid, c.installmentsTotal) }}
+                    </dd>
+                  </div>
+                  @if (c.paid; as paid) {
+                    <div class="fact">
+                      <dt>{{ t().commitments.detail.paid }}</dt>
+                      <dd data-cy="commitment-paid"><app-money [value]="paid" /></dd>
+                    </div>
+                  }
                 }
-              </ul>
+                @if (c.nextDueDate; as next) {
+                  <div class="fact">
+                    <dt>{{ t().commitments.detail.nextDue }}</dt>
+                    <dd data-cy="commitment-next">{{ date(next) }}</dd>
+                  </div>
+                }
+                @if (c.notes; as notes) {
+                  <div class="fact">
+                    <dt>{{ t().commitments.detail.notes }}</dt>
+                    <dd class="fact__text">{{ notes }}</dd>
+                  </div>
+                }
+              </dl>
+              @if (c.kind === 'TRACKED_THIRD_PARTY') {
+                <p class="note" data-cy="commitment-tracked-note">
+                  {{ t().commitments.detail.trackedNote }}
+                </p>
+              }
+              @if (c.financingPending) {
+                <p class="note">{{ t().commitments.detail.financingNote }}</p>
+              }
             </app-section-container>
+
+            @if (c.kind === 'TRACKED_THIRD_PARTY') {
+              <app-section-container [heading]="t().commitments.detail.progressForm.title">
+                <form
+                  class="form"
+                  [formGroup]="progressForm"
+                  (ngSubmit)="saveProgress()"
+                  novalidate
+                  data-cy="commitment-progress-form"
+                >
+                  <div class="form__pair">
+                    <app-number-stepper
+                      formControlName="installmentsPaid"
+                      fieldId="commitment-progress-paid"
+                      [min]="0"
+                      [max]="c.installmentsTotal"
+                      [label]="t().commitments.detail.progressForm.installmentsPaid"
+                    />
+                    <app-money-input
+                      formControlName="paidAmount"
+                      fieldId="commitment-progress-amount"
+                      [currency]="currency"
+                      [mandatory]="false"
+                      [allowZero]="true"
+                      [label]="t().commitments.detail.progressForm.paidAmount"
+                    />
+                  </div>
+                  <app-date-picker
+                    formControlName="nextDueDate"
+                    fieldId="commitment-progress-next"
+                    [mandatory]="false"
+                    [label]="t().commitments.detail.progressForm.nextDueDate"
+                  />
+                  <app-text-field
+                    formControlName="notes"
+                    fieldId="commitment-progress-notes"
+                    autocomplete="off"
+                    [maxlength]="1000"
+                    [mandatory]="false"
+                    [label]="t().commitments.detail.progressForm.notes"
+                  />
+                  <div class="form__actions">
+                    <button
+                      type="submit"
+                      class="button button--primary"
+                      data-cy="commitment-progress-save"
+                      [disabled]="facade.busy()"
+                      [attr.aria-busy]="facade.busy()"
+                    >
+                      {{
+                        facade.busy()
+                          ? t().commitments.detail.progressForm.saving
+                          : t().commitments.detail.progressForm.save
+                      }}
+                    </button>
+                  </div>
+                </form>
+              </app-section-container>
+            }
+
+            @if (c.kind === 'LONG_TERM_PROJECT') {
+              <app-section-container [heading]="t().commitments.detail.schedule.title">
+                @if (c.schedule.length === 0) {
+                  <p class="note" data-cy="commitment-schedule-empty">
+                    {{ t().commitments.detail.schedule.empty }}
+                  </p>
+                } @else {
+                  <ul class="schedule" data-cy="commitment-schedule">
+                    @for (item of c.schedule; track item.position) {
+                      <li class="item row-card" [attr.data-cy]="'commitment-item-' + item.position">
+                        <div class="item__main">
+                          <p class="item__title">{{ item.label }}</p>
+                          <p class="note">
+                            <span class="status">{{ t().commitments.itemTypes[item.type] }}</span>
+                            {{ due(item) }}
+                          </p>
+                        </div>
+                        <div class="item__values">
+                          <p class="item__amount"><app-money [value]="item.amount" /></p>
+                          <p
+                            class="note"
+                            [attr.data-cy]="'commitment-item-status-' + item.position"
+                          >
+                            <span class="status" [attr.data-tone]="item.paid ? 'positive' : null">{{
+                              item.paid ? paidOn(item) : t().commitments.detail.schedule.pending
+                            }}</span>
+                          </p>
+                        </div>
+                        @if (!item.paid) {
+                          <button
+                            type="button"
+                            class="button"
+                            [attr.data-cy]="'commitment-pay-' + item.position"
+                            [attr.aria-label]="markLabel(item)"
+                            [disabled]="facade.busy()"
+                            (click)="askPay(item)"
+                          >
+                            {{ t().commitments.detail.schedule.markPaid }}
+                          </button>
+                        }
+                      </li>
+                    }
+                  </ul>
+                }
+              </app-section-container>
+
+              @if (c.pendingByMonth.length > 0) {
+                <app-section-container [heading]="t().commitments.detail.pendingByMonth">
+                  <ul class="months" data-cy="commitment-pending-months">
+                    @for (entry of c.pendingByMonth; track entry.competence) {
+                      <li class="month">
+                        <span>{{ month(entry.competence) }}</span>
+                        <strong><app-money [value]="entry.amount" /></strong>
+                      </li>
+                    }
+                  </ul>
+                </app-section-container>
+              }
+            }
           }
+        }
+        @default {
+          <div data-cy="commitment-loading">
+            <p class="visually-hidden" role="status">{{ t().commitments.detail.loading }}</p>
+            <div class="list-skeleton" aria-hidden="true">
+              <div class="list-skeleton__row"></div>
+              <div class="list-skeleton__row"></div>
+            </div>
+          </div>
         }
       }
-    }
-    @default {
-      <div data-cy="commitment-loading">
-        <p class="visually-hidden" role="status">{{ t().commitments.detail.loading }}</p>
-        <div class="list-skeleton" aria-hidden="true">
-          <div class="list-skeleton__row"></div>
-          <div class="list-skeleton__row"></div>
-        </div>
-      </div>
-    }
-  }
+    </div>
+  </div>
 
   @if (paying(); as item) {
     <app-form-modal

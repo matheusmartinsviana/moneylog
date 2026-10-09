@@ -10,6 +10,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
+import { DisclosureComponent } from '~/app/common/components/disclosure/disclosure.component';
 import {
   EmptyStateAction,
   EmptyStateComponent,
@@ -44,6 +45,7 @@ import { formatRatio } from '~/util/ratio';
 @Component({
   selector: 'app-debts-overview-page',
   imports: [
+    DisclosureComponent,
     ReactiveFormsModule,
     RouterLink,
     PageLayoutComponent,

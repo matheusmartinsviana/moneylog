@@ -59,6 +59,13 @@
   margin-left: auto;
 }
 
+/* Celular, no Início sucinto: só a saudação (a frase de apoio tira uma linha que a tela não tem). */
+@media (width < 768px) {
+  .wh--home .wh__subtitle {
+    display: none;
+  }
+}
+
 /* Mobile: só a barra fina (lupa, chip e avatar). */
 @media (width < 480px) {
   .wh__status app-chip {

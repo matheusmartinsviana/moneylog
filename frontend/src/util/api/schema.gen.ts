@@ -1822,8 +1822,9 @@ export interface paths {
          * @description Mesmos filtros de `GET /v1/transactions` (sem paginação) mais `includeVoided`. UTF-8 **com BOM**, separador `;`, fim de linha
          *     `CRLF`, valor com vírgula decimal e sem milhar (`1234,50`), datas ISO. **Uma linha por movimentação** (a compra em 6x aparece uma
          *     vez, com o valor inteiro). Colunas: data, tipo, descrição, categoria, conta/cartão (`origem > destino` nas transferências), método,
-         *     valor, status e **direção** (9ª coluna, aditiva, S-261: `Aplicação`/`Resgate` no `INVESTMENT` e `Crédito`/`Débito` no `ADJUSTMENT`,
-         *     `Contribution`/`Redemption`/`Credit`/`Debit` em inglês; vazia nos demais tipos, em que o valor, sempre positivo, já basta). O
+         *     valor, status, **direção** (9ª coluna, aditiva, S-261: `Aplicação`/`Resgate` no `INVESTMENT` e `Crédito`/`Débito` no `ADJUSTMENT`,
+         *     `Contribution`/`Redemption`/`Credit`/`Debit` em inglês; vazia nos demais tipos, em que o valor, sempre positivo, já basta) e
+         *     **competência da renda** (10ª coluna, aditiva, ADR-017: `AAAA-MM` quando a receita pertence a outro mês que o da data; vazia nas demais linhas). O
          *     cabeçalho **e os valores de tipo, método, status e direção** seguem `Accept-Language` (português por padrão; `en` em inglês),
          *     por exemplo `Despesa`/`Pix`/`Ativa` ou `Expense`/`Pix`/`Active`. Texto que começa com `=`, `+`, `-`, `@`,
          *     tabulação ou retorno de carro recebe um `'` na frente (proteção contra injeção de fórmula). Estornadas só com `status=VOIDED` ou
@@ -3230,6 +3231,12 @@ export interface components {
              */
             categoryId?: string;
             method?: components["schemas"]["PaymentMethod"];
+            /**
+             * @description Mês a que a renda pertence (`AAAA-MM`), quando difere do mês da `date` (ADR-017): o adiantamento pago em 16/09 e atribuído a
+             *     `2026-10` conta como renda de outubro. Ausente ou `null` = o mês da `date`. O saldo e o caixa seguem na `date`. Fora de 2000-01..2100-12
+             *     → `422 INCOME_COMPETENCE_INVALID`. Só em `INCOME`.
+             */
+            incomeCompetence?: string | null;
         };
         /** @description Transferência entre contas próprias da mesma liquidez (`TRANSFER`). */
         TransferInput: {
@@ -3395,6 +3402,12 @@ export interface components {
              */
             categoryId?: string;
             method?: components["schemas"]["PaymentMethod"];
+            /**
+             * @description Mês a que a renda pertence (`AAAA-MM`), quando difere do mês da `date` (ADR-017): o adiantamento pago em 16/09 e atribuído a
+             *     `2026-10` conta como renda de outubro. Ausente ou `null` = o mês da `date` (no `PUT`, limpa a competência de renda). O saldo e o caixa seguem na `date`. Fora de 2000-01..2100-12
+             *     → `422 INCOME_COMPETENCE_INVALID`. Só em `INCOME`.
+             */
+            incomeCompetence?: string | null;
             /** Format: int64 */
             version: number;
         };
@@ -3649,6 +3662,11 @@ export interface components {
              * @description Data da ocorrência realizada (`source: RECURRENCE`). Campo opcional (Etapa 4).
              */
             occurrenceDate?: string | null;
+            /**
+             * @description Mês a que a receita pertence quando declarado (ADR-017); `null` = o mês da `date`. Só em `INCOME`. A competência efetiva da renda é
+             *     `incomeCompetence` ou, se `null`, o mês de `date`. Campo opcional (2.18.0).
+             */
+            incomeCompetence?: string | null;
             impact: components["schemas"]["Impact"];
             /** @description Ativa, de tipo editável e sem conta arquivada (S-62, S-88). */
             editable: boolean;
@@ -3690,6 +3708,7 @@ export interface components {
             transactionType: components["schemas"]["TransactionType"];
             /** Format: date */
             date: string;
+            /** @description Competência da linha: o mês de `date`, exceto na receita com `incomeCompetence` (ADR-017), em que é a competência declarada (`date` segue sendo quando o dinheiro caiu). */
             competence: components["schemas"]["Competence"];
             description: string;
             category: components["schemas"]["CategoryRef"];
@@ -4949,6 +4968,8 @@ export interface components {
              *     vencidas e não realizadas dela continuam pendentes (S-20). Campo opcional (sempre presente na resposta); ausente = `false`.
              */
             ended?: boolean;
+            /** @description Só na recorrência de receita (ADR-017): 0 = a renda de cada ocorrência pertence ao mês da data; 1 = ao mês seguinte (salário dividido). 0 nas demais. Campo opcional (2.18.0). */
+            incomeCompetenceOffsetMonths?: number;
             /**
              * Format: date
              * @description Próxima ocorrência **pendente** (inclui as vencidas, S-20); `null` se desativada ou sem mais ocorrências.
@@ -4987,6 +5008,12 @@ export interface components {
             /** Format: date */
             endDate?: string | null;
             maxOccurrences?: number | null;
+            /**
+             * @description Só em recorrência de receita (ADR-017; em outro tipo → `422 RECURRENCE_INVALID`): `0` (padrão) = a ocorrência realizada
+             *     tem `incomeCompetence` ausente (mês da data); `1` = `incomeCompetence` = mês da data da ocorrência + 1. As ocorrências já
+             *     realizadas não mudam.
+             */
+            incomeCompetenceOffsetMonths?: number | null;
         };
         /** @description Só os dados do modelo (S-139). Frequência e início não existem aqui. */
         RecurrenceUpdate: {
@@ -5008,6 +5035,12 @@ export interface components {
             endDate?: string | null;
             /** Format: int64 */
             version: number;
+            /**
+             * @description Ausente mantém o atual. Só em recorrência de receita (ADR-017; em outro tipo → `422 RECURRENCE_INVALID`): `0` =  a ocorrência realizada
+             *     tem `incomeCompetence` ausente (mês da data); `1` = `incomeCompetence` = mês da data da ocorrência + 1. As ocorrências já
+             *     realizadas não mudam.
+             */
+            incomeCompetenceOffsetMonths?: number | null;
         };
         RecurrenceEndInput: {
             /**
@@ -5814,6 +5847,8 @@ export interface components {
             /** Format: date-time */
             voidedAt: string | null;
             installments: components["schemas"]["BackupInstallment"][];
+            /** @description Competência da receita quando difere do mês da data (ADR-017); restaurável. Campo opcional (2.18.0). */
+            incomeCompetence?: string | null;
         };
         BackupSettlement: {
             /** Format: uuid */
@@ -5879,6 +5914,8 @@ export interface components {
             maxOccurrences: number | null;
             active: boolean;
             skippedDates: string[];
+            /** @description Deslocamento da competência da renda das ocorrências (ADR-017). Campo opcional (2.18.0). */
+            incomeCompetenceOffsetMonths?: number;
         };
         BackupGoalReservation: {
             /** Format: uuid */
@@ -5920,6 +5957,8 @@ export interface components {
             /** Format: date */
             effectiveDate: string;
             active: boolean;
+            /** @description Competência do lançamento (`AAAA-MM`): o mês de `effectiveDate`, exceto no livro `INCOME` com `incomeCompetence` (ADR-017). Campo opcional (2.18.0). */
+            competence?: string;
         };
         /**
          * @description Backup completo dos dados do usuário (S-153). `schemaVersion` sobe quando um campo muda de sentido (campos novos são
@@ -6307,7 +6346,7 @@ export interface components {
              */
             to: string;
             /**
-             * @description `DATE` (`DAY`, `WEEK`) ou `COMPETENCE` (`MONTH`). Só rótulo: a competência de um lançamento é o mês da data efetiva.
+             * @description `DATE` (`DAY`, `WEEK`: data efetiva, o caixa) ou `COMPETENCE` (`MONTH`: competência do lançamento, que é o mês da data efetiva, exceto na receita com `incomeCompetence`, ADR-017). Só rótulo.
              * @enum {string}
              */
             basis: "DATE" | "COMPETENCE";
@@ -6396,6 +6435,8 @@ export interface components {
             type: components["schemas"]["TransactionType"];
             category: components["schemas"]["CategoryRef"] | null;
             account: components["schemas"]["AccountRef"] | null;
+            /** @description Mês a que a receita pertence quando declarado (ADR-017); `null` nas demais. Campo opcional (2.18.0). */
+            incomeCompetence?: string | null;
         };
         SearchAccount: {
             /** Format: uuid */

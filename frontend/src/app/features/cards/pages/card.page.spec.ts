@@ -107,6 +107,8 @@ describe('CardPage', () => {
   it('Dado a tela, então mostra o bloco de notas vinculadas ao registro (a página injeta o bloco; nenhum módulo importa notes)', async () => {
     await setup();
 
+    // As notas ligadas moram em "Mais" (recolhido e montado só ao abrir).
+    await userEvent.click(await screen.findByTestId('card-more-toggle'));
     expect(await screen.findByTestId('card-notes-block')).toHaveTextContent('Notas vinculadas');
     expect(screen.getByTestId('card-notes-new')).toBeInTheDocument();
   });

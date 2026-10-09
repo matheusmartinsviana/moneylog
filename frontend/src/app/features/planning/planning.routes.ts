@@ -6,6 +6,7 @@ import { CommitmentPage } from '~/app/features/planning/pages/commitment.page';
 import { CommitmentsPage } from '~/app/features/planning/pages/commitments.page';
 import { DebtsOverviewPage } from '~/app/features/planning/pages/debts-overview.page';
 import { OccurrencesPage } from '~/app/features/planning/pages/occurrences.page';
+import { OverviewPage } from '~/app/features/planning/pages/overview.page';
 import { ProjectionsPage } from '~/app/features/planning/pages/projections.page';
 import { RecurrenceFormPage } from '~/app/features/planning/pages/recurrence-form.page';
 import { RecurrencesPage } from '~/app/features/planning/pages/recurrences.page';
@@ -30,6 +31,7 @@ const routes: Routes = [
         ],
       },
       { path: 'occurrences', component: OccurrencesPage, title: pageTitle('planning') },
+      { path: 'overview', component: OverviewPage, title: pageTitle('planning') },
       { path: 'summary', component: SummaryPage, title: pageTitle('planning') },
       { path: 'summary/:month', component: SummaryPage, title: pageTitle('planning') },
       { path: 'projections', component: ProjectionsPage, title: pageTitle('planning') },

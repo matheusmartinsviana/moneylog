@@ -1,4 +1,4 @@
-<app-page-layout [heading]="t().nav.notes">
+<app-page-layout fit [heading]="t().nav.notes">
   <button
     pageActions
     type="button"
@@ -9,163 +9,44 @@
     {{ t().notes.list.newNote }}
   </button>
 
-  <p class="storage" data-cy="notes-storage">{{ t().notes.storage }}</p>
-
-  <nav
-    class="tabs"
-    appSlideIndicator
-    [attr.aria-label]="t().notes.list.viewLabel"
-    data-cy="notes-tabs"
-  >
-    <a
-      class="tab"
-      routerLink="/notes"
-      data-cy="notes-tab-notes"
-      [attr.aria-current]="trashView() ? null : 'page'"
+  <div class="fit-stack">
+    <nav
+      class="tabs"
+      appSlideIndicator
+      [attr.aria-label]="t().notes.list.viewLabel"
+      data-cy="notes-tabs"
     >
-      {{ t().notes.list.viewNotes }}
-    </a>
-    <a
-      class="tab"
-      routerLink="/notes"
-      [queryParams]="{ view: 'trash' }"
-      data-cy="notes-tab-trash"
-      [attr.aria-current]="trashView() ? 'page' : null"
-    >
-      {{ t().notes.list.viewTrash }}
-    </a>
-  </nav>
+      <a
+        class="tab"
+        routerLink="/notes"
+        data-cy="notes-tab-notes"
+        [attr.aria-current]="trashView() ? null : 'page'"
+      >
+        {{ t().notes.list.viewNotes }}
+      </a>
+      <a
+        class="tab"
+        routerLink="/notes"
+        [queryParams]="{ view: 'trash' }"
+        data-cy="notes-tab-trash"
+        [attr.aria-current]="trashView() ? 'page' : null"
+      >
+        {{ t().notes.list.viewTrash }}
+      </a>
+    </nav>
 
-  @if (trashView()) {
-    <section class="trash" data-cy="notes-trash" [attr.aria-label]="t().notes.trash.title">
-      <p class="hint">{{ t().notes.trash.description }}</p>
-      @if (actionError(); as message) {
-        <p class="banner" role="alert" data-cy="notes-action-error">{{ message }}</p>
-      }
-      @switch (list.state().status) {
-        @case ('loading') {
-          <div data-cy="notes-loading">
-            <p class="visually-hidden" role="status">{{ t().notes.list.loading }}</p>
-            <div class="list-skeleton" aria-hidden="true">
-              <div class="list-skeleton__row"></div>
-              <div class="list-skeleton__row"></div>
-            </div>
-          </div>
-        }
-        @case ('error') {
-          <app-error-state [problem]="loadError()" (retry)="list.retry()" />
-        }
-        @case ('ready') {
-          @if ((list.items() ?? []).length === 0) {
-            <p class="empty-note" data-cy="notes-trash-empty">{{ t().notes.trash.empty }}</p>
-          } @else {
-            <div class="surface">
-              <app-trash-list
-                [notes]="list.items() ?? []"
-                [busy]="list.busy()"
-                (restore)="list.restore($event)"
-              />
-            </div>
-            <div class="actions">
-              <button
-                type="button"
-                class="button"
-                data-cy="notes-empty-trash"
-                [disabled]="list.busy()"
-                (click)="askEmpty()"
-              >
-                {{ t().notes.trash.emptyTrash }}
-              </button>
-            </div>
+    @if (trashView()) {
+      <div class="fit-scroll">
+        <section class="trash" data-cy="notes-trash" [attr.aria-label]="t().notes.trash.title">
+          <p class="hint">{{ t().notes.trash.description }}</p>
+          @if (actionError(); as message) {
+            <p class="banner" role="alert" data-cy="notes-action-error">{{ message }}</p>
           }
-        }
-      }
-    </section>
-  } @else {
-    <div class="toolbar">
-      <app-text-field
-        [formControl]="search"
-        fieldId="notes-search"
-        [role]="'searchbox'"
-        enterkeyhint="search"
-        [label]="t().notes.list.searchLabel"
-        [placeholder]="t().notes.list.searchPlaceholder"
-        [mandatory]="false"
-        [maxlength]="200"
-      />
-      <app-tag-chips
-        [tags]="list.tags()"
-        [selected]="filters().tag"
-        [label]="t().notes.list.tagsLabel"
-        (selectTag)="selectTag($event)"
-      />
-    </div>
-
-    @if (vaultEmpty()) {
-      <app-empty-state
-        [heading]="t().emptyState.notes.title"
-        [description]="t().emptyState.notes.description"
-        [actions]="emptyActions()"
-        illustration="document"
-        (action)="onEmptyAction($event)"
-      />
-    } @else {
-      <div class="layout">
-        @if (tree().count > 0 || selectedFolder() !== null) {
-          <aside class="folders" data-cy="notes-folders">
-            @if (viewport.compact()) {
-              <app-select
-                fieldId="notes-folder-select"
-                [options]="folderChoices()"
-                [label]="t().notes.list.folderSelectLabel"
-                [emptyLabel]="t().notes.list.allNotes"
-                [mandatory]="false"
-                [searchable]="false"
-                [formControl]="folderControl"
-              />
-            } @else {
-              <h2 class="folders__title">{{ t().notes.list.foldersLabel }}</h2>
-              <app-folder-tree
-                [root]="tree()"
-                [selected]="selectedFolder()"
-                [label]="t().notes.list.treeLabel"
-                [allLabel]="t().notes.list.allNotes"
-                (selectFolder)="selectFolder($event)"
-              />
-            }
-            @if (list.treeMore() === 'available') {
-              <div class="folders__more" data-cy="notes-tree-partial">
-                <p class="folders__hint" role="status">{{ treeNotice() }}</p>
-                <button
-                  type="button"
-                  class="button"
-                  data-cy="notes-tree-more"
-                  [disabled]="list.treeLoadingMore()"
-                  [attr.aria-busy]="list.treeLoadingMore() || null"
-                  (click)="list.loadMoreTree()"
-                >
-                  {{ t().notes.list.treeLoadMore }}
-                </button>
-              </div>
-            } @else if (list.treeMore() === 'capped') {
-              <p class="folders__hint" role="status" data-cy="notes-tree-capped">
-                {{ treeNotice() }}
-              </p>
-            }
-          </aside>
-        }
-
-        <section
-          class="results"
-          data-cy="notes-results"
-          [attr.aria-busy]="list.state().status === 'loading'"
-        >
           @switch (list.state().status) {
             @case ('loading') {
               <div data-cy="notes-loading">
                 <p class="visually-hidden" role="status">{{ t().notes.list.loading }}</p>
                 <div class="list-skeleton" aria-hidden="true">
-                  <div class="list-skeleton__row"></div>
                   <div class="list-skeleton__row"></div>
                   <div class="list-skeleton__row"></div>
                 </div>
@@ -176,56 +57,181 @@
             }
             @case ('ready') {
               @if ((list.items() ?? []).length === 0) {
-                <app-empty-state
-                  [heading]="t().notes.list.noResults.title"
-                  [description]="t().notes.list.noResults.description"
-                  [actions]="[
-                    {
-                      id: 'clear-filters',
-                      label: t().notes.list.clearFilters,
-                      available: true,
-                      primary: true,
-                    },
-                  ]"
-                  illustration="document"
-                  (action)="clearFilters()"
-                />
+                <p class="empty-note" data-cy="notes-trash-empty">{{ t().notes.trash.empty }}</p>
               } @else {
-                <ul class="surface list" data-cy="notes-list">
-                  @for (note of list.items(); track note.id) {
-                    <li app-note-row [note]="note" [term]="filters().q"></li>
-                  }
-                </ul>
-                @if (actionError(); as message) {
-                  <p class="banner" role="alert" data-cy="notes-action-error">{{ message }}</p>
-                }
-                @if (list.hasNext()) {
+                <div class="surface">
+                  <app-trash-list
+                    [notes]="list.items() ?? []"
+                    [busy]="list.busy()"
+                    (restore)="list.restore($event)"
+                  />
+                </div>
+                <div class="actions">
                   <button
                     type="button"
                     class="button"
-                    data-cy="notes-load-more"
-                    [disabled]="list.loadingMore()"
-                    (click)="list.loadMore()"
+                    data-cy="notes-empty-trash"
+                    [disabled]="list.busy()"
+                    (click)="askEmpty()"
                   >
-                    {{ list.loadingMore() ? t().notes.list.loadingMore : t().notes.list.loadMore }}
+                    {{ t().notes.trash.emptyTrash }}
                   </button>
-                }
+                </div>
               }
             }
           }
         </section>
       </div>
-    }
-  }
+    } @else {
+      <div class="toolbar">
+        <app-text-field
+          [formControl]="search"
+          fieldId="notes-search"
+          [role]="'searchbox'"
+          enterkeyhint="search"
+          [label]="t().notes.list.searchLabel"
+          [placeholder]="t().notes.list.searchPlaceholder"
+          [mandatory]="false"
+          [maxlength]="200"
+        />
+        <app-tag-chips
+          [tags]="list.tags()"
+          [selected]="filters().tag"
+          [label]="t().notes.list.tagsLabel"
+          (selectTag)="selectTag($event)"
+        />
+      </div>
+      <div class="fit-scroll">
+        @if (vaultEmpty()) {
+          <app-empty-state
+            [heading]="t().emptyState.notes.title"
+            [description]="t().emptyState.notes.description"
+            [actions]="emptyActions()"
+            illustration="document"
+            (action)="onEmptyAction($event)"
+          />
+        } @else {
+          <div class="layout">
+            @if (tree().count > 0 || selectedFolder() !== null) {
+              <aside class="folders" data-cy="notes-folders">
+                @if (viewport.compact()) {
+                  <app-select
+                    fieldId="notes-folder-select"
+                    [options]="folderChoices()"
+                    [label]="t().notes.list.folderSelectLabel"
+                    [emptyLabel]="t().notes.list.allNotes"
+                    [mandatory]="false"
+                    [searchable]="false"
+                    [formControl]="folderControl"
+                  />
+                } @else {
+                  <h2 class="folders__title">{{ t().notes.list.foldersLabel }}</h2>
+                  <app-folder-tree
+                    [root]="tree()"
+                    [selected]="selectedFolder()"
+                    [label]="t().notes.list.treeLabel"
+                    [allLabel]="t().notes.list.allNotes"
+                    (selectFolder)="selectFolder($event)"
+                  />
+                }
+                @if (list.treeMore() === 'available') {
+                  <div class="folders__more" data-cy="notes-tree-partial">
+                    <p class="folders__hint" role="status">{{ treeNotice() }}</p>
+                    <button
+                      type="button"
+                      class="button"
+                      data-cy="notes-tree-more"
+                      [disabled]="list.treeLoadingMore()"
+                      [attr.aria-busy]="list.treeLoadingMore() || null"
+                      (click)="list.loadMoreTree()"
+                    >
+                      {{ t().notes.list.treeLoadMore }}
+                    </button>
+                  </div>
+                } @else if (list.treeMore() === 'capped') {
+                  <p class="folders__hint" role="status" data-cy="notes-tree-capped">
+                    {{ treeNotice() }}
+                  </p>
+                }
+              </aside>
+            }
 
-  <app-disclosure
-    fieldId="notes-vault"
-    [heading]="t().notes.vault.title"
-    [lazy]="true"
-    [(open)]="vaultOpen"
-  >
-    <app-vault-section [showTitle]="false" (imported)="onImported()" />
-  </app-disclosure>
+            <section
+              class="results"
+              data-cy="notes-results"
+              [attr.aria-busy]="list.state().status === 'loading'"
+            >
+              @switch (list.state().status) {
+                @case ('loading') {
+                  <div data-cy="notes-loading">
+                    <p class="visually-hidden" role="status">{{ t().notes.list.loading }}</p>
+                    <div class="list-skeleton" aria-hidden="true">
+                      <div class="list-skeleton__row"></div>
+                      <div class="list-skeleton__row"></div>
+                      <div class="list-skeleton__row"></div>
+                    </div>
+                  </div>
+                }
+                @case ('error') {
+                  <app-error-state [problem]="loadError()" (retry)="list.retry()" />
+                }
+                @case ('ready') {
+                  @if ((list.items() ?? []).length === 0) {
+                    <app-empty-state
+                      [heading]="t().notes.list.noResults.title"
+                      [description]="t().notes.list.noResults.description"
+                      [actions]="[
+                        {
+                          id: 'clear-filters',
+                          label: t().notes.list.clearFilters,
+                          available: true,
+                          primary: true,
+                        },
+                      ]"
+                      illustration="document"
+                      (action)="clearFilters()"
+                    />
+                  } @else {
+                    <ul class="surface list" data-cy="notes-list">
+                      @for (note of list.items(); track note.id) {
+                        <li app-note-row [note]="note" [term]="filters().q"></li>
+                      }
+                    </ul>
+                    @if (actionError(); as message) {
+                      <p class="banner" role="alert" data-cy="notes-action-error">{{ message }}</p>
+                    }
+                    @if (list.hasNext()) {
+                      <button
+                        type="button"
+                        class="button"
+                        data-cy="notes-load-more"
+                        [disabled]="list.loadingMore()"
+                        (click)="list.loadMore()"
+                      >
+                        {{
+                          list.loadingMore() ? t().notes.list.loadingMore : t().notes.list.loadMore
+                        }}
+                      </button>
+                    }
+                  }
+                }
+              }
+            </section>
+          </div>
+        }
+      </div>
+    }
+
+    <app-disclosure
+      fieldId="notes-vault"
+      [heading]="t().notes.vault.title"
+      [lazy]="true"
+      [(open)]="vaultOpen"
+    >
+      <p class="storage" data-cy="notes-storage">{{ t().notes.storage }}</p>
+      <app-vault-section [showTitle]="false" (imported)="onImported()" />
+    </app-disclosure>
+  </div>
 
   <app-new-note-sheet
     [open]="creating()"

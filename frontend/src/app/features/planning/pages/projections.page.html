@@ -1,173 +1,194 @@
-<app-page-layout [heading]="t().nav.planning">
-  <app-planning-nav current="projections" />
+<app-page-layout fit [heading]="t().nav.planning">
+  <div class="fit-stack">
+    <app-planning-nav current="projections" />
 
-  <div class="banner banner--projection" role="note" data-cy="projection-banner">
-    <p class="banner__title" data-cy="projection-banner-title">
-      {{ t().projections.bannerTitle }}
-    </p>
-    <p data-cy="projection-banner-text">{{ t().projections.bannerText }}</p>
-  </div>
+    <div class="banner banner--projection" role="note" data-cy="projection-banner">
+      <p class="banner__title" data-cy="projection-banner-title">
+        {{ t().projections.bannerTitle }}
+      </p>
+      <p data-cy="projection-banner-text">{{ t().projections.bannerText }}</p>
+    </div>
 
-  <div class="controls">
-    <app-segmented-control
-      [formControl]="horizonControl"
-      fieldId="projection-horizon"
-      [options]="horizonOptions()"
-      [label]="t().projections.horizonLabel"
-    />
-    <app-switch
-      [formControl]="trendControl"
-      fieldId="projection-trend"
-      [label]="t().projections.trend.toggle"
-      [hint]="t().projections.trend.hint"
-    />
-  </div>
-
-  @switch (projection.state().status) {
-    @case ('loading') {
-      <div data-cy="projection-loading">
-        <p class="visually-hidden" role="status">{{ t().projections.loading }}</p>
-        <div class="list-skeleton" aria-hidden="true">
-          <div class="list-skeleton__row"></div>
-          <div class="list-skeleton__row"></div>
-          <div class="list-skeleton__row"></div>
-        </div>
-      </div>
-    }
-    @case ('empty') {
-      <app-empty-state
-        [heading]="t().projections.empty.title"
-        [description]="t().projections.empty.description"
-        [actions]="emptyActions()"
-        illustration="timeline"
+    <div class="controls">
+      <app-segmented-control
+        [formControl]="horizonControl"
+        fieldId="projection-horizon"
+        [options]="horizonOptions()"
+        [label]="t().projections.horizonLabel"
       />
-    }
-    @case ('error') {
-      <app-error-state [problem]="projection.error()" (retry)="retry()" />
-    }
-    @case ('ready') {
-      @if (data(); as p) {
-        <app-section-container
-          [heading]="t().projections.chartLabel"
-          [description]="t().projections.horizons[p.horizon]"
-        >
-          <p class="start" data-cy="projection-start">
-            <span class="start__label">{{ t().projections.startingBalance }}</span>
-            <app-money [value]="p.startingBalance" />
-          </p>
-          <app-sparkline [series]="sparkSeries()" />
-          <div class="table-wrap">
-            <table class="table" data-cy="projection-table">
-              <caption class="visually-hidden">
-                {{
-                  t().projections.table.caption
-                }}
-              </caption>
-              <thead>
-                <tr>
-                  <th scope="col">{{ t().projections.table.month }}</th>
-                  <th scope="col" class="num">{{ t().projections.table.inflows }}</th>
-                  <th scope="col" class="num">{{ t().projections.table.outflows }}</th>
-                  <th scope="col" class="num">{{ t().projections.table.balance }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (row of rows(); track row.point.competence) {
-                  <tr [attr.data-cy]="'projection-row-' + row.point.competence">
-                    <th scope="row">
-                      {{ row.month }}
-                      <span
-                        class="table__until"
-                        [attr.data-cy]="'projection-until-' + row.point.competence"
-                        >{{ row.until }}</span
-                      >
-                    </th>
-                    <td class="num" [attr.data-cy]="'projection-inflows-' + row.point.competence">
-                      <app-money [value]="row.point.inflows" />
-                    </td>
-                    <td class="num" [attr.data-cy]="'projection-outflows-' + row.point.competence">
-                      <app-money [value]="row.point.outflows" />
-                    </td>
-                    <td class="num" [attr.data-cy]="'projection-balance-' + row.point.competence">
-                      <app-money [value]="row.point.balance" />
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
+      <app-switch
+        [formControl]="trendControl"
+        fieldId="projection-trend"
+        [label]="t().projections.trend.toggle"
+        [hint]="t().projections.trend.hint"
+      />
+    </div>
+
+    <div class="fit-scroll">
+      @switch (projection.state().status) {
+        @case ('loading') {
+          <div data-cy="projection-loading">
+            <p class="visually-hidden" role="status">{{ t().projections.loading }}</p>
+            <div class="list-skeleton" aria-hidden="true">
+              <div class="list-skeleton__row"></div>
+              <div class="list-skeleton__row"></div>
+              <div class="list-skeleton__row"></div>
+            </div>
           </div>
-        </app-section-container>
-
-        @if (p.trend; as trend) {
-          <app-section-container [heading]="t().projections.trend.title">
-            <p class="tag-line">
-              <span class="tag tag--estimate" data-cy="projection-trend-estimate">{{
-                t().projections.trend.estimate
-              }}</span>
-            </p>
-            @if (trendReason(); as reason) {
-              <p class="note" data-cy="projection-trend-unavailable">{{ reason }}</p>
-            } @else {
-              @if (trend.monthlyAverage; as average) {
-                <p class="start" data-cy="projection-trend-average">
-                  <span class="start__label">{{ t().projections.trend.monthlyAverage }}</span>
-                  <app-money [value]="average" />
-                </p>
-              }
-              @if (trendBasedOn(); as basedOn) {
-                <p class="note" data-cy="projection-trend-based-on">{{ basedOn }}</p>
-              }
-              <div class="table-wrap">
-                <table class="table" data-cy="projection-trend-table">
-                  <caption class="visually-hidden">
-                    {{
-                      t().projections.trend.title
-                    }}
-                  </caption>
-                  <thead>
-                    <tr>
-                      <th scope="col">{{ t().projections.table.month }}</th>
-                      <th scope="col" class="num">{{ t().projections.trend.spending }}</th>
-                      <th scope="col" class="num">{{ t().projections.trend.balance }}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (row of trendRows(); track row.point.competence) {
-                      <tr [attr.data-cy]="'projection-trend-row-' + row.point.competence">
-                        <th scope="row">{{ row.month }}</th>
-                        <td class="num">
-                          <app-money [value]="row.point.estimatedSpending" />
-                        </td>
-                        <td class="num">
-                          <app-money [value]="row.point.balance" />
-                        </td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            }
-          </app-section-container>
         }
+        @case ('empty') {
+          <app-empty-state
+            [heading]="t().projections.empty.title"
+            [description]="t().projections.empty.description"
+            [actions]="emptyActions()"
+            illustration="timeline"
+          />
+        }
+        @case ('error') {
+          <app-error-state [problem]="projection.error()" (retry)="retry()" />
+        }
+        @case ('ready') {
+          @if (data(); as p) {
+            <app-section-container
+              [heading]="t().projections.chartLabel"
+              [description]="t().projections.horizons[p.horizon]"
+            >
+              <p class="start" data-cy="projection-start">
+                <span class="start__label">{{ t().projections.startingBalance }}</span>
+                <app-money [value]="p.startingBalance" />
+              </p>
+              <app-sparkline [series]="sparkSeries()" />
+            </app-section-container>
 
-        <app-section-container [heading]="t().projections.assumptionsTitle">
-          <ul class="assumptions" data-cy="projection-assumptions">
-            @for (assumption of assumptions(); track assumption.key) {
-              <li [attr.data-cy]="'projection-assumption-' + assumption.key">
-                {{ assumption.text }}
-              </li>
-            }
-          </ul>
-        </app-section-container>
+            <app-disclosure fieldId="projection-more" [heading]="t().brief.more" [headingLevel]="2">
+              <div class="more">
+                <div class="table-wrap">
+                  <table class="table" data-cy="projection-table">
+                    <caption class="visually-hidden">
+                      {{
+                        t().projections.table.caption
+                      }}
+                    </caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">{{ t().projections.table.month }}</th>
+                        <th scope="col" class="num">{{ t().projections.table.inflows }}</th>
+                        <th scope="col" class="num">{{ t().projections.table.outflows }}</th>
+                        <th scope="col" class="num">{{ t().projections.table.balance }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (row of rows(); track row.point.competence) {
+                        <tr [attr.data-cy]="'projection-row-' + row.point.competence">
+                          <th scope="row">
+                            {{ row.month }}
+                            <span
+                              class="table__until"
+                              [attr.data-cy]="'projection-until-' + row.point.competence"
+                              >{{ row.until }}</span
+                            >
+                          </th>
+                          <td
+                            class="num"
+                            [attr.data-cy]="'projection-inflows-' + row.point.competence"
+                          >
+                            <app-money [value]="row.point.inflows" />
+                          </td>
+                          <td
+                            class="num"
+                            [attr.data-cy]="'projection-outflows-' + row.point.competence"
+                          >
+                            <app-money [value]="row.point.outflows" />
+                          </td>
+                          <td
+                            class="num"
+                            [attr.data-cy]="'projection-balance-' + row.point.competence"
+                          >
+                            <app-money [value]="row.point.balance" />
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+                @if (p.trend; as trend) {
+                  <app-section-container [heading]="t().projections.trend.title">
+                    <p class="tag-line">
+                      <span class="tag tag--estimate" data-cy="projection-trend-estimate">{{
+                        t().projections.trend.estimate
+                      }}</span>
+                    </p>
+                    @if (trendReason(); as reason) {
+                      <p class="note" data-cy="projection-trend-unavailable">{{ reason }}</p>
+                    } @else {
+                      @if (trend.monthlyAverage; as average) {
+                        <p class="start" data-cy="projection-trend-average">
+                          <span class="start__label">{{
+                            t().projections.trend.monthlyAverage
+                          }}</span>
+                          <app-money [value]="average" />
+                        </p>
+                      }
+                      @if (trendBasedOn(); as basedOn) {
+                        <p class="note" data-cy="projection-trend-based-on">{{ basedOn }}</p>
+                      }
+                      <div class="table-wrap">
+                        <table class="table" data-cy="projection-trend-table">
+                          <caption class="visually-hidden">
+                            {{
+                              t().projections.trend.title
+                            }}
+                          </caption>
+                          <thead>
+                            <tr>
+                              <th scope="col">{{ t().projections.table.month }}</th>
+                              <th scope="col" class="num">{{ t().projections.trend.spending }}</th>
+                              <th scope="col" class="num">{{ t().projections.trend.balance }}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @for (row of trendRows(); track row.point.competence) {
+                              <tr [attr.data-cy]="'projection-trend-row-' + row.point.competence">
+                                <th scope="row">{{ row.month }}</th>
+                                <td class="num">
+                                  <app-money [value]="row.point.estimatedSpending" />
+                                </td>
+                                <td class="num">
+                                  <app-money [value]="row.point.balance" />
+                                </td>
+                              </tr>
+                            }
+                          </tbody>
+                        </table>
+                      </div>
+                    }
+                  </app-section-container>
+                }
 
-        <app-section-container [heading]="t().projections.goals.title">
-          <p class="note" data-cy="projection-goals-note">{{ t().projections.goals.note }}</p>
-          <p class="start" data-cy="projection-goals-reserved">
-            <span class="start__label">{{ t().projections.goals.reserved }}</span>
-            <app-money [value]="p.goals.reserved" />
-          </p>
-        </app-section-container>
+                <app-section-container [heading]="t().projections.assumptionsTitle">
+                  <ul class="assumptions" data-cy="projection-assumptions">
+                    @for (assumption of assumptions(); track assumption.key) {
+                      <li [attr.data-cy]="'projection-assumption-' + assumption.key">
+                        {{ assumption.text }}
+                      </li>
+                    }
+                  </ul>
+                </app-section-container>
+
+                <app-section-container [heading]="t().projections.goals.title">
+                  <p class="note" data-cy="projection-goals-note">
+                    {{ t().projections.goals.note }}
+                  </p>
+                  <p class="start" data-cy="projection-goals-reserved">
+                    <span class="start__label">{{ t().projections.goals.reserved }}</span>
+                    <app-money [value]="p.goals.reserved" />
+                  </p>
+                </app-section-container>
+              </div>
+            </app-disclosure>
+          }
+        }
       }
-    }
-  }
+    </div>
+  </div>
 </app-page-layout>

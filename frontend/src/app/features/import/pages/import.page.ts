@@ -13,6 +13,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { startWith } from 'rxjs';
 
+import { DisclosureComponent } from '~/app/common/components/disclosure/disclosure.component';
 import { ErrorStateComponent } from '~/app/common/components/error-state/error-state.component';
 import type { ChoiceOption } from '~/app/common/components/forms/choice-option';
 import { FilePickerComponent } from '~/app/common/components/forms/file-picker/file-picker.component';
@@ -44,6 +45,7 @@ import { formatIsoDate } from '~/util/date';
 @Component({
   selector: 'app-import-page',
   imports: [
+    DisclosureComponent,
     ReactiveFormsModule,
     RouterLink,
     PageLayoutComponent,

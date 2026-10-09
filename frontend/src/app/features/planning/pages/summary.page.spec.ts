@@ -15,6 +15,7 @@ import {
 } from '~/testing/etapa5-testing';
 import { provideI18nTesting } from '~/testing/i18n-testing';
 import { provideNotesStub } from '~/testing/notes-testing';
+import { provideReportsStub, ReportsGatewayStub } from '~/testing/reports-testing';
 
 vi.setConfig({ testTimeout: 30_000 });
 
@@ -23,6 +24,7 @@ const text = (el: HTMLElement) => el.textContent?.replace(/\s+/g, ' ').trim();
 async function setup(
   gateway = new MonthlySummaryGatewayStub(),
   month: string | undefined = '2026-10',
+  reports = new ReportsGatewayStub(),
 ) {
   const result = await render(SummaryPage, {
     inputs: { month },
@@ -31,6 +33,7 @@ async function setup(
       provideNotesStub(),
       provideRouter([]),
       provideMonthlySummaryStub(gateway),
+      provideReportsStub(reports),
     ],
   });
   await result.fixture.whenStable();
@@ -105,8 +108,19 @@ describe('SummaryPage', () => {
     expect(text(screen.getByTestId('summary-future-installments'))).toContain('R$ 1.000,00');
   });
 
+  it('Dado o mês, então mostra o gasto por categoria do backend (saiu do Início) para o mesmo mês da URL', async () => {
+    const reports = new ReportsGatewayStub();
+    await setup(undefined, '2026-10', reports);
+
+    expect(await screen.findByTestId('home-categories-total')).toHaveTextContent('R$ 250,00');
+    expect(screen.getAllByText('Tecnologia').length).toBeGreaterThan(0);
+    expect(reports.months).toEqual(['2026-10']);
+  });
+
   it('Dado a comparação com setembro, então diz subiu e caiu em palavras, com valor e percentual do backend', async () => {
     await setup();
+    // A comparação mora em "Mais" (recolhido por padrão).
+    await userEvent.click(screen.getByTestId('summary-more-toggle'));
 
     expect(
       text(screen.getByRole('heading', { name: /Comparação com setembro de 2026/ })),

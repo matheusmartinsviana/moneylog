@@ -18,6 +18,8 @@ html {
 body {
   margin: 0;
   position: relative;
+  display: flex;
+  flex-direction: column;
   min-height: 100dvh;
   background-color: var(--color-canvas);
   /* Halo lilás difuso no topo do canvas (DS 03): decorativo, só por token; nenhum texto crítico depende dele. */
@@ -26,6 +28,26 @@ body {
   background-size: 100% 36rem;
   color: var(--color-text);
   overflow-x: hidden;
+}
+
+app-root {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Página "sucinta" (`data-fit-page`, ver `src/styles/README.md`): a tela é exatamente a altura da viewport. */
+body:has([data-fit-page]) {
+  height: 100dvh;
+}
+
+/* O host da rota que contém uma página "sucinta" reparte a altura que sobra na janela (sem altura fixa em px). */
+.shell__content > :has(> [data-fit-page]) {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
 }
 
 /* Listras finas das referências no topo do canvas, esmaecendo para baixo (o vidro tem o que refratar). */

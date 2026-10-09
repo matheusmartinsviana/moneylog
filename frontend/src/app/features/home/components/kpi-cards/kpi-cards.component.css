@@ -122,11 +122,6 @@
   font-size: var(--text-2xl);
 }
 
-/* Coluna lateral do Início: saldo e medidor empilhados. */
-.kpis[data-part='balance'] {
-  grid-template-columns: minmax(0, 1fr);
-}
-
 /* Telas largas (modo `all`): os 4 numa linha (herói maior). Abaixo, 2 por linha. */
 @container (width >= 46rem) {
   .kpis[data-part='all'] {
@@ -149,5 +144,125 @@
 
   .kpi__value--hero {
     font-size: var(--text-xl);
+  }
+}
+
+/*
+ * Início sucinto (`compact`): uma faixa só, sem altura fixa. Celular: saldo e medidor na primeira linha, gasto,
+ * receita e resultado na segunda. A partir de 46 rem, tudo numa linha.
+ */
+.is-compact {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.is-compact .kpi {
+  grid-column: span 2;
+  padding: var(--space-2) var(--space-3);
+}
+
+.is-compact .kpi--compact-balance {
+  grid-column: span 4;
+  order: 1;
+  align-content: center;
+}
+
+.is-compact .kpi--compact {
+  order: 3;
+}
+
+.is-compact .kpi--compact-gauge {
+  grid-column: span 2;
+  order: 2;
+  gap: 0;
+  align-content: center;
+}
+
+.is-compact .kpi--compact-gauge app-gauge {
+  width: min(100%, 6.5rem);
+  margin-inline: auto;
+}
+
+.is-compact .kpi__value {
+  font-size: var(--text-md);
+}
+
+.is-compact .kpi__value--hero {
+  font-size: var(--text-xl);
+}
+
+.is-compact .kpi__value--gauge {
+  font-size: var(--text-sm);
+  line-height: 1;
+}
+
+.is-compact .kpi__label {
+  font-size: var(--text-xs);
+}
+
+.is-compact .kpi--compact .kpi__caption {
+  display: none;
+}
+
+@container (width >= 46rem) {
+  .is-compact {
+    grid-template-columns: 1.4fr repeat(3, minmax(0, 1fr)) minmax(0, 0.9fr);
+    gap: var(--space-3);
+  }
+
+  .is-compact .kpi,
+  .is-compact .kpi--compact-balance,
+  .is-compact .kpi--compact-gauge {
+    grid-column: auto;
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .is-compact .kpi--compact-balance {
+    order: 0;
+  }
+
+  .is-compact .kpi--compact {
+    order: 1;
+    align-content: center;
+  }
+
+  .is-compact .kpi--compact-gauge {
+    order: 2;
+  }
+
+  .is-compact .kpi__value {
+    font-size: var(--text-xl);
+  }
+
+  .is-compact .kpi__value--hero {
+    font-size: var(--text-2xl);
+  }
+
+  .is-compact .kpi--compact .kpi__caption {
+    display: block;
+  }
+
+  .is-compact .kpi--compact-gauge app-gauge {
+    width: min(100%, 7rem);
+  }
+}
+
+/* O rótulo curto da taxa de poupança só existe no celular; o longo fica para leitores de tela e telas largas. */
+.kpi__label-short {
+  display: none;
+}
+
+@container (width < 46rem) {
+  .is-compact .kpi__label-long {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .is-compact .kpi__label-short {
+    display: inline;
   }
 }

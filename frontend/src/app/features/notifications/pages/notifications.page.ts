@@ -12,6 +12,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
+import { DisclosureComponent } from '~/app/common/components/disclosure/disclosure.component';
 import {
   EmptyStateAction,
   EmptyStateComponent,
@@ -28,6 +29,8 @@ import { interpolate } from '~/app/common/i18n/interpolate';
 import { problemMessage } from '~/app/common/i18n/problem-message';
 import { NotificationRowComponent } from '~/app/features/notifications/components/notification-row.component';
 import { ReminderFormComponent } from '~/app/features/notifications/components/reminder-form.component';
+import { dailyText } from '~/app/features/notifications/notification-text';
+import { DailyMessageFacade } from '~/modules/notifications/core/facades/daily-message.facade';
 import { NotificationsCenterFacade } from '~/modules/notifications/core/facades/notifications-center.facade';
 import { RemindersFacade } from '~/modules/notifications/core/facades/reminders.facade';
 import { UnreadCountFacade } from '~/modules/notifications/core/facades/unread-count.facade';
@@ -65,6 +68,7 @@ interface DayGroup {
 @Component({
   selector: 'app-notifications-page',
   imports: [
+    DisclosureComponent,
     ReactiveFormsModule,
     RouterLink,
     PageLayoutComponent,
@@ -76,7 +80,7 @@ interface DayGroup {
     NotificationRowComponent,
     ReminderFormComponent,
   ],
-  providers: [NotificationsCenterFacade, RemindersFacade],
+  providers: [NotificationsCenterFacade, RemindersFacade, DailyMessageFacade],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './notifications.page.html',
   styleUrl: './notifications.page.css',
@@ -87,6 +91,15 @@ export class NotificationsPage implements OnInit {
   protected readonly t = this.i18n.t;
   protected readonly center = inject(NotificationsCenterFacade);
   protected readonly reminders = inject(RemindersFacade);
+  private readonly dailyMessage = inject(DailyMessageFacade);
+
+  /** Mensagem do dia (saiu do Início sucinto): chave + números do backend; sem resposta, nada é mostrado. */
+  protected readonly daily = computed(() => {
+    const message = this.dailyMessage.message();
+    return message
+      ? dailyText(message, this.t().notifications, HTML_LANG[this.i18n.language()])
+      : null;
+  });
 
   protected readonly statusControl = new FormControl<string | null>('ALL');
   protected readonly kindControl = new FormControl<string | null>(null);
@@ -177,6 +190,7 @@ export class NotificationsPage implements OnInit {
   ngOnInit(): void {
     this.center.load({ status: 'ALL', kind: null });
     this.reminders.load(false);
+    this.dailyMessage.load();
   }
 
   protected applyFilter(): void {

@@ -22,7 +22,12 @@ const routes: Routes = [
     title: pageTitle('cards'),
     children: [{ path: 'edit', component: CardFormPage }],
   },
-  { path: ':id/invoices/:invoiceId', component: InvoicePage, title: pageTitle('cards') },
+  {
+    path: ':id/invoices/:invoiceId',
+    providers: CARD_DETAIL_PROVIDERS,
+    component: InvoicePage,
+    title: pageTitle('cards'),
+  },
 ];
 
 export default routes;

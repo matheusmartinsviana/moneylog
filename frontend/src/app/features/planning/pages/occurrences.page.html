@@ -1,73 +1,77 @@
-<app-page-layout [heading]="t().nav.planning">
-  <app-planning-nav current="pending" />
+<app-page-layout fit [heading]="t().nav.planning">
+  <div class="fit-stack">
+    <app-planning-nav current="pending" />
 
-  @if (skipError(); as message) {
-    <p class="banner" role="alert" data-cy="occurrences-error">{{ message }}</p>
-  }
+    <div class="fit-scroll">
+      @if (skipError(); as message) {
+        <p class="banner" role="alert" data-cy="occurrences-error">{{ message }}</p>
+      }
 
-  @switch (occurrences.state().status) {
-    @case ('loading') {
-      <div data-cy="occurrences-loading">
-        <p class="visually-hidden" role="status">{{ t().recurrences.occurrences.loading }}</p>
-        <div class="list-skeleton" aria-hidden="true">
-          <div class="list-skeleton__row"></div>
-          <div class="list-skeleton__row"></div>
-        </div>
-      </div>
-    }
-    @case ('empty') {
-      <app-empty-state
-        [heading]="t().recurrences.occurrences.emptyTitle"
-        [description]="t().recurrences.occurrences.emptyDescription"
-        [actions]="[]"
-        illustration="timeline"
-      />
-    }
-    @case ('error') {
-      <app-error-state [problem]="occurrences.error()" (retry)="retry()" />
-    }
-    @case ('ready') {
-      @if (occurrences.overdueTruncated()) {
-        <p class="banner" role="status" data-cy="occurrences-truncated">
-          {{ t().recurrences.occurrences.overdueTruncated }}
-        </p>
+      @switch (occurrences.state().status) {
+        @case ('loading') {
+          <div data-cy="occurrences-loading">
+            <p class="visually-hidden" role="status">{{ t().recurrences.occurrences.loading }}</p>
+            <div class="list-skeleton" aria-hidden="true">
+              <div class="list-skeleton__row"></div>
+              <div class="list-skeleton__row"></div>
+            </div>
+          </div>
+        }
+        @case ('empty') {
+          <app-empty-state
+            [heading]="t().recurrences.occurrences.emptyTitle"
+            [description]="t().recurrences.occurrences.emptyDescription"
+            [actions]="[]"
+            illustration="timeline"
+          />
+        }
+        @case ('error') {
+          <app-error-state [problem]="occurrences.error()" (retry)="retry()" />
+        }
+        @case ('ready') {
+          @if (occurrences.overdueTruncated()) {
+            <p class="banner" role="status" data-cy="occurrences-truncated">
+              {{ t().recurrences.occurrences.overdueTruncated }}
+            </p>
+          }
+          @if (overdue().length > 0) {
+            <section aria-labelledby="occurrences-overdue-title" data-cy="occurrences-overdue">
+              <h2 id="occurrences-overdue-title" class="section-title section-title--overdue">
+                {{ t().recurrences.occurrences.overdueSection }}
+              </h2>
+              <ul class="list">
+                @for (occurrence of overdue(); track occurrence.recurrenceId + occurrence.date) {
+                  <li
+                    app-occurrence-row
+                    [occurrence]="occurrence"
+                    (realize)="askRealize($event)"
+                    (skip)="askSkip($event)"
+                  ></li>
+                }
+              </ul>
+            </section>
+          }
+          @if (upcoming().length > 0) {
+            <section aria-labelledby="occurrences-upcoming-title" data-cy="occurrences-upcoming">
+              <h2 id="occurrences-upcoming-title" class="section-title">
+                {{ t().recurrences.occurrences.upcomingSection }}
+              </h2>
+              <ul class="list">
+                @for (occurrence of upcoming(); track occurrence.recurrenceId + occurrence.date) {
+                  <li
+                    app-occurrence-row
+                    [occurrence]="occurrence"
+                    (realize)="askRealize($event)"
+                    (skip)="askSkip($event)"
+                  ></li>
+                }
+              </ul>
+            </section>
+          }
+        }
       }
-      @if (overdue().length > 0) {
-        <section aria-labelledby="occurrences-overdue-title" data-cy="occurrences-overdue">
-          <h2 id="occurrences-overdue-title" class="section-title section-title--overdue">
-            {{ t().recurrences.occurrences.overdueSection }}
-          </h2>
-          <ul class="list">
-            @for (occurrence of overdue(); track occurrence.recurrenceId + occurrence.date) {
-              <li
-                app-occurrence-row
-                [occurrence]="occurrence"
-                (realize)="askRealize($event)"
-                (skip)="askSkip($event)"
-              ></li>
-            }
-          </ul>
-        </section>
-      }
-      @if (upcoming().length > 0) {
-        <section aria-labelledby="occurrences-upcoming-title" data-cy="occurrences-upcoming">
-          <h2 id="occurrences-upcoming-title" class="section-title">
-            {{ t().recurrences.occurrences.upcomingSection }}
-          </h2>
-          <ul class="list">
-            @for (occurrence of upcoming(); track occurrence.recurrenceId + occurrence.date) {
-              <li
-                app-occurrence-row
-                [occurrence]="occurrence"
-                (realize)="askRealize($event)"
-                (skip)="askSkip($event)"
-              ></li>
-            }
-          </ul>
-        </section>
-      }
-    }
-  }
+    </div>
+  </div>
 
   @if (realizing(); as target) {
     <app-realize-sheet

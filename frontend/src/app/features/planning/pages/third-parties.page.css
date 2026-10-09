@@ -114,3 +114,9 @@
   font-size: var(--text-lg);
   font-weight: var(--weight-semibold);
 }
+
+.more {
+  display: grid;
+  gap: var(--section-gap);
+  padding-top: var(--space-3);
+}

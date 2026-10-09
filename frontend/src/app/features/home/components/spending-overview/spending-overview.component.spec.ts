@@ -1,4 +1,5 @@
 import { DeferBlockBehavior } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { render, screen, within } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 
@@ -29,7 +30,7 @@ async function setup(
   const result = await render(SpendingOverviewComponent, {
     // O gráfico é um bloco @defer (chunk à parte): o Testing Library o deixa manual por padrão.
     deferBlockBehavior: DeferBlockBehavior.Playthrough,
-    providers: [provideI18nTesting(language)],
+    providers: [provideI18nTesting(language), provideRouter([])],
     inputs: { state, period },
     on: { periodChange, retry },
   });
@@ -37,7 +38,7 @@ async function setup(
 }
 
 describe('SpendingOverviewComponent', () => {
-  it('Dado a série, então mostra os 4 períodos (o atual marcado), a base e os totais do backend', async () => {
+  it('Dado a série, então mostra só 7 dias, 30 dias e 12 meses (o atual marcado) e o link para as movimentações', async () => {
     await setup();
 
     const group = screen.getByRole('radiogroup', { name: pt.dashboard.overview.periodLabel });
@@ -45,27 +46,16 @@ describe('SpendingOverviewComponent', () => {
       within(group)
         .getAllByRole('radio')
         .map((radio) => radio.textContent?.trim()),
-    ).toEqual(['7 dias', '30 dias', '3 meses', '12 meses']);
+    ).toEqual(['7 dias', '30 dias', '12 meses']);
     expect(screen.getByTestId('home-overview-period-D7')).toHaveAttribute('aria-checked', 'true');
-    expect(screen.getByTestId('home-overview-basis')).toHaveTextContent(
-      pt.dashboard.overview.basis.DATE,
+    expect(screen.getByTestId('home-overview-transactions')).toHaveAttribute(
+      'href',
+      '/transactions',
     );
-    expect(text(screen.getByTestId('home-overview-income'))).toBe('R$ 3.000,00');
-    expect(text(screen.getByTestId('home-overview-expenses'))).toBe('R$ 250,00');
-    // `net` é "Resultado do período" (receita menos consumo), nunca "saldo".
-    expect(screen.getByText(pt.dashboard.overview.net)).toBeInTheDocument();
-    expect(text(screen.getByTestId('home-overview-net'))).toBe('R$ 2.750,00');
+    // Compacto: sem descrição, base nem totais (o resumo do mês está nos indicadores).
+    expect(screen.queryByTestId('home-overview-basis')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('home-overview-totals')).not.toBeInTheDocument();
     expect(screen.queryByText(/^saldo/i)).not.toBeInTheDocument();
-  });
-
-  it('Dado basis COMPETENCE, então o rótulo diz "por competência"', async () => {
-    await setup({
-      status: 'ready',
-      data: anIncomeExpenseSeries({ basis: 'COMPETENCE', granularity: 'MONTH', period: 'M12' }),
-    });
-    expect(screen.getByTestId('home-overview-basis')).toHaveTextContent(
-      pt.dashboard.overview.basis.COMPETENCE,
-    );
   });
 
   it('Dado a série, então o gráfico usa os valores do backend (tabela equivalente = JSON) e o negativo vem com o sinal', async () => {
@@ -83,9 +73,9 @@ describe('SpendingOverviewComponent', () => {
   it('Dado a troca de período, então emite o período escolhido (quem carrega é o pai)', async () => {
     const { periodChange } = await setup();
 
-    await userEvent.click(screen.getByTestId('home-overview-period-M3'));
+    await userEvent.click(screen.getByTestId('home-overview-period-M12'));
 
-    expect(periodChange).toHaveBeenCalledWith('M3');
+    expect(periodChange).toHaveBeenCalledWith('M12');
   });
 
   it('Dado o teclado, então as setas do controle trocam o período (padrão do SegmentedControl)', async () => {
@@ -136,7 +126,7 @@ describe('SpendingOverviewComponent', () => {
 
   it('Dado inglês, então os rótulos e os períodos vêm traduzidos', async () => {
     await setup(ready(), 'D7', 'en');
-    expect(screen.getByText(en.dashboard.overview.net)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: en.dashboard.overview.title })).toBeInTheDocument();
     expect(screen.getByTestId('home-overview-period-M12')).toHaveTextContent('12 months');
   });
 

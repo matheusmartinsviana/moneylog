@@ -51,7 +51,7 @@ test('transferência entre contas CASH: saldos mudam, impacto líquido zero no c
   expect(await cyText(page, `account-balance-${a.id}`)).toContain(fmt('800.00'));
   expect(await cyText(page, `account-balance-${b.id}`)).toContain(fmt('250.00'));
 
-  await open(page, '/');
+  await open(page, '/planning/overview');
   expect(await cyText(page, 'home-in-accounts')).toBe(fmt('1050.00'));
   expect(await cyText(page, 'home-month-cash-net')).toBe(fmt('0.00'));
   expect(await cyText(page, 'home-month-consumption')).toBe(fmt('0.00'));
@@ -128,7 +128,7 @@ test('aplicação e resgate: saem e voltam do caixa, não são despesa', async (
   expect(s.month.consumption.amount).toBe('0.00');
   expect(s.month.investedNet.amount).toBe('200.00');
 
-  await open(page, '/');
+  await open(page, '/planning/overview');
   expect(await cyText(page, 'home-in-accounts')).toBe(fmt('800.00'));
   expect(await cyText(page, 'home-investments')).toBe(fmt('200.00'));
   expect(await cyText(page, 'home-month-consumption')).toBe(fmt('0.00'));
@@ -242,7 +242,7 @@ test('reembolso: teto da despesa, categoria travada, editar e estornar com reemb
   expect(s.month.consumption.amount).toBe('0.00');
 
   // Início e competência batem: consumo 0,00; a visão por competência traz o reembolso negativo.
-  await open(page, '/');
+  await open(page, '/planning/overview');
   expect(await cyText(page, 'home-month-refunds')).toBe(fmt('100.00'));
   expect(await cyText(page, 'home-month-consumption')).toBe(fmt('0.00'));
   await open(page, '/transactions');
@@ -319,7 +319,7 @@ test('editar: o valor novo aparece no Início e na lista; versão desatualizada 
   expect(updated.amount.amount).toBe('120.50');
   expect(updated.version).toBe(tx.version + 1);
 
-  await open(page, '/');
+  await open(page, '/planning/overview');
   expect(await cyText(page, 'home-month-consumption')).toBe(fmt('120.50'));
   expect(await cyText(page, 'home-in-accounts')).toBe(fmt('879.50'));
   await open(page, '/transactions');

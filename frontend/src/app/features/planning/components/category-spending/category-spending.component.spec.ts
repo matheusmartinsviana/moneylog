@@ -3,7 +3,7 @@ import { render, screen, within } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 
 import { pt } from '~/app/common/i18n/translations/pt';
-import { CategorySpendingComponent } from '~/app/features/home/components/category-spending/category-spending.component';
+import { CategorySpendingComponent } from '~/app/features/planning/components/category-spending/category-spending.component';
 import type { CategorySpendingState } from '~/modules/reports/core/facades/category-spending.facade';
 import { axeViolations, describeViolations } from '~/testing/axe';
 import { provideI18nTesting } from '~/testing/i18n-testing';

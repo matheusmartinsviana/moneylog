@@ -1,24 +1,18 @@
-import { TestBed } from '@angular/core/testing';
+import { DeferBlockBehavior, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
-import { render, screen, within } from '@testing-library/angular';
+import { render, screen, waitFor } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
-import { defer, NEVER, of, Subject, throwError } from 'rxjs';
+import { defer, delay, NEVER, Observable, of, Subject, tap, throwError } from 'rxjs';
 
+import { en } from '~/app/common/i18n/translations/en';
 import { pt } from '~/app/common/i18n/translations/pt';
 import { HomePage } from '~/app/features/home/pages/home.page';
 import { DashboardFailure } from '~/modules/dashboard/core/types/dashboard-failure';
 import type { DashboardSummary } from '~/modules/dashboard/core/types/dashboard-summary';
-import { GoalsListFacade } from '~/modules/goals/core/facades/goals-list.facade';
-import {
-  AccountsGatewayStub,
-  anAccount,
-  brl,
-  failWith,
-  provideAccountsStub,
-} from '~/testing/accounts-testing';
-import { provideAiStub } from '~/testing/ai-testing';
+import type { UpcomingItem } from '~/modules/dashboard/core/types/upcoming';
+import type { IncomeExpenseSeries } from '~/modules/reports/core/types/reports';
+import { brl } from '~/testing/accounts-testing';
 import { axeViolations, describeViolations } from '~/testing/axe';
-import { aCard, CardsGatewayStub, provideCardsStub } from '~/testing/cards-testing';
 import {
   aDashboardSummary,
   anEmptyUpcoming,
@@ -27,75 +21,119 @@ import {
   provideDashboardMock,
   provideDashboardStub,
 } from '~/testing/dashboard-testing';
+import { provideDebtOverviewStub } from '~/testing/debt-overview-testing';
+import {
+  aSummary,
+  MonthlySummaryGatewayStub,
+  provideMonthlySummaryStub,
+} from '~/testing/etapa5-testing';
 import { aGoal, GoalsGatewayStub, provideGoalsStub } from '~/testing/goals-testing';
-import { provideHomeSupportStubs } from '~/testing/home-testing';
 import { provideI18nTesting } from '~/testing/i18n-testing';
-import { formatMoney, Money } from '~/util/money';
+import {
+  anIncomeExpenseSeries,
+  provideReportsStub,
+  ReportsGatewayStub,
+} from '~/testing/reports-testing';
+import { LedgerGate } from '~/util/api/ledger-gate';
+import { formatMoney, type Money } from '~/util/money';
 
-const text = (el: HTMLElement) => el.textContent?.replace(/\u00a0/g, ' ').trim();
+const text = (el: HTMLElement) =>
+  el.textContent
+    ?.replace(/\u00a0/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 const shown = (money: Money) => formatMoney(money).replace(/\u00a0/g, ' ');
 
-async function setup(
-  stub = new DashboardGatewayStub(),
-  language: 'pt' | 'en' = 'pt',
-  cardsGateway = new CardsGatewayStub(),
-  goalsGateway = new GoalsGatewayStub(),
-) {
-  const accounts = new AccountsGatewayStub();
-  accounts.accounts = [anAccount({ id: 'acc-1', name: 'Nubank' })];
+function upcomingItem(
+  label: string,
+  bucket: UpcomingItem['bucket'],
+  amount = '10.00',
+): UpcomingItem {
+  return {
+    kind: 'RECURRENCE',
+    bucket,
+    dueDate: '2026-10-12',
+    direction: 'OUT',
+    amount: brl(amount),
+    label,
+    refType: 'RECURRENCE',
+    refId: `ref-${label}`,
+    items: [],
+  };
+}
+
+interface Stubs {
+  dashboard: DashboardGatewayStub;
+  monthly: MonthlySummaryGatewayStub;
+  reports: ReportsGatewayStub;
+  goals: GoalsGatewayStub;
+}
+
+function stubs(): Stubs {
+  return {
+    dashboard: new DashboardGatewayStub(),
+    monthly: new MonthlySummaryGatewayStub(),
+    reports: new ReportsGatewayStub(),
+    goals: new GoalsGatewayStub(),
+  };
+}
+
+async function setup(s: Stubs = stubs(), language: 'pt' | 'en' = 'pt') {
   const result = await render(HomePage, {
+    // O gráfico é um bloco @defer (chunk à parte): o Testing Library o deixa manual por padrão.
+    deferBlockBehavior: DeferBlockBehavior.Playthrough,
     providers: [
       provideI18nTesting(language),
       provideRouter([]),
-      ...provideAiStub(),
-      provideDashboardStub(stub),
-      provideCardsStub(cardsGateway),
-      provideGoalsStub(goalsGateway),
-      provideAccountsStub(accounts),
-      ...provideHomeSupportStubs(),
+      provideDashboardStub(s.dashboard),
+      provideMonthlySummaryStub(s.monthly),
+      provideReportsStub(s.reports),
+      provideGoalsStub(s.goals),
+      ...provideDebtOverviewStub(),
     ],
   });
-  return { ...result, stub, cardsGateway, goalsGateway };
+  await result.fixture.whenStable();
+  result.fixture.detectChanges();
+  return { ...result, ...s };
 }
 
-describe('HomePage (dashboard)', () => {
-  it('Dado que volto do /quick-add (nova visita), então o Início pede o resumo de novo, sem cache velho', async () => {
-    const stub = new DashboardGatewayStub();
+describe('HomePage (Início sucinto)', () => {
+  it('Dado que volto de outra tela (nova visita), então o Início pede o resumo de novo, sem cache velho', async () => {
+    const s = stubs();
     let calls = 0;
-    stub.summary$ = defer(() => {
+    s.dashboard.summary$ = defer(() => {
       calls++;
       return of(aDashboardSummary());
     });
-    const { fixture } = await setup(stub);
+    const { fixture } = await setup(s);
     expect(calls).toBe(1);
 
-    // Cada visita inicializa a página de novo e a facade (escopo de componente) não guarda cache.
     fixture.componentInstance.ngOnInit();
 
     expect(calls).toBe(2);
   });
 
   it('Dado o resumo ainda carregando, então mostra o esqueleto com status acessível e nada de valores', async () => {
-    const stub = new DashboardGatewayStub();
-    stub.summary$ = NEVER;
-    await setup(stub);
+    const s = stubs();
+    s.dashboard.summary$ = NEVER;
+    await setup(s);
 
     expect(screen.getByTestId('home-loading')).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent(pt.home.loading);
     expect(screen.queryByTestId('home-dashboard')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('home-register')).not.toBeInTheDocument();
   });
 
-  it('Dado a facade de requisições em modo mock (sem contas), quando a página carrega, então mostra o estado vazio do Início', async () => {
+  it('Dado a facade em modo mock (sem contas), então mostra o estado vazio com "adicionar conta"', async () => {
     await render(HomePage, {
       providers: [
         provideI18nTesting('pt'),
         provideRouter([]),
-        ...provideAiStub(),
         provideDashboardMock(),
-        provideCardsStub(),
+        provideMonthlySummaryStub(),
+        provideReportsStub(),
         provideGoalsStub(),
-        provideAccountsStub(),
-        ...provideHomeSupportStubs(),
+        ...provideDebtOverviewStub(),
       ],
     });
 
@@ -104,32 +142,23 @@ describe('HomePage (dashboard)', () => {
       'href',
       '/accounts/new',
     );
-    expect(screen.getByTestId('empty-state-action-add-account')).not.toHaveAttribute(
-      'aria-disabled',
-    );
-    // "Importar extrato" continua indisponível, com a dica "disponível em breve".
     expect(screen.getByTestId('empty-state-action-import-statement')).toHaveAttribute(
       'aria-disabled',
       'true',
     );
-    expect(screen.getByTestId('empty-state-coming-soon')).toBeInTheDocument();
     expect(screen.queryByTestId('home-dashboard')).not.toBeInTheDocument();
   });
 
   it('Dado uma falha, quando clico em "tentar de novo", então recarrega e mostra o resumo', async () => {
-    const stub = new DashboardGatewayStub();
-    stub.summary$ = throwError(() => new Error('rede'));
-    const { fixture } = await setup(stub);
+    const s = stubs();
+    s.dashboard.summary$ = throwError(() => new Error('rede'));
+    const { fixture } = await setup(s);
 
-    const alert = screen.getByRole('alert');
-    expect(within(alert).getByTestId('empty-state-title')).toHaveTextContent(pt.home.error.title);
-    const retry = screen.getByTestId('empty-state-action-retry');
-    expect(retry).toHaveTextContent(pt.home.error.retry);
-    expect(retry).toBeEnabled();
-
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(screen.getByTestId('empty-state-title')).toHaveTextContent(pt.home.error.title);
     const reload = new Subject<DashboardSummary>();
-    stub.summary$ = reload;
-    await userEvent.click(retry);
+    s.dashboard.summary$ = reload;
+    await userEvent.click(screen.getByTestId('empty-state-action-retry'));
     expect(screen.getByTestId('home-loading')).toBeInTheDocument();
 
     reload.next(aDashboardSummary());
@@ -142,406 +171,260 @@ describe('HomePage (dashboard)', () => {
   });
 
   it('Dado o backend negando acesso, então mostra "sem permissão" sem botão de tentar de novo', async () => {
-    const stub = new DashboardGatewayStub();
-    stub.summary$ = throwError(() => new DashboardFailure('forbidden'));
-    await setup(stub);
+    const s = stubs();
+    s.dashboard.summary$ = throwError(() => new DashboardFailure('forbidden'));
+    await setup(s);
 
     expect(screen.getByTestId('empty-state-title')).toHaveTextContent(pt.home.forbidden.title);
     expect(screen.queryByTestId('empty-state-action-retry')).not.toBeInTheDocument();
   });
 
+  it('Dado a recarga em segundo plano que falha, então mantém os dados, avisa e "tentar de novo" recarrega', async () => {
+    const s = stubs();
+    let calls = 0;
+    s.dashboard.summary$ = defer(() => {
+      calls++;
+      return calls === 2 ? throwError(() => new Error('rede')) : of(aDashboardSummary());
+    });
+    const { fixture } = await setup(s);
+
+    fixture.componentInstance['dashboard'].reload();
+    fixture.detectChanges();
+
+    expect(screen.getByTestId('home-dashboard')).toBeInTheDocument();
+    expect(screen.getByTestId('home-refresh-failed')).toHaveTextContent(pt.home.refreshFailed);
+    await userEvent.click(screen.getByTestId('home-refresh-retry'));
+    fixture.detectChanges();
+
+    expect(calls).toBe(3);
+    expect(screen.queryByTestId('home-refresh-failed')).not.toBeInTheDocument();
+  });
+
   describe('com dados', () => {
-    it('Dado o resumo, então "quanto tenho" exibe exatamente os valores recebidos, sem recalcular', async () => {
+    it('Dado o resumo, então saldo, gasto, receita e resultado do mês são os que o servidor devolveu (sem conta no front)', async () => {
       const summary = aDashboardSummary();
       await setup();
 
-      expect(text(screen.getByTestId('home-available'))).toBe(shown(summary.balances.available));
-      expect(text(screen.getByTestId('home-in-accounts'))).toBe(shown(summary.balances.inAccounts));
-      expect(text(screen.getByTestId('home-committed-30d'))).toBe(
-        shown(summary.balances.committed30d),
+      expect(text(screen.getByTestId('kpi-in-accounts-value'))).toBe(
+        shown(summary.balances.inAccounts),
       );
-      expect(text(screen.getByTestId('home-reserved'))).toBe(shown(summary.balances.reserved));
-      expect(text(screen.getByTestId('home-investments'))).toBe(
-        shown(summary.balances.investments),
-      );
-      expect(text(screen.getByTestId('home-available'))).toBe('R$ 17.617,00');
+      expect(text(screen.getByTestId('kpi-in-accounts-change'))).toBe('+8% vs fim do mês passado');
+      expect(text(screen.getByTestId('kpi-spending-value'))).toBe(shown(summary.month.consumption));
+      expect(text(screen.getByTestId('kpi-income-value'))).toBe(shown(summary.month.income));
+      expect(text(screen.getByTestId('kpi-result-value'))).toBe(shown(summary.month.net));
+      expect(text(screen.getByTestId('kpi-savings-value'))).toBe('91,7%');
     });
 
-    it('Dado valores que não "fecham" a conta, então a tela mostra o que veio (o front não calcula)', async () => {
-      const stub = new DashboardGatewayStub();
-      const brl = (amount: string) => ({ amount, currency: 'BRL' });
-      stub.summary$ = of(
-        aDashboardSummary({
-          balances: {
-            inAccounts: brl('100.00'),
-            investments: brl('0.00'),
-            available: brl('1.23'),
-            reserved: brl('0.00'),
-            committed30d: brl('0.00'),
-            inAccountsChange: null,
-          },
-        }),
-      );
-      await setup(stub);
-
-      expect(text(screen.getByTestId('home-available'))).toBe('R$ 1,23');
-    });
-
-    it('Dado o disponível negativo, então mostra o menos tipográfico e o aviso em texto', async () => {
-      const stub = new DashboardGatewayStub();
+    it('Dado resultado negativo do servidor, então mostra o menos tipográfico', async () => {
+      const s = stubs();
       const base = aDashboardSummary();
-      stub.summary$ = of(
-        aDashboardSummary({
-          balances: { ...base.balances, available: { amount: '-250.00', currency: 'BRL' } },
-        }),
-      );
-      await setup(stub);
+      s.dashboard.summary$ = of({ ...base, month: { ...base.month, net: brl('-120.00') } });
+      await setup(s);
 
-      expect(text(screen.getByTestId('home-available'))).toBe('−R$ 250,00');
-      expect(screen.getByTestId('home-available')).toHaveClass('is-negative');
-      expect(screen.getByTestId('home-available-negative')).toHaveTextContent(
-        pt.home.available.negative,
-      );
+      expect(text(screen.getByTestId('kpi-result-value'))).toBe('−R$ 120,00');
     });
 
-    it('Dado os horizontes, então "o que está comprometido" lista os 6 horizontes e a projeção só onde existe', async () => {
-      const summary = aDashboardSummary();
-      await setup();
-
-      const table = screen.getByTestId('home-commitments');
-      expect(
-        within(table)
-          .getAllByRole('rowheader')
-          .map((th) => th.textContent?.trim()),
-      ).toEqual(Object.values(pt.home.committed.horizons));
-      expect(text(screen.getByTestId('home-committed-m12'))).toBe(shown(summary.committed.m12));
-      expect(text(screen.getByTestId('home-projected-d90'))).toBe(shown(summary.projected.d90));
-      expect(screen.getByTestId('home-projected-d7')).toHaveTextContent(
-        pt.home.committed.notApplicable,
+    it('Dado mais de 3 compromissos, então mostra só 3 dos próximos 7 dias, na ordem do servidor, e leva ao Panorama', async () => {
+      const s = stubs();
+      s.dashboard.upcoming$ = of(
+        anEmptyUpcomingWith([
+          upcomingItem('Aluguel', 'TOMORROW', '1800.00'),
+          upcomingItem('Internet', 'NEXT_7_DAYS'),
+          upcomingItem('Streaming', 'NEXT_7_DAYS'),
+          upcomingItem('Academia', 'NEXT_7_DAYS'),
+          upcomingItem('Seguro', 'NEXT_30_DAYS'),
+        ]),
       );
-      expect(screen.getByText(pt.home.committed.projectionNote)).toBeInTheDocument();
-    });
+      await setup(s);
 
-    it('Dado os próximos, então "o que pago a seguir" agrupa pelo bucket do backend, aninha as parcelas e mostra os totais recebidos', async () => {
-      const upcoming = anUpcoming();
-      await setup();
-
-      const groups = screen.getAllByTestId(/^home-upcoming-group-/);
-      expect(groups.map((g) => g.getAttribute('data-cy'))).toEqual([
-        'home-upcoming-group-OVERDUE',
-        'home-upcoming-group-NEXT_7_DAYS',
-        'home-upcoming-group-UNDATED',
+      const rows = screen.getAllByTestId('home-upcoming-item');
+      expect(rows.map((row) => row.querySelector('.ub__label')?.textContent)).toEqual([
+        'Aluguel',
+        'Internet',
+        'Streaming',
       ]);
-      const overdue = groups[0]!;
-      expect(within(overdue).getByRole('heading', { level: 3 })).toHaveTextContent(
-        pt.home.upcoming.buckets.OVERDUE,
-      );
-      expect(overdue).toHaveTextContent('Roxinho');
-      expect(overdue).toHaveTextContent(pt.home.upcoming.kinds.INVOICE);
-      expect(overdue).toHaveTextContent('Vence em 5 de out.');
-
-      // As parcelas ficam recolhidas na fatura e abrem com um toque (Disclosure).
-      const toggle = within(overdue).getByTestId('home-upcoming-installments-OVERDUE-0-toggle');
-      expect(toggle).toHaveAttribute('aria-expanded', 'false');
-      expect(within(overdue).queryByTestId('home-upcoming-installment')).not.toBeInTheDocument();
-      await userEvent.click(toggle);
-      expect(toggle).toHaveAttribute('aria-expanded', 'true');
-      const installments = within(overdue).getByRole('list', {
-        name: pt.home.upcoming.installments,
-      });
-      expect(text(within(installments).getByTestId('home-upcoming-installment'))).toMatch(
-        /^Notebook\s+4\/10\s*R\$ 320,00$/,
-      );
-
-      expect(text(screen.getByTestId('home-upcoming-total-out'))).toBe(shown(upcoming.totals.out));
-      expect(text(screen.getByTestId('home-upcoming-total-in'))).toBe(shown(upcoming.totals.in));
-      expect(groups[2]).toHaveTextContent(pt.home.upcoming.undated);
+      expect(text(screen.getAllByTestId('home-upcoming-amount')[0]!)).toBe('R$ 1.800,00');
+      expect(screen.getByTestId('home-upcoming-all')).toHaveAttribute('href', '/planning/overview');
     });
 
-    it('Dado contas sem vencimentos, então a seção "a seguir" diz que não há nada no período', async () => {
-      const stub = new DashboardGatewayStub();
-      stub.upcoming$ = of(anEmptyUpcoming());
-      await setup(stub);
+    it('Dado nada nos próximos 7 dias (só mais adiante), então diz que nada vence', async () => {
+      const s = stubs();
+      s.dashboard.upcoming$ = of(anEmptyUpcomingWith([upcomingItem('Seguro', 'NEXT_30_DAYS')]));
+      await setup(s);
 
-      expect(screen.getByTestId('home-upcoming-empty')).toHaveTextContent(pt.home.upcoming.empty);
-      expect(screen.queryByTestId('home-upcoming-total-out')).not.toBeInTheDocument();
+      expect(screen.getByTestId('home-upcoming-empty')).toHaveTextContent(pt.brief.upcoming.empty);
+      expect(screen.queryByTestId('home-upcoming-item')).not.toBeInTheDocument();
     });
 
-    it('Dado o mês e o patrimônio, então exibe os valores recebidos e explica as parcelas fora do total', async () => {
-      const { month, netWorth } = aDashboardSummary();
+    it('Dado as dívidas, então "Você deve" mostra o total do servidor com link para as dívidas totais', async () => {
       await setup();
 
-      expect(text(screen.getByTestId('home-month-income'))).toBe(shown(month.income));
-      expect(text(screen.getByTestId('home-month-consumption'))).toBe(shown(month.consumption));
-      expect(text(screen.getByTestId('home-month-net'))).toBe(shown(month.net));
-      expect(text(screen.getByTestId('home-month-refunds'))).toBe(shown(month.refunds));
-      expect(text(screen.getByTestId('home-month-method-PIX'))).toBe(
-        shown(month.expensesPaid.byMethod.PIX),
-      );
-      expect(text(screen.getByTestId('home-month-cash-net'))).toBe(shown(month.cashFlow.net));
-      expect(text(screen.getByTestId('home-net-worth-total'))).toBe(shown(netWorth.total));
-      expect(text(screen.getByTestId('home-net-worth-cards'))).toBe('−R$ 200,00');
-      expect(text(screen.getByTestId('home-net-worth-future-installments'))).toBe(
-        shown(netWorth.cardFutureInstallments),
-      );
-      expect(screen.getByText(pt.home.netWorth.cardFutureInstallmentsNote)).toBeInTheDocument();
-      expect(screen.getByText('outubro de 2026')).toBeInTheDocument();
+      expect(await screen.findByTestId('home-debts-total')).toHaveTextContent('R$ 6.500,00');
+      expect(screen.getByTestId('home-debts-open')).toHaveAttribute('href', '/planning/debts');
     });
 
-    it('Dado o resumo, então o cabeçalho mostra a data de referência e as ações levam a rotas reais', async () => {
+    it('Dado metas ativas, então a meta em destaque é a primeira, com o selo do degrau e o progresso do servidor', async () => {
+      const s = stubs();
+      s.goals.goals = [
+        aGoal({ id: 'g-1', name: 'Reserva', stage: 'STRATEGY', progress: '0.4250' }),
+        aGoal({ id: 'g-2', name: 'Viagem' }),
+      ];
+      await setup(s);
+
+      expect(await screen.findByTestId('home-featured-goal-open')).toHaveTextContent('Reserva');
+      expect(screen.getByTestId('home-featured-goal-open')).toHaveAttribute('href', '/goals/g-1');
+      expect(screen.getByTestId('home-featured-goal-stage')).toHaveTextContent('Estratégia');
+      expect(screen.getByTestId('home-featured-goal-percent')).toHaveTextContent('42,5%');
+      expect(screen.queryByText('Viagem')).not.toBeInTheDocument();
+    });
+
+    it('Dado nenhuma meta, então convida a criar uma', async () => {
       await setup();
 
-      expect(screen.getByTestId('page-description')).toHaveTextContent(
-        'Posição de 10 de outubro de 2026.',
+      expect(await screen.findByTestId('home-featured-goal-empty')).toHaveTextContent(
+        pt.brief.featuredGoal.empty,
       );
-      expect(screen.queryByTestId('home-projection')).not.toBeInTheDocument();
-      expect(screen.getByTestId('home-action-quick-add')).toHaveAttribute('href', '/quick-add');
-      expect(screen.getByTestId('home-action-transactions')).toHaveAttribute(
+      expect(screen.getByTestId('home-featured-goal-create')).toHaveAttribute(
+        'href',
+        '/goals/new-smart',
+      );
+    });
+
+    it('Dado o Início, então os blocos que saíram (contas, categorias, recentes, insights, legado, captura) não estão aqui', async () => {
+      await setup();
+
+      for (const id of [
+        'home-accounts-section',
+        'home-categories-total',
+        'home-recent',
+        'home-insight',
+        'home-legacy',
+        'home-quick-capture',
+        'home-third-parties-pending',
+        'home-goals-summary',
+      ]) {
+        expect(screen.queryByTestId(id), id).not.toBeInTheDocument();
+      }
+    });
+
+    it('Dado a projeção, então avisa que é projeção', async () => {
+      const s = stubs();
+      s.dashboard.summary$ = of(aDashboardSummary({ isProjection: true }));
+      await setup(s);
+
+      expect(screen.getByTestId('home-projection')).toHaveTextContent(pt.home.projection);
+    });
+  });
+
+  describe('gráfico compacto', () => {
+    it('Dado o gráfico, então só oferece 7 dias, 30 dias e 12 meses e usa os valores do backend', async () => {
+      const s = stubs();
+      await setup(s);
+
+      expect(await screen.findByTestId('home-overview-chart')).toBeInTheDocument();
+      expect(screen.getByTestId('home-overview-period-D7')).toBeInTheDocument();
+      expect(screen.getByTestId('home-overview-period-D30')).toBeInTheDocument();
+      expect(screen.getByTestId('home-overview-period-M12')).toBeInTheDocument();
+      expect(screen.queryByTestId('home-overview-period-M3')).not.toBeInTheDocument();
+      expect(screen.getByTestId('home-overview-transactions')).toHaveAttribute(
         'href',
         '/transactions',
       );
     });
 
-    it('Dado um resumo de projeção, então o cabeçalho sinaliza "projeção"', async () => {
-      const stub = new DashboardGatewayStub();
-      stub.summary$ = of(aDashboardSummary({ isProjection: true }));
-      await setup(stub);
+    it('Dado a troca de período, então pede o relatório do período escolhido', async () => {
+      const s = stubs();
+      const { fixture } = await setup(s);
+      const periods: string[] = [];
+      s.reports.incomeExpensesResult = (period) => {
+        periods.push(period);
+        return of(anIncomeExpenseSeries({ period }));
+      };
 
-      expect(screen.getByTestId('home-projection')).toHaveTextContent(pt.home.projection);
-    });
+      await userEvent.click(screen.getByTestId('home-overview-period-M12'));
+      await fixture.whenStable();
 
-    it('Dado BRL com a UI em inglês, então os rótulos mudam e os valores seguem a moeda do dado', async () => {
-      await setup(new DashboardGatewayStub(), 'en');
-
-      expect(screen.getByRole('heading', { name: 'Available' })).toBeInTheDocument();
-      expect(text(screen.getByTestId('home-available'))).toBe('R$ 17.617,00');
-      expect(screen.getByTestId('page-description')).toHaveTextContent('As of October 10, 2026.');
-    });
-
-    describe('cartões e crédito (T71)', () => {
-      it('Dado o cartão do cenário, então mostra o total comprometido e as compras futuras em linhas SEPARADAS, como o backend', async () => {
-        const cardsGateway = new CardsGatewayStub();
-        cardsGateway.cards = [
-          aCard({
-            id: 'card-1',
-            name: 'Roxinho',
-            availableLimit: brl('7717.00'),
-            totalCommitted: brl('1283.00'),
-            committedFuture: brl('1000.00'),
-          }),
-        ];
-        await setup(new DashboardGatewayStub(), 'pt', cardsGateway);
-
-        expect(text(screen.getByTestId('home-card-total-committed-card-1'))).toBe('R$ 1.283,00');
-        expect(text(screen.getByTestId('home-card-committed-future-card-1'))).toBe('R$ 1.000,00');
-        expect(text(screen.getByTestId('home-card-available-card-1'))).toBe('R$ 7.717,00');
-        // Nenhuma soma dos dois (2.283,00) em lugar nenhum.
-        expect(screen.getByTestId('home-cards')).not.toHaveTextContent('2.283,00');
-        expect(screen.getByTestId('home-card-open-card-1')).toHaveAttribute(
-          'href',
-          '/cards/card-1',
-        );
-        expect(screen.getByText(pt.home.cards.note)).toBeInTheDocument();
-      });
-
-      it('Dado cartão acima do limite, então aparece com texto "acima do limite"', async () => {
-        const cardsGateway = new CardsGatewayStub();
-        cardsGateway.cards = [
-          aCard({ id: 'card-1', overLimit: true, availableLimit: brl('-50.00') }),
-        ];
-        await setup(new DashboardGatewayStub(), 'pt', cardsGateway);
-
-        expect(screen.getByTestId('home-card-available-card-1')).toHaveTextContent(
-          pt.home.cards.overLimit,
-        );
-        expect(text(screen.getByTestId('home-card-available-card-1'))).toContain('−R$ 50,00');
-      });
-
-      it('Dado nenhum cartão, então diz isso com a ação "Adicionar cartão"', async () => {
-        await setup();
-
-        expect(screen.getByTestId('home-cards-empty')).toHaveTextContent(pt.home.cards.empty);
-        expect(screen.getByTestId('home-cards-add')).toHaveAttribute('href', '/cards/new');
-      });
-
-      it('Dado erro nos cartões, então o resto do Início continua e "tentar de novo" recarrega', async () => {
-        const cardsGateway = new CardsGatewayStub();
-        cardsGateway.listError = failWith(500, 'INTERNAL_ERROR');
-        await setup(new DashboardGatewayStub(), 'pt', cardsGateway);
-
-        expect(screen.getByTestId('home-cards-error')).toHaveTextContent(pt.home.cards.error);
-        expect(screen.getByTestId('home-dashboard')).toBeInTheDocument();
-        cardsGateway.listError = null;
-        cardsGateway.cards = [aCard({ id: 'card-1' })];
-        await userEvent.click(screen.getByTestId('home-cards-retry'));
-
-        expect(await screen.findByTestId('home-card-card-1')).toBeInTheDocument();
-      });
-
-      it('Dado a ação rápida "Crédito", então leva a /quick-add?mode=credit e está habilitada', async () => {
-        await setup();
-
-        const credit = screen.getByTestId('home-action-credit');
-        expect(credit).toHaveAttribute('href', '/quick-add?mode=credit');
-        expect(credit).not.toHaveAttribute('aria-disabled');
-        expect(credit).toHaveTextContent(pt.quickAdd.modes.credit);
-        expect(credit).not.toHaveTextContent(/breve/i);
-      });
-
-      it('Dado a fatura nos próximos, então mostra o valor do backend e as parcelas só ao expandir', async () => {
-        await setup();
-
-        const item = screen.getAllByTestId('home-upcoming-item')[0]!;
-        expect(item).toHaveTextContent('Roxinho');
-        expect(text(within(item).getByTestId('home-upcoming-amount'))).toBe('R$ 1.283,00');
-        expect(within(item).queryByTestId('home-upcoming-installment')).not.toBeInTheDocument();
-        await userEvent.click(within(item).getByRole('button', { name: /Parcelas incluídas/ }));
-        expect(within(item).getByTestId('home-upcoming-installment')).toBeInTheDocument();
-      });
-
-      it('Dado fatura vencida, então vai para "Vencidos" com cor de risco e o texto do grupo', async () => {
-        await setup();
-
-        const group = screen.getByTestId('home-upcoming-group-OVERDUE');
-        expect(within(group).getByRole('heading', { level: 3 })).toHaveClass('is-negative');
-        expect(group).toHaveTextContent(pt.home.upcoming.buckets.OVERDUE);
-        expect(group).toHaveTextContent(pt.home.upcoming.kinds.INVOICE);
-      });
-
-      it('Dado cartões carregando, então o Início mostra o estado de carregamento da seção', async () => {
-        const cardsGateway = new CardsGatewayStub();
-        cardsGateway.listError = NEVER as never;
-        await setup(new DashboardGatewayStub(), 'pt', cardsGateway);
-
-        expect(screen.getByTestId('home-cards-loading')).toHaveTextContent(pt.home.cards.loading);
-      });
-    });
-
-    it('Dado o dashboard com dados, então o axe não aponta violações', async () => {
-      const { container } = await setup();
-
-      const violations = await axeViolations(container);
-      expect(violations, describeViolations(violations)).toEqual([]);
+      expect(periods).toEqual(['M12']);
     });
   });
+
+  describe('+ Registrar', () => {
+    it('Dado o botão, quando abro o menu e escolho "Emprestei", então abre o Novo registro já em "Emprestei"', async () => {
+      await setup();
+      const router = TestBed.inject(Router);
+      const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+      expect(screen.getByTestId('home-register-open')).toHaveAttribute('href', '/quick-add');
+      await userEvent.click(screen.getByTestId('home-register-menu'));
+      await userEvent.click(await screen.findByTestId('home-register-menu-item-loan'));
+
+      expect(navigate).toHaveBeenCalledWith(['/quick-add'], { queryParams: { mode: 'loan' } });
+    });
+  });
+
+  it('Dado o inglês, então os rótulos vêm traduzidos', async () => {
+    await setup(stubs(), 'en');
+
+    expect(screen.getByText(en.brief.upcoming.title)).toBeInTheDocument();
+    expect(screen.getByText(en.brief.register)).toBeInTheDocument();
+    expect(screen.getByText(en.brief.result)).toBeInTheDocument();
+  });
+
+  it('Dado o Início completo, então não há violações de acessibilidade', async () => {
+    const s = stubs();
+    s.goals.goals = [aGoal()];
+    s.monthly.result = () => of(aSummary({ partial: false }));
+    const { container } = await setup(s);
+    await screen.findByTestId('home-featured-goal-open');
+
+    const violations = await axeViolations(container);
+    expect(violations, describeViolations(violations)).toEqual([]);
+  }, 30_000);
 });
 
-describe('HomePage: metas e reservado (T101)', () => {
-  const withReserved = (reserved: Money) => {
-    const stub = new DashboardGatewayStub();
-    const base = aDashboardSummary();
-    stub.summary$ = of(aDashboardSummary({ balances: { ...base.balances, reserved } }));
-    return stub;
-  };
+function anEmptyUpcomingWith(items: UpcomingItem[]) {
+  return { ...anEmptyUpcoming(), items };
+}
 
-  it('Dado reserved > 0, então mostra o reservado e o disponível do backend, com o link para as metas e a dica da fórmula', async () => {
-    const summary = aDashboardSummary();
-    const { fixture } = await setup(withReserved(brl('8500.00')));
-    await fixture.whenStable();
+describe('HomePage: fila das leituras do razão (R13)', () => {
+  /** Observável que conta quantas leituras estão em voo e em que ordem começaram. */
+  class Meter {
+    inFlight = 0;
+    max = 0;
+    readonly started: string[] = [];
 
-    expect(text(screen.getByTestId('home-reserved'))).toBe(shown(brl('8500.00')));
-    expect(text(screen.getByTestId('home-available'))).toBe(shown(summary.balances.available));
-    expect(screen.getByTestId('home-reserved-goals')).toHaveAttribute('href', '/goals');
-    expect(screen.getByTestId('home-reserved-hint')).toBeInTheDocument();
-  });
+    track<T>(name: string, value: T): Observable<T> {
+      return defer(() => {
+        this.started.push(name);
+        this.max = Math.max(this.max, ++this.inFlight);
+        let open = true;
+        const done = () => {
+          if (!open) return;
+          open = false;
+          this.inFlight--;
+        };
+        return of(value).pipe(delay(15), tap({ complete: done, error: done, unsubscribe: done }));
+      });
+    }
+  }
 
-  it('Dado reserved zero, então não há link para as metas reservadas', async () => {
-    const { fixture } = await setup(withReserved(brl('0.00')));
-    await fixture.whenStable();
+  it('Dado todos os blocos, então no máximo 2 leituras do razão ficam em voo e a ordem é a das prioridades', async () => {
+    const meter = new Meter();
+    const s = stubs();
+    s.dashboard.summary$ = meter.track<DashboardSummary>('dashboard', aDashboardSummary());
+    s.dashboard.upcoming$ = meter.track('upcoming', anUpcoming());
+    s.monthly.result = () => meter.track('monthly', aSummary({ partial: false }));
+    s.reports.incomeExpensesResult = () =>
+      meter.track<IncomeExpenseSeries>('overview', anIncomeExpenseSeries());
+    await setup(s);
 
-    expect(screen.queryByTestId('home-reserved-goals')).not.toBeInTheDocument();
-  });
-
-  it('Dado "Meta" sem metas, então leva a /goals/new', async () => {
-    const { fixture } = await setup();
-    await fixture.whenStable();
-    const router = TestBed.inject(Router);
-    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
-
-    await userEvent.click(screen.getByTestId('home-action-goal'));
-
-    expect(navigate).toHaveBeenCalledWith(['/goals/new']);
-  });
-
-  it('Dado "Meta" com metas, então abre a reserva rápida com a meta de maior prioridade (a primeira do backend)', async () => {
-    const goals = new GoalsGatewayStub();
-    goals.goals = [
-      aGoal({ id: 'g-high', name: 'Reserva' }),
-      aGoal({ id: 'g-low', name: 'Viagem' }),
-    ];
-    const { fixture } = await setup(
-      new DashboardGatewayStub(),
-      'pt',
-      new CardsGatewayStub(),
-      goals,
-    );
-    await fixture.whenStable();
-
-    await userEvent.click(screen.getByTestId('home-action-goal'));
-
-    expect(await screen.findByTestId('reserve-form')).toBeInTheDocument();
-    expect(screen.getByTestId('reserve-goal')).toBeInTheDocument();
-    expect(screen.getByTestId('reserve-goal')).toHaveTextContent('Reserva');
-  });
-
-  it('Dado a reserva rápida concluída, então o Início volta a ler o resumo do backend', async () => {
-    const stub = new DashboardGatewayStub();
-    let calls = 0;
-    stub.summary$ = defer(() => {
-      calls++;
-      return of(aDashboardSummary());
+    await waitFor(() => expect(screen.getByTestId('home-overview-chart')).toBeInTheDocument(), {
+      timeout: 3000,
     });
-    const goals = new GoalsGatewayStub();
-    goals.goals = [aGoal()];
-    const { fixture } = await setup(stub, 'pt', new CardsGatewayStub(), goals);
-    await fixture.whenStable();
-    expect(calls).toBe(1);
 
-    await userEvent.click(screen.getByTestId('home-action-goal'));
-    await userEvent.click(await screen.findByTestId('reserve-account'));
-    await userEvent.click(screen.getByTestId('reserve-account-option-acc-1'));
-    await userEvent.type(screen.getByTestId('reserve-amount'), '100,00');
-    await userEvent.click(screen.getByTestId('reserve-submit'));
-    await fixture.whenStable();
-
-    expect(goals.reservations).toHaveLength(1);
-    expect(calls).toBe(2);
-  });
-
-  it('Dado a folha de reserva aberta, quando a lista de metas recarrega (silenciosa e pendente), então a folha e o digitado continuam', async () => {
-    const goals = new GoalsGatewayStub();
-    goals.goals = [aGoal()];
-    const { fixture } = await setup(
-      new DashboardGatewayStub(),
-      'pt',
-      new CardsGatewayStub(),
-      goals,
-    );
-    await fixture.whenStable();
-    await userEvent.click(screen.getByTestId('home-action-goal'));
-    await userEvent.type(await screen.findByTestId('reserve-amount'), '100,00');
-
-    vi.spyOn(goals, 'list').mockReturnValue(new Subject());
-    (fixture.componentInstance as unknown as { goals: GoalsListFacade }).goals.reload('ACTIVE');
-    fixture.detectChanges();
-
-    expect(screen.getByTestId('reserve-form')).toBeInTheDocument();
-    expect((screen.getByTestId('reserve-amount') as HTMLInputElement).value).toContain('100');
-  });
-
-  it('Dado o resumo, então há atalhos para metas, resumo do mês (competência do backend) e projeções', async () => {
-    const { fixture } = await setup();
-    await fixture.whenStable();
-    const competence = aDashboardSummary().month.competence;
-
-    expect(screen.getByTestId('home-action-goals')).toHaveAttribute('href', '/goals');
-    expect(screen.getByTestId('home-action-summary')).toHaveAttribute(
-      'href',
-      `/planning/summary/${competence}`,
-    );
-    expect(screen.getByTestId('home-action-projections')).toHaveAttribute(
-      'href',
-      '/planning/projections',
-    );
+    expect(meter.max).toBeLessThanOrEqual(2);
+    expect(meter.started).toEqual(['dashboard', 'upcoming', 'monthly', 'overview']);
+    expect(meter.inFlight).toBe(0);
+    expect(new LedgerGate().maxInFlight).toBe(2);
   });
 });

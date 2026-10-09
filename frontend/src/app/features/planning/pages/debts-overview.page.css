@@ -177,3 +177,9 @@
   padding: 0;
   list-style: none;
 }
+
+.more {
+  display: grid;
+  gap: var(--section-gap);
+  padding-top: var(--space-3);
+}

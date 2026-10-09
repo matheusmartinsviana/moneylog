@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
 
+import { DisclosureComponent } from '~/app/common/components/disclosure/disclosure.component';
 import { PageLayoutComponent } from '~/app/common/components/page-layout/page-layout.component';
 import { SectionContainerComponent } from '~/app/common/components/section-container/section-container.component';
 import { I18nService } from '~/app/common/i18n/i18n.service';
@@ -14,6 +15,7 @@ import { InsightsFacade } from '~/modules/ai/core/facades/insights.facade';
 @Component({
   selector: 'app-insights-page',
   imports: [
+    DisclosureComponent,
     PageLayoutComponent,
     SectionContainerComponent,
     InsightListComponent,
@@ -30,13 +32,21 @@ import { InsightsFacade } from '~/modules/ai/core/facades/insights.facade';
         >
           <app-insight-list [state]="insights.state()" (retry)="insights.retry()" />
         </app-section-container>
-        <app-section-container [heading]="t().ai.actions.title">
-          <app-ai-actions />
-        </app-section-container>
+        <app-disclosure fieldId="insights-more" [heading]="t().brief.more" [headingLevel]="2">
+          <div class="ins__more">
+            <app-section-container [heading]="t().ai.actions.title">
+              <app-ai-actions />
+            </app-section-container>
+          </div>
+        </app-disclosure>
       </div>
     </app-page-layout>
   `,
   styles: `
+    .ins__more {
+      padding-top: var(--space-3);
+    }
+
     .ins {
       display: grid;
       gap: var(--space-5);

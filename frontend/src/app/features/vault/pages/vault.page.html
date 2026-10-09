@@ -1,9 +1,9 @@
-<app-page-layout [heading]="t().nav.vault" [description]="t().workspacePages.vault.subtitle">
+<app-page-layout fit [heading]="t().nav.vault" [description]="t().workspacePages.vault.subtitle">
   <a pageActions class="button" routerLink="/notes" data-cy="vault-open-notes">
     {{ t().nav.notes }}
   </a>
 
-  <div class="vault" data-cy="vault-page">
+  <div class="vault fit-stack" data-cy="vault-page">
     <section class="vault__card" aria-labelledby="vault-card-title" data-cy="vault-card">
       <h2 class="vault__title" id="vault-card-title">{{ t().workspacePages.vault.cardTitle }}</h2>
       @switch (overview.state().status) {
@@ -22,132 +22,143 @@
           </p>
         }
       }
-      <app-vault-section [showTitle]="false" (imported)="onImported()" />
+      <app-disclosure
+        fieldId="vault-more"
+        [heading]="t().brief.more"
+        [headingLevel]="3"
+        [lazy]="true"
+      >
+        <app-vault-section [showTitle]="false" (imported)="onImported()" />
+      </app-disclosure>
     </section>
 
-    @switch (list.state().status) {
-      @case ('loading') {
-        <p class="vault__muted" role="status" data-cy="vault-loading">
-          {{ t().workspacePages.vault.loading }}
-        </p>
-      }
-      @case ('error') {
-        <div class="vault__state" role="alert" data-cy="vault-list-error">
-          <p>{{ t().workspacePages.vault.error }}</p>
-          <button type="button" class="button" data-cy="vault-list-retry" (click)="list.retry()">
-            {{ t().workspacePages.vault.retry }}
-          </button>
-        </div>
-      }
-      @case ('ready') {
-        @if ((list.items() ?? []).length === 0 && folder() === null) {
-          <div class="vault__state" data-cy="vault-empty">
-            <p>
-              <strong>{{ t().workspacePages.vault.emptyTitle }}</strong>
-              {{ t().workspacePages.vault.emptyDescription }}
-            </p>
-            <a class="button button--primary" routerLink="/notes" data-cy="vault-create">
-              {{ t().workspacePages.vault.createNote }}
-            </a>
+    <div class="fit-scroll">
+      @switch (list.state().status) {
+        @case ('loading') {
+          <p class="vault__muted" role="status" data-cy="vault-loading">
+            {{ t().workspacePages.vault.loading }}
+          </p>
+        }
+        @case ('error') {
+          <div class="vault__state" role="alert" data-cy="vault-list-error">
+            <p>{{ t().workspacePages.vault.error }}</p>
+            <button type="button" class="button" data-cy="vault-list-retry" (click)="list.retry()">
+              {{ t().workspacePages.vault.retry }}
+            </button>
           </div>
-        } @else {
-          <div class="vault__workspace">
-            <nav class="vault__tree" [attr.aria-label]="t().workspacePages.vault.foldersLabel">
-              <app-folder-tree
-                [root]="list.tree()"
-                [selected]="folder()"
-                [label]="t().workspacePages.vault.foldersLabel"
-                [allLabel]="t().notes.list.allNotes"
-                (selectFolder)="selectFolder($event)"
-              />
-            </nav>
+        }
+        @case ('ready') {
+          @if ((list.items() ?? []).length === 0 && folder() === null) {
+            <div class="vault__state" data-cy="vault-empty">
+              <p>
+                <strong>{{ t().workspacePages.vault.emptyTitle }}</strong>
+                {{ t().workspacePages.vault.emptyDescription }}
+              </p>
+              <a class="button button--primary" routerLink="/notes" data-cy="vault-create">
+                {{ t().workspacePages.vault.createNote }}
+              </a>
+            </div>
+          } @else {
+            <div class="vault__workspace">
+              <nav class="vault__tree" [attr.aria-label]="t().workspacePages.vault.foldersLabel">
+                <app-folder-tree
+                  [root]="list.tree()"
+                  [selected]="folder()"
+                  [label]="t().workspacePages.vault.foldersLabel"
+                  [allLabel]="t().notes.list.allNotes"
+                  (selectFolder)="selectFolder($event)"
+                />
+              </nav>
 
-            <section class="vault__notes" aria-labelledby="vault-notes-title">
-              <h2 class="vault__subtitle" id="vault-notes-title">
-                {{ t().workspacePages.vault.notesTitle }}
-              </h2>
-              @if ((list.items() ?? []).length === 0) {
-                <p class="vault__muted" data-cy="vault-folder-empty">
-                  {{ t().workspacePages.vault.folderEmpty }}
-                </p>
-              } @else {
-                <ul class="vault__list" data-cy="vault-notes">
-                  @for (note of list.items(); track note.id) {
-                    <li>
-                      <button
-                        type="button"
-                        class="vault__note"
-                        [class.is-selected]="note.id === selectedId()"
-                        [attr.aria-pressed]="note.id === selectedId()"
-                        [attr.data-cy]="'vault-note-' + note.id"
-                        (click)="select(note.id)"
-                      >
-                        <span class="vault__note-title">{{ note.title }}</span>
-                        <span class="vault__note-path">{{ note.path }}</span>
-                      </button>
-                    </li>
-                  }
-                </ul>
-              }
-            </section>
-
-            <section
-              class="vault__preview"
-              aria-labelledby="vault-preview-title"
-              data-cy="vault-preview"
-            >
-              <h2 class="vault__subtitle" id="vault-preview-title">
-                {{ t().workspacePages.vault.previewTitle }}
-              </h2>
-              @if (selectedId() === null) {
-                <p class="vault__muted" data-cy="vault-preview-empty">
-                  {{ t().workspacePages.vault.selectNote }}
-                </p>
-              } @else {
-                @switch (editor.loadStatus().status) {
-                  @case ('loading') {
-                    <p class="vault__muted" role="status">{{ t().workspacePages.vault.loading }}</p>
-                  }
-                  @case ('error') {
-                    <p class="vault__muted" role="alert" data-cy="vault-preview-error">
-                      {{ t().workspacePages.vault.previewError }}
-                    </p>
-                  }
-                  @default {
-                    @if (editor.note(); as note) {
-                      <div class="vault__preview-head">
-                        <h3 class="vault__note-heading">{{ note.title }}</h3>
-                        <a
-                          class="button"
-                          [routerLink]="['/notes', note.id]"
-                          data-cy="vault-open-editor"
+              <section class="vault__notes" aria-labelledby="vault-notes-title">
+                <h2 class="vault__subtitle" id="vault-notes-title">
+                  {{ t().workspacePages.vault.notesTitle }}
+                </h2>
+                @if ((list.items() ?? []).length === 0) {
+                  <p class="vault__muted" data-cy="vault-folder-empty">
+                    {{ t().workspacePages.vault.folderEmpty }}
+                  </p>
+                } @else {
+                  <ul class="vault__list" data-cy="vault-notes">
+                    @for (note of list.items(); track note.id) {
+                      <li>
+                        <button
+                          type="button"
+                          class="vault__note"
+                          [class.is-selected]="note.id === selectedId()"
+                          [attr.aria-pressed]="note.id === selectedId()"
+                          [attr.data-cy]="'vault-note-' + note.id"
+                          (click)="select(note.id)"
                         >
-                          {{ t().workspacePages.vault.openEditor }}
-                        </a>
-                      </div>
-                      @if (split(); as parts) {
-                        @if (parts.meta !== null && parts.meta.length > 0) {
-                          <dl
-                            class="vault__meta"
-                            [attr.aria-label]="t().workspacePages.vault.metadataTitle"
-                            data-cy="vault-metadata"
+                          <span class="vault__note-title">{{ note.title }}</span>
+                          <span class="vault__note-path">{{ note.path }}</span>
+                        </button>
+                      </li>
+                    }
+                  </ul>
+                }
+              </section>
+
+              <section
+                class="vault__preview"
+                aria-labelledby="vault-preview-title"
+                data-cy="vault-preview"
+              >
+                <h2 class="vault__subtitle" id="vault-preview-title">
+                  {{ t().workspacePages.vault.previewTitle }}
+                </h2>
+                @if (selectedId() === null) {
+                  <p class="vault__muted" data-cy="vault-preview-empty">
+                    {{ t().workspacePages.vault.selectNote }}
+                  </p>
+                } @else {
+                  @switch (editor.loadStatus().status) {
+                    @case ('loading') {
+                      <p class="vault__muted" role="status">
+                        {{ t().workspacePages.vault.loading }}
+                      </p>
+                    }
+                    @case ('error') {
+                      <p class="vault__muted" role="alert" data-cy="vault-preview-error">
+                        {{ t().workspacePages.vault.previewError }}
+                      </p>
+                    }
+                    @default {
+                      @if (editor.note(); as note) {
+                        <div class="vault__preview-head">
+                          <h3 class="vault__note-heading">{{ note.title }}</h3>
+                          <a
+                            class="button"
+                            [routerLink]="['/notes', note.id]"
+                            data-cy="vault-open-editor"
                           >
-                            @for (entry of parts.meta; track entry.key) {
-                              <dt>{{ entry.key }}</dt>
-                              <dd>{{ entry.value }}</dd>
-                            }
-                          </dl>
+                            {{ t().workspacePages.vault.openEditor }}
+                          </a>
+                        </div>
+                        @if (split(); as parts) {
+                          @if (parts.meta !== null && parts.meta.length > 0) {
+                            <dl
+                              class="vault__meta"
+                              [attr.aria-label]="t().workspacePages.vault.metadataTitle"
+                              data-cy="vault-metadata"
+                            >
+                              @for (entry of parts.meta; track entry.key) {
+                                <dt>{{ entry.key }}</dt>
+                                <dd>{{ entry.value }}</dd>
+                              }
+                            </dl>
+                          }
+                          <app-markdown-view [source]="parts.content" [links]="note.links" />
                         }
-                        <app-markdown-view [source]="parts.content" [links]="note.links" />
                       }
                     }
                   }
                 }
-              }
-            </section>
-          </div>
+              </section>
+            </div>
+          }
         }
       }
-    }
+    </div>
   </div>
 </app-page-layout>

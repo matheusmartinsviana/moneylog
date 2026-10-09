@@ -13,6 +13,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
 import { ConfirmDialogComponent } from '~/app/common/components/confirm-dialog/confirm-dialog.component';
+import { DisclosureComponent } from '~/app/common/components/disclosure/disclosure.component';
 import {
   EmptyStateAction,
   EmptyStateComponent,
@@ -49,6 +50,7 @@ const MAX_MONTH = '2100-12';
 @Component({
   selector: 'app-third-parties-page',
   imports: [
+    DisclosureComponent,
     ReactiveFormsModule,
     RouterLink,
     PageLayoutComponent,

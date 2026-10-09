@@ -120,6 +120,27 @@ describe('KpiCardsComponent', () => {
     expect(value).toHaveClass('is-negative');
   });
 
+  it('Dado o modo compacto (Início sucinto), então mostra saldo com variação, gasto, receita, resultado e o medidor, tudo do servidor', async () => {
+    await render(KpiCardsComponent, {
+      providers: [provideI18nTesting('pt')],
+      inputs: {
+        summary: aDashboardSummary(),
+        monthly: closedMonth(),
+        monthlyStatus: 'ready',
+        part: 'compact',
+      },
+    });
+
+    expect(text(screen.getByTestId('kpi-in-accounts-value'))).toBe('R$ 18.900,00');
+    expect(screen.getByTestId('kpi-in-accounts-change')).toBeInTheDocument();
+    expect(text(screen.getByTestId('kpi-spending-value'))).toBe('R$ 1.620,50');
+    expect(text(screen.getByTestId('kpi-income-value'))).toBe('R$ 12.000,00');
+    // O resultado é o `month.net` do dashboard, sem conta no front (receita menos gasto não bate de propósito).
+    expect(text(screen.getByTestId('kpi-result-value'))).toBe('R$ 10.379,50');
+    expect(text(screen.getByTestId('kpi-savings-value'))).toBe('41,2%');
+    expect(screen.getByRole('region', { name: 'Taxa de poupança' })).toBeInTheDocument();
+  });
+
   describe('mês encerrado: a variação é tendência', () => {
     it('Dado expensesDelta -0.0420, então "4,2% menor que o mês anterior" em tom positivo (gastar menos é bom)', async () => {
       await setup();

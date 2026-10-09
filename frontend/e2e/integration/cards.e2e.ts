@@ -178,8 +178,8 @@ test('criar cartão, comprar em 6x, ver a fatura, pagar em duas vezes: os mesmos
   );
   await evidence(page, 'e2e-06-lista-cartoes');
 
-  await open(page, '/');
-  await expect(cy(page, 'home-dashboard')).toBeVisible();
+  await open(page, '/planning/overview');
+  await expect(cy(page, 'home-legacy')).toBeVisible();
   await expect(cy(page, `home-card-${card.id}`)).toBeVisible();
   expect(await cyText(page, `home-card-available-${card.id}`)).toBe(
     fmt(finalCard.availableLimit.amount),

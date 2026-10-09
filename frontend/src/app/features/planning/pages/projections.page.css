@@ -95,3 +95,9 @@
   margin: 0;
   padding-left: var(--space-5);
 }
+
+.more {
+  display: grid;
+  gap: var(--section-gap);
+  padding-top: var(--space-3);
+}

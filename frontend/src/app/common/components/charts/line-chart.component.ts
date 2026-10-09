@@ -66,6 +66,7 @@ interface Drawn {
   selector: 'app-line-chart',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
+    '[class.compact]': 'compact()',
     // Toque fora do gráfico fecha o tooltip (o Safari iOS não dispara `blur` ao tocar numa área não focável).
     '(document:pointerdown)': 'onDocumentPointerDown($event)',
   },
@@ -85,6 +86,11 @@ export class LineChartComponent {
   readonly cy = input('line-chart');
   /** Painel principal (Início): mais alto, com halo atrás do traço. */
   readonly hero = input(false, { transform: booleanAttribute });
+  /**
+   * Gráfico compacto (telas "sucintas"): preenche a altura que o painel dá (sem altura fixa em px), sem o botão
+   * "Ver como tabela". A tabela equivalente continua no DOM (só para leitores de tela).
+   */
+  readonly compact = input(false, { transform: booleanAttribute });
 
   protected readonly uid = ++nextId;
   protected readonly fillId = `line-chart-fill-${this.uid}`;
@@ -189,14 +195,18 @@ export class LineChartComponent {
       : null;
   });
 
-  /** Rótulos do eixo X: pontas e até dois do meio (seleção de posição, nada calculado). */
+  /** Rótulos do eixo X: pontas e até dois do meio (um só no modo compacto) (seleção de posição, nada calculado). */
   protected readonly axisLabels = computed(() => {
     const n = this.count();
     if (n === 0) return [];
+    // Compacto: só as pontas e o meio (3 marcas), para que nenhum rótulo seja cortado em tela estreita.
+    const max = this.compact() ? 3 : 4;
     const picks =
-      n <= 4
+      n <= max
         ? [...Array(n).keys()]
-        : [0, Math.round((n - 1) / 3), Math.round(((n - 1) * 2) / 3), n - 1];
+        : this.compact()
+          ? [0, Math.round((n - 1) / 2), n - 1]
+          : [0, Math.round((n - 1) / 3), Math.round(((n - 1) * 2) / 3), n - 1];
     const ticks = [...new Set(picks)];
     // Rótulos longos não se sobrepõem: cada marca tem uma largura máxima de 2/3 do menor vão entre marcas
     // vizinhas (1/2 se só há as duas pontas) e o texto que não cabe vira reticências (o nome inteiro está no

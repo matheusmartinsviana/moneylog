@@ -1,4 +1,4 @@
-<app-page-layout [heading]="person()?.name ?? t().nav.people">
+<app-page-layout fit [heading]="person()?.name ?? t().nav.people">
   @if (person(); as p) {
     <div pageActions class="actions" data-cy="person-actions">
       <a
@@ -51,108 +51,121 @@
     }
     @case ('ready') {
       @if (person(); as p) {
-        @if (facade.refreshProblem()) {
-          <p class="banner" role="status" data-cy="person-refresh-failed">
-            {{ t().people.detail.refreshFailed }}
-            <button
-              type="button"
-              class="button"
-              data-cy="person-refresh-retry"
-              (click)="facade.retryRefresh()"
+        <div class="fit-stack">
+          @if (facade.refreshProblem()) {
+            <p class="banner" role="status" data-cy="person-refresh-failed">
+              {{ t().people.detail.refreshFailed }}
+              <button
+                type="button"
+                class="button"
+                data-cy="person-refresh-retry"
+                (click)="facade.retryRefresh()"
+              >
+                {{ t().people.detail.refreshRetry }}
+              </button>
+            </p>
+          }
+          @if (p.archived) {
+            <p class="banner" role="status" data-cy="person-archived">
+              {{ t().people.detail.archivedBanner }}
+            </p>
+          }
+          @if (actionError(); as message) {
+            <p class="banner" role="alert" data-cy="person-action-error">{{ message }}</p>
+          }
+
+          <section class="summary surface" aria-label="{{ p.name }}" data-cy="person-summary">
+            <p
+              class="summary__balance"
+              [class.is-receivable]="p.direction === 'RECEIVABLE'"
+              [class.is-payable]="p.direction === 'PAYABLE'"
+              [attr.data-direction]="p.direction"
+              data-cy="person-balance"
             >
-              {{ t().people.detail.refreshRetry }}
-            </button>
-          </p>
-        }
-        @if (p.archived) {
-          <p class="banner" role="status" data-cy="person-archived">
-            {{ t().people.detail.archivedBanner }}
-          </p>
-        }
-        @if (actionError(); as message) {
-          <p class="banner" role="alert" data-cy="person-action-error">{{ message }}</p>
-        }
+              <span class="num">{{ balance() }}</span>
+            </p>
+            <p class="summary__meta">
+              <span data-cy="person-open-debts">{{ debtsText() }}</span>
+              <span data-cy="person-next-due">{{ nextDue() }}</span>
+            </p>
+          </section>
 
-        <section class="summary surface" aria-label="{{ p.name }}" data-cy="person-summary">
-          <p
-            class="summary__balance"
-            [class.is-receivable]="p.direction === 'RECEIVABLE'"
-            [class.is-payable]="p.direction === 'PAYABLE'"
-            [attr.data-direction]="p.direction"
-            data-cy="person-balance"
-          >
-            <span class="num">{{ balance() }}</span>
-          </p>
-          <p class="summary__meta">
-            <span data-cy="person-open-debts">{{ debtsText() }}</span>
-            <span data-cy="person-next-due">{{ nextDue() }}</span>
-          </p>
-        </section>
+          <div class="fit-scroll">
+            <app-tabs
+              fieldId="person-tabs"
+              [label]="t().people.detail.tabsLabel"
+              [tabs]="tabs()"
+              [active]="activeTab()"
+              (activeChange)="setTab($event)"
+            >
+              <ng-template appTabPanel="receivable">
+                @let group = receivables();
+                @if (group.open.length === 0 && group.closed.length === 0) {
+                  <p class="empty" data-cy="person-receivable-empty">
+                    {{ t().people.detail.emptyTab }}
+                  </p>
+                } @else {
+                  @if (group.open.length > 0) {
+                    <h2 class="section-title">{{ t().people.detail.openSection }}</h2>
+                    <ul class="list" data-cy="person-receivable-open">
+                      @for (debt of group.open; track debt.id) {
+                        <li app-debt-row [debt]="debt"></li>
+                      }
+                    </ul>
+                  }
+                  @if (group.closed.length > 0) {
+                    <h2 class="section-title">{{ t().people.detail.closedSection }}</h2>
+                    <ul class="list" data-cy="person-receivable-closed">
+                      @for (debt of group.closed; track debt.id) {
+                        <li app-debt-row [debt]="debt"></li>
+                      }
+                    </ul>
+                  }
+                }
+              </ng-template>
+              <ng-template appTabPanel="payable">
+                @let group = payables();
+                @if (group.open.length === 0 && group.closed.length === 0) {
+                  <p class="empty" data-cy="person-payable-empty">
+                    {{ t().people.detail.emptyTab }}
+                  </p>
+                } @else {
+                  @if (group.open.length > 0) {
+                    <h2 class="section-title">{{ t().people.detail.openSection }}</h2>
+                    <ul class="list" data-cy="person-payable-open">
+                      @for (debt of group.open; track debt.id) {
+                        <li app-debt-row [debt]="debt"></li>
+                      }
+                    </ul>
+                  }
+                  @if (group.closed.length > 0) {
+                    <h2 class="section-title">{{ t().people.detail.closedSection }}</h2>
+                    <ul class="list" data-cy="person-payable-closed">
+                      @for (debt of group.closed; track debt.id) {
+                        <li app-debt-row [debt]="debt"></li>
+                      }
+                    </ul>
+                  }
+                }
+              </ng-template>
+            </app-tabs>
 
-        <app-tabs
-          fieldId="person-tabs"
-          [label]="t().people.detail.tabsLabel"
-          [tabs]="tabs()"
-          [active]="activeTab()"
-          (activeChange)="setTab($event)"
-        >
-          <ng-template appTabPanel="receivable">
-            @let group = receivables();
-            @if (group.open.length === 0 && group.closed.length === 0) {
-              <p class="empty" data-cy="person-receivable-empty">
-                {{ t().people.detail.emptyTab }}
-              </p>
-            } @else {
-              @if (group.open.length > 0) {
-                <h2 class="section-title">{{ t().people.detail.openSection }}</h2>
-                <ul class="list" data-cy="person-receivable-open">
-                  @for (debt of group.open; track debt.id) {
-                    <li app-debt-row [debt]="debt"></li>
-                  }
-                </ul>
-              }
-              @if (group.closed.length > 0) {
-                <h2 class="section-title">{{ t().people.detail.closedSection }}</h2>
-                <ul class="list" data-cy="person-receivable-closed">
-                  @for (debt of group.closed; track debt.id) {
-                    <li app-debt-row [debt]="debt"></li>
-                  }
-                </ul>
-              }
-            }
-          </ng-template>
-          <ng-template appTabPanel="payable">
-            @let group = payables();
-            @if (group.open.length === 0 && group.closed.length === 0) {
-              <p class="empty" data-cy="person-payable-empty">{{ t().people.detail.emptyTab }}</p>
-            } @else {
-              @if (group.open.length > 0) {
-                <h2 class="section-title">{{ t().people.detail.openSection }}</h2>
-                <ul class="list" data-cy="person-payable-open">
-                  @for (debt of group.open; track debt.id) {
-                    <li app-debt-row [debt]="debt"></li>
-                  }
-                </ul>
-              }
-              @if (group.closed.length > 0) {
-                <h2 class="section-title">{{ t().people.detail.closedSection }}</h2>
-                <ul class="list" data-cy="person-payable-closed">
-                  @for (debt of group.closed; track debt.id) {
-                    <li app-debt-row [debt]="debt"></li>
-                  }
-                </ul>
-              }
-            }
-          </ng-template>
-        </app-tabs>
-
-        <app-linked-notes
-          type="PERSON"
-          cy="person-notes"
-          [entityId]="p.id"
-          [label]="p.name"
-          [status]="p.archived ? 'ARCHIVED' : null"
-        />
+            <app-disclosure
+              fieldId="person-more"
+              [heading]="t().brief.more"
+              [headingLevel]="2"
+              [lazy]="true"
+            >
+              <app-linked-notes
+                type="PERSON"
+                cy="person-notes"
+                [entityId]="p.id"
+                [label]="p.name"
+                [status]="p.archived ? 'ARCHIVED' : null"
+              />
+            </app-disclosure>
+          </div>
+        </div>
       }
     }
   }

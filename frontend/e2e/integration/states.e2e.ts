@@ -22,7 +22,7 @@ test('erro de servidor no Início, na lista e no /quick-add: mensagem com "Tenta
   net.allow(500);
 
   net.failNext('GET', /\/v1\/dashboard\/summary$/);
-  await open(page, '/');
+  await open(page, '/planning/overview');
   await expect(cy(page, 'home-error')).toBeVisible();
   await evidence(page, 'e2e-40-inicio-erro');
   await page.getByRole('button', { name: 'Tentar de novo' }).click();

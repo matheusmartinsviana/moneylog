@@ -333,14 +333,6 @@ export const es: AppI18n = {
       cardFutureInstallments: 'Cuotas futuras de la tarjeta',
       cardFutureInstallmentsNote: 'Fuera del total: entran en el patrimonio mes a mes, al vencer.',
     },
-    actions: {
-      transactions: 'Ver movimientos',
-      goals: 'Ver metas',
-      summary: 'Resumen del mes',
-      projections: 'Ver proyecciones',
-      goalQuick: 'Meta',
-      smartGoal: 'Meta inteligente',
-    },
     reservedNote: {
       formula:
         'Disponible = en cuentas − comprometido en 30 días − reservado. El servidor hace la cuenta; aquí no se calcula nada.',
@@ -363,31 +355,6 @@ export const es: AppI18n = {
     },
   },
   dashboard: {
-    legacyTitle: 'Compromisos y patrimonio',
-    legacyDescription: 'Disponible, próximos compromisos, mes, patrimonio y tarjetas.',
-    quickCapture: {
-      title: 'Registrar movimiento',
-      description: 'Monto, descripción y categoría en pocos toques.',
-      descriptionPlaceholder: 'Ej.: almuerzo',
-      typeLabel: 'Tipo',
-      expense: 'Gasto',
-      income: 'Ingreso',
-      loan: 'Presté',
-      moreOptions: 'Más opciones',
-      loading: 'Cargando cuentas y categorías.',
-      error: 'No se pudieron cargar las cuentas y categorías.',
-      retry: 'Intentar de nuevo',
-      empty: {
-        title: 'Crea una cuenta para registrar',
-        description: 'Un movimiento necesita una cuenta de saldo.',
-        action: 'Crear cuenta',
-      },
-      ai: {
-        title: 'Interpretación con IA',
-        hint: 'Disponible cuando la IA esté configurada.',
-        learnMore: 'Más información',
-      },
-    },
     kpis: {
       label: 'Indicadores del mes',
       thisMonth: 'Este mes',
@@ -411,35 +378,12 @@ export const es: AppI18n = {
       retry: 'Intentar de nuevo',
       loading: 'Cargando los indicadores.',
     },
-    accounts: {
-      title: 'Cuentas',
-      description: 'Saldo actual de cada cuenta activa y la factura de cada tarjeta.',
-      listLabel: 'Cuentas y tarjetas',
-      open: 'Abrir {name}',
-      reserved: 'Reservado en metas',
-      invoiceTitle: 'Factura actual',
-      noInvoice: 'Sin factura abierta',
-      limitAvailable: 'Límite disponible',
-      overLimit: 'Sobre el límite',
-      loading: 'Cargando las cuentas.',
-      error: 'No se pudieron cargar las cuentas.',
-      retry: 'Intentar de nuevo',
-      empty: {
-        title: 'Ninguna cuenta activa.',
-        description: 'Crea una cuenta para ver los saldos aquí.',
-      },
-      create: 'Crear cuenta',
-      viewAll: 'Ver cuentas',
-    },
     overview: {
       title: 'Ingresos y gastos',
-      description: 'Resultado del período: ingresos menos consumo. No es el saldo de las cuentas.',
       periodLabel: 'Período',
       periods: { D7: '7 días', D30: '30 días', M3: '3 meses', M12: '12 meses' },
-      basis: { DATE: 'Por fecha', COMPETENCE: 'Por competencia' },
       income: 'Ingresos',
       expenses: 'Gastos',
-      net: 'Resultado del período',
       empty: 'Sin ingresos ni gastos en este período.',
       error: 'No se pudo cargar el gráfico.',
       retry: 'Intentar de nuevo',
@@ -454,28 +398,6 @@ export const es: AppI18n = {
       error: 'No se pudieron cargar las categorías.',
       retry: 'Intentar de nuevo',
       loading: 'Cargando las categorías.',
-    },
-    recent: {
-      title: 'Recientes',
-      viewAll: 'Ver todos',
-      today: 'Hoy',
-      yesterday: 'Ayer',
-      empty: 'Ningún movimiento reciente.',
-      error: 'No se pudieron cargar los movimientos.',
-      retry: 'Intentar de nuevo',
-      loading: 'Cargando los movimientos.',
-    },
-    insight: {
-      title: 'Insight',
-      viewAll: 'Ver todos',
-      askAi: 'Preguntar a la IA',
-      askAiHint: 'Disponible cuando la IA esté activada',
-    },
-    budget: {
-      title: 'Presupuesto mensual',
-      description: 'Los presupuestos por categoría llegan pronto.',
-      soon: 'Próximamente',
-      learnMore: 'Saber más',
     },
   },
   ai: {
@@ -1978,6 +1900,7 @@ export const es: AppI18n = {
       debts: 'Deudas totales',
       thirdParties: 'Por cobrar',
       commitments: 'Compromisos',
+      overview: 'Panorama',
     },
     summary: {
       title: 'Estimación mensual',
@@ -2284,12 +2207,6 @@ export const es: AppI18n = {
       inProgress: 'En curso',
       empty: 'La línea de tiempo aparece cuando la meta tiene plazo.',
       note: 'Un mes sin dato nunca cuenta como cumplido.',
-    },
-    summary: {
-      title: 'Metas',
-      description: 'En qué escalón está cada meta.',
-      viewAll: 'Ver metas',
-      add: 'Nueva meta inteligente',
     },
     status: { ACTIVE: 'Activa', ACHIEVED: 'Alcanzada', ARCHIVED: 'Archivada' },
     priority: { HIGH: 'Alta', MEDIUM: 'Media', LOW: 'Baja' },
@@ -3364,7 +3281,6 @@ export const es: AppI18n = {
         cancel: 'Cancelar',
       },
     },
-    home: { title: 'Por cobrar a terceros', open: 'Ver detalles' },
     month: {
       title: 'Gasto del mes: bruto, de terceros y neto',
       description:
@@ -3493,6 +3409,31 @@ export const es: AppI18n = {
       cancel: 'Cancelar',
       toast: 'Compromiso registrado.',
     },
+  },
+
+  brief: {
+    register: 'Registrar',
+    registerMore: 'Más formas de registrar',
+    result: 'Resultado',
+    resultCaption: 'Ingresos menos gasto del mes',
+    savings: 'Ahorro',
+    upcoming: {
+      title: 'Próximos compromisos',
+      empty: 'Nada vence en los próximos 7 días.',
+      viewAll: 'Ver todos',
+    },
+    featuredGoal: {
+      title: 'Meta destacada',
+      empty: 'Crea una meta para seguirla aquí.',
+      create: 'Crear meta',
+      open: 'Abrir {name}',
+    },
+    viewTransactions: 'Ver movimientos',
+    panorama: {
+      description: 'Disponible, compromisos, mes, patrimonio y tarjetas en un solo lugar.',
+    },
+    settingsLinks: 'Otras configuraciones',
+    more: 'Más',
   },
 
   notFound: {

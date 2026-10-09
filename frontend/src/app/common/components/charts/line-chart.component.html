@@ -153,21 +153,23 @@
       }
     </ul>
 
-    <button
-      type="button"
-      class="button lc__toggle"
-      [attr.aria-expanded]="tableOpen()"
-      [attr.aria-controls]="tableId"
-      [attr.data-cy]="cy() + '-table-toggle'"
-      (click)="toggleTable()"
-    >
-      {{ tableOpen() ? t().charts.hideTable : t().charts.viewAsTable }}
-    </button>
+    @if (!compact()) {
+      <button
+        type="button"
+        class="button lc__toggle"
+        [attr.aria-expanded]="tableOpen()"
+        [attr.aria-controls]="tableId"
+        [attr.data-cy]="cy() + '-table-toggle'"
+        (click)="toggleTable()"
+      >
+        {{ tableOpen() ? t().charts.hideTable : t().charts.viewAsTable }}
+      </button>
+    }
     <!-- A tabela equivalente existe sempre no DOM: escondida para quem vê, aberta pelo botão. -->
     <div
       class="lc__table"
       [id]="tableId"
-      [class.visually-hidden]="!tableOpen()"
+      [class.visually-hidden]="!tableOpen() || compact()"
       [attr.data-cy]="cy() + '-table'"
     >
       <table>

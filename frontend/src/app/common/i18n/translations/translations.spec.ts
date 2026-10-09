@@ -120,6 +120,7 @@ describe('Traduções', () => {
       'accounts',
       'ai',
       'auth',
+      'brief',
       'cards',
       'categories',
       'charts',

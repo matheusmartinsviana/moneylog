@@ -96,290 +96,315 @@
           </section>
         </div>
 
-        <app-section-container [heading]="t().debtOverview.comparison.title">
-          <dl class="facts" data-cy="debts-comparison">
-            @if (data.comparison.reason === 'NO_INCOME') {
-              <p class="note" role="status" data-cy="debts-no-income">
-                {{ t().debtOverview.comparison.noIncome }}
-              </p>
-            } @else {
-              <div class="fact">
-                <dt>{{ t().debtOverview.comparison.incomeBase }}</dt>
-                <dd data-cy="debts-income">
-                  @if (data.income.monthly; as income) {
-                    <app-money [value]="income" />
-                  }
-                  <span class="note">{{
-                    t().debtOverview.comparison.incomeSource[data.income.source]
-                  }}</span>
-                </dd>
-              </div>
-              @if (data.comparison.debtToIncome; as value) {
-                <div class="fact">
-                  <dt>{{ t().debtOverview.comparison.debtToIncome }}</dt>
-                  <dd class="num" data-cy="debts-debt-to-income">{{ ratio(value) }}</dd>
-                </div>
-              }
-              @if (data.comparison.fixedCostToIncome; as value) {
-                <div class="fact">
-                  <dt>{{ t().debtOverview.comparison.fixedCostToIncome }}</dt>
-                  <dd class="num" data-cy="debts-fixed-to-income">{{ ratio(value) }}</dd>
-                </div>
-              }
-            }
-            <div class="fact">
-              <dt>{{ t().debtOverview.comparison.inAccounts }}</dt>
-              <dd data-cy="debts-in-accounts"><app-money [value]="data.liquidity.inAccounts" /></dd>
-            </div>
-            <div class="fact">
-              <dt>{{ t().debtOverview.comparison.debtMinusInAccounts }}</dt>
-              <dd data-cy="debts-minus-accounts">
-                <app-money [value]="data.comparison.debtMinusInAccounts" />
-              </dd>
-            </div>
-          </dl>
-        </app-section-container>
-
-        <app-section-container [heading]="t().debtOverview.cards.title">
-          @if (data.cards.items.length === 0) {
-            <p class="note" data-cy="debts-cards-empty">{{ t().debtOverview.cards.empty }}</p>
-          } @else {
-            <ul class="blocks" data-cy="debts-cards">
-              @for (item of data.cards.items; track item.card.id) {
-                <li class="block" [attr.data-cy]="'debts-card-' + item.card.id">
-                  <div class="block__head">
-                    <a class="link" [routerLink]="['/cards', item.card.id]">{{ item.card.name }}</a>
-                    <strong [attr.data-cy]="'debts-card-total-' + item.card.id"
-                      ><app-money [value]="item.total"
-                    /></strong>
-                  </div>
-                  <dl class="mini">
-                    <div>
-                      <dt>{{ t().debtOverview.cards.invoiced }}</dt>
-                      <dd><app-money [value]="item.invoiced" /></dd>
-                    </div>
-                    <div>
-                      <dt>{{ t().debtOverview.cards.future }}</dt>
-                      <dd><app-money [value]="item.future" /></dd>
-                    </div>
-                    <div>
-                      <dt>{{ t().debtOverview.cards.otherCharges }}</dt>
-                      <dd><app-money [value]="item.otherCharges" /></dd>
-                    </div>
-                    <div>
-                      <dt>{{ t().debtOverview.cards.adjustment }}</dt>
-                      <dd><app-money [value]="item.adjustment" /></dd>
-                    </div>
-                  </dl>
-                  <h3 class="block__sub">{{ t().debtOverview.cards.plans }}</h3>
-                  @if (item.plans.length === 0) {
-                    <p class="note">{{ t().debtOverview.cards.noPlans }}</p>
-                  } @else {
-                    <ul class="plans">
-                      @for (plan of item.plans; track plan.purchaseId) {
-                        <li class="plan" [attr.data-cy]="'debts-plan-' + plan.purchaseId">
-                          <div class="block__head">
-                            <span>
-                              {{ plan.description ?? t().debtOverview.cards.noDescription }}
-                              @if (plan.ongoing) {
-                                <span class="tag">{{ t().debtOverview.cards.ongoing }}</span>
-                              }
-                            </span>
-                            <strong><app-money [value]="plan.remaining" /></strong>
-                          </div>
-                          <p class="note" [attr.data-cy]="'debts-plan-text-' + plan.purchaseId">
-                            {{ remainingText(plan.remainingInstallments, plan.totalInstallments) }}
-                            ·
-                            {{ installmentText(plan) }} · {{ until(plan.lastDueDate) }}
-                          </p>
-                        </li>
+        <app-disclosure fieldId="debts-more" [heading]="t().brief.more" [headingLevel]="2">
+          <div class="more">
+            <app-section-container [heading]="t().debtOverview.comparison.title">
+              <dl class="facts" data-cy="debts-comparison">
+                @if (data.comparison.reason === 'NO_INCOME') {
+                  <p class="note" role="status" data-cy="debts-no-income">
+                    {{ t().debtOverview.comparison.noIncome }}
+                  </p>
+                } @else {
+                  <div class="fact">
+                    <dt>{{ t().debtOverview.comparison.incomeBase }}</dt>
+                    <dd data-cy="debts-income">
+                      @if (data.income.monthly; as income) {
+                        <app-money [value]="income" />
                       }
-                    </ul>
-                  }
-                </li>
-              }
-            </ul>
-          }
-        </app-section-container>
-
-        <app-section-container [heading]="t().debtOverview.people.title">
-          @if (data.people.items.length === 0) {
-            <p class="note" data-cy="debts-people-empty">{{ t().debtOverview.people.empty }}</p>
-          } @else {
-            <ul class="blocks" data-cy="debts-people">
-              @for (line of data.people.items; track line.debtId) {
-                <li class="block" [attr.data-cy]="'debts-line-' + line.debtId">
-                  <div class="block__head">
-                    <a class="link" [routerLink]="['/debts', line.debtId]">{{
-                      line.creditorName
-                    }}</a>
-                    <strong><app-money [value]="line.outstanding" /></strong>
-                  </div>
-                  <p class="note">
-                    @if (line.description) {
-                      {{ line.description }} ·
-                    }
-                    {{ expected(line.expectedDate) }}
-                    @if (line.overdue) {
-                      <span class="tag tag--risk" data-cy="debts-overdue">{{
-                        t().debtOverview.people.overdue
+                      <span class="note">{{
+                        t().debtOverview.comparison.incomeSource[data.income.source]
                       }}</span>
-                    }
-                  </p>
-                </li>
-              }
-            </ul>
-          }
-          <p class="note" data-cy="debts-receivables">
-            {{ t().debtOverview.receivables.label }}: <app-money [value]="data.receivablesInfo" />.
-            {{ t().debtOverview.receivables.note }}
-          </p>
-        </app-section-container>
-
-        <app-section-container
-          [heading]="t().debtOverview.other.title"
-          [description]="t().debtOverview.other.hint"
-        >
-          @if (data.other.items.length === 0) {
-            <p class="note" data-cy="debts-other-empty">{{ t().debtOverview.other.empty }}</p>
-          } @else {
-            <ul class="blocks" data-cy="debts-other">
-              @for (line of data.other.items; track line.debtId) {
-                <li class="block" [attr.data-cy]="'debts-line-' + line.debtId">
-                  <div class="block__head">
-                    <a class="link" [routerLink]="['/debts', line.debtId]">{{
-                      line.creditorName
-                    }}</a>
-                    <strong><app-money [value]="line.outstanding" /></strong>
+                    </dd>
                   </div>
-                  <p class="note">
-                    @if (line.description) {
-                      {{ line.description }} ·
-                    }
-                    {{ expected(line.expectedDate) }}
-                    @if (line.overdue) {
-                      <span class="tag tag--risk">{{ t().debtOverview.people.overdue }}</span>
-                    }
-                  </p>
-                </li>
-              }
-            </ul>
-          }
-        </app-section-container>
-
-        <app-section-container
-          [heading]="t().debtOverview.tracked.title"
-          [description]="t().debtOverview.tracked.description"
-        >
-          <div data-cy="debts-tracked">
-            @if (data.tracked.items.length === 0) {
-              <p class="note" data-cy="debts-tracked-empty">{{ t().debtOverview.tracked.empty }}</p>
-            } @else {
-              <ul class="blocks" data-cy="debts-tracked-list">
-                @for (item of data.tracked.items; track item.id) {
-                  <li class="block" [attr.data-cy]="'debts-tracked-' + item.id">
-                    <div class="block__head">
-                      <a class="link" [routerLink]="['/planning/commitments', item.id]">{{
-                        item.name
-                      }}</a>
-                      <span class="tag">{{ t().debtOverview.tracked.kinds[item.kind] }}</span>
+                  @if (data.comparison.debtToIncome; as value) {
+                    <div class="fact">
+                      <dt>{{ t().debtOverview.comparison.debtToIncome }}</dt>
+                      <dd class="num" data-cy="debts-debt-to-income">{{ ratio(value) }}</dd>
                     </div>
-                    @if (item.kind === 'TRACKED_THIRD_PARTY') {
-                      <p class="note">
-                        {{ trackedInstallments(item.installmentsPaid, item.installmentsTotal) }}
-                        ·
-                        {{ t().debtOverview.tracked.balanceUnknown }}
-                      </p>
-                      @if (item.paid; as paid) {
-                        <p class="note">
-                          {{ t().debtOverview.tracked.paid }}: <app-money [value]="paid" />
-                        </p>
-                      }
-                    } @else {
-                      <dl class="mini">
-                        @if (item.nominalBalance; as balance) {
-                          <div>
-                            <dt>{{ t().debtOverview.tracked.balance }}</dt>
-                            <dd [attr.data-cy]="'debts-tracked-balance-' + item.id">
-                              <app-money [value]="balance" />
-                            </dd>
-                          </div>
-                        }
-                        @if (item.directPending; as pending) {
-                          <div>
-                            <dt>{{ t().debtOverview.tracked.directPending }}</dt>
-                            <dd><app-money [value]="pending" /></dd>
-                          </div>
-                        }
-                      </dl>
-                      @if (item.progress; as value) {
-                        <p class="note">{{ trackedProgress(value) }}</p>
-                      }
-                    }
-                    @if (item.nextDueDate; as next) {
-                      <p class="note">{{ trackedNext(next) }}</p>
-                    }
-                  </li>
+                  }
+                  @if (data.comparison.fixedCostToIncome; as value) {
+                    <div class="fact">
+                      <dt>{{ t().debtOverview.comparison.fixedCostToIncome }}</dt>
+                      <dd class="num" data-cy="debts-fixed-to-income">{{ ratio(value) }}</dd>
+                    </div>
+                  }
                 }
-              </ul>
-              @if (data.tracked.scheduleByMonth.length > 0) {
-                <h3 class="block__sub">{{ t().debtOverview.tracked.scheduleTitle }}</h3>
-                <ul class="months" data-cy="debts-tracked-schedule">
-                  @for (entry of data.tracked.scheduleByMonth; track entry.competence) {
-                    <li class="block__head">
-                      <span>{{ monthText(entry.competence) }}</span>
-                      <strong><app-money [value]="entry.amount" /></strong>
+                <div class="fact">
+                  <dt>{{ t().debtOverview.comparison.inAccounts }}</dt>
+                  <dd data-cy="debts-in-accounts">
+                    <app-money [value]="data.liquidity.inAccounts" />
+                  </dd>
+                </div>
+                <div class="fact">
+                  <dt>{{ t().debtOverview.comparison.debtMinusInAccounts }}</dt>
+                  <dd data-cy="debts-minus-accounts">
+                    <app-money [value]="data.comparison.debtMinusInAccounts" />
+                  </dd>
+                </div>
+              </dl>
+            </app-section-container>
+
+            <app-section-container [heading]="t().debtOverview.cards.title">
+              @if (data.cards.items.length === 0) {
+                <p class="note" data-cy="debts-cards-empty">{{ t().debtOverview.cards.empty }}</p>
+              } @else {
+                <ul class="blocks" data-cy="debts-cards">
+                  @for (item of data.cards.items; track item.card.id) {
+                    <li class="block" [attr.data-cy]="'debts-card-' + item.card.id">
+                      <div class="block__head">
+                        <a class="link" [routerLink]="['/cards', item.card.id]">{{
+                          item.card.name
+                        }}</a>
+                        <strong [attr.data-cy]="'debts-card-total-' + item.card.id"
+                          ><app-money [value]="item.total"
+                        /></strong>
+                      </div>
+                      <dl class="mini">
+                        <div>
+                          <dt>{{ t().debtOverview.cards.invoiced }}</dt>
+                          <dd><app-money [value]="item.invoiced" /></dd>
+                        </div>
+                        <div>
+                          <dt>{{ t().debtOverview.cards.future }}</dt>
+                          <dd><app-money [value]="item.future" /></dd>
+                        </div>
+                        <div>
+                          <dt>{{ t().debtOverview.cards.otherCharges }}</dt>
+                          <dd><app-money [value]="item.otherCharges" /></dd>
+                        </div>
+                        <div>
+                          <dt>{{ t().debtOverview.cards.adjustment }}</dt>
+                          <dd><app-money [value]="item.adjustment" /></dd>
+                        </div>
+                      </dl>
+                      <h3 class="block__sub">{{ t().debtOverview.cards.plans }}</h3>
+                      @if (item.plans.length === 0) {
+                        <p class="note">{{ t().debtOverview.cards.noPlans }}</p>
+                      } @else {
+                        <ul class="plans">
+                          @for (plan of item.plans; track plan.purchaseId) {
+                            <li class="plan" [attr.data-cy]="'debts-plan-' + plan.purchaseId">
+                              <div class="block__head">
+                                <span>
+                                  {{ plan.description ?? t().debtOverview.cards.noDescription }}
+                                  @if (plan.ongoing) {
+                                    <span class="tag">{{ t().debtOverview.cards.ongoing }}</span>
+                                  }
+                                </span>
+                                <strong><app-money [value]="plan.remaining" /></strong>
+                              </div>
+                              <p class="note" [attr.data-cy]="'debts-plan-text-' + plan.purchaseId">
+                                {{
+                                  remainingText(plan.remainingInstallments, plan.totalInstallments)
+                                }}
+                                ·
+                                {{ installmentText(plan) }} · {{ until(plan.lastDueDate) }}
+                              </p>
+                            </li>
+                          }
+                        </ul>
+                      }
                     </li>
                   }
                 </ul>
-                <p class="note">{{ t().debtOverview.tracked.scheduleNote }}</p>
               }
-            }
-            <div class="actions">
-              <a class="button" routerLink="/planning/commitments" data-cy="debts-tracked-manage">
-                {{ t().debtOverview.tracked.manage }}
-              </a>
-              <a class="button" routerLink="/planning/commitments/new" data-cy="debts-tracked-add">
-                {{ t().debtOverview.tracked.add }}
-              </a>
-            </div>
-          </div>
-        </app-section-container>
+            </app-section-container>
 
-        <app-section-container
-          [heading]="t().debtOverview.schedule.title"
-          [description]="t().debtOverview.schedule.description"
-        >
-          <app-segmented-control
-            [formControl]="monthsControl"
-            fieldId="debts-schedule-months"
-            [options]="monthsChoices()"
-            [label]="t().debtOverview.schedule.horizon"
-          />
-          <app-debt-schedule [schedule]="data.schedule" />
-        </app-section-container>
-
-        <app-section-container [heading]="t().debtOverview.goal.title">
-          <div data-cy="debts-goal">
-            @if (data.payoffGoal; as goal) {
-              <p>
-                @if (goal.baselineSet) {
-                  {{ goalProgress(goal.progress) }}
-                } @else {
-                  {{ t().debtOverview.goal.building }}
-                }
+            <app-section-container [heading]="t().debtOverview.people.title">
+              @if (data.people.items.length === 0) {
+                <p class="note" data-cy="debts-people-empty">{{ t().debtOverview.people.empty }}</p>
+              } @else {
+                <ul class="blocks" data-cy="debts-people">
+                  @for (line of data.people.items; track line.debtId) {
+                    <li class="block" [attr.data-cy]="'debts-line-' + line.debtId">
+                      <div class="block__head">
+                        <a class="link" [routerLink]="['/debts', line.debtId]">{{
+                          line.creditorName
+                        }}</a>
+                        <strong><app-money [value]="line.outstanding" /></strong>
+                      </div>
+                      <p class="note">
+                        @if (line.description) {
+                          {{ line.description }} ·
+                        }
+                        {{ expected(line.expectedDate) }}
+                        @if (line.overdue) {
+                          <span class="tag tag--risk" data-cy="debts-overdue">{{
+                            t().debtOverview.people.overdue
+                          }}</span>
+                        }
+                      </p>
+                    </li>
+                  }
+                </ul>
+              }
+              <p class="note" data-cy="debts-receivables">
+                {{ t().debtOverview.receivables.label }}:
+                <app-money [value]="data.receivablesInfo" />.
+                {{ t().debtOverview.receivables.note }}
               </p>
-              <a class="button" [routerLink]="['/goals', goal.goalId]" data-cy="debts-goal-open">
-                {{ t().debtOverview.goal.open }}
-              </a>
-            } @else {
-              <p class="note">{{ t().debtOverview.goal.none }}</p>
-              <a class="button" routerLink="/goals" data-cy="debts-goal-create">
-                {{ t().debtOverview.goal.create }}
-              </a>
-            }
+            </app-section-container>
+
+            <app-section-container
+              [heading]="t().debtOverview.other.title"
+              [description]="t().debtOverview.other.hint"
+            >
+              @if (data.other.items.length === 0) {
+                <p class="note" data-cy="debts-other-empty">{{ t().debtOverview.other.empty }}</p>
+              } @else {
+                <ul class="blocks" data-cy="debts-other">
+                  @for (line of data.other.items; track line.debtId) {
+                    <li class="block" [attr.data-cy]="'debts-line-' + line.debtId">
+                      <div class="block__head">
+                        <a class="link" [routerLink]="['/debts', line.debtId]">{{
+                          line.creditorName
+                        }}</a>
+                        <strong><app-money [value]="line.outstanding" /></strong>
+                      </div>
+                      <p class="note">
+                        @if (line.description) {
+                          {{ line.description }} ·
+                        }
+                        {{ expected(line.expectedDate) }}
+                        @if (line.overdue) {
+                          <span class="tag tag--risk">{{ t().debtOverview.people.overdue }}</span>
+                        }
+                      </p>
+                    </li>
+                  }
+                </ul>
+              }
+            </app-section-container>
+
+            <app-section-container
+              [heading]="t().debtOverview.tracked.title"
+              [description]="t().debtOverview.tracked.description"
+            >
+              <div data-cy="debts-tracked">
+                @if (data.tracked.items.length === 0) {
+                  <p class="note" data-cy="debts-tracked-empty">
+                    {{ t().debtOverview.tracked.empty }}
+                  </p>
+                } @else {
+                  <ul class="blocks" data-cy="debts-tracked-list">
+                    @for (item of data.tracked.items; track item.id) {
+                      <li class="block" [attr.data-cy]="'debts-tracked-' + item.id">
+                        <div class="block__head">
+                          <a class="link" [routerLink]="['/planning/commitments', item.id]">{{
+                            item.name
+                          }}</a>
+                          <span class="tag">{{ t().debtOverview.tracked.kinds[item.kind] }}</span>
+                        </div>
+                        @if (item.kind === 'TRACKED_THIRD_PARTY') {
+                          <p class="note">
+                            {{ trackedInstallments(item.installmentsPaid, item.installmentsTotal) }}
+                            ·
+                            {{ t().debtOverview.tracked.balanceUnknown }}
+                          </p>
+                          @if (item.paid; as paid) {
+                            <p class="note">
+                              {{ t().debtOverview.tracked.paid }}: <app-money [value]="paid" />
+                            </p>
+                          }
+                        } @else {
+                          <dl class="mini">
+                            @if (item.nominalBalance; as balance) {
+                              <div>
+                                <dt>{{ t().debtOverview.tracked.balance }}</dt>
+                                <dd [attr.data-cy]="'debts-tracked-balance-' + item.id">
+                                  <app-money [value]="balance" />
+                                </dd>
+                              </div>
+                            }
+                            @if (item.directPending; as pending) {
+                              <div>
+                                <dt>{{ t().debtOverview.tracked.directPending }}</dt>
+                                <dd><app-money [value]="pending" /></dd>
+                              </div>
+                            }
+                          </dl>
+                          @if (item.progress; as value) {
+                            <p class="note">{{ trackedProgress(value) }}</p>
+                          }
+                        }
+                        @if (item.nextDueDate; as next) {
+                          <p class="note">{{ trackedNext(next) }}</p>
+                        }
+                      </li>
+                    }
+                  </ul>
+                  @if (data.tracked.scheduleByMonth.length > 0) {
+                    <h3 class="block__sub">{{ t().debtOverview.tracked.scheduleTitle }}</h3>
+                    <ul class="months" data-cy="debts-tracked-schedule">
+                      @for (entry of data.tracked.scheduleByMonth; track entry.competence) {
+                        <li class="block__head">
+                          <span>{{ monthText(entry.competence) }}</span>
+                          <strong><app-money [value]="entry.amount" /></strong>
+                        </li>
+                      }
+                    </ul>
+                    <p class="note">{{ t().debtOverview.tracked.scheduleNote }}</p>
+                  }
+                }
+                <div class="actions">
+                  <a
+                    class="button"
+                    routerLink="/planning/commitments"
+                    data-cy="debts-tracked-manage"
+                  >
+                    {{ t().debtOverview.tracked.manage }}
+                  </a>
+                  <a
+                    class="button"
+                    routerLink="/planning/commitments/new"
+                    data-cy="debts-tracked-add"
+                  >
+                    {{ t().debtOverview.tracked.add }}
+                  </a>
+                </div>
+              </div>
+            </app-section-container>
+
+            <app-section-container
+              [heading]="t().debtOverview.schedule.title"
+              [description]="t().debtOverview.schedule.description"
+            >
+              <app-segmented-control
+                [formControl]="monthsControl"
+                fieldId="debts-schedule-months"
+                [options]="monthsChoices()"
+                [label]="t().debtOverview.schedule.horizon"
+              />
+              <app-debt-schedule [schedule]="data.schedule" />
+            </app-section-container>
+
+            <app-section-container [heading]="t().debtOverview.goal.title">
+              <div data-cy="debts-goal">
+                @if (data.payoffGoal; as goal) {
+                  <p>
+                    @if (goal.baselineSet) {
+                      {{ goalProgress(goal.progress) }}
+                    } @else {
+                      {{ t().debtOverview.goal.building }}
+                    }
+                  </p>
+                  <a
+                    class="button"
+                    [routerLink]="['/goals', goal.goalId]"
+                    data-cy="debts-goal-open"
+                  >
+                    {{ t().debtOverview.goal.open }}
+                  </a>
+                } @else {
+                  <p class="note">{{ t().debtOverview.goal.none }}</p>
+                  <a class="button" routerLink="/goals" data-cy="debts-goal-create">
+                    {{ t().debtOverview.goal.create }}
+                  </a>
+                }
+              </div>
+            </app-section-container>
           </div>
-        </app-section-container>
+        </app-disclosure>
       }
     }
   }

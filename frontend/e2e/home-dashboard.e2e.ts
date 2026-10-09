@@ -12,13 +12,11 @@ import {
   waitForApp,
 } from './support';
 import {
-  CONSUMPTION,
   CATEGORY_FOOD,
+  CONSUMPTION,
   NOTE_ID,
-  TX_TODAY,
   homeResponses,
   incomeExpensesD7,
-  incomeExpensesM3,
   incomeExpensesM12,
   spendingByCategory,
 } from './support/home-fixtures';
@@ -51,10 +49,10 @@ async function openHome(page: Page, responses = homeResponses()): Promise<void> 
   await expect(page.locator('[data-cy="home-overview-chart"]')).toBeVisible();
 }
 
-test.describe('Início: valores = JSON do contrato (desktop 1280)', () => {
+test.describe('Início sucinto: valores = JSON do contrato (desktop 1280)', () => {
   test.use({ viewport: VIEWPORTS.desktop });
 
-  test('os 4 KPIs, o gasto = total das categorias e as contas mostram o que o JSON diz', async ({
+  test('saldo, gasto, receita, resultado e poupança do mês mostram o que o JSON diz', async ({
     page,
   }) => {
     await openHome(page);
@@ -64,32 +62,59 @@ test.describe('Início: valores = JSON do contrato (desktop 1280)', () => {
       '+8% vs fim do mês passado',
     );
     await expect(page.locator('[data-cy="kpi-spending-value"]')).toHaveText(fmt(CONSUMPTION));
-    await expect(page.locator('[data-cy="kpi-spending-change"]')).toHaveText(
-      '4,2% menor que o mês anterior',
-    );
     await expect(page.locator('[data-cy="kpi-income-value"]')).toHaveText(fmt('12000.00'));
+    // O resultado é o `month.net` do dashboard: o front não faz receita menos gasto.
+    await expect(page.locator('[data-cy="kpi-result-value"]')).toHaveText(fmt('10379.50'));
     await expect(page.locator('[data-cy="kpi-savings-value"]')).toHaveText('41,2%');
-    await expect(page.locator('[data-cy="kpi-savings-change"]')).toHaveText(
-      '+3,8 p.p. vs mês anterior',
-    );
-    // O mesmo número em dois cartões: o gasto do KPI e o total de "Para onde vai o dinheiro".
-    expect(norm(await page.locator('[data-cy="home-categories-total"]').textContent())).toContain(
-      fmt(spendingByCategory.total.amount),
-    );
-    expect(spendingByCategory.total.amount).toBe(CONSUMPTION);
-
-    await expect(
-      page.locator('[data-cy="home-account-balance-22222222-2222-4222-8222-222222222222"]'),
-    ).toHaveText(fmt('12345.67'));
-    await expect(
-      page.locator('[data-cy="home-card-invoice-44444444-4444-4444-8444-444444444444"]'),
-    ).toHaveText(fmt('1283.00'));
   });
 
-  test('as categorias mostram valor e % do backend e levam às movimentações filtradas', async ({
+  test('os blocos que saíram do Início continuam acessíveis nas telas deles, com os mesmos números', async ({
     page,
   }) => {
     await openHome(page);
+    for (const id of [
+      'home-accounts-section',
+      'home-categories-total',
+      'home-recent',
+      'home-insight',
+      'home-legacy',
+      'home-quick-capture',
+      'home-budget',
+    ]) {
+      await expect(page.locator(`[data-cy="${id}"]`), id).toHaveCount(0);
+    }
+
+    // Contas: o saldo de cada conta e a fatura de cada cartão.
+    await page.goto('/accounts');
+    await expect(
+      page.locator('[data-cy="page-content"]').getByText(fmt('12345.67')).first(),
+    ).toBeVisible();
+
+    // Panorama (Planejamento): o que o Início tinha em "Compromissos e patrimônio", com os mesmos data-cy.
+    await page.goto('/planning/overview');
+    const overview = page.locator('[data-cy="home-legacy"]');
+    for (const id of ['home-available', 'home-commitments']) {
+      await expect(overview.locator(`[data-cy="${id}"]`), id).toBeVisible();
+    }
+    // Mês, patrimônio e cartões moram em "Mais" (recolhido por padrão).
+    await page.locator('[data-cy="overview-more-toggle"]').click();
+    await expect(overview.locator('[data-cy="home-month-income"]')).toBeVisible();
+    await expect(page.locator('[data-cy="planning-tab-overview"]')).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+  });
+
+  test('o gasto por categoria (que saiu do Início) está no Resumo do mês, com valor e % do backend e link filtrado', async ({
+    page,
+  }) => {
+    await openHome(page);
+    await page.goto('/planning/summary/2026-10');
+    await expect(page.locator('[data-cy="home-categories-total"]')).toContainText(
+      fmt(spendingByCategory.total.amount),
+    );
+    // O mesmo número do consumo do Início: uma fonte só (o servidor).
+    expect(spendingByCategory.total.amount).toBe(CONSUMPTION);
 
     const food = page.locator(`[data-cy="home-categories-item-${CATEGORY_FOOD}"]`);
     expect(norm(await food.textContent())).toContain(fmt('820.00'));
@@ -99,13 +124,12 @@ test.describe('Início: valores = JSON do contrato (desktop 1280)', () => {
     ).toContain('Outras (3 categorias)');
 
     await page.locator(`[data-cy="home-categories-link-${CATEGORY_FOOD}"]`).click();
-    // A lista tira da URL o que é o padrão (a competência corrente) e mantém a visão e a categoria.
     await expect(page).toHaveURL(
       new RegExp(`/transactions\\?view=entries&categoryId=${CATEGORY_FOOD}`),
     );
   });
 
-  test('o gráfico de 30 dias, 7 dias, 3 e 12 meses: a tabela equivalente repete o JSON, inclusive o negativo', async ({
+  test('o gráfico oferece só 7 dias, 30 dias e 12 meses e a tabela equivalente repete o JSON, inclusive o negativo', async ({
     page,
   }) => {
     await openHome(page);
@@ -115,16 +139,11 @@ test.describe('Início: valores = JSON do contrato (desktop 1280)', () => {
       'aria-checked',
       'true',
     );
-    await expect(page.locator('[data-cy="home-overview-basis"]')).toHaveText('Por data');
+    await expect(page.locator('[data-cy="home-overview-period-M3"]')).toHaveCount(0);
 
     await page.locator('[data-cy="home-overview-period-D7"]').click();
     await expect(rows).toHaveCount(incomeExpensesD7.points.length);
-    await expect(page.locator('[data-cy="home-overview-income"]')).toHaveText(fmt('3000.00'));
-    await expect(page.locator('[data-cy="home-overview-expenses"]')).toHaveText(fmt('493.40'));
-    // "Resultado do período" é o `net` do backend, nunca "saldo".
-    await expect(page.locator('[data-cy="home-overview-net"]')).toHaveText(fmt('2506.60'));
-    await expect(page.getByText('Resultado do período', { exact: true })).toBeVisible();
-    // O dia de reembolso (despesa negativa) vem com o sinal e abaixo do zero.
+    // O dia de reembolso (despesa negativa) vem com o sinal.
     const refund = incomeExpensesD7.points[5]!;
     expect(norm(await rows.nth(5).textContent())).toContain(fmt(refund.expenses.amount));
     expect(fmt(refund.expenses.amount)).toBe('−R$ 50,00');
@@ -134,14 +153,8 @@ test.describe('Início: valores = JSON do contrato (desktop 1280)', () => {
       expect(text).toContain(fmt(point.expenses.amount));
     }
 
-    await page.locator('[data-cy="home-overview-period-M3"]').click();
-    await expect(rows).toHaveCount(incomeExpensesM3.points.length);
-    await expect(page.locator('[data-cy="home-overview-net"]')).toHaveText(fmt('6280.00'));
-
     await page.locator('[data-cy="home-overview-period-M12"]').click();
     await expect(rows).toHaveCount(incomeExpensesM12.points.length);
-    await expect(page.locator('[data-cy="home-overview-basis"]')).toHaveText('Por competência');
-    await expect(page.locator('[data-cy="home-overview-net"]')).toHaveText(fmt('23588.50'));
   });
 
   test('troca de período pelo teclado (setas do controle segmentado)', async ({ page }) => {
@@ -150,120 +163,51 @@ test.describe('Início: valores = JSON do contrato (desktop 1280)', () => {
     await page.locator('[data-cy="home-overview-period-D30"]').focus();
     await page.keyboard.press('ArrowRight');
 
-    await expect(page.locator('[data-cy="home-overview-period-M3"]')).toHaveAttribute(
+    await expect(page.locator('[data-cy="home-overview-period-M12"]')).toHaveAttribute(
       'aria-checked',
       'true',
     );
-    await expect(page.locator('[data-cy="home-overview-net"]')).toHaveText(fmt('6280.00'));
   });
 
-  test('recentes: "Hoje" e "Ontem" pelo asOf do backend, valor com sinal e abre a movimentação', async ({
+  test('"Ver movimentações" leva à lista de movimentações', async ({ page }) => {
+    await openHome(page);
+
+    await page.locator('[data-cy="home-overview-transactions"]').click();
+
+    await expect(page).toHaveURL(/\/transactions/);
+  });
+
+  test('um único botão primário: "+ Registrar" abre o Novo registro e o menu abre o "Emprestei"', async ({
     page,
   }) => {
     await openHome(page);
 
-    const rows = page.locator('[data-cy="home-recent"] [data-cy^="transaction-item-"]');
-    await expect(rows).toHaveCount(3);
-    expect(norm(await rows.nth(0).textContent())).toContain('Alimentação · Nubank');
-    expect(norm(await rows.nth(0).textContent())).toContain(`−${fmt('87.30')}`);
-    expect(norm(await rows.nth(1).textContent())).toContain(`+${fmt('3000.00')}`);
-    // Agrupadas por dia: um título por dia ("Hoje", "Ontem" e a data).
-    const days = page.locator('[data-cy^="home-recent-day-"] h3');
-    await expect(days).toHaveText(['Hoje', 'Ontem', '4 de outubro de 2026']);
+    await expect(page.locator('main .button--primary, header .button--primary')).toHaveCount(1);
+    await expect(page.locator('[data-cy="home-register-open"]')).toHaveClass(/button--primary/);
 
-    await rows.nth(0).click();
-    await expect(page).toHaveURL(new RegExp(`/transactions/${TX_TODAY}$`));
+    await page.locator('[data-cy="home-register-menu"]').click();
+    await page.locator('[data-cy="home-register-menu-item-loan"]').click();
+    await expect(page).toHaveURL(/mode=loan/);
+    await expect(page.locator('[role="dialog"]')).toBeVisible();
+    await page.keyboard.press('Escape');
+
+    await page.locator('[data-cy="home-register-open"]').click();
+    await expect(page.locator('[role="dialog"]')).toBeVisible();
   });
 
-  test('"Perguntar à IA" e o orçamento seguem desabilitados e sem efeito', async ({ page }) => {
-    await openHome(page);
-    const url = page.url();
-
-    const ask = page.locator('[data-cy="home-insight-ask-ai"]');
-    await expect(ask).toHaveAttribute('aria-disabled', 'true');
-    await ask.click({ force: true });
-    // Sem IA ligada o cartão de captura não oferece o atalho "Perguntar à IA".
-    await expect(page.locator('[data-cy="capture-ask-ai"]')).toHaveCount(0);
-    const budget = page.locator('[data-cy="home-budget"]');
-    await expect(budget).toHaveAttribute('aria-disabled', 'true');
-    await expect(budget).toContainText('Orçamentos por categoria chegam em breve.');
-    expect(norm(await budget.textContent())).not.toMatch(/\d/);
-    await budget.click({ force: true });
-
-    expect(page.url()).toBe(url);
-    await expect(page.locator('[role="dialog"]')).toHaveCount(0);
-  });
-
-  test('o orçamento leva à página /budgets "em breve" e ela está na sidebar', async ({ page }) => {
+  test('o orçamento está na página /budgets "em breve" e ela está na sidebar', async ({ page }) => {
     await openHome(page);
 
-    await page.locator('[data-cy="home-budget-link"]').click();
+    await page.goto('/budgets');
 
-    await expect(page).toHaveURL(/\/budgets$/);
     await expect(page.locator('[data-cy="page-title"]')).toHaveText('Orçamentos');
     await expect(page.locator('[data-cy="empty-state-title"]')).toHaveText(
       'Orçamentos chegam em breve.',
     );
-    // Orçamentos mora no popover "Mais": o botão fica ativo na rota.
     await expect(page.locator('[data-cy="sidebar-more"]')).toHaveClass(/is-active/);
   });
 
-  test('um único botão primário na tela: o Salvar do Quick Capture', async ({ page }) => {
-    await openHome(page);
-
-    await expect(page.locator('main .button--primary, header .button--primary')).toHaveCount(1);
-    await expect(page.locator('[data-cy="quick-capture-save"]')).toHaveClass(/button--primary/);
-    // "Mais opções" é só um link comum.
-    await expect(page.locator('[data-cy="home-quick-capture-link"]')).not.toHaveClass(
-      /button--primary/,
-    );
-    // Os atalhos do cartão são pílulas, não botões primários.
-    await expect(page.locator('[data-cy="capture-type-expense"]')).not.toHaveClass(
-      /button--primary/,
-    );
-  });
-
-  test('o que já existia continua em "Compromissos e patrimônio" com os mesmos data-cy', async ({
-    page,
-  }) => {
-    await openHome(page);
-
-    const legacy = page.locator('[data-cy="home-legacy"]');
-    for (const id of [
-      'home-available',
-      'home-commitments',
-      'home-action-goal',
-      'home-action-summary',
-    ]) {
-      await expect(legacy.locator(`[data-cy="${id}"]`)).toBeVisible();
-    }
-    await expect(page.locator('[data-cy="home-action-quick-add"]')).not.toHaveClass(
-      /button--primary/,
-    );
-  });
-
-  test('cartão clicável sobe 2 px e ganha sombra no hover (.lift), sem transform com movimento reduzido', async ({
-    page,
-  }) => {
-    await page.emulateMedia({ reducedMotion: 'no-preference' });
-    await openHome(page);
-    const tile = page.locator('[data-cy="home-account-22222222-2222-4222-8222-222222222222"]');
-    await tile.scrollIntoViewIfNeeded();
-    const before = await tile.evaluate((el) => getComputedStyle(el).boxShadow);
-
-    await tile.hover();
-    await expect
-      .poll(async () => tile.evaluate((el) => getComputedStyle(el).transform))
-      .toBe('matrix(1, 0, 0, 1, 0, -2)');
-    expect(await tile.evaluate((el) => getComputedStyle(el).boxShadow)).not.toBe(before);
-
-    await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.mouse.move(0, 0);
-    await tile.hover();
-    expect(await tile.evaluate((el) => getComputedStyle(el).transform)).toBe('none');
-  });
-
-  test('o tema escuro e o claro não têm violações de acessibilidade no Início completo', async ({
+  test('o tema escuro e o claro não têm violações de acessibilidade no Início', async ({
     page,
   }) => {
     for (const theme of ['light', 'dark'] as const) {
@@ -282,24 +226,12 @@ test.describe('Início: valores = JSON do contrato (desktop 1280)', () => {
 test.describe('Início: mês em andamento (R5)', () => {
   test.use({ viewport: VIEWPORTS.desktop });
 
-  test('com partial = true, os chips ficam neutros e dizem "mês em andamento vs mês anterior inteiro"', async ({
-    page,
-  }) => {
+  test('com partial = true, os indicadores dizem que o mês está em andamento', async ({ page }) => {
     await openHome(page, homeResponses({ partial: true }));
 
-    const spending = page.locator('[data-cy="kpi-spending-change"]');
-    await expect(spending).toHaveText('−80% · mês em andamento vs mês anterior inteiro');
-    await expect(spending).toHaveAttribute('data-tone', 'neutral');
-    await expect(page.locator('[data-cy="kpi-income-change"]')).toHaveAttribute(
-      'data-tone',
-      'neutral',
+    await expect(page.locator('[data-cy="kpi-spending-caption"]')).toHaveText(
+      'Este mês, em andamento',
     );
-    await expect(page.locator('[data-cy="kpi-savings-change"]')).toHaveText(
-      '−3,3 p.p. · mês em andamento vs mês anterior inteiro',
-    );
-    const insight = norm(await page.locator('[data-cy="home-insight-text"]').textContent());
-    // O insight vem do backend (`GET /v1/insights`): o front só traduz `key` + `params`.
-    expect(insight).toContain('Alimentação subiu 25% em relação ao mês passado');
   });
 });
 
@@ -377,7 +309,7 @@ test.describe('busca global (T209)', () => {
 test.describe('Início em 375 px (mobile)', () => {
   test.use({ viewport: VIEWPORTS.mobile });
 
-  test('sem rolagem horizontal, uma coluna na ordem saldo, gráfico, KPIs do mês, captura e recentes', async ({
+  test('sem rolagem horizontal e uma coluna na ordem indicadores, compromissos, dívida, gráfico e meta', async ({
     page,
   }) => {
     await openHome(page);
@@ -385,21 +317,17 @@ test.describe('Início em 375 px (mobile)', () => {
 
     const tops = await page.evaluate(() =>
       [
-        'home-kpis-balance',
-        'home-overview-chart',
         'home-kpis',
-        'home-quick-capture',
-        'home-recent',
-        'home-accounts-section',
-        'home-categories',
-        'home-budget',
-        'home-legacy',
+        'home-upcoming-brief',
+        'home-debts-brief',
+        'home-overview-chart',
+        'home-featured-goal',
       ].map((id) => document.querySelector(`[data-cy="${id}"]`)?.getBoundingClientRect().top ?? -1),
     );
     for (let i = 1; i < tops.length; i++)
       expect(tops[i]!, `bloco ${i}`).toBeGreaterThan(tops[i - 1]!);
 
-    // Gasto e receita do mês dividem a linha; saldo e poupança ficam empilhados.
+    // Gasto e receita do mês dividem a linha.
     const spending = await page.locator('[data-cy="kpi-spending"]').boundingBox();
     const income = await page.locator('[data-cy="kpi-income"]').boundingBox();
     expect(Math.abs(spending!.y - income!.y)).toBeLessThan(2);
@@ -423,20 +351,6 @@ test.describe('Início em 375 px (mobile)', () => {
 
     await expect(page.locator('[role="dialog"]')).toHaveCount(0);
     await expect(open).toBeFocused();
-    await expectNoHorizontalScroll(page);
-  });
-
-  test('o strip de contas rola na horizontal com snap e cada cartão é focável', async ({
-    page,
-  }) => {
-    await openHome(page);
-
-    const strip = page.locator('[data-cy="home-accounts"]');
-    expect(await strip.evaluate((el) => getComputedStyle(el).scrollSnapType)).toContain('x');
-    await page.locator('[data-cy="home-account-22222222-2222-4222-8222-222222222222"]').focus();
-    await expect(
-      page.locator('[data-cy="home-account-22222222-2222-4222-8222-222222222222"]'),
-    ).toBeFocused();
     await expectNoHorizontalScroll(page);
   });
 

@@ -92,8 +92,8 @@ test('jornada: criar a meta → reservar 8.500,00 → ver reservado e disponíve
   expect(transactions.body.items).toHaveLength(0);
 
   // 5. O Início mostra reservado e disponível exatamente como a API.
-  await open(page, '/');
-  await expect(cy(page, 'home-dashboard')).toBeVisible();
+  await open(page, '/planning/overview');
+  await expect(cy(page, 'home-legacy')).toBeVisible();
   const summary = await net.body('GET', '/v1/dashboard/summary');
   expect(summary.balances.reserved.amount).toBe('8500.00');
   expect(await cyText(page, 'home-reserved')).toBe(fmt(summary.balances.reserved.amount));
@@ -220,7 +220,7 @@ test('reserva acima do saldo: aviso "reserva descoberta" na meta e na conta, sem
 
   await open(page, '/accounts');
   await expect(cy(page, `account-uncovered-${nubank.id}`)).toBeVisible();
-  await open(page, '/');
+  await open(page, '/planning/overview');
   const summary = await net.body('GET', '/v1/dashboard/summary');
   expect(summary.balances.reserved.amount).toBe('25000.00');
   expect(await cyText(page, 'home-reserved')).toBe(fmt('25000.00'));
@@ -288,13 +288,13 @@ test('arquivar a meta tira o valor do reservado; desarquivar o devolve', async (
   await expect(cy(page, 'goal-archived-note')).toBeVisible();
   const archived = await net.body('POST', `/v1/goals/${goal.id}/archive`);
   expect(archived.status).toBe('ARCHIVED');
-  await open(page, '/');
+  await open(page, '/planning/overview');
   expect(await cyText(page, 'home-reserved')).toBe(fmt('0.00'));
 
   await open(page, `/goals/${goal.id}`);
   await cy(page, 'goal-unarchive').click();
   await expect(cy(page, 'goal-reserve')).toBeVisible();
-  await open(page, '/');
+  await open(page, '/planning/overview');
   expect(await cyText(page, 'home-reserved')).toBe(fmt('1000.00'));
 });
 
@@ -331,8 +331,8 @@ test('resumo × Início × lista concordam no mês; o maior gasto abre a movimen
   });
   await signIn(page);
 
-  await open(page, '/');
-  await expect(cy(page, 'home-dashboard')).toBeVisible();
+  await open(page, '/planning/overview');
+  await expect(cy(page, 'home-legacy')).toBeVisible();
   const home = await net.body('GET', '/v1/dashboard/summary');
   const homeIncome = await cyText(page, 'home-month-income');
   const homeNet = await cyText(page, 'home-month-net');
@@ -507,7 +507,7 @@ test('movimentação com data futura aparece uma vez em "A seguir" (SCHEDULED_TR
     method: 'PIX',
   });
   await signIn(page);
-  await open(page, '/');
+  await open(page, '/planning/overview');
 
   const upcoming = await net.body('GET', '/v1/dashboard/upcoming');
   const scheduled = upcoming.items.filter((i: any) => i.kind === 'SCHEDULED_TRANSACTION');

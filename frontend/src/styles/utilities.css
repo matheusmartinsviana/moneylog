@@ -606,3 +606,28 @@ html[data-glass] .glass-lens {
     min-height: 2.75rem;
   }
 }
+
+/*
+ * Página "sucinta" (`app-page-layout fit`): o conteúdo vira uma pilha que enche a altura da janela. O que vem antes
+ * (abas, filtros, resumo) fica fixo e a lista principal (`.fit-scroll`) rola DENTRO do próprio painel, com a barra
+ * fina do app; a página não rola (src/styles/README.md). `position: relative` contém os elementos só para leitores
+ * de tela de dentro, que senão aumentariam a altura da página.
+ */
+.fit-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  height: 100%;
+  min-height: 0;
+}
+
+.fit-stack > .fit-scroll {
+  position: relative;
+  display: grid;
+  flex: 1 1 auto;
+  align-content: start;
+  gap: var(--section-gap);
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}

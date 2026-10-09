@@ -25,6 +25,14 @@ import { I18nService } from '~/app/common/i18n/i18n.service';
     <nav class="tabs" [attr.aria-label]="t().recurrences.tabsLabel" data-cy="planning-tabs">
       <a
         class="tab"
+        routerLink="/planning/overview"
+        data-cy="planning-tab-overview"
+        [attr.aria-current]="current() === 'overview' ? 'page' : null"
+      >
+        {{ t().recurrences.tabs.overview }}
+      </a>
+      <a
+        class="tab"
         routerLink="/planning/recurrences"
         data-cy="planning-tab-recurrences"
         [attr.aria-current]="current() === 'recurrences' ? 'page' : null"
@@ -85,6 +93,13 @@ import { I18nService } from '~/app/common/i18n/i18n.service';
 export class PlanningNavComponent {
   protected readonly t = inject(I18nService).t;
   readonly current = input.required<
-    'recurrences' | 'pending' | 'summary' | 'projections' | 'debts' | 'thirdParties' | 'commitments'
+    | 'overview'
+    | 'recurrences'
+    | 'pending'
+    | 'summary'
+    | 'projections'
+    | 'debts'
+    | 'thirdParties'
+    | 'commitments'
   >();
 }

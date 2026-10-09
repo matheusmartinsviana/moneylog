@@ -46,6 +46,26 @@ describe('NotificationsPage (T135)', () => {
     expect(screen.getByTestId('notification-unread')).toHaveTextContent('Não lida');
   });
 
+  it('Dado a mensagem do dia (saiu do Início sucinto), então aparece no topo da central com os números do backend', async () => {
+    const gateway = new NotificationsGatewayStub();
+    gateway.daily = {
+      key: 'notification.daily.base',
+      params: { available: '22656.40', committed7d: '1800.00' },
+      generatedAt: '2026-10-10T12:00:00Z',
+    };
+    await setup(gateway);
+
+    const message = screen.getByTestId('home-daily-message');
+    expect(message.textContent).toMatch(/22\.656,40/);
+    expect(message.textContent).toMatch(/1\.800,00/);
+  });
+
+  it('Dado nenhuma mensagem do dia, então nada é mostrado (nem erro)', async () => {
+    await setup();
+
+    expect(screen.queryByTestId('home-daily-message')).not.toBeInTheDocument();
+  });
+
   it('Dado uma chave desconhecida, então mostra o texto neutro, nunca a chave', async () => {
     const gateway = new NotificationsGatewayStub();
     gateway.notifications = [aNotification({ titleKey: 'notification.futura.x' })];

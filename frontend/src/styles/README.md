@@ -35,6 +35,28 @@ manual; `[data-theme="light|dark"]` (gravado pelo `ThemeService`) vale contra o 
   existem em `@media (prefers-reduced-motion: no-preference)`.
 - **Casca:** `--window-max-width` 90rem. A janela flutuante só existe a partir de 1024 px e a página rola (ADR-011).
 
+## Tela sucinta (ADR-011, 2026-10-15)
+
+Toda tela tem **um propósito principal**: acima da dobra ficam só o título, de 1 a 3 números ou ações-chave e a lista
+principal; o secundário vai para "Mais" (`app-disclosure` fechado, chave `brief.more`), abas ou páginas internas, os
+filtros ficam recolhidos e os textos de ajuda são curtos. Sem blocos redundantes e sem tirar funcionalidade: o que sai de
+uma tela tem de continuar acessível em outra.
+
+- **Cabe na tela.** `<app-page-layout fit>` faz a página ocupar exatamente a altura da janela (`100dvh` por `flex`/`grid`
+  com `min-height: 0`, **sem altura fixa em px**, com a safe-area do iPhone). A cadeia é `body` > `app-root` > `app-shell` >
+  janela > página; `body:has([data-fit-page])` fixa `height: 100dvh` e a faixa do modo demo entra no fluxo, então nada soma
+  `100dvh` mais uma faixa acima. O Início é a página mais estrita: **não rola** em 1280×720, 1440×800 e 390×844.
+- **Lista longa rola dentro do painel.** Em páginas com muitas linhas (Movimentações, Notas, Pendentes, Recorrências,
+  Notificações, Vault...) use `.fit-stack` (pilha que enche a altura) com `.fit-scroll` na lista: o que vem antes (abas,
+  filtros, resumo) fica fixo e a lista rola com a barra fina do app. `position: relative` nesses contêineres contém os
+  elementos só para leitores de tela (`.visually-hidden` é `absolute` e, sem isso, aumenta a altura da página).
+- **Densidade.** `--page-pad-top`, `--page-pad-bottom` e `--page-gap` são curtos; `SectionContainer` tem `dense`
+  (menos respiro), `fill` (ocupa a altura do pai) e `scroll` (corpo rola dentro do painel).
+- **Teste.** `e2e/fit-screen.e2e.ts` abre o Início em 1280×720, 1440×800 e 390×844, nos temas claro e escuro, em
+  português, nos projetos `mock`, `prod` e `demo`, e falha se `document.documentElement.scrollHeight > innerHeight`, se a
+  página rola na horizontal, se algum elemento do conteúdo tem corte ou rolagem horizontal ou se o painel do Início
+  precisou de rolagem própria. Tela nova sucinta entra nesse teste.
+
 Regras verificadas no `npm run lint`:
 
 - `scripts/check-styles.mjs`: nenhuma cor literal (hex/rgb/hsl) fora de `tokens.css` e nenhum gradiente literal fora dele (gradientes só como token `--gradient-*`, usados por `var()`),

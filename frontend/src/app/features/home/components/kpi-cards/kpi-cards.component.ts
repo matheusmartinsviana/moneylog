@@ -38,9 +38,116 @@ interface Chip {
       role="group"
       [attr.aria-label]="t().dashboard.kpis.label"
       [attr.data-part]="part()"
-      [attr.data-cy]="part() === 'balance' ? 'home-kpis-balance' : 'home-kpis'"
+      [class.is-compact]="part() === 'compact'"
+      data-cy="home-kpis"
     >
-      @if (part() !== 'flow') {
+      @if (part() === 'compact') {
+        <!-- Início sucinto: saldo (com a variação do servidor), gasto, receita e resultado do mês, e a taxa de poupança num medidor pequeno. -->
+        <section
+          class="kpi kpi--hero kpi--compact-balance glass glass--halo"
+          aria-labelledby="kpi-in-accounts-title"
+          data-cy="kpi-in-accounts"
+        >
+          <h2 class="kpi__label" id="kpi-in-accounts-title">
+            {{ t().dashboard.kpis.inAccounts.title }}
+          </h2>
+          <p
+            class="kpi__value kpi__value--hero"
+            [class.is-negative]="negative(summary().balances.inAccounts.amount)"
+            data-cy="kpi-in-accounts-value"
+          >
+            <app-money [value]="summary().balances.inAccounts" />
+          </p>
+          @if (inAccountsChip(); as chip) {
+            <p class="delta" [attr.data-tone]="chip.tone" data-cy="kpi-in-accounts-change">
+              {{ chip.text }}
+            </p>
+          }
+        </section>
+
+        <section
+          class="kpi kpi--compact"
+          aria-labelledby="kpi-spending-title"
+          data-cy="kpi-spending"
+        >
+          <h2 class="kpi__label" id="kpi-spending-title">
+            {{ t().dashboard.kpis.spending.title }}
+          </h2>
+          <p class="kpi__value" data-cy="kpi-spending-value">
+            <app-money [value]="summary().month.consumption" />
+          </p>
+          <p class="kpi__caption" data-cy="kpi-spending-caption">{{ caption() }}</p>
+        </section>
+
+        <section class="kpi kpi--compact" aria-labelledby="kpi-income-title" data-cy="kpi-income">
+          <h2 class="kpi__label" id="kpi-income-title">{{ t().dashboard.kpis.income.title }}</h2>
+          <p class="kpi__value" data-cy="kpi-income-value">
+            <app-money [value]="summary().month.income" />
+          </p>
+          <p class="kpi__caption">{{ caption() }}</p>
+        </section>
+
+        <section class="kpi kpi--compact" aria-labelledby="kpi-result-title" data-cy="kpi-result">
+          <h2 class="kpi__label" id="kpi-result-title">{{ t().brief.result }}</h2>
+          <p
+            class="kpi__value"
+            [class.is-negative]="negative(summary().month.net.amount)"
+            data-cy="kpi-result-value"
+          >
+            <app-money [value]="summary().month.net" />
+          </p>
+          <p class="kpi__caption">{{ t().brief.resultCaption }}</p>
+        </section>
+
+        <section
+          class="kpi kpi--gauge kpi--compact-gauge glass glass--halo"
+          aria-labelledby="kpi-savings-title"
+          data-cy="kpi-savings"
+        >
+          <h2 class="kpi__label" id="kpi-savings-title">
+            <span class="kpi__label-long">{{ t().dashboard.kpis.savings.title }}</span>
+            <span class="kpi__label-short" aria-hidden="true">{{ t().brief.savings }}</span>
+          </h2>
+          <app-gauge [share]="ringShare()" data-cy="kpi-savings-ring">
+            @switch (monthlyStatus()) {
+              @case ('ready') {
+                @if (monthly(); as m) {
+                  <p
+                    class="kpi__value kpi__value--gauge"
+                    [class.is-negative]="m.savingsRate !== null && negative(m.savingsRate)"
+                    data-cy="kpi-savings-value"
+                  >
+                    {{ savingsText() }}
+                  </p>
+                }
+              }
+              @case ('error') {
+                <p class="kpi__value kpi__value--gauge" data-cy="kpi-savings-value">—</p>
+              }
+              @default {
+                <p class="kpi__skeleton sk" aria-hidden="true"></p>
+              }
+            }
+          </app-gauge>
+          @switch (monthlyStatus()) {
+            @case ('error') {
+              <button type="button" class="kpi__retry" data-cy="kpi-retry" (click)="retry.emit()">
+                {{ t().dashboard.kpis.retry }}
+              </button>
+            }
+            @case ('loading') {
+              <p class="visually-hidden" role="status">{{ t().dashboard.kpis.loading }}</p>
+            }
+            @default {
+              @if (monthly()?.savingsRate === null) {
+                <p class="kpi__caption" data-cy="kpi-savings-empty">
+                  {{ t().dashboard.kpis.savings.noIncome }}
+                </p>
+              }
+            }
+          }
+        </section>
+      } @else {
         <section
           class="kpi kpi--hero glass glass--halo"
           aria-labelledby="kpi-in-accounts-title"
@@ -62,9 +169,7 @@ interface Chip {
             </p>
           }
         </section>
-      }
 
-      @if (part() !== 'balance') {
         <section class="kpi" aria-labelledby="kpi-spending-title" data-cy="kpi-spending">
           <h3 class="kpi__label" id="kpi-spending-title">
             {{ t().dashboard.kpis.spending.title }}
@@ -96,9 +201,7 @@ interface Chip {
             <p class="delta delta--skeleton sk" aria-hidden="true"></p>
           }
         </section>
-      }
 
-      @if (part() !== 'flow') {
         <section
           class="kpi kpi--gauge glass glass--halo"
           aria-labelledby="kpi-savings-title"
@@ -174,10 +277,10 @@ export class KpiCardsComponent {
   readonly monthlyStatus = input<KpiMonthlyStatus>('loading');
   readonly retry = output<void>();
   /**
-   * Quais KPIs desenhar: `balance` (saldo em contas e taxa de poupança, coluna lateral do Início), `flow` (gasto e
-   * receita do mês, sob o gráfico) ou `all` (os quatro, como antes).
+   * Quais KPIs desenhar: `compact` (Início sucinto: saldo, gasto, receita, resultado do mês que o servidor devolve e
+   * o medidor pequeno da poupança) ou `all` (os quatro, com as variações de cada um).
    */
-  readonly part = input<'all' | 'balance' | 'flow'>('all');
+  readonly part = input<'all' | 'compact'>('all');
 
   private readonly locale = computed(() => HTML_LANG[this.i18n.language()]);
 

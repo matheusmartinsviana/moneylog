@@ -36,7 +36,7 @@ test.describe('WebKit: rotas principais', () => {
 });
 
 test.describe('WebKit: Início com dados (fatia C1)', () => {
-  test('KPIs, contas, gráfico (chunk @defer) e recentes aparecem, sem rolagem horizontal', async ({
+  test('KPIs, gráfico (chunk @defer), compromissos e botão Registrar aparecem, sem rolagem horizontal', async ({
     page,
   }) => {
     await seedPreferences(page, { language: 'pt' });
@@ -46,11 +46,11 @@ test.describe('WebKit: Início com dados (fatia C1)', () => {
 
     await expect(page.locator('[data-cy="kpi-spending-value"]')).toContainText('1.620,50');
     await expect(page.locator('[data-cy="home-overview-chart"]')).toBeVisible();
-    await expect(page.locator('[data-cy="home-accounts"]')).toBeVisible();
-    await expect(page.locator('[data-cy="home-recent"]')).toBeVisible();
+    await expect(page.locator('[data-cy="home-upcoming-brief"]')).toBeVisible();
+    await expect(page.locator('[data-cy="home-register-open"]')).toBeVisible();
     await expectNoHorizontalScroll(page);
-    await page.locator('[data-cy="home-overview-period-M3"]').click();
-    await expect(page.locator('[data-cy="home-overview-net"]')).toContainText('6.280,00');
+    await page.locator('[data-cy="home-overview-period-M12"]').click();
+    await expect(page.locator('[data-cy="home-overview-chart"]')).toBeVisible();
   });
 
   test('a busca global abre, mostra os grupos e abre uma nota com teclado', async ({

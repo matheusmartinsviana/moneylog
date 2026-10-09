@@ -75,8 +75,8 @@ test('criar conta, lançar despesa Pix e ver o mesmo número no Início, na list
   expect(created.method).toBe('PIX');
 
   // 4. Início: contas 900, disponível 900, consumo 100, caixa saída 100, líquido -100.
-  await open(page, '/');
-  await expect(cy(page, 'home-dashboard')).toBeVisible();
+  await open(page, '/planning/overview');
+  await expect(cy(page, 'home-legacy')).toBeVisible();
   const s = await lastSummary(net);
   expect(s.balances.inAccounts.amount).toBe('900.00');
   expect(s.balances.available.amount).toBe('900.00');
@@ -170,8 +170,8 @@ test('transferência, receita e estorno: os números continuam batendo em todas 
   await expect(cy(page, 'toast-info')).toBeVisible();
 
   // Início: em contas 3.900; consumo 100; fluxo entradas 3.000 / saídas 100; líquido 2.900.
-  await open(page, '/');
-  await expect(cy(page, 'home-dashboard')).toBeVisible();
+  await open(page, '/planning/overview');
+  await expect(cy(page, 'home-legacy')).toBeVisible();
   const s = await lastSummary(net);
   expect(s.balances.inAccounts.amount).toBe('3900.00');
   expect(s.month.consumption.amount).toBe('100.00');
@@ -227,7 +227,7 @@ test('transferência, receita e estorno: os números continuam batendo em todas 
   await expect(cy(page, 'detail-voided')).toBeVisible();
   await evidence(page, 'e2e-08-detalhe-estornada');
 
-  await open(page, '/');
+  await open(page, '/planning/overview');
   expect(await cyText(page, 'home-month-consumption')).toBe(fmt('0.00'));
   expect(await cyText(page, 'home-month-cash-out')).toBe(fmt('0.00'));
   expect(await cyText(page, 'home-in-accounts')).toBe(fmt('4000.00'));

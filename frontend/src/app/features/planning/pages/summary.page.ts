@@ -11,6 +11,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
+import { DisclosureComponent } from '~/app/common/components/disclosure/disclosure.component';
 import {
   EmptyStateAction,
   EmptyStateComponent,
@@ -24,10 +25,12 @@ import { HTML_LANG } from '~/app/common/i18n/i18n';
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { interpolate } from '~/app/common/i18n/interpolate';
 import { LinkedNotesComponent } from '~/app/features/notes/components/linked-notes/linked-notes.component';
+import { CategorySpendingComponent } from '~/app/features/planning/components/category-spending/category-spending.component';
 import { ComparisonRowComponent } from '~/app/features/planning/components/comparison-row/comparison-row.component';
 import { PlanningNavComponent } from '~/app/features/planning/components/planning-nav/planning-nav.component';
 import { SummaryBlockComponent } from '~/app/features/planning/components/summary-block/summary-block.component';
 import { MonthlySummaryFacade } from '~/modules/monthly-summary/core/facades/monthly-summary.facade';
+import { CategorySpendingFacade } from '~/modules/reports/core/facades/category-spending.facade';
 import { formatCompetence, todayIso } from '~/util/date';
 import { formatRatio } from '~/util/ratio';
 
@@ -45,6 +48,8 @@ const MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
 @Component({
   selector: 'app-summary-page',
   imports: [
+    CategorySpendingComponent,
+    DisclosureComponent,
     LinkedNotesComponent,
     ReactiveFormsModule,
     RouterLink,
@@ -58,7 +63,7 @@ const MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
     SummaryBlockComponent,
     ComparisonRowComponent,
   ],
-  providers: [MonthlySummaryFacade],
+  providers: [MonthlySummaryFacade, CategorySpendingFacade],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './summary.page.html',
   styleUrl: './summary.page.css',
@@ -68,6 +73,7 @@ export class SummaryPage {
   private readonly router = inject(Router);
   protected readonly t = this.i18n.t;
   protected readonly summary = inject(MonthlySummaryFacade);
+  protected readonly categories = inject(CategorySpendingFacade);
   protected readonly minMonth = MIN_MONTH;
   protected readonly maxMonth = MAX_MONTH;
 
@@ -146,7 +152,10 @@ export class SummaryPage {
       const valid = this.validMonth();
       untracked(() => {
         this.picker.setValue(valid ? month : null, { emitEvent: false });
-        if (valid) this.summary.load(month);
+        if (valid) {
+          this.summary.load(month);
+          this.categories.load(month);
+        }
       });
     });
     // Escolher outro mês no seletor muda a URL (o F5 volta ao mesmo mês).

@@ -73,8 +73,8 @@ test('criar a recorrência Internet → ver no Início e nos pendentes → reali
   );
 
   // 3. O Início mostra a ocorrência com "Realizar"; os totais são os do /upcoming.
-  await open(page, '/');
-  await expect(cy(page, 'home-dashboard')).toBeVisible();
+  await open(page, '/planning/overview');
+  await expect(cy(page, 'home-legacy')).toBeVisible();
   const upcoming = await net.body('GET', '/v1/dashboard/upcoming');
   const item = upcoming.items.find(
     (i: any) => i.kind === 'RECURRENCE' && i.refId === recurrence.id && i.dueDate === TODAY(),
@@ -165,8 +165,8 @@ test('pular uma ocorrência: não cria movimentação e ela some dos pendentes e
   expect(skipped.status).toBe('SKIPPED');
   expect((await api.get('/v1/transactions?pageSize=50')).body.items.length).toBe(txBefore);
 
-  await open(page, '/');
-  await expect(cy(page, 'home-dashboard')).toBeVisible();
+  await open(page, '/planning/overview');
+  await expect(cy(page, 'home-legacy')).toBeVisible();
   const upcoming = await net.body('GET', '/v1/dashboard/upcoming');
   expect(
     upcoming.items.filter((i: any) => i.kind === 'RECURRENCE' && i.dueDate === target.date),

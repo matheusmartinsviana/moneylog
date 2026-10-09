@@ -35,7 +35,8 @@ describe('DebtSummaryCardComponent', () => {
     await setup();
 
     expect(text(screen.getByTestId('home-debts-total'))).toBe('R$ 6.500,00');
-    expect(text(screen.getByTestId('home-debts-parts'))).toContain('R$ 5.000,00');
+    // Sucinto: só o total; as partes ficam na página de dívidas totais.
+    expect(screen.queryByTestId('home-debts-parts')).not.toBeInTheDocument();
     expect(screen.getByTestId('home-debts-open')).toHaveAttribute('href', '/planning/debts');
   });
 

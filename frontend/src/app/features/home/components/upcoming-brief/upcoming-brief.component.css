@@ -1,0 +1,110 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.ub {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  height: 100%;
+  min-height: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-panel);
+}
+
+.ub__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.ub__title {
+  font-size: var(--text-md);
+}
+
+.ub__link {
+  color: var(--color-accent);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  text-decoration: none;
+}
+
+.ub__link:hover {
+  text-decoration: underline;
+}
+
+.ub__link:focus-visible {
+  border-radius: 4px;
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.ub__list {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ub__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+}
+
+.ub__main {
+  display: grid;
+  min-width: 0;
+}
+
+.ub__label {
+  overflow: hidden;
+  font-size: var(--text-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ub__meta {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.ub__amount {
+  flex: none;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.ub__amount.is-incoming {
+  color: var(--color-positive);
+}
+
+.ub__empty {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+/* Celular: cada compromisso numa linha só (nome e data lado a lado) para o gráfico ter altura. */
+@container (width < 40rem) {
+  .ub {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .ub__row {
+    padding: var(--space-1) var(--space-3);
+  }
+
+  .ub__main {
+    grid-auto-flow: column;
+    grid-auto-columns: auto;
+    justify-content: start;
+    align-items: baseline;
+    gap: var(--space-2);
+  }
+}

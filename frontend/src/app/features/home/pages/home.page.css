@@ -1,6 +1,19 @@
+/*
+ * Início sucinto: cabe na tela sem rolar (src/styles/README.md). A página (`app-page-layout fit`) dá a altura que
+ * sobra; a grade a reparte e o gráfico fica com o que resta (`minmax(0, 1fr)`), sem altura fixa em px.
+ */
 :host {
-  display: block;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
   container-type: inline-size;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
 }
 
 .tag {
@@ -27,268 +40,67 @@
   border-radius: var(--radius-panel);
 }
 
-/*
- * Composição do Início. A ordem do DOM é a do mobile (Quick Capture primeiro, DS 02 6.4): uma coluna. Em telas
- * largas a grade distribui os blocos por área; nada some e nenhum bloco depende de outro para aparecer.
- */
+/* Celular: uma coluna (indicadores, compromissos e dívida, gráfico, meta); o gráfico fica com a sobra. */
 .home {
+  position: relative; /* contém os elementos só para leitores de tela: sem altura fantasma na página */
   display: grid;
-  gap: var(--section-gap);
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'kpis'
+    'side'
+    'chart'
+    'goal';
+  gap: var(--space-2);
+  height: 100%;
+  min-height: 0;
   min-width: 0;
+  /* Rede de segurança de telas muito baixas: rola dentro do painel, nunca a página. */
+  overflow-y: auto;
 }
 
 .home > * {
   min-width: 0;
 }
 
-.home__heading {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--space-2) var(--space-4);
+.home__banner {
+  grid-column: 1 / -1;
 }
 
-.home__title {
-  font-size: var(--text-lg);
+.home__kpis {
+  grid-area: kpis;
 }
 
-.home__subtitle {
-  color: var(--color-text-muted);
-  font-size: var(--text-sm);
+.home__chart {
+  grid-area: chart;
+  min-height: 0;
 }
 
-.home__accounts,
-.home__legacy {
+.home__side {
   display: grid;
-  gap: var(--space-3);
-}
-
-.home__legacy {
-  margin-top: var(--space-4);
-}
-
-.home__link {
-  display: inline-flex;
-  align-items: center;
-  min-height: 2.75rem;
-  color: var(--color-accent);
-  font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-  text-decoration: none;
-}
-
-.home__link:hover {
-  text-decoration: underline;
-}
-
-.home__link:focus-visible {
-  border-radius: 4px;
-  outline: none;
-  box-shadow: var(--focus-ring);
-}
-
-.block-state {
-  display: grid;
-  justify-items: start;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-card);
-  background-color: var(--color-surface);
-  color: var(--color-text-muted);
-  font-size: var(--text-sm);
-}
-
-.strip-skeleton {
-  height: 8rem;
-  border-radius: var(--radius-card);
-}
-
-/* Colunas do Início: o painel do gráfico + KPIs + captura à esquerda; saldo, medidor e recentes à direita. */
-.home__main,
-.home__aside {
-  display: grid;
-  align-content: start;
-  gap: var(--section-gap);
-  min-width: 0;
-}
-
-/* Celular: uma coluna; o saldo e o medidor vêm primeiro, depois o gráfico, os KPIs, o cartão de captura e os recentes. */
-.home__main,
-.home__aside {
-  display: contents;
-}
-
-.home__balance {
-  order: 1;
-}
-
-.home__overview {
-  order: 2;
-}
-
-.home__flow {
-  order: 3;
-}
-
-.home__capture {
-  order: 4;
-}
-
-.home__recent {
-  order: 5;
-}
-
-.home__accounts {
-  order: 6;
-}
-
-.home__categories {
-  order: 7;
-}
-
-.home__budget {
-  order: 8;
-}
-
-.home__insight {
-  order: 9;
-}
-
-.home__legacy {
-  order: 10;
-}
-
-/* Tablet e janela: duas colunas (a lateral tem de 18 a 22 rem). */
-@container (width >= 54rem) {
-  .home {
-    grid-template-columns: minmax(0, 1fr) minmax(18rem, 22rem);
-    align-items: start;
-  }
-
-  .home__main,
-  .home__aside {
-    display: grid;
-  }
-
-  .home__main {
-    grid-column: 1;
-    grid-row: 1;
-  }
-
-  .home__aside {
-    grid-column: 2;
-    grid-row: 1;
-  }
-
-  .home__balance,
-  .home__overview,
-  .home__flow,
-  .home__capture,
-  .home__recent {
-    order: 0;
-  }
-
-  .home__accounts,
-  .home__legacy,
-  .home__insight {
-    grid-column: 1 / -1;
-  }
-
-  .home__categories {
-    grid-column: 1;
-  }
-
-  .home__budget {
-    grid-column: 2;
-  }
-
-  .home__accounts {
-    order: 1;
-  }
-
-  .home__categories,
-  .home__budget {
-    order: 2;
-  }
-}
-
-/* Compromissos e patrimônio (o que já existia): a grade antiga, agora dentro da seção. */
-.dashboard {
-  display: grid;
-  gap: var(--space-4);
-  min-width: 0;
-}
-
-.dashboard > * {
-  min-width: 0;
-}
-
-.note {
-  color: var(--color-text-muted);
-  font-size: var(--text-sm);
-}
-
-.actions {
-  display: flex;
-  flex-wrap: wrap;
+  grid-area: side;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-2);
 }
 
-@container (width >= 50rem) {
-  .dashboard {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+.home__goal {
+  grid-area: goal;
+}
+
+/* Tablet e janela: indicadores em cima, gráfico à esquerda, compromissos e dívida à direita, meta embaixo. */
+@container (width >= 54rem) {
+  .home {
+    grid-template-columns: minmax(0, 1fr) minmax(17rem, 22rem);
+    grid-template-rows: auto minmax(0, 1fr) auto;
     grid-template-areas:
-      'available committed'
-      'upcoming month'
-      'upcoming net-worth'
-      'debts debts'
-      'cards cards'
-      'actions actions';
-    align-items: start;
+      'kpis kpis'
+      'chart side'
+      'goal goal';
+    gap: var(--space-3);
   }
 
-  .area-available {
-    grid-area: available;
+  .home__side {
+    grid-template-rows: minmax(0, 1fr) auto;
+    min-height: 0;
   }
-
-  .area-committed {
-    grid-area: committed;
-  }
-
-  .area-upcoming {
-    grid-area: upcoming;
-  }
-
-  .area-month {
-    grid-area: month;
-  }
-
-  .area-net-worth {
-    grid-area: net-worth;
-  }
-
-  .area-debts {
-    grid-area: debts;
-  }
-
-  .area-cards {
-    grid-area: cards;
-  }
-
-  .area-actions {
-    grid-area: actions;
-  }
-}
-
-.daily {
-  font-size: var(--text-sm);
-}
-
-.stack {
-  display: grid;
-  align-content: start;
-  gap: var(--space-4);
-  min-width: 0;
 }

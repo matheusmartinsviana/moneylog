@@ -31,11 +31,12 @@ const WIDTHS = [320, 375, 390, 414, 768, 820, 1023, 1024, 1180, 1199, 1200, 1280
 
 const heightFor = (width: number) => (width < 768 ? 812 : 800);
 
-/** Início com contas (o cartão de captura só mostra os atalhos quando há conta de saldo). */
+/** Início com dados (o botão "+ Registrar" e o gráfico só existem com o resumo carregado). */
 async function openHomeWithAccounts(page: Page): Promise<void> {
   await seedMockResponses(page, homeResponses());
   await open(page, '/');
-  await expect(page.locator('[data-cy="capture-type-expense"]')).toBeVisible();
+  await expect(page.locator('[data-cy="home-register-open"]')).toBeVisible();
+  await expect(page.locator('[data-cy="home-overview-period-D7"]')).toBeVisible();
 }
 
 async function open(page: Page, path: string): Promise<void> {
@@ -255,8 +256,6 @@ test.describe('foco, teclado e menu do avatar (desktop)', () => {
       expect(text, path).not.toMatch(/demonstra|demo\b|FinVault/i);
     }
     await open(page, '/');
-    // Desligada, a IA não aparece como atalho no cartão de captura.
-    await expect(page.locator('[data-cy="capture-ask-ai"]')).toHaveCount(0);
     await expect(page.locator('[data-cy="header-ai-status"]')).toHaveText('IA desligada');
     // Nenhuma imagem de marca: o espaço do logo é vazio e o wordmark vem de BRAND_NAME.
     await expect(
@@ -268,30 +267,21 @@ test.describe('foco, teclado e menu do avatar (desktop)', () => {
 });
 
 test.describe('BUG-QA-02 e BUG-QA-03 · o anel de foco não é cortado', () => {
-  test('o anel de 4 px de cada atalho do Quick Capture cabe dentro do contêiner (1280 px)', async ({
+  test('o anel de 4 px do "+ Registrar" e do menu dele cabe dentro do contêiner (1280 px)', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await openHomeWithAccounts(page);
-    for (const key of ['type-expense', 'type-income', 'type-loan', 'transfer']) {
-      expect(
-        await focusRingClippedSides(page, `[data-cy="capture-${key}"]`),
-        `capture-${key}`,
-      ).toEqual([]);
+    for (const key of ['register-open', 'register-menu']) {
+      expect(await focusRingClippedSides(page, `[data-cy="home-${key}"]`), key).toEqual([]);
     }
   });
 
-  test('o mesmo no celular, onde os atalhos rolam na horizontal (375 px, Início)', async ({
-    page,
-  }) => {
+  test('o mesmo no celular (375 px, Início)', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
     await openHomeWithAccounts(page);
-    for (const key of ['type-expense', 'type-income']) {
-      // O atalho que não cabe na linha rola para a vista com o foco; o anel tem de caber por inteiro.
-      await page
-        .locator(`[data-cy="capture-${key}"]`)
-        .evaluate((el) => el.scrollIntoView({ inline: 'center', block: 'nearest' }));
-      expect(await focusRingClippedSides(page, `[data-cy="capture-${key}"]`), key).toEqual([]);
+    for (const key of ['register-open', 'register-menu']) {
+      expect(await focusRingClippedSides(page, `[data-cy="home-${key}"]`), key).toEqual([]);
     }
   });
 
@@ -785,7 +775,7 @@ test.describe('A4 / BUG-QA-12 · alvos de toque e hover sem perder contraste', (
       await page.emulateMedia({ colorScheme: scheme });
       await page.setViewportSize({ width: 1280, height: 800 });
       await openHomeWithAccounts(page);
-      const chip = page.locator('[data-cy="capture-type-income"]');
+      const chip = page.locator('[data-cy="home-overview-period-D7"]');
       await chip.hover();
       await page.waitForTimeout(400);
       const state = await chip.evaluate((el) => {

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 
+import { DisclosureComponent } from '~/app/common/components/disclosure/disclosure.component';
 import { PageLayoutComponent } from '~/app/common/components/page-layout/page-layout.component';
 import { SectionContainerComponent } from '~/app/common/components/section-container/section-container.component';
 import { I18nService } from '~/app/common/i18n/i18n.service';
@@ -11,7 +12,7 @@ import { I18nService } from '~/app/common/i18n/i18n.service';
  */
 @Component({
   selector: 'app-mcp-page',
-  imports: [PageLayoutComponent, SectionContainerComponent],
+  imports: [DisclosureComponent, PageLayoutComponent, SectionContainerComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <app-page-layout [heading]="t().nav.mcp" [description]="t().workspacePages.mcp.subtitle">
@@ -32,9 +33,13 @@ import { I18nService } from '~/app/common/i18n/i18n.service';
           </ul>
         </app-section-container>
 
-        <app-section-container [heading]="t().workspacePages.mcp.accessTitle">
-          <p class="mcp__muted" data-cy="mcp-access">{{ t().workspacePages.mcp.accessText }}</p>
-        </app-section-container>
+        <app-disclosure fieldId="mcp-more" [heading]="t().brief.more" [headingLevel]="2">
+          <div class="mcp__more">
+            <app-section-container [heading]="t().workspacePages.mcp.accessTitle">
+              <p class="mcp__muted" data-cy="mcp-access">{{ t().workspacePages.mcp.accessText }}</p>
+            </app-section-container>
+          </div>
+        </app-disclosure>
       </div>
     </app-page-layout>
   `,
@@ -43,6 +48,10 @@ import { I18nService } from '~/app/common/i18n/i18n.service';
       display: grid;
       gap: var(--space-5);
       max-width: 44rem;
+    }
+
+    .mcp__more {
+      padding-top: var(--space-3);
     }
 
     .mcp__soon {
@@ -63,6 +72,7 @@ import { I18nService } from '~/app/common/i18n/i18n.service';
     .mcp__tools {
       display: grid;
       gap: var(--space-2);
+      grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
       list-style: none;
       margin: 0;
       padding: 0;

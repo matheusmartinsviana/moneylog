@@ -139,8 +139,8 @@ for (const [width, viewport] of Object.entries(SIZES)) {
           };
 
           // Início
-          await open(page, '/');
-          await expect(cy(page, 'home-dashboard')).toBeVisible();
+          await open(page, '/planning/overview');
+          await expect(cy(page, 'home-legacy')).toBeVisible();
           const m = summary.month;
           expect(await cyText(page, 'home-in-accounts')).toBe(
             fmt(summary.balances.inAccounts.amount),

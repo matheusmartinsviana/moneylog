@@ -12,7 +12,12 @@ describe('McpPage ("em breve")', () => {
     expect(screen.getByTestId('mcp-soon')).toHaveTextContent(pt.workspacePages.mcp.soon);
     expect(screen.getByTestId('mcp-tools').querySelectorAll('li')).toHaveLength(5);
     expect(screen.getAllByText(pt.workspacePages.mcp.planned)).toHaveLength(5);
-    expect(container.querySelector('button, a, input, [role="switch"]')).toBeNull();
+    // Nada finge funcionar: o único controle é o "Mais" (disclosure) que recolhe o texto de acesso.
+    expect(
+      [...container.querySelectorAll('button, a, input, [role="switch"]')].map((el) =>
+        el.getAttribute('data-cy'),
+      ),
+    ).toEqual(['mcp-more-toggle']);
     expect(container.textContent).not.toMatch(/conectado/i);
     const violations = await axeViolations(container);
     expect(violations, describeViolations(violations)).toEqual([]);

@@ -101,6 +101,8 @@ describe('NotesPage', () => {
   it('Dado a tela, então diz com honestidade onde as notas ficam guardadas', async () => {
     await setup();
 
+    // O aviso mora em "Mais" (junto do cofre), recolhido por padrão.
+    await userEvent.click(screen.getByTestId('notes-vault-toggle'));
     expect(screen.getByTestId('notes-storage')).toHaveTextContent(
       'Guardado no servidor do moneylog. Exporte quando quiser uma cópia em Markdown.',
     );
