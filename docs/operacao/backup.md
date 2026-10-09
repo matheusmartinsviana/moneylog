@@ -22,6 +22,10 @@ Implementação: T176. Código em `backend/src/main/java/com/moneylog/core/backu
 
 A imagem Docker já traz `pg_dump`/`pg_restore` 17.
 
+## O que o `pg_dump` leva (fotos das metas, ADR-018)
+
+As fotos das metas de sonho moram no Postgres (`goal_photos` com os metadados e `goal_photo_blobs` com os bytes) e **entram no `pg_dump`** e no snapshot do RDS. Ficam **fora** do ZIP do vault (Markdown, ADR-009) e do backup JSON (`GET /v1/export/backup`). O crescimento do dump é limitado pela cota de 40 MB de fotos por usuário. `BackupRestoreIT` prova que as fotos voltam com o mesmo conteúdo (hash dos bytes de exibição e miniatura) e que a meta segue em destaque.
+
 ## RPO e RTO esperados (a confirmar com o dono)
 
 - **RPO**: até 24 h com o job diário (perde-se o que foi lançado desde as 03:00 UTC). No RDS, o PITR automático reduz para minutos; o dump diário continua sendo a cópia fora do RDS.

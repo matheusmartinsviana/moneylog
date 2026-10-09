@@ -44,3 +44,7 @@ Alerta: `AWS Budgets` mensal (padrão US$ 15) com avisos a 50%, 80% e 100% do re
 ## Não exercitado (precisa da conta AWS)
 
 Todo o Terraform foi validado (`fmt`, `validate`) e **nunca** aplicado nem planejado contra uma conta. Não foram exercitados: a `S3BackupStorage` contra o S3 real (testada contra um S3 falso), a role da instância (IMDSv2, testada contra um IMDS falso), a assinatura do CloudFront, o `deploy.sh` na EC2 e o certificado ACM.
+
+## Nota (ADR-018)
+
+As fotos das metas de sonho (exibição e miniatura, até 40 MB por usuário) passam a morar no banco (`goal_photo_blobs`, `bytea`) e portanto no RDS, no snapshot e no `pg_dump`. Se o volume passar de ~1 GB, trocar o adaptador da porta `PhotoStorage` por object storage (S3/R2).
