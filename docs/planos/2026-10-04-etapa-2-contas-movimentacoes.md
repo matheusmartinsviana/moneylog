@@ -951,3 +951,8 @@ Pedido do dono: escolher a própria senha no primeiro login e passar o e-mail do
 - Ordem do login: senha do banco (única que vale quando definida) > redefinição pendente (ninguém entra) > hash do ambiente (retrocompatibilidade; agora opcional).
 - `MONEYLOG_OWNER_EMAIL` novo renomeia o dono (mesmo `id`, nunca segundo usuário); `MONEYLOG_OWNER_RESET_PASSWORD=true` (uso único, remover depois) apaga a senha do banco e revoga as sessões.
 - Testes: `FirstAccessUseCasesTest`, `FirstAccessIT` (feliz, código errado/reutilizado/expirado, senha fraca, rate limit, revogação, isolamento) e `FirstAccessCompatIT` (retrocompatibilidade e prioridade do banco).
+
+## 11. Registro: competência de renda (contrato 2.18.0, ADR-017)
+
+`IncomeInput`/`IncomeUpdate` e `Transaction` ganham `incomeCompetence` (`AAAA-MM`, opcional): a receita pode pertencer a um mês diferente do mês em que o dinheiro cai. O lançamento da conta (saldo, caixa) continua na `date`; só o posting do livro `INCOME` vai para a competência declarada. Ausente = mês da data (nada muda para o que já existe); no `PUT`, ausente limpa; só `INCOME` aceita (as demais recusam: `400`, e o banco garante). Fora de 2000-01..2100-12: `422 INCOME_COMPETENCE_INVALID`. Estorno desativa o posting onde estiver. Importação CSV/OFX não preenche. Ver ADR-017.
+

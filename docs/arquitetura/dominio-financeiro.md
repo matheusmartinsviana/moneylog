@@ -68,6 +68,8 @@ Consequências diretas:
 - **Competência** = `YearMonth` da data efetiva do posting. Na compra parcelada, a parcela `k` tem data efetiva = data da compra + (k−1) meses, limitada ao último dia do mês (31/01 → 28/02).
 - "Hoje" sempre vem de um `Clock` injetado (testes determinísticos). Tudo o que depende de "hoje" (status da fatura, status "atrasado", guardas de estorno, `bucket`) é **calculado na leitura** com esse `Clock`, nunca gravado por job (**[S-37]**).
 
+> **Exceção única, ADR-017 (2026-10-08).** A competência de um posting é o mês da data efetiva, **salvo no livro `INCOME`**, onde a receita pode declarar `incomeCompetence` e pertencer a outro mês (adiantamento de 16/09 que é renda de outubro). A data efetiva, o saldo e o caixa não mudam; só a competência da renda. Toda leitura por competência usa `Posting.competence()`; as por data (caixa, saldo, patrimônio, compromissos, `income-expenses` em `DAY`/`WEEK`) seguem a data efetiva.
+
 ## 2. Entidades
 
 > Todas as entidades têm `id` (UUID gerado pela aplicação), `userId`, `createdAt`, `updatedAt` e, quando editáveis, `version` (lock otimista). Nenhuma entidade financeira é apagada fisicamente (regra 7 do PR 01).
