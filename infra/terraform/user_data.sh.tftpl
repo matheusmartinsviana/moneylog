@@ -1,35 +1,166 @@
 #!/bin/bash
 # Prepara a instância (executado uma vez pelo cloud-init). Nenhum segredo aqui: a configuração vem do SSM no momento do deploy.
+# Modo do banco: ${database_mode}
 set -euo pipefail
 dnf install -y docker
 systemctl enable --now docker
-mkdir -p /opt/moneylog
+
+# Plugin do Docker Compose (não vem no repositório do Amazon Linux). Versão fixa + conferência do SHA-256 publicado na release.
+COMPOSE_VERSION="v2.29.7"
+case "$(uname -m)" in aarch64) CARCH=aarch64 ;; *) CARCH=x86_64 ;; esac
+mkdir -p /usr/local/lib/docker/cli-plugins
+curl -fsSL "https://github.com/docker/compose/releases/download/$COMPOSE_VERSION/docker-compose-linux-$CARCH" -o /tmp/docker-compose
+curl -fsSL "https://github.com/docker/compose/releases/download/$COMPOSE_VERSION/docker-compose-linux-$CARCH.sha256" -o /tmp/docker-compose.sha256
+(cd /tmp && echo "$(cut -d' ' -f1 /tmp/docker-compose.sha256)  docker-compose" | sha256sum -c -)
+install -m 0755 /tmp/docker-compose /usr/local/lib/docker/cli-plugins/docker-compose
+rm -f /tmp/docker-compose /tmp/docker-compose.sha256
+
+%{ if database_mode == "ec2" ~}
+# Instância de 1 GB roda Spring Boot + Postgres: 1 GB de swap evita o OOM killer em picos (migração, backup).
+if [ ! -f /swapfile ]; then
+  dd if=/dev/zero of=/swapfile bs=1M count=1024
+  chmod 600 /swapfile
+  mkswap /swapfile
+  echo "/swapfile none swap sw 0 0" >> /etc/fstab
+fi
+swapon -a
+%{ endif ~}
+
+mkdir -p /opt/moneylog/backups
+chown 10001:10001 /opt/moneylog/backups
+%{ if database_mode == "ec2" ~}
+
+# Volume de dados do Postgres (EBS separado do disco do sistema; sobrevive à troca da instância).
+DEV="/dev/disk/by-id/nvme-Amazon_Elastic_Block_Store_${data_volume_id}"
+for _ in $(seq 1 60); do [ -e "$DEV" ] && break; sleep 5; done
+[ -e "$DEV" ] || { echo "volume de dados não apareceu: $DEV" >&2; exit 1; }
+blkid "$DEV" >/dev/null 2>&1 || mkfs.xfs -L moneylogdata "$DEV"
+mkdir -p /opt/moneylog/pgdata
+grep -q moneylogdata /etc/fstab || echo "LABEL=moneylogdata /opt/moneylog/pgdata xfs defaults,nofail 0 2" >> /etc/fstab
+mount -a
+chown 999:999 /opt/moneylog/pgdata
+%{ endif ~}
+
+cat > /opt/moneylog/docker-compose.yml <<'COMPOSE'
+# Gerado pelo user_data (Terraform). A imagem vem de IMAGE (/opt/moneylog/.env, escrito por deploy.sh); nada secreto aqui:
+# os segredos ficam em /opt/moneylog/secrets (um arquivo por variável, vindo do SSM) e são lidos como Docker secrets.
+name: moneylog
+services:
+%{ if database_mode == "ec2" ~}
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${db_name}
+      POSTGRES_USER_FILE: /run/secrets/DB_USER
+      POSTGRES_PASSWORD_FILE: /run/secrets/DB_PASSWORD
+    volumes:
+      - /opt/moneylog/pgdata:/var/lib/postgresql/data
+      - /opt/moneylog/secrets:/run/secrets:ro
+    # Sem "ports": o Postgres só é alcançável pela rede interna do compose.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${db_username} -d ${db_name}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+%{ endif ~}
+  backend:
+    image: $${IMAGE:?IMAGE não definida (use /opt/moneylog/deploy.sh <tag>)}
+    restart: unless-stopped
+%{ if database_mode == "ec2" ~}
+    depends_on:
+      postgres:
+        condition: service_healthy
+%{ endif ~}
+%{ if database_mode == "ec2" ~}
+    # Teto de memória do container: a JVM calcula o heap (75%) em cima disto e deixa espaço para o Postgres na mesma máquina.
+    mem_limit: 640m
+%{ endif ~}
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+    ports:
+      - "8080:8080"
+    volumes:
+      - /opt/moneylog/secrets:/run/secrets:ro
+      - /opt/moneylog/backups:/var/backups/moneylog
+    read_only: true
+    tmpfs:
+      - /tmp
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: ${region}
+        awslogs-group: ${log_group}
+        awslogs-stream: backend
+COMPOSE
 
 cat > /opt/moneylog/deploy.sh <<'DEPLOY'
 #!/bin/bash
-# Uso: /opt/moneylog/deploy.sh <tag-da-imagem>
-# Baixa a configuração do SSM para arquivos (um por variável, com o NOME da variável) e sobe o container lendo-os como Docker secrets
-# via SECRETS_DIR (application-prod.yaml). Os valores nunca vão para a linha de comando nem para o log.
+# Uso: /opt/moneylog/deploy.sh <tag-da-imagem>   |   /opt/moneylog/deploy.sh --rollback
+# Baixa a configuração do SSM para arquivos (um por variável, com o NOME da variável), sobe o compose e espera o health.
+# Se o health não vier, volta sozinho para a tag anterior. Os valores nunca vão para a linha de comando nem para o log.
 set -euo pipefail
-TAG="$${1:?informe a tag da imagem}"
 REGION="${region}"
-IMAGE="${registry}/${repository}:$TAG"
-SECRETS=/opt/moneylog/secrets
+REGISTRY="${registry}"
+REPOSITORY="${repository}"
+DIR=/opt/moneylog
+SECRETS=$DIR/secrets
+cd "$DIR"
 
-rm -rf "$SECRETS" && mkdir -p "$SECRETS" && chmod 700 "$SECRETS"
+CURRENT=""; [ -f current-tag ] && CURRENT="$(cat current-tag)"
+if [ "$${1:-}" = "--rollback" ]; then
+  [ -f previous-tag ] || { echo "sem tag anterior registrada" >&2; exit 1; }
+  TAG="$(cat previous-tag)"
+else
+  TAG="$${1:?informe a tag da imagem (ou --rollback)}"
+fi
+
+wait_healthy() {
+  for _ in $(seq 1 36); do
+    if curl -fsS http://127.0.0.1:8080/actuator/health 2>/dev/null | grep -q '"UP"'; then return 0; fi
+    sleep 5
+  done
+  return 1
+}
+
+start_with() {
+  printf 'IMAGE=%s/%s:%s\n' "$REGISTRY" "$REPOSITORY" "$1" > "$DIR/.env"
+  docker compose up -d --remove-orphans
+}
+
+# Configuração do SSM -> arquivos legíveis só pelo usuário do container (uid 10001) e por root (Postgres lê como root).
+umask 077
+mkdir -p "$SECRETS"
+find "$SECRETS" -type f -delete
 aws ssm get-parameters-by-path --region "$REGION" --path "${ssm_prefix}" --with-decryption --query 'Parameters[].[Name,Value]' --output text |
   while IFS=$'\t' read -r name value; do
     printf '%s' "$value" > "$SECRETS/$(basename "$name")"
   done
+chown -R 10001:10001 "$SECRETS"
+chmod 500 "$SECRETS"
 chmod 400 "$SECRETS"/*
 
-aws ecr get-login-password --region "$REGION" | docker login --username AWS --password-stdin "${registry}" >/dev/null
-docker pull "$IMAGE"
-docker rm -f moneylog 2>/dev/null || true
-docker run -d --name moneylog --restart unless-stopped -p 8080:8080 --read-only --tmpfs /tmp \
-  -v "$SECRETS":/run/secrets:ro -v /opt/moneylog/backups:/var/backups/moneylog \
-  -e SPRING_PROFILES_ACTIVE=prod "$IMAGE"
-echo "$TAG" > /opt/moneylog/current-tag
+aws ecr get-login-password --region "$REGION" | docker login --username AWS --password-stdin "$REGISTRY" >/dev/null
+docker pull "$REGISTRY/$REPOSITORY:$TAG"
+
+start_with "$TAG"
+if wait_healthy; then
+  if [ "$TAG" != "$CURRENT" ]; then
+    [ -n "$CURRENT" ] && echo "$CURRENT" > previous-tag
+    echo "$TAG" > current-tag
+  fi
+  echo "deploy ok: $TAG"
+  exit 0
+fi
+
+echo "health não ficou UP com $TAG" >&2
+docker compose logs --tail 30 backend >&2 || true
+if [ -n "$CURRENT" ] && [ "$CURRENT" != "$TAG" ]; then
+  echo "voltando para $CURRENT" >&2
+  start_with "$CURRENT"
+  wait_healthy && echo "rollback ok: $CURRENT" >&2 || echo "rollback também não ficou UP" >&2
+fi
+exit 1
 DEPLOY
 chmod 755 /opt/moneylog/deploy.sh
-mkdir -p /opt/moneylog/backups && chown 10001:10001 /opt/moneylog/backups

@@ -1,5 +1,21 @@
-# Copie para terraform.tfvars (ignorado pelo git). Sem segredos: só nomes, ARNs e e-mail.
-domain_name         = "app.exemplo.com"
-acm_certificate_arn = "arn:aws:acm:us-east-1:111111111111:certificate/00000000-0000-0000-0000-000000000000"
-budget_alert_email  = "voce@exemplo.com"
-github_repo         = "seu-usuario/moneylog"
+# Copie para terraform.tfvars (ignorado pelo git). Sem segredos: só nomes, e-mail e escolhas.
+# Guia: docs/operacao/deploy-gratis-aws.md
+
+# --- Padrão barato (arquitetura A do guia): Postgres no compose da EC2, sem RDS, URL *.cloudfront.net ---
+database_mode      = "ec2"
+instance_type      = "t3.micro" # ou "t4g.micro" (ARM): exige PLATFORM=linux/arm64 ao construir a imagem
+region             = "us-east-1" # confira o preço da sua região; sa-east-1 é mais cara (decisão do dono)
+budget_alert_email = "voce@exemplo.com"
+budget_limit_usd   = 10
+github_repo        = "seu-usuario/moneylog"
+
+# --- Domínio próprio (opcional, depois): preencha os DOIS (certificado ACM em us-east-1) ---
+# domain_name         = "app.exemplo.com"
+# acm_certificate_arn = "arn:aws:acm:us-east-1:111111111111:certificate/00000000-0000-0000-0000-000000000000"
+
+# --- RDS em vez de Postgres na EC2 (~US$ 13 a 15/mês a mais) ---
+# database_mode     = "rds"
+# db_instance_class = "db.t4g.micro"
+
+# --- CSP (veja scripts/deploy-frontend.sh --print-csp; teste no navegador antes) ---
+# content_security_policy = ""

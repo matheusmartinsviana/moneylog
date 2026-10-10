@@ -11,23 +11,53 @@ variable "environment" {
 }
 
 variable "domain_name" {
-  description = "Domínio único do app (front e API no mesmo domínio, sem CORS). Ex.: app.exemplo.com"
+  description = "Domínio próprio do app (front e API no mesmo domínio, sem CORS). Vazio = usa o domínio gratuito *.cloudfront.net (HTTPS incluso)."
   type        = string
+  default     = ""
 }
 
 variable "acm_certificate_arn" {
-  description = "ARN do certificado ACM em us-east-1 para o domínio (criado/validado pelo usuário)."
+  description = "ARN do certificado ACM em us-east-1 para o domínio próprio. Obrigatório se domain_name estiver preenchido; vazio caso contrário."
   type        = string
+  default     = ""
+
+  validation {
+    condition     = (var.domain_name == "") == (var.acm_certificate_arn == "")
+    error_message = "Preencha domain_name e acm_certificate_arn juntos, ou deixe os dois vazios (domínio *.cloudfront.net)."
+  }
+}
+
+variable "database_mode" {
+  description = "ec2 (padrão recomendado): Postgres 17 no Docker Compose da própria EC2, volume EBS próprio e snapshots diários, SEM RDS. rds: RDS PostgreSQL gerenciado (~US$ 13 a 15/mês a mais, ADR-005)."
+  type        = string
+  default     = "ec2"
+
+  validation {
+    condition     = contains(["ec2", "rds"], var.database_mode)
+    error_message = "database_mode deve ser \"ec2\" ou \"rds\"."
+  }
 }
 
 variable "instance_type" {
-  description = "Tipo da EC2 do backend. t3.micro (x86) é elegível ao free tier; t4g.micro (ARM) exige imagem arm64."
+  description = "Tipo da EC2 do backend. t3.micro (x86, 1 GB) é o padrão. t4g.micro (ARM, mais barata) exige imagem do backend arm64: PLATFORM=linux/arm64 em scripts/deploy-backend.sh. Os tipos Graviton (letra g, ex.: t4g, m7g) escolhem a AMI arm64 sozinhos."
   type        = string
   default     = "t3.micro"
 }
 
+variable "data_volume_size_gb" {
+  description = "Tamanho do volume EBS gp3 do Postgres (só database_mode = ec2). Cobrado por GB provisionado."
+  type        = number
+  default     = 10
+}
+
+variable "content_security_policy" {
+  description = "Cabeçalho Content-Security-Policy do front. Vazio = não envia CSP. O index.html do Angular tem 2 scripts inline: a CSP precisa dos hashes deles (scripts/deploy-frontend.sh --print-csp imprime uma CSP pronta). Teste no navegador antes de ligar."
+  type        = string
+  default     = ""
+}
+
 variable "db_instance_class" {
-  description = "Classe do RDS."
+  description = "Classe do RDS (só database_mode = rds)."
   type        = string
   default     = "db.t4g.micro"
 }
@@ -38,15 +68,15 @@ variable "db_name" {
 }
 
 variable "db_username" {
-  description = "Usuário mestre do RDS. É também o usuário da aplicação e DONO do banco (necessário para CREATE EXTENSION unaccent)."
+  description = "Usuário da aplicação e DONO do banco (necessário para CREATE EXTENSION unaccent). No RDS é o usuário mestre; no modo ec2 é o POSTGRES_USER e deve ser o mesmo valor do parâmetro SSM DB_USER."
   type        = string
   default     = "moneylog"
 }
 
 variable "budget_limit_usd" {
-  description = "Teto mensal do AWS Budgets em USD."
+  description = "Teto mensal do AWS Budgets em USD (uso bruto, sem descontar créditos: avisa o ritmo de consumo dos créditos)."
   type        = number
-  default     = 15
+  default     = 10
 }
 
 variable "budget_alert_email" {

@@ -1,5 +1,7 @@
 # Roteiro de deploy na AWS
 
+> **Nota (2026-10-10): o caminho mais barato e o padrão agora é `deploy-gratis-aws.md`** (EC2 com Postgres no Docker Compose, sem RDS, URL `*.cloudfront.net` opcional, scripts `scripts/deploy-frontend.sh`, `scripts/deploy-backend.sh`, `scripts/reset-database.sh`). Este roteiro continua válido para `database_mode = "rds"`; os passos 7 (papel dono no RDS) e a tabela de parâmetros com `DB_URL` do RDS só se aplicam a esse modo. No modo `ec2`, `DB_URL=jdbc:postgresql://postgres:5432/moneylog` e `DB_PASSWORD` é um valor gerado por você no SSM. Novos parâmetros do Terraform: `database_mode`, `domain_name`/`acm_certificate_arn` agora opcionais, `content_security_policy`, `data_volume_size_gb`.
+
 **Status: NADA FOI EXECUTADO.** Este roteiro, o Terraform (`infra/terraform/`) e os workflows (`.github/workflows/`) foram escritos e validados localmente (`terraform fmt/validate`, `actionlint`), sem credenciais e sem tocar na AWS. Decisões e custo: `docs/adrs/ADR-005-topologia-aws-e-banco.md`. Cada passo abaixo é **seu**; os comandos são os que **você** executa.
 
 ## Pré-requisitos que bloqueiam o go-live

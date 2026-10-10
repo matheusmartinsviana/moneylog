@@ -16,6 +16,7 @@ data "aws_ec2_managed_prefix_list" "cloudfront" {
 }
 
 # Backend: só o CloudFront alcança a porta 8080. Sem porta 22 (acesso por SSM Session Manager).
+# A lista do CloudFront ocupa ~55 regras do SG (cota padrão: 60 por SG); não adicione outras regras de entrada neste SG.
 resource "aws_security_group" "backend" {
   name        = "moneylog-${var.environment}-backend"
   description = "Backend moneylog: entrada apenas do CloudFront na 8080"
@@ -39,6 +40,7 @@ resource "aws_security_group" "backend" {
 }
 
 resource "aws_security_group" "database" {
+  count       = var.database_mode == "rds" ? 1 : 0
   name        = "moneylog-${var.environment}-database"
   description = "RDS moneylog: entrada apenas do backend na 5432"
   vpc_id      = data.aws_vpc.default.id

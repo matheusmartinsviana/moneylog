@@ -1,11 +1,14 @@
-# Recomendação da ADR-005: RDS PostgreSQL gerenciado (backup automático, patches, sem administrar o Postgres na EC2).
+# Só com database_mode = "rds". No modo padrão "ec2" o Postgres roda no compose da instância (docs/operacao/deploy-gratis-aws.md).
+# Opção da ADR-005: RDS PostgreSQL gerenciado (backup automático, patches, sem administrar o Postgres na EC2).
 # O usuário mestre é o dono do banco: necessário para o Flyway executar `CREATE EXTENSION unaccent` (V6.01).
 resource "aws_db_subnet_group" "main" {
+  count      = var.database_mode == "rds" ? 1 : 0
   name       = "moneylog-${var.environment}"
   subnet_ids = data.aws_subnets.default.ids
 }
 
 resource "aws_db_instance" "main" {
+  count             = var.database_mode == "rds" ? 1 : 0
   identifier        = "moneylog-${var.environment}"
   engine            = "postgres"
   engine_version    = "17"
@@ -18,8 +21,8 @@ resource "aws_db_instance" "main" {
   # A senha é gerada e guardada pelo próprio RDS no Secrets Manager: não passa pelo Terraform nem pelo estado.
   manage_master_user_password = true
 
-  db_subnet_group_name   = aws_db_subnet_group.main.name
-  vpc_security_group_ids = [aws_security_group.database.id]
+  db_subnet_group_name   = aws_db_subnet_group.main[0].name
+  vpc_security_group_ids = [aws_security_group.database[0].id]
   publicly_accessible    = false
   multi_az               = false
   storage_encrypted      = true

@@ -48,3 +48,7 @@ Todo o Terraform foi validado (`fmt`, `validate`) e **nunca** aplicado nem plane
 ## Nota (ADR-018)
 
 As fotos das metas de sonho (exibição e miniatura, até 40 MB por usuário) passam a morar no banco (`goal_photo_blobs`, `bytea`) e portanto no RDS, no snapshot e no `pg_dump`. Se o volume passar de ~1 GB, trocar o adaptador da porta `PhotoStorage` por object storage (S3/R2).
+
+## Nota (2026-10-10): decisão de custo, EC2 sem RDS como padrão
+
+Contas AWS novas não têm mais os 12 meses grátis de EC2/RDS/S3 (recebem créditos). Com isso, o RDS (~US$ 15 a 17/mês com armazenamento) dobraria o custo de um app de uso pessoal. **O padrão passa a ser a alternativa já prevista no item 3: Postgres 17 no Docker Compose da própria EC2**, volume EBS separado (cifrado, `prevent_destroy`), snapshot diário por DLM (7 retidos) e o `pg_dump` diário cifrado para o S3 (T176) como cópia principal. O RDS segue disponível por `database_mode = "rds"`. Também: o domínio `*.cloudfront.net` (HTTPS grátis) é aceito sem domínio próprio, a EC2 ganhou EIP (a origem do CloudFront usa o DNS público da instância), swap de 1 GB e limite de memória do container, e os logs do container vão para o CloudWatch (14 dias). Custo estimado do padrão: ~US$ 12 a 14/mês (ver o guia), contra ~US$ 27 com RDS. **Risco aceito e registrado:** o trecho CloudFront -> EC2 continua em HTTP (HTTPS na origem exige domínio próprio e proxy; pendente). Detalhes, custos por arquitetura e passo a passo: `docs/operacao/deploy-gratis-aws.md`.

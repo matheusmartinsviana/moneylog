@@ -6,6 +6,12 @@ resource "aws_budgets_budget" "monthly" {
   limit_unit   = "USD"
   time_unit    = "MONTHLY"
 
+  # Uso bruto: sem descontar créditos/reembolsos. Enquanto os créditos pagam a conta, o alerta mostra o ritmo em que eles acabam.
+  cost_types {
+    include_credit = false
+    include_refund = false
+  }
+
   dynamic "notification" {
     for_each = [50, 80, 100]
     content {

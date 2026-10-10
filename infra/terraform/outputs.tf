@@ -1,5 +1,5 @@
 output "cloudfront_domain" {
-  description = "Aponte o DNS do domínio (CNAME/ALIAS) para este valor."
+  description = "Endereço do app (https://<valor>). Com domínio próprio, aponte o DNS (CNAME/ALIAS) para este valor."
   value       = aws_cloudfront_distribution.app.domain_name
 }
 
@@ -30,10 +30,24 @@ output "github_deploy_role_arn" {
 }
 
 output "database_endpoint" {
-  value = aws_db_instance.main.address
+  description = "Endpoint do RDS (vazio no modo ec2: o DB_URL é jdbc:postgresql://postgres:5432/<db_name>)."
+  value       = var.database_mode == "rds" ? aws_db_instance.main[0].address : ""
 }
 
 output "database_secret_arn" {
   description = "Secrets Manager com a senha do usuário mestre; copie para o parâmetro SSM DB_PASSWORD."
-  value       = aws_db_instance.main.master_user_secret[0].secret_arn
+  value       = var.database_mode == "rds" ? aws_db_instance.main[0].master_user_secret[0].secret_arn : ""
+}
+
+output "app_url" {
+  description = "URL do app (use em MONEYLOG_ALLOWED_ORIGINS)."
+  value       = var.domain_name != "" ? "https://${var.domain_name}" : "https://${aws_cloudfront_distribution.app.domain_name}"
+}
+
+output "ssm_prefix" {
+  value = var.ssm_prefix
+}
+
+output "log_group" {
+  value = aws_cloudwatch_log_group.backend.name
 }

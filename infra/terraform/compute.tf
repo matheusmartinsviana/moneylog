@@ -1,5 +1,20 @@
+locals {
+  # Famílias Graviton têm "g" depois do número da geração (t4g, m7g, c7gd...). O resto é x86.
+  arm_instance = length(regexall("^[a-z]+[0-9]+g[a-z]*\\.", var.instance_type)) > 0
+  arch         = local.arm_instance ? "arm64" : "x86_64"
+  use_rds      = var.database_mode == "rds"
+  use_ec2_db   = var.database_mode == "ec2"
+  registry     = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com"
+}
+
 data "aws_ssm_parameter" "al2023" {
-  name = "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-${var.instance_type == "t4g.micro" ? "arm64" : "x86_64"}"
+  name = "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-${local.arch}"
+}
+
+# Logs do container no CloudWatch (5 GB de ingestão por mês no Always Free). Retenção curta para não crescer.
+resource "aws_cloudwatch_log_group" "backend" {
+  name              = "/moneylog/${var.environment}/backend"
+  retention_in_days = 14
 }
 
 resource "aws_ecr_repository" "backend" {
@@ -78,10 +93,28 @@ data "aws_iam_policy_document" "backend" {
   }
 
   statement {
+    sid       = "ContainerLogs"
+    actions   = ["logs:CreateLogStream", "logs:PutLogEvents"]
+    resources = ["${aws_cloudwatch_log_group.backend.arn}:*"]
+  }
+}
+
+# Só no modo rds: leitura da senha gerada pelo RDS (no modo ec2 a senha do banco é um parâmetro SSM).
+data "aws_iam_policy_document" "rds_secret" {
+  count = local.use_rds ? 1 : 0
+
+  statement {
     sid       = "ReadDatabaseSecret"
     actions   = ["secretsmanager:GetSecretValue"]
-    resources = [aws_db_instance.main.master_user_secret[0].secret_arn]
+    resources = [aws_db_instance.main[0].master_user_secret[0].secret_arn]
   }
+}
+
+resource "aws_iam_role_policy" "rds_secret" {
+  count  = local.use_rds ? 1 : 0
+  name   = "moneylog-rds-secret"
+  role   = aws_iam_role.backend.id
+  policy = data.aws_iam_policy_document.rds_secret[0].json
 }
 
 resource "aws_iam_role_policy" "backend" {
@@ -95,10 +128,15 @@ resource "aws_iam_instance_profile" "backend" {
   role = aws_iam_role.backend.name
 }
 
+# A instância e o volume de dados precisam estar na mesma zona: ambos derivam desta sub-rede.
+data "aws_subnet" "backend" {
+  id = data.aws_subnets.default.ids[0]
+}
+
 resource "aws_instance" "backend" {
   ami                         = data.aws_ssm_parameter.al2023.value
   instance_type               = var.instance_type
-  subnet_id                   = data.aws_subnets.default.ids[0]
+  subnet_id                   = data.aws_subnet.backend.id
   vpc_security_group_ids      = [aws_security_group.backend.id]
   iam_instance_profile        = aws_iam_instance_profile.backend.name
   associate_public_ip_address = true
@@ -113,20 +151,111 @@ resource "aws_instance" "backend" {
 
   root_block_device {
     volume_type = "gp3"
-    volume_size = 20
+    volume_size = 12
     encrypted   = true
   }
 
   user_data = templatefile("${path.module}/user_data.sh.tftpl", {
     region     = var.region
     ssm_prefix = var.ssm_prefix
-    registry   = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.region}.amazonaws.com"
+    registry   = local.registry
     repository = aws_ecr_repository.backend.name
+    log_group  = aws_cloudwatch_log_group.backend.name
+
+    database_mode = var.database_mode
+    db_name       = var.db_name
+    db_username   = var.db_username
+    # ID do volume sem hífen: é como ele aparece em /dev/disk/by-id nas instâncias Nitro.
+    data_volume_id = local.use_ec2_db ? replace(aws_ebs_volume.data[0].id, "-", "") : ""
   })
 
   user_data_replace_on_change = false
 
   tags = {
     Name = "moneylog-${var.environment}-backend"
+  }
+}
+
+# IP fixo: o CloudFront usa o DNS público da instância como origem, e o IP automático muda se ela for parada e iniciada.
+# O IPv4 público é cobrado (~US$ 3,65/mês) com ou sem Elastic IP; o EIP associado não acrescenta custo.
+resource "aws_eip" "backend" {
+  instance = aws_instance.backend.id
+  domain   = "vpc"
+}
+
+# ---- Modo ec2: volume de dados do Postgres, separado do disco do sistema, com snapshot diário (DLM) ----
+resource "aws_ebs_volume" "data" {
+  count             = local.use_ec2_db ? 1 : 0
+  availability_zone = data.aws_subnet.backend.availability_zone
+  size              = var.data_volume_size_gb
+  type              = "gp3"
+  encrypted         = true
+
+  tags = {
+    Name     = "moneylog-${var.environment}-pgdata"
+    Snapshot = "moneylog-${var.environment}"
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "aws_volume_attachment" "data" {
+  count        = local.use_ec2_db ? 1 : 0
+  device_name  = "/dev/sdf"
+  volume_id    = aws_ebs_volume.data[0].id
+  instance_id  = aws_instance.backend.id
+  force_detach = false
+}
+
+data "aws_iam_policy_document" "dlm_assume" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["dlm.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "dlm" {
+  count              = local.use_ec2_db ? 1 : 0
+  name               = "moneylog-${var.environment}-dlm"
+  assume_role_policy = data.aws_iam_policy_document.dlm_assume.json
+}
+
+resource "aws_iam_role_policy_attachment" "dlm" {
+  count      = local.use_ec2_db ? 1 : 0
+  role       = aws_iam_role.dlm[0].name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSDataLifecycleManagerServiceRole"
+}
+
+# Snapshot do volume do Postgres todo dia, 7 retidos. Complementa o pg_dump para o S3 (o snapshot não é consistente a nível
+# de aplicação: serve como recuperação de desastre; o pg_dump é a cópia restaurável com garantias).
+resource "aws_dlm_lifecycle_policy" "pgdata" {
+  count              = local.use_ec2_db ? 1 : 0
+  description        = "moneylog ${var.environment}: snapshot diario do volume do Postgres"
+  execution_role_arn = aws_iam_role.dlm[0].arn
+  state              = "ENABLED"
+
+  policy_details {
+    resource_types = ["VOLUME"]
+    target_tags = {
+      Snapshot = "moneylog-${var.environment}"
+    }
+
+    schedule {
+      name = "diario"
+      create_rule {
+        interval      = 24
+        interval_unit = "HOURS"
+        times         = ["06:00"]
+      }
+      retain_rule {
+        count = 7
+      }
+      copy_tags = true
+    }
   }
 }

@@ -57,14 +57,43 @@ data "aws_cloudfront_origin_request_policy" "all_viewer_except_host" {
   name = "Managed-AllViewerExceptHostHeader"
 }
 
-data "aws_cloudfront_response_headers_policy" "security" {
-  name = "Managed-SecurityHeadersPolicy"
+# Cabeçalhos de segurança do front: HSTS, nosniff, frame DENY, referrer e (opcional) CSP.
+# Não use a política gerenciada: ela não aceita CSP, e a CSP do Angular depende de hashes (variável content_security_policy).
+resource "aws_cloudfront_response_headers_policy" "security" {
+  name = "moneylog-${var.environment}-security"
+
+  security_headers_config {
+    strict_transport_security {
+      access_control_max_age_sec = 31536000
+      include_subdomains         = true
+      override                   = true
+    }
+    content_type_options {
+      override = true
+    }
+    frame_options {
+      frame_option = "DENY"
+      override     = true
+    }
+    referrer_policy {
+      referrer_policy = "strict-origin-when-cross-origin"
+      override        = true
+    }
+
+    dynamic "content_security_policy" {
+      for_each = var.content_security_policy == "" ? [] : [var.content_security_policy]
+      content {
+        content_security_policy = content_security_policy.value
+        override                = true
+      }
+    }
+  }
 }
 
 resource "aws_cloudfront_distribution" "app" {
   enabled             = true
   comment             = "moneylog ${var.environment}"
-  aliases             = [var.domain_name]
+  aliases             = var.domain_name == "" ? [] : [var.domain_name]
   default_root_object = "index.html"
   price_class         = "PriceClass_100"
   http_version        = "http2and3"
@@ -77,7 +106,7 @@ resource "aws_cloudfront_distribution" "app" {
 
   origin {
     origin_id   = "backend"
-    domain_name = aws_instance.backend.public_dns
+    domain_name = aws_eip.backend.public_dns
 
     custom_origin_config {
       http_port              = 8080
@@ -94,7 +123,7 @@ resource "aws_cloudfront_distribution" "app" {
     cached_methods             = ["GET", "HEAD"]
     compress                   = true
     cache_policy_id            = data.aws_cloudfront_cache_policy.optimized.id
-    response_headers_policy_id = data.aws_cloudfront_response_headers_policy.security.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.security.id
 
     function_association {
       event_type   = "viewer-request"
@@ -120,10 +149,21 @@ resource "aws_cloudfront_distribution" "app" {
     }
   }
 
-  viewer_certificate {
-    acm_certificate_arn      = var.acm_certificate_arn
-    ssl_support_method       = "sni-only"
-    minimum_protocol_version = "TLSv1.2_2021"
+  # Sem domínio próprio: certificado padrão do CloudFront (*.cloudfront.net), HTTPS grátis.
+  dynamic "viewer_certificate" {
+    for_each = var.domain_name == "" ? [1] : []
+    content {
+      cloudfront_default_certificate = true
+    }
+  }
+
+  dynamic "viewer_certificate" {
+    for_each = var.domain_name == "" ? [] : [1]
+    content {
+      acm_certificate_arn      = var.acm_certificate_arn
+      ssl_support_method       = "sni-only"
+      minimum_protocol_version = "TLSv1.2_2021"
+    }
   }
 
   # Sem bloco `logging_config`: o termo de busca vai na URL (GET /v1/search?q=...) e o log padrão do CloudFront gravaria a query string.
@@ -199,6 +239,18 @@ resource "aws_s3_bucket_lifecycle_configuration" "backups" {
 
     abort_incomplete_multipart_upload {
       days_after_initiation = 7
+    }
+  }
+
+  # A retenção do app apaga o backup antigo (cria marcador de exclusão); aqui o marcador órfão também some.
+  rule {
+    id     = "limpa-marcadores-de-exclusao"
+    status = "Enabled"
+
+    filter {}
+
+    expiration {
+      expired_object_delete_marker = true
     }
   }
 }
