@@ -3053,15 +3053,111 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Insights determinísticos do mês (valem sem IA)
-         * @description Calculados pelo backend sobre os mesmos números do resumo mensal. O backend não monta a frase: devolve `key` (i18n) e `params`.
-         *     `CATEGORY_DELTA` (variação de uma categoria vs. mês anterior, só com 10% ou mais **e** R$ 50,00 ou mais) e `CARD_COMMITTED`
-         *     (fatura que vence no mês com saldo a pagar). Mês sem dados = lista vazia.
+         * Insights do mês (alias de `/v1/insights/monthly`, paginado)
+         * @description Alias de `GET /v1/insights/monthly` mantido para clientes antigos: só os insights `CATEGORY_DELTA` e `CARD_COMMITTED`, com exatamente os
+         *     campos de sempre (`type`, `key`, `params`, `factRefs`, `source`), sem nenhum campo novo e sem os demais tipos. Paginado por `page` e
+         *     `pageSize`. Mês sem dados = lista vazia. Clientes novos usam `/v1/insights/monthly`.
          */
         get: operations["listInsights"];
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/insights/monthly": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Insights do mês, ordenados e sem repetição
+         * @description Calculados pelo backend sobre o razão (uma leitura por requisição). Ordem estável: `severity` (ALERT, ATTENTION, POSITIVE, INFO), depois
+         *     `priority` decrescente, depois a magnitude em centavos e `type`/`id`. Tipos: `SAVINGS_RATE`, `SPEND_VS_BASELINE`, `CATEGORY_DELTA`,
+         *     `MONTH_PROJECTION`, `FREE_MONEY`, `COMMITMENT_INDEX`, `DEBT_SERVICE`, `INSTALLMENT_LOAD`, `EMERGENCY_COVERAGE`, `INCOME_STABILITY`,
+         *     `GOAL_PACE`, `CONCENTRATION`, `CARD_COMMITTED`, `CARD_LIMIT_USAGE`, `RECURRING_DETECTED`. Os que dependem do estado de hoje
+         *     (projeção, dinheiro livre, cobertura da reserva, metas, limite do cartão) só saem no mês corrente. `insufficient[]` diz por que um
+         *     insight não saiu. Mês futuro responde `insufficient: [{type: ALL, reason: FUTURE_MONTH}]`.
+         */
+        get: operations["listMonthlyInsights"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/insights/daily": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Insights do dia (fuso do usuário)
+         * @description Tipos: `DAILY_BUDGET`, `TODAY_VS_AVERAGE`, `DUE_SOON`, `MIN_BALANCE_FORECAST`, `ATYPICAL_ENTRY`, `CARD_CLOSING_SOON`. `date` padrão = hoje no
+         *     fuso do usuário; data depois de hoje é `400 INSIGHTS_DATE_INVALID`. A agenda e o caixa usam o estado atual (a data só define o dia de
+         *     referência). Sem renda recebida no mês o orçamento do dia não sai (`insufficient`), nunca é estimado.
+         */
+        get: operations["listDailyInsights"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/insights/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Insights mês a mês (recalculados, não armazenados)
+         * @description Os insights mensais de cada mês de `from` a `to` (no máximo 12 meses; `INSIGHTS_RANGE_INVALID` se passar), até 10 por mês, uma
+         *     leitura do razão no total. Insights de estado atual (projeção, dinheiro livre, cobertura, metas, limite do cartão) só aparecem no mês corrente.
+         */
+        get: operations["listInsightHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/insights/{id}/dismissals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Id do insight (`ins_` + 32 hexadecimais), como veio na lista. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Dispensar um insight
+         * @description `TODAY` esconde só hoje; `MONTH` esconde o mesmo tipo e assunto até o fim do mês; `TYPE` para de avisar deste tipo até reverter.
+         *     Auditoria só de inserção. Id que não é de um insight do usuário (ou que já não é calculado) é `404 INSIGHT_NOT_FOUND`.
+         */
+        post: operations["dismissInsight"];
+        /**
+         * Reverter a dispensa
+         * @description Grava `revoked_at` em todas as dispensas ativas que escondem o insight; a linha de auditoria continua existindo.
+         */
+        delete: operations["restoreInsight"];
         options?: never;
         head?: never;
         patch?: never;
@@ -7065,12 +7161,16 @@ export interface components {
         AiAnalysisSummarySlice: components["schemas"]["SliceBase"] & {
             items: components["schemas"]["AiAnalysisSummary"][];
         };
+        /**
+         * @description Insight no formato original (2.8.0), só os tipos `CATEGORY_DELTA` e `CARD_COMMITTED`: é o que `GET /v1/insights` (alias) devolve, sem
+         *     nenhum campo novo, para não quebrar clientes antigos. Os insights completos (catálogo inteiro e campos novos) são o `InsightItem`.
+         */
         Insight: {
             /** @enum {string} */
             type: "CATEGORY_DELTA" | "CARD_COMMITTED";
             /** @description Chave de i18n (`insight.category.up`, `insight.category.down`, `insight.card.committed`). */
             key: string;
-            /** @description Decimais em string. `CATEGORY_DELTA`: `categoryId`, `categoryName`, `current`, `previous`, `deltaAmount`, `deltaPercent`. `CARD_COMMITTED`: `amount`. */
+            /** @description Decimais em string. `CATEGORY_DELTA`: `categoryId`, `categoryName`, `current`, `previous`, `deltaAmount`, `deltaPercent` (mais `baseline` e `months`, 2.20.0). `CARD_COMMITTED`: `amount`. */
             params: {
                 [key: string]: string;
             };
@@ -7083,6 +7183,75 @@ export interface components {
         };
         InsightSlice: components["schemas"]["SliceBase"] & {
             items: components["schemas"]["Insight"][];
+        };
+        /** @description Insight calculado completo (2.20.0, ADR-019). Todos os campos listados em `required` são sempre enviados; `period`, `basis`, `confidence` e `subjectId` podem ser `null`. */
+        InsightItem: {
+            /** @description `ins_` + hash de (usuário, tipo, período, assunto): estável entre chamadas. */
+            id: string;
+            /** @enum {string} */
+            type: "SAVINGS_RATE" | "SPEND_VS_BASELINE" | "CATEGORY_DELTA" | "MONTH_PROJECTION" | "FREE_MONEY" | "COMMITMENT_INDEX" | "DEBT_SERVICE" | "INSTALLMENT_LOAD" | "EMERGENCY_COVERAGE" | "INCOME_STABILITY" | "GOAL_PACE" | "CONCENTRATION" | "CARD_COMMITTED" | "CARD_LIMIT_USAGE" | "RECURRING_DETECTED" | "DAILY_BUDGET" | "TODAY_VS_AVERAGE" | "DUE_SOON" | "MIN_BALANCE_FORECAST" | "ATYPICAL_ENTRY" | "CARD_CLOSING_SOON";
+            /** @description Chave de i18n (`insight.<área>.<variante>`); chave desconhecida mostra texto neutro. */
+            key: string;
+            /** @description Decimais em string, já calculados (o front só formata). Depende do `type` (ver `docs/arquitetura/insights.md`). */
+            params: {
+                [key: string]: string;
+            };
+            factRefs: string[];
+            /** @enum {string} */
+            severity: "ALERT" | "ATTENTION" | "POSITIVE" | "INFO";
+            /** @description Desempate dentro da severidade (maior primeiro). */
+            priority: number;
+            period?: {
+                /** @enum {string} */
+                kind: "MONTH" | "DAY";
+                /** @description `AAAA-MM` ou `AAAA-MM-DD`. */
+                value: string;
+            } | null;
+            /**
+             * @description Calculado pelos dados do usuário, sem IA.
+             * @enum {string}
+             */
+            source: "COMPUTED";
+            /**
+             * @description Como o número nasceu: só a agenda conhecida, estatística do histórico ou projeção do mês corrente.
+             * @enum {string|null}
+             */
+            basis?: "KNOWN_SCHEDULE" | "HISTORY" | "PROJECTION" | null;
+            confidence?: {
+                /** @description Observações usadas. */
+                n: number;
+                /** @description Janela pedida (meses; dias na projeção). */
+                window: number;
+                /** @description z robusto (decimal em texto) */
+                z?: string | null;
+            } | null;
+            /** @description O que o insight descreve dentro do tipo (categoria, meta, cartão, lançamento). */
+            subjectId?: string | null;
+            dismissed: boolean;
+        };
+        InsightInsufficient: {
+            /** @description Tipo que não saiu (`ALL` = o mês inteiro não se aplica). */
+            type: string;
+            /** @enum {string} */
+            reason: "HISTORY" | "NO_INCOME" | "PARTIAL_MONTH" | "NO_DATA" | "NO_BASELINE" | "NO_ACCOUNTS" | "NO_SCHEDULE" | "NO_LIMIT" | "NO_PLAN" | "FUTURE_MONTH";
+            /** @description Quantos meses (ou dias) faltam para emitir. */
+            missing?: number | null;
+        };
+        InsightList: components["schemas"]["SliceBase"] & {
+            items: components["schemas"]["InsightItem"][];
+            insufficient: components["schemas"]["InsightInsufficient"][];
+        };
+        InsightHistory: {
+            items: {
+                month: string;
+                items: components["schemas"]["InsightItem"][];
+                hasNext: boolean;
+                insufficient: components["schemas"]["InsightInsufficient"][];
+            }[];
+        };
+        InsightDismissInput: {
+            /** @enum {string} */
+            scope: "TODAY" | "MONTH" | "TYPE";
         };
         AiSettings: {
             dailyMessageEnabled: boolean;
@@ -7200,6 +7369,10 @@ export interface components {
         Page: number;
         /** @description Itens por página. */
         PageSize: number;
+        /** @description Quantos insights devolver (1 a 50; padrão 20). */
+        InsightLimit: number;
+        /** @description Inclui os dispensados, marcados com `dismissed = true`. */
+        IncludeDismissed: boolean;
         /** @description UUID gerado por tentativa de envio (S-72, S-87). */
         IdempotencyKey: string;
         /**
@@ -11667,6 +11840,155 @@ export interface operations {
             };
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    listMonthlyInsights: {
+        parameters: {
+            query?: {
+                /** @description Competência `AAAA-MM` (padrão = mês corrente). */
+                month?: string;
+                /** @description Quantos insights devolver (1 a 50; padrão 20). */
+                limit?: components["parameters"]["InsightLimit"];
+                /** @description Inclui os dispensados, marcados com `dismissed = true`. */
+                includeDismissed?: components["parameters"]["IncludeDismissed"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Os insights do mês. */
+            200: {
+                headers: {
+                    "Cache-Control": components["headers"]["NoStore"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InsightList"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    listDailyInsights: {
+        parameters: {
+            query?: {
+                /** @description Dia `AAAA-MM-DD` (padrão = hoje no fuso do usuário; futuro é recusado). */
+                date?: string;
+                /** @description Quantos insights devolver (1 a 50; padrão 20). */
+                limit?: components["parameters"]["InsightLimit"];
+                /** @description Inclui os dispensados, marcados com `dismissed = true`. */
+                includeDismissed?: components["parameters"]["IncludeDismissed"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Os insights do dia. */
+            200: {
+                headers: {
+                    "Cache-Control": components["headers"]["NoStore"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InsightList"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    listInsightHistory: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Um item por mês, do mais antigo ao mais recente. */
+            200: {
+                headers: {
+                    "Cache-Control": components["headers"]["NoStore"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InsightHistory"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    dismissInsight: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Id do insight (`ins_` + 32 hexadecimais), como veio na lista. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InsightDismissInput"];
+            };
+        };
+        responses: {
+            /** @description O insight atualizado, com `dismissed = true`. */
+            201: {
+                headers: {
+                    Location: components["headers"]["Location"];
+                    "Cache-Control": components["headers"]["NoStore"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InsightItem"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    restoreInsight: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Id do insight (`ins_` + 32 hexadecimais), como veio na lista. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description O insight atualizado. */
+            200: {
+                headers: {
+                    "Cache-Control": components["headers"]["NoStore"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InsightItem"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
             500: components["responses"]["InternalServerError"];
         };
     };
