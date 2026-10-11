@@ -943,3 +943,19 @@ Pedido do dono (4 imagens de referência + vidro líquido do portfólio). Sem co
 - **Recorrência:** interruptor "Pertence ao mês seguinte" (só receita, criar e editar) e selo "Renda do mês seguinte" na lista.
 - **Início:** legenda sob o seletor do gráfico conforme `basis` (DATE: dinheiro que entrou; COMPETENCE: renda do mês). Resumo mensal, painel e `income-expenses` exibem o que o servidor devolve, sem conta no front. Exportação CSV: nada a fazer.
 - **Demo (sintético):** o "Projeto de design" do mês anterior tem competência do mês seguinte (só no detalhe/lista; os agregados da demo não a refletem). **Testes:** mappers, recorrência (requests e formulário), formulário de receita, item da lista, legenda do gráfico, `nextMonthOf`. **Pendências:** sem e2e; imagem do backup/CSV não tocada.
+
+### Registro: meta em destaque compacta na Home
+- A meta em destaque deixou de ser faixa de largura total: virou um cartão na coluna direita, empilhado sob "Próximos compromissos" e "Você deve" (`home.page.html/css`); o gráfico ganhou a altura liberada.
+- Cartão: foto 16:9 como área principal (altura fixa de 6,25rem, 4rem no celular), setas, pausa e pontos pequenos dentro da foto; nome, preço, selo e barra fina com percentual abaixo. Sem foto: só nome, preço, selo e progresso. Sem destaque: cartão de uma linha com o convite.
+- Celular: bloco único com foto pequena à esquerda e dados à direita, antes do gráfico. Slider, a11y, i18n e `data-cy` mantidos.
+- Pendente: bateria completa (fit-screen/e2e) roda uma vez no fim; o `fit-screen` 390x844 no mock já falhava antes desta mudança.
+
+### Registro: ajuste global de responsividade mobile (frontend, auditoria 10/10, só código)
+- Tokens: `--touch-min` 44 px; escala tipográfica fluida e menor, espaços e raios menores em <= 640 px (`tokens.css`); escala única de z-index (`--z-content`..`--z-skip`, sem z-index solto); `--text-tab` 11 px, contador do sino 12 px.
+- Modais: em celular, folhas e diálogos viram modal centralizado (margem 12 a 16 px, `max-height: 90dvh`, entrada com fade, escala 0,97 e subida de 8 px); rodapé de ações sticky (último filho do `<form>`), `interactive-widget=resizes-content`, teclado sobe o modal.
+- Início: tipografia e espaços menores fazem tudo caber (inclusive a meta) em 360x740, 375x667, 390x844 e 430x932; KPIs com `clamp()` por `cqi` e `nowrap`; medidor menor; 3 linhas só abaixo de 20 rem. Paisagem (altura < 500 px): barra inferior baixa, cabeçalho de uma linha, página rola. Trilho lateral só com altura >= 600 px. 320x568 e paisagem rolam (documentado).
+- Abas do Planejamento: uma linha com rolagem horizontal e aba ativa na vista; `.tabs flex: none` (aba ativa de Notas); `.page__content` em `minmax(0, 1fr)` (fim da rolagem horizontal em /planning/third-parties 320).
+- Toque: `.hit` e `.stretched-link` (cartão inteiro clicável, sem mudar visual), campos de data, filtros, editor, fotos, galeria, menu e trilho com 44 px no celular/toque.
+- Barra inferior: rótulo curto "Extrato/Activity/Extracto" até 26 rem (nome acessível completo no DOM); colunas `1fr 1fr 3,5rem 1fr 1fr`.
+- Campos: busca `type="search"` (Notas, Pessoas), horário com `mask="time"` sem `inputmode=numeric`. Telas: Revisão de importação (cartão compacto e lista com rolagem interna), Configurações de notificações e Mais (grades), Movimentações usa cartões até 960 px.
+- Pendências: campos curtos em 2 colunas nos formulários, e a bateria (lint/testes/build/e2e/fit-screen) roda uma vez depois da aprovação; specs de overlay/bottom-nav ajustadas mas não executadas.
