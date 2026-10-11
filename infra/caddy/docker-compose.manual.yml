@@ -31,6 +31,10 @@ services:
     mem_limit: 640m
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      # Push (Web Push/VAPID): as chaves vêm do SSM como arquivos em /run/secrets (MONEYLOG_PUSH_VAPID_PUBLIC,
+      # _PRIVATE e _SUBJECT). Sem elas o backend NÃO sobe com isto ligado: rode scripts/enable-push-prod.sh antes de
+      # publicar este compose.
+      MONEYLOG_PUSH_ENABLED: "true"
     ports:
       - "127.0.0.1:8080:8080"
     volumes:
