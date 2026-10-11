@@ -1,5 +1,8 @@
 # Deploy por GitHub Actions com OIDC (sem chave de longa duração)
 
+Os valores reais (conta, instância, bucket, domínio) não ficam no repositório: use os placeholders `<...>` abaixo e
+preencha no console e nas variáveis do Environment.
+
 Objetivo: publicar front e backend sem nenhuma chave da AWS guardada em disco ou no GitHub. O GitHub Actions troca um
 token de curta duração (OIDC) por credenciais temporárias de uma role que só ele pode assumir, e só depois que você
 aprova o Environment `production`. Os três repositórios continuam **privados**.
@@ -17,8 +20,8 @@ deste plano essa chave é desativada e depois apagada.
 3. **Environment `production`** no repositório `moneylog` (Settings > Environments):
    - Required reviewers: você.
    - Deployment branches and tags: apenas `main`.
-   - Variables: `AWS_REGION=us-east-1`, `AWS_DEPLOY_ROLE_ARN` (preencher no passo 2), `ARTIFACTS_BUCKET=moneylog-artifacts-mviana`,
-     `INSTANCE_ID=i-04e3d0c5996e25ef6`, `DOMAIN=moneylog.mviana.tech`.
+   - Variables: `AWS_REGION=us-east-1`, `AWS_DEPLOY_ROLE_ARN` (preencher no passo 2), `ARTIFACTS_BUCKET=<BUCKET-DE-ARTEFATOS>`,
+     `INSTANCE_ID=<ID-DA-INSTANCIA>`, `DOMAIN=<seu-dominio>`.
    - Secrets: `SUBMODULES_TOKEN`.
 
 ## 1. Provedor OIDC na AWS (uma vez)
@@ -43,7 +46,7 @@ Console > IAM > Funções > Criar função > Identidade da web > provedor acima,
     {
       "Effect": "Allow",
       "Principal": {
-        "Federated": "arn:aws:iam::001800894052:oidc-provider/token.actions.githubusercontent.com"
+        "Federated": "arn:aws:iam::<ID-DA-CONTA>:oidc-provider/token.actions.githubusercontent.com"
       },
       "Action": "sts:AssumeRoleWithWebIdentity",
       "Condition": {
@@ -80,13 +83,13 @@ Console > IAM > Funções > Criar função > Identidade da web > provedor acima,
         "ecr:PutImage",
         "ecr:DescribeImages"
       ],
-      "Resource": "arn:aws:ecr:us-east-1:001800894052:repository/moneylog-backend"
+      "Resource": "arn:aws:ecr:us-east-1:<ID-DA-CONTA>:repository/moneylog-backend"
     },
     {
       "Sid": "FrontendArtifacts",
       "Effect": "Allow",
       "Action": "s3:PutObject",
-      "Resource": "arn:aws:s3:::moneylog-artifacts-mviana/frontend/*"
+      "Resource": "arn:aws:s3:::<BUCKET-DE-ARTEFATOS>/frontend/*"
     },
     {
       "Sid": "RunOnInstance",
@@ -94,7 +97,7 @@ Console > IAM > Funções > Criar função > Identidade da web > provedor acima,
       "Action": "ssm:SendCommand",
       "Resource": [
         "arn:aws:ssm:us-east-1::document/AWS-RunShellScript",
-        "arn:aws:ec2:us-east-1:001800894052:instance/i-04e3d0c5996e25ef6"
+        "arn:aws:ec2:us-east-1:<ID-DA-CONTA>:instance/<ID-DA-INSTANCIA>"
       ]
     },
     {

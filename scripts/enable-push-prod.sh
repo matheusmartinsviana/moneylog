@@ -13,8 +13,8 @@
 set -euo pipefail
 export AWS_REGION=us-east-1 AWS_DEFAULT_REGION=us-east-1
 P=/moneylog/prod
-BUCKET=moneylog-artifacts-mviana
-SUBJECT=https://moneylog.mviana.tech
+BUCKET="${ARTIFACTS_BUCKET:?defina ARTIFACTS_BUCKET (bucket de artefatos)}"
+SUBJECT="https://${DOMAIN:?defina DOMAIN (domínio do app)}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 COMPOSE="$ROOT/infra/caddy/docker-compose.manual.yml"
 [ -s "$COMPOSE" ] || { echo "não achei $COMPOSE" >&2; exit 1; }
