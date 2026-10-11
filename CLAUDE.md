@@ -24,12 +24,6 @@ PWA mobile-first · backend **Spring Boot (Java 17+)** + **PostgreSQL** + Flyway
 - Variáveis locais em `backend/.env` (copiado de `backend/.env.example`).
 - Hospedagem alvo: AWS free tier (ADR-001). Em produção hoje: `https://moneylog.mviana.tech` (EC2 + Cloudflare); roteiro em `docs/operacao/deploy-gratis-aws.md`.
 
-## Commits (regra fixa, vale nos três repositórios)
-- **Nunca** adicionar `Co-Authored-By` nem qualquer linha de atribuição (nem de IA) em commits ou PRs. Os hooks (`.githooks/` e `frontend/.husky/`) recusam esses commits.
-- Sempre **Conventional Commits**: `<tipo>(<escopo opcional>): <descrição no imperativo, minúscula>`.
-  Tipos: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`. Breaking change: `!` ou rodapé `BREAKING CHANGE:`.
-- Um commit por mudança lógica. Commit/push só quando o usuário pedir.
-
 ## Código sem comentários
 - Não escreva comentários no código (Java, TypeScript, HTML, CSS, scripts): nomes e testes explicam. Exceção só para algo muito específico que o código não consegue dizer.
 - Ficam as diretivas que fazem o código funcionar (`eslint-disable`, `prettier-ignore`, `@ts-expect-error`, `/// <reference>`). Migrações SQL já aplicadas não se editam (o Flyway valida o checksum).
