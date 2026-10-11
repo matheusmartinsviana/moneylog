@@ -152,7 +152,7 @@ cmd_git() {
 
 cmd_setup() {
   say "1/4 submódulos"; git -C "$ROOT" submodule update --init --recursive
-  say "2/4 hooks de commit (Conventional Commits, sem co-autor)"
+  say "2/4 hooks de commit"
   git -C "$ROOT" config core.hooksPath .githooks
   git -C "$BACK" config core.hooksPath .githooks
   (cd "$FRONT" && [ -d node_modules ] || npm ci --silent; npm run --silent prepare 2>/dev/null || true)

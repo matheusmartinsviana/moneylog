@@ -27,7 +27,7 @@ Cada submódulo é um repositório normal: dá para entrar em `backend/` ou `fro
 ou clonar só um deles. O contrato `contracts/openapi.yaml` é do backend; o frontend mantém uma cópia
 (`./moneylog contract sync`).
 
-**Fluxo de commits.** Commit em cada repositório que mudou (Conventional Commits, **sem `Co-Authored-By`**), push dos
+**Fluxo de commits.** Commit em cada repositório que mudou, push dos
 submódulos primeiro e, por último, no principal: `git add backend frontend && git commit -m "chore: atualiza submódulos"`.
 
 ## Produção
