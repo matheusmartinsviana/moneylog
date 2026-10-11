@@ -152,7 +152,7 @@ put  DB_USER                  "moneylog"                       # igual a db_user
 puts DB_PASSWORD              "$(openssl rand -base64 36 | tr -d '\n')"
 puts JWT_SECRET               "$(openssl rand -base64 48 | tr -d '\n')"      # nunca o de dev
 put  MONEYLOG_OWNER_EMAIL     "voce@exemplo.com"
-puts MONEYLOG_OWNER_SETUP_CODE "$(openssl rand -hex 16)"       # >= 16 caracteres, vale 24 h (ADR-015)
+puts MONEYLOG_OWNER_SETUP_CODE "$(openssl rand -hex 16)"       # >= 24 caracteres, 10+ distintos, vale 24 h (ADR-015)
 put  MONEYLOG_ALLOWED_ORIGINS "$(terraform -chdir=infra/terraform output -raw app_url)"
 put  MONEYLOG_TRUSTED_PROXIES "$(scripts/deploy-backend.sh --print-trusted-proxies)"
 put  AI_PROVIDER              "none"                           # chaves de IA vazias: não crie AI_API_KEY
