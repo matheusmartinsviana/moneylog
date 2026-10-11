@@ -128,7 +128,8 @@ cmd_logs() {
 }
 
 cmd_test() {
-  need_repos; local what="${1:-all}" full="${2:-}"
+  need_repos; local what="all" full="" a
+  for a in "$@"; do case "$a" in --full) full="--full" ;; back|backend) what=back ;; front|frontend) what=front ;; all) what=all ;; *) die "uso: ./moneylog test [back|front|all] [--full]" ;; esac; done
   if [ "$what" = back ] || [ "$what" = all ]; then
     say "== backend"; if [ "$full" = "--full" ]; then (cd "$BACK" && ./mvnw -B verify); else (cd "$BACK" && ./mvnw -B test); fi
   fi
