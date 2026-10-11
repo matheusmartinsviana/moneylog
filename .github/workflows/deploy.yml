@@ -29,6 +29,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.ref }}
+          # backend/ e frontend/ são submódulos de repositórios privados: o GITHUB_TOKEN não os lê.
+          # Crie o segredo SUBMODULES_TOKEN (PAT fine-grained, Contents: read, nos dois repos).
+          submodules: recursive
+          token: ${{ secrets.SUBMODULES_TOKEN }}
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
