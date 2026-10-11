@@ -30,6 +30,10 @@ PWA mobile-first · backend **Spring Boot (Java 17+)** + **PostgreSQL** + Flyway
   Tipos: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`. Breaking change: `!` ou rodapé `BREAKING CHANGE:`.
 - Um commit por mudança lógica. Commit/push só quando o usuário pedir.
 
+## Código sem comentários
+- Não escreva comentários no código (Java, TypeScript, HTML, CSS, scripts): nomes e testes explicam. Exceção só para algo muito específico que o código não consegue dizer.
+- Ficam as diretivas que fazem o código funcionar (`eslint-disable`, `prettier-ignore`, `@ts-expect-error`, `/// <reference>`). Migrações SQL já aplicadas não se editam (o Flyway valida o checksum).
+
 ## Time de agentes (`.claude/agents/`)
 | Agente | Papel | Escreve código? |
 |---|---|---|
