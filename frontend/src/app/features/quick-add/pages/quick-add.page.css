@@ -1,8 +1,0 @@
-:host {
-  display: contents;
-}
-
-.quick-add {
-  display: grid;
-  gap: var(--space-3);
-}

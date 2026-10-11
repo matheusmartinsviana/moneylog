@@ -1,0 +1,8 @@
+[submodule "backend"]
+	path = backend
+	url = https://github.com/matheusmartinsviana/moneylog-backend.git
+	branch = main
+[submodule "frontend"]
+	path = frontend
+	url = https://github.com/matheusmartinsviana/moneylog-frontend.git
+	branch = main

@@ -3,14 +3,8 @@
 .env.*
 !.env.example
 
-# Backend (Maven)
-backend/target/
-backend/.mvn/wrapper/maven-wrapper.jar
-
-# Frontend (Angular)
-node_modules/
-dist/
-.angular/
+# Orquestração local (./moneylog): logs e PIDs
+.run/
 
 # IDEs e SO
 .idea/

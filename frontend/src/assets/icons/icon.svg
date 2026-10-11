@@ -1,5 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <!-- Sem logo por decisão do dono (logo ainda não definido). Ladrilho liso na cor de surface-muted (tokens.css).
-       O PWA exige ícones para ser instalável; troque este arquivo quando a marca existir. -->
-  <rect x="8" y="8" width="496" height="496" rx="112" fill="#F6F4F1" stroke="#E7E4DF" stroke-width="4"/>
-</svg>

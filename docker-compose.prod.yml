@@ -1,6 +1,6 @@
 # Exemplo de produção local/servidor único (T175): backend (perfil prod) + Postgres. SEM segredos neste arquivo:
-# tudo vem do .env (copie de .env.example) ou de arquivos em ./secrets (Docker secrets, opcional).
-#   docker compose -f docker-compose.prod.yml --env-file .env up --build
+# tudo vem do .env (copie de backend/.env.example) ou de arquivos em ./secrets (Docker secrets, opcional).
+#   docker compose -f docker-compose.prod.yml --env-file backend/.env up --build
 # O perfil prod não sobe sem JWT_SECRET, MONEYLOG_OWNER_*, DB_* e MONEYLOG_TRUSTED_PROXIES.
 # Em produção na AWS o Postgres é o RDS (ADR-005): remova o serviço `postgres` e aponte DB_URL para o RDS.
 name: moneylog-prod
