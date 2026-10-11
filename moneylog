@@ -1,0 +1,184 @@
+#!/usr/bin/env bash
+# moneylog: sobe, para e acompanha banco, backend e frontend a partir do repositório principal.
+# Cada parte continua um repositório independente (backend/ e frontend/ são submódulos): dá para rodar e codar nelas separadamente.
+#
+#   ./moneylog setup                       submódulos, hooks de commit, backend/.env e dependências do front
+#   ./moneylog up [db|back|front|all]      sobe em segundo plano (padrão: all). Front: --mock | --demo | --local (https)
+#   ./moneylog down [db|back|front|all]    para (o banco só para com `down db` ou `down all`)
+#   ./moneylog restart [db|back|front|all]
+#   ./moneylog status                      o que está de pé (portas, saúde, PIDs)
+#   ./moneylog logs [db|back|front|all] [-f]   últimas linhas (ou acompanha com -f)
+#   ./moneylog test [back|front|all] [--full]  unitários (back: --full roda também os de integração, precisa do Docker)
+#   ./moneylog contract [sync|check]       contrato OpenAPI: copia do backend para o front / confere se divergiu
+#   ./moneylog git <comando git>           roda o mesmo comando git nos três repositórios (ex.: git status -sb)
+#   ./moneylog doctor                      confere ferramentas, submódulos, .env e contrato
+#
+# Logs e PIDs ficam em .run/ (fora do git). Nada aqui guarda segredo: o backend lê backend/.env (também fora do git).
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+RUN="$ROOT/.run"
+BACK="$ROOT/backend"
+FRONT="$ROOT/frontend"
+BACK_PORT="${APP_PORT:-8080}"
+FRONT_PORT=4200
+JDK="/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home"
+[ -z "${JAVA_HOME:-}" ] && [ -d "$JDK" ] && export JAVA_HOME="$JDK"
+mkdir -p "$RUN"
+
+say()  { printf '\033[1m%s\033[0m\n' "$*"; }
+warn() { printf '\033[33m%s\033[0m\n' "$*" >&2; }
+die()  { printf '\033[31m%s\033[0m\n' "$*" >&2; exit 1; }
+
+pid_alive() { [ -f "$RUN/$1.pid" ] && kill -0 "$(cat "$RUN/$1.pid")" 2>/dev/null; }
+port_open() { lsof -iTCP:"$1" -sTCP:LISTEN >/dev/null 2>&1; }
+back_up()   { curl -fsS -m 3 "http://localhost:$BACK_PORT/actuator/health" 2>/dev/null | grep -q '"UP"'; }
+front_up()  { curl -fsS -m 3 -o /dev/null "http://localhost:$FRONT_PORT/" 2>/dev/null; }
+db_state()  { (cd "$BACK" && docker compose ps --format '{{.Health}}' postgres 2>/dev/null | head -1); }
+
+need_repos() { [ -f "$BACK/pom.xml" ] && [ -f "$FRONT/package.json" ] || die "backend/ ou frontend/ vazio: rode ./moneylog setup"; }
+
+# Inicia um processo em segundo plano no próprio grupo de processos (para poder parar tudo junto depois).
+start_bg() { # nome dir comando...
+  local name="$1" dir="$2"; shift 2
+  ( cd "$dir"; set -m; nohup "$@" >"$RUN/$name.log" 2>&1 & echo $! >"$RUN/$name.pid" )
+}
+stop_bg() { # nome
+  if pid_alive "$1"; then
+    local pid; pid="$(cat "$RUN/$1.pid")"
+    kill -TERM -- "-$pid" 2>/dev/null || kill -TERM "$pid" 2>/dev/null || true
+    for _ in 1 2 3 4 5 6 7 8 9 10; do pid_alive "$1" || break; sleep 1; done
+    pid_alive "$1" && kill -KILL -- "-$pid" 2>/dev/null || true
+    say "$1: parado"
+  else
+    warn "$1: não foi iniciado por este script (nada a parar)"
+  fi
+  rm -f "$RUN/$1.pid"
+}
+wait_for() { # descrição segundos função
+  local i=0; printf '%s' "aguardando $1"
+  while [ "$i" -lt "$2" ]; do "$3" && { echo " ok"; return 0; }; printf '.'; sleep 2; i=$((i + 2)); done
+  echo; warn "$1: ainda não respondeu em $2 s (veja ./moneylog logs)"; return 1
+}
+
+up_db() {
+  [ -f "$BACK/.env" ] || die "backend/.env não existe: rode ./moneylog setup"
+  (cd "$BACK" && docker compose up -d --wait) && say "db: postgres de pé"
+}
+up_back() {
+  [ -f "$BACK/.env" ] || die "backend/.env não existe: rode ./moneylog setup"
+  if back_up; then say "back: já está respondendo em :$BACK_PORT"; return; fi
+  port_open "$BACK_PORT" && die "porta $BACK_PORT ocupada por outro processo"
+  [ "$(db_state)" = "healthy" ] || up_db
+  start_bg backend "$BACK" bash -c 'set -a; . ./.env; set +a; exec ./mvnw -B spring-boot:run -Dspring-boot.run.profiles=dev'
+  say "back: iniciando (log em .run/backend.log)"; wait_for "backend" 150 back_up || true
+}
+up_front() {
+  local script="start"
+  case "${1:-}" in --mock) script="start:mock" ;; --demo) script="start:demo" ;; --local) script="start:local" ;; esac
+  if front_up; then say "front: já está respondendo em :$FRONT_PORT"; return; fi
+  port_open "$FRONT_PORT" && [ "$script" != "start:demo" ] && die "porta $FRONT_PORT ocupada por outro processo"
+  [ -d "$FRONT/node_modules" ] || (cd "$FRONT" && npm ci)
+  start_bg frontend "$FRONT" npm run "$script"
+  say "front: iniciando com npm run $script (log em .run/frontend.log)"; wait_for "frontend" 120 front_up || true
+}
+
+cmd_up() {
+  need_repos; local what="${1:-all}"; shift || true
+  case "$what" in
+    db) up_db ;; back|backend) up_back ;; front|frontend) up_front "${1:-}" ;;
+    all) up_db; up_back; up_front "${1:-}" ;;
+    *) die "uso: ./moneylog up [db|back|front|all]" ;;
+  esac
+}
+cmd_down() {
+  local what="${1:-all}"
+  case "$what" in
+    db) (cd "$BACK" && docker compose stop postgres) ;;
+    back|backend) stop_bg backend ;; front|frontend) stop_bg frontend ;;
+    all) stop_bg frontend; stop_bg backend; (cd "$BACK" && docker compose stop postgres) ;;
+    *) die "uso: ./moneylog down [db|back|front|all]" ;;
+  esac
+}
+cmd_restart() { local what="${1:-all}"; case "$what" in db) cmd_down db; cmd_up db ;; *) cmd_down "$what"; cmd_up "$what" ;; esac; }
+
+cmd_status() {
+  need_repos
+  local s
+  s="$(db_state)"; printf "%-9s %s\n" "banco" "$([ -n "$s" ] && echo "postgres: $s" || echo parado)"
+  if back_up; then printf '%-9s %s\n' "backend" "UP em :$BACK_PORT$(pid_alive backend && echo "  (pid $(cat "$RUN/backend.pid"))")"
+  else printf '%-9s %s\n' "backend" "$(port_open "$BACK_PORT" && echo "porta $BACK_PORT ocupada, sem saúde UP" || echo parado)"; fi
+  if front_up; then printf '%-9s %s\n' "frontend" "de pé em :$FRONT_PORT$(pid_alive frontend && echo "  (pid $(cat "$RUN/frontend.pid"))")"
+  else printf '%-9s %s\n' "frontend" "$(port_open "$FRONT_PORT" && echo "porta $FRONT_PORT ocupada" || echo parado)"; fi
+  echo; for r in . backend frontend; do
+    printf '%-9s %s\n' "$([ "$r" = . ] && echo principal || echo "$r")" "$(git -C "$ROOT/$r" rev-parse --abbrev-ref HEAD) @ $(git -C "$ROOT/$r" rev-parse --short HEAD)$( [ -n "$(git -C "$ROOT/$r" status --porcelain)" ] && echo '  *alterado*')"
+  done
+}
+
+cmd_logs() {
+  local what="${1:-all}" follow=""; shift || true; [ "${1:-}" = "-f" ] && follow="-f"
+  case "$what" in
+    db) (cd "$BACK" && docker compose logs --tail 100 $follow postgres) ;;
+    back|backend) tail -n 100 $follow "$RUN/backend.log" ;;
+    front|frontend) tail -n 100 $follow "$RUN/frontend.log" ;;
+    all) touch "$RUN/backend.log" "$RUN/frontend.log"; tail -n 50 $follow "$RUN/backend.log" "$RUN/frontend.log" ;;
+    -f) cmd_logs all -f ;;
+    *) die "uso: ./moneylog logs [db|back|front|all] [-f]" ;;
+  esac
+}
+
+cmd_test() {
+  need_repos; local what="${1:-all}" full="${2:-}"
+  if [ "$what" = back ] || [ "$what" = all ]; then
+    say "== backend"; if [ "$full" = "--full" ]; then (cd "$BACK" && ./mvnw -B verify); else (cd "$BACK" && ./mvnw -B test); fi
+  fi
+  if [ "$what" = front ] || [ "$what" = all ]; then say "== frontend"; (cd "$FRONT" && npm test); fi
+}
+
+cmd_contract() {
+  need_repos; cd "$FRONT"
+  case "${1:-check}" in
+    sync) npm run contract:sync && npm run api:types ;;
+    check) npm run contract:check ;;
+    *) die "uso: ./moneylog contract [sync|check]" ;;
+  esac
+}
+
+cmd_git() {
+  [ "$#" -gt 0 ] || die "uso: ./moneylog git <comando git>   (ex.: git status -sb)"
+  for r in . backend frontend; do say "== $([ "$r" = . ] && echo principal || echo "$r")"; git -C "$ROOT/$r" "$@" || true; done
+}
+
+cmd_setup() {
+  say "1/4 submódulos"; git -C "$ROOT" submodule update --init --recursive
+  say "2/4 hooks de commit (Conventional Commits, sem co-autor)"
+  git -C "$ROOT" config core.hooksPath .githooks
+  git -C "$BACK" config core.hooksPath .githooks
+  (cd "$FRONT" && [ -d node_modules ] || npm ci --silent; npm run --silent prepare 2>/dev/null || true)
+  say "3/4 backend/.env"
+  if [ ! -f "$BACK/.env" ]; then cp "$BACK/.env.example" "$BACK/.env"; warn "backend/.env criado a partir do exemplo: preencha DB_PASSWORD, JWT_SECRET etc."; else echo "ok (já existe)"; fi
+  say "4/4 conferência"; cmd_doctor
+}
+
+cmd_doctor() {
+  local ok=1
+  chk() { if "${@:2}" >/dev/null 2>&1; then printf '  ✔ %s\n' "$1"; else printf '  ✖ %s\n' "$1"; ok=0; fi; }
+  chk "java 21 (JAVA_HOME)"           bash -c '"${JAVA_HOME:-/nonexistent}/bin/java" -version 2>&1 | grep -q "\"21"'
+  chk "node 24"                        bash -c 'node -v | grep -q "^v24"'
+  chk "docker rodando"                 docker info
+  chk "gh autenticado"                 gh auth status
+  chk "submódulo backend"              test -f "$BACK/pom.xml"
+  chk "submódulo frontend"             test -f "$FRONT/package.json"
+  chk "backend/.env"                   test -f "$BACK/.env"
+  chk "hooks de commit (principal)"    bash -c "[ \"\$(git -C '$ROOT' config core.hooksPath)\" = .githooks ]"
+  chk "contrato do front = do backend" bash -c "cd '$FRONT' && node scripts/sync-contract.mjs --check"
+  [ "$ok" = 1 ] && say "tudo certo" || warn "há pendências acima (./moneylog setup resolve a maioria)"
+}
+
+cmd="${1:-help}"; shift || true
+case "$cmd" in
+  setup) cmd_setup ;; up) cmd_up "$@" ;; down) cmd_down "$@" ;; restart) cmd_restart "$@" ;;
+  status) cmd_status ;; logs) cmd_logs "$@" ;; test) cmd_test "$@" ;; contract) cmd_contract "$@" ;;
+  git) cmd_git "$@" ;; doctor) cmd_doctor ;;
+  help|-h|--help|*) sed -n '2,17p' "$0" ;;
+esac
