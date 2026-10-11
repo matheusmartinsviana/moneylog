@@ -4,7 +4,8 @@
 #
 #   ECR_REPOSITORY=<conta>.dkr.ecr.<região>.amazonaws.com/moneylog-backend INSTANCE_ID=i-... AWS_REGION=... \
 #     scripts/deploy-backend.sh [--dry-run] [--skip-build] [--rollback] [--tag TAG]
-#   scripts/deploy-backend.sh --print-trusted-proxies   # CIDRs do CloudFront para MONEYLOG_TRUSTED_PROXIES
+#   scripts/deploy-backend.sh --print-trusted-proxies   # CIDRs do CloudFront para MONEYLOG_TRUSTED_PROXIES (EDGE_MODE=cloudflare: os da Cloudflare)
+# Funciona igual nos dois modos de borda (edge_mode): só usa ECR + SSM + /opt/moneylog/deploy.sh.
 #
 # Variáveis: ECR_REPOSITORY (terraform output ecr_repository), INSTANCE_ID (backend_instance_id), AWS_REGION,
 #            PLATFORM (padrão linux/amd64; use linux/arm64 se instance_type for t4g.*), TAG (padrão: SHA curto do git).
@@ -28,6 +29,12 @@ while [ $# -gt 0 ]; do
     --rollback) ROLLBACK=true ;;
     --tag) TAG="${2:?--tag exige um valor}"; shift ;;
     --print-trusted-proxies)
+      if [ "${EDGE_MODE:-cloudfront}" = cloudflare ]; then
+        # Modo cloudflare: o deploy.sh da instância já grava MONEYLOG_TRUSTED_PROXIES sozinho (Cloudflare + rede do Caddy).
+        # Isto só mostra o valor equivalente para conferência.
+        printf '172.29.0.0/24,%s\n' "$( (curl -fsS https://www.cloudflare.com/ips-v4; echo; curl -fsS https://www.cloudflare.com/ips-v6) | tr -d '\r' | grep -E '^[0-9a-fA-F:.]+/[0-9]+$' | paste -sd, -)"
+        exit 0
+      fi
       curl -fsS https://ip-ranges.amazonaws.com/ip-ranges.json | python3 -I -c '
 import json, sys
 d = json.load(sys.stdin)

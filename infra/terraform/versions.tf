@@ -6,6 +6,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.80"
     }
+    http = {
+      source  = "hashicorp/http"
+      version = "~> 3.4"
+    }
   }
 
   # Estado remoto: configure no primeiro `terraform init` (veja docs/operacao/deploy-aws.md, passo 5).

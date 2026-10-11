@@ -1,0 +1,77 @@
+# Caminho MANUAL (console EC2, sem Terraform): equivalente ao compose que o Terraform gera no modo cloudflare.
+# Copie para /opt/moneylog/docker-compose.yml. Sem segredos: eles ficam em /opt/moneylog/secrets (um arquivo por variável,
+# vindo do SSM) e o Origin Certificate em /opt/moneylog/certs. Guia: docs/operacao/deploy-gratis-aws.md, seção 11.
+# Variáveis (arquivo /opt/moneylog/.env): IMAGE (imagem do backend), DOMAIN (app.exemplo.com), DB_NAME e DB_USER (iguais ao SSM),
+# AWS_REGION e LOG_GROUP (CloudWatch).
+name: moneylog
+services:
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-moneylog}
+      POSTGRES_USER_FILE: /run/secrets/DB_USER
+      POSTGRES_PASSWORD_FILE: /run/secrets/DB_PASSWORD
+    volumes:
+      - /var/lib/moneylog/pgdata:/var/lib/postgresql/data
+      - /opt/moneylog/secrets:/run/secrets:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-moneylog} -d ${DB_NAME:-moneylog}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  backend:
+    image: ${IMAGE:?IMAGE não definida em /opt/moneylog/.env}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    mem_limit: 640m
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - /opt/moneylog/secrets:/run/secrets:ro
+      - /opt/moneylog/backups:/var/backups/moneylog
+    read_only: true
+    tmpfs:
+      - /tmp
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: ${AWS_REGION:?}
+        awslogs-group: ${LOG_GROUP:?}
+        awslogs-stream: backend
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "443:443"
+    env_file:
+      - /opt/moneylog/edge/caddy.env
+    environment:
+      DOMAIN: ${DOMAIN:?}
+    volumes:
+      - /opt/moneylog/Caddyfile:/etc/caddy/Caddyfile:ro
+      - /opt/moneylog/aop.caddy:/etc/caddy/aop.caddy:ro
+      - /opt/moneylog/csp.caddy:/etc/caddy/csp.caddy:ro
+      - /opt/moneylog/certs:/certs:ro
+      - /srv/app:/srv/app:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.29.0.0/24

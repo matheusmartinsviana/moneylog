@@ -1,6 +1,6 @@
 #!/bin/bash
 # Prepara a instância (executado uma vez pelo cloud-init). Nenhum segredo aqui: a configuração vem do SSM no momento do deploy.
-# Modo do banco: ${database_mode}
+# Modo do banco: ${database_mode} | borda: ${edge_mode}
 set -euo pipefail
 dnf install -y docker
 systemctl enable --now docker
@@ -39,6 +39,44 @@ mkdir -p /opt/moneylog/pgdata
 grep -q moneylogdata /etc/fstab || echo "LABEL=moneylogdata /opt/moneylog/pgdata xfs defaults,nofail 0 2" >> /etc/fstab
 mount -a
 chown 999:999 /opt/moneylog/pgdata
+%{ endif ~}
+
+%{ if edge_mode == "cloudflare" ~}
+# ---- Borda Cloudflare: Caddy na 443 (Origin Certificate vindo do SSM no deploy), front em /srv/app, sem nenhum segredo aqui ----
+dnf install -y unzip
+mkdir -p /opt/moneylog/certs /opt/moneylog/edge /srv/app/releases
+chmod 700 /opt/moneylog/certs
+
+cat > /opt/moneylog/Caddyfile <<'CADDY'
+${caddyfile}
+CADDY
+
+%{ if authenticated_origins ~}
+# Authenticated Origin Pulls: o CA público da Cloudflare valida o certificado de cliente que ela apresenta.
+curl -fsSL https://developers.cloudflare.com/ssl/static/authenticated_origin_pull_ca.pem -o /opt/moneylog/edge/aop-ca.pem
+cat > /opt/moneylog/aop.caddy <<'AOP'
+client_auth {
+	mode require_and_verify
+	trust_pool file /etc/caddy/aop-ca.pem
+}
+AOP
+%{ else ~}
+echo "# Authenticated Origin Pulls desligado" > /opt/moneylog/aop.caddy
+%{ endif ~}
+%{ if csp != "" ~}
+cat > /opt/moneylog/csp.caddy <<'CSP'
+header Content-Security-Policy "${csp}"
+CSP
+%{ else ~}
+echo "# CSP desligada" > /opt/moneylog/csp.caddy
+%{ endif ~}
+
+# Valores não secretos lidos pelo deploy.sh (viram MONEYLOG_ALLOWED_ORIGINS e MONEYLOG_TRUSTED_PROXIES do backend).
+# O backend vê o IP do container do Caddy (rede 172.29.0.0/24 do compose) e confia no X-Forwarded-For que ele monta.
+printf '%s' "https://${domain_name}" > /opt/moneylog/edge/allowed-origins
+printf '%s' "$(echo "${cloudflare_cidrs}" | tr ' ' ',')" > /opt/moneylog/edge/cloudflare-cidrs
+printf '%s,%s' "172.29.0.0/24" "$(cat /opt/moneylog/edge/cloudflare-cidrs)" > /opt/moneylog/edge/trusted-proxies
+printf 'CF_PROXIES=%s\n' "${cloudflare_cidrs}" > /opt/moneylog/edge/caddy.env
 %{ endif ~}
 
 cat > /opt/moneylog/docker-compose.yml <<'COMPOSE'
@@ -80,7 +118,12 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: prod
     ports:
+%{ if edge_mode == "cloudflare" ~}
+      # Só no loopback (health check do deploy.sh). O Caddy fala com o backend pela rede interna do compose.
+      - "127.0.0.1:8080:8080"
+%{ else ~}
       - "8080:8080"
+%{ endif ~}
     volumes:
       - /opt/moneylog/secrets:/run/secrets:ro
       - /opt/moneylog/backups:/var/backups/moneylog
@@ -93,6 +136,43 @@ services:
         awslogs-region: ${region}
         awslogs-group: ${log_group}
         awslogs-stream: backend
+%{ if edge_mode == "cloudflare" ~}
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "443:443"
+%{ if allow_http ~}
+      - "80:80"
+%{ endif ~}
+    env_file:
+      - /opt/moneylog/edge/caddy.env
+    environment:
+      DOMAIN: ${domain_name}
+    volumes:
+      - /opt/moneylog/Caddyfile:/etc/caddy/Caddyfile:ro
+      - /opt/moneylog/aop.caddy:/etc/caddy/aop.caddy:ro
+      - /opt/moneylog/csp.caddy:/etc/caddy/csp.caddy:ro
+%{ if authenticated_origins ~}
+      - /opt/moneylog/edge/aop-ca.pem:/etc/caddy/aop-ca.pem:ro
+%{ endif ~}
+      - /opt/moneylog/certs:/certs:ro
+      - /srv/app:/srv/app:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.29.0.0/24
+%{ endif ~}
 COMPOSE
 
 cat > /opt/moneylog/deploy.sh <<'DEPLOY'
@@ -127,6 +207,10 @@ wait_healthy() {
 start_with() {
   printf 'IMAGE=%s/%s:%s\n' "$REGISTRY" "$REPOSITORY" "$1" > "$DIR/.env"
   docker compose up -d --remove-orphans
+%{ if edge_mode == "cloudflare" ~}
+  # Recarrega o Caddy (pega certificado novo sem derrubar conexões).
+  docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile --force >/dev/null 2>&1 || true
+%{ endif ~}
 }
 
 # Configuração do SSM -> arquivos legíveis só pelo usuário do container (uid 10001) e por root (Postgres lê como root).
@@ -137,6 +221,26 @@ aws ssm get-parameters-by-path --region "$REGION" --path "${ssm_prefix}" --with-
   while IFS=$'\t' read -r name value; do
     printf '%s' "$value" > "$SECRETS/$(basename "$name")"
   done
+%{ if edge_mode == "cloudflare" ~}
+# Valores do Terraform (não secretos) têm prioridade sobre qualquer parâmetro SSM de mesmo nome.
+tr -d '\n' < "$DIR/edge/allowed-origins" > "$SECRETS/MONEYLOG_ALLOWED_ORIGINS"
+tr -d '\n' < "$DIR/edge/trusted-proxies" > "$SECRETS/MONEYLOG_TRUSTED_PROXIES"
+
+# Origin Certificate da Cloudflare: SSM SecureString -> /opt/moneylog/certs (root, 600). Nunca passa pelo Terraform.
+mkdir -p "$DIR/certs"
+chmod 700 "$DIR/certs"
+fetch_cert() { # <parâmetro> <arquivo> <cabeçalho PEM esperado>
+  local tmp
+  tmp="$(mktemp "$DIR/certs/.tmp.XXXXXX")"
+  aws ssm get-parameter --region "$REGION" --with-decryption --name "${ssm_prefix}/edge/$1" \
+    --query Parameter.Value --output text > "$tmp" || { rm -f "$tmp"; echo "parâmetro ${ssm_prefix}/edge/$1 não encontrado (veja o guia: carregar o Origin Certificate)" >&2; exit 1; }
+  grep -q "^-----BEGIN $3" "$tmp" || { rm -f "$tmp"; echo "${ssm_prefix}/edge/$1 não parece um PEM ($3)" >&2; exit 1; }
+  chmod 600 "$tmp"
+  mv "$tmp" "$DIR/certs/$2"
+}
+fetch_cert origin-pem origin.pem "CERTIFICATE"
+fetch_cert origin-key origin.key "[A-Z ]*PRIVATE KEY"
+%{ endif ~}
 chown -R 10001:10001 "$SECRETS"
 chmod 500 "$SECRETS"
 chmod 400 "$SECRETS"/*
@@ -164,3 +268,29 @@ fi
 exit 1
 DEPLOY
 chmod 755 /opt/moneylog/deploy.sh
+%{ if edge_mode == "cloudflare" ~}
+
+printf 'REGION=%s\nBUCKET=%s\nDOMAIN=%s\n' "${region}" "${artifacts_bucket}" "${domain_name}" > /opt/moneylog/edge/front.env
+cat > /opt/moneylog/deploy-frontend.sh <<'FRONT'
+${front_script}
+FRONT
+chmod 755 /opt/moneylog/deploy-frontend.sh
+
+cat > /opt/moneylog/edge-refresh.sh <<'EDGE'
+#!/bin/bash
+# Atualiza na instância os CIDRs da Cloudflare (Caddy + MONEYLOG_TRUSTED_PROXIES). O Security Group é atualizado pelo
+# `terraform apply` (prefix lists). Uso (root): /opt/moneylog/edge-refresh.sh
+set -euo pipefail
+cd /opt/moneylog
+V4="$(curl -fsS https://www.cloudflare.com/ips-v4)"
+V6="$(curl -fsS https://www.cloudflare.com/ips-v6)"
+ALL="$(printf '%s\n%s\n' "$V4" "$V6" | tr -d '\r' | grep -E '^[0-9a-fA-F:.]+/[0-9]+$' || true)"
+[ "$(echo "$ALL" | grep -c .)" -ge 10 ] || { echo "lista da Cloudflare suspeita; nada foi alterado" >&2; exit 1; }
+printf 'CF_PROXIES=%s\n' "$(echo "$ALL" | paste -sd' ' -)" > edge/caddy.env
+printf '%s' "$(echo "$ALL" | paste -sd',' -)" > edge/cloudflare-cidrs
+printf '%s,%s' "172.29.0.0/24" "$(cat edge/cloudflare-cidrs)" > edge/trusted-proxies
+docker compose up -d --force-recreate caddy
+[ -f current-tag ] && ./deploy.sh "$(cat current-tag)"
+EDGE
+chmod 755 /opt/moneylog/edge-refresh.sh
+%{ endif ~}

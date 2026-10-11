@@ -14,6 +14,11 @@ variable "domain_name" {
   description = "Domínio próprio do app (front e API no mesmo domínio, sem CORS). Vazio = usa o domínio gratuito *.cloudfront.net (HTTPS incluso)."
   type        = string
   default     = ""
+
+  validation {
+    condition     = var.edge_mode != "cloudflare" || var.domain_name != ""
+    error_message = "edge_mode = \"cloudflare\" exige domain_name (o nome que você aponta na Cloudflare, ex.: app.exemplo.com)."
+  }
 }
 
 variable "acm_certificate_arn" {
@@ -22,9 +27,57 @@ variable "acm_certificate_arn" {
   default     = ""
 
   validation {
-    condition     = (var.domain_name == "") == (var.acm_certificate_arn == "")
-    error_message = "Preencha domain_name e acm_certificate_arn juntos, ou deixe os dois vazios (domínio *.cloudfront.net)."
+    condition     = var.edge_mode == "cloudflare" ? var.acm_certificate_arn == "" : (var.domain_name == "") == (var.acm_certificate_arn == "")
+    error_message = "edge_mode = \"cloudfront\": preencha domain_name e acm_certificate_arn juntos, ou deixe os dois vazios (domínio *.cloudfront.net). edge_mode = \"cloudflare\": acm_certificate_arn deve ficar vazio (o certificado é o Origin Certificate da Cloudflare, carregado no SSM)."
   }
+}
+
+variable "edge_mode" {
+  description = "Quem fica na frente do app. cloudflare (recomendado se o domínio já está na Cloudflare): Cloudflare (proxy) -> EC2 com Caddy na 443, sem S3 de site, CloudFront nem OAC; exige domain_name. cloudfront: S3 + CloudFront + EC2 (porta 8080 só para o CloudFront, HTTP na origem)."
+  type        = string
+  default     = "cloudfront"
+
+  validation {
+    condition     = contains(["cloudflare", "cloudfront"], var.edge_mode)
+    error_message = "edge_mode deve ser \"cloudflare\" ou \"cloudfront\"."
+  }
+}
+
+variable "cloudflare_fetch_ips" {
+  description = "edge_mode = cloudflare: true busca https://www.cloudflare.com/ips-v4 e ips-v6 a cada plan/apply (data source http); resposta inválida cai na lista das variáveis abaixo. false não faz chamada de rede (usa só as variáveis). Falha de rede com true derruba o plan: nesse caso use false."
+  type        = bool
+  default     = true
+}
+
+variable "cloudflare_ipv4_fallback" {
+  description = "CIDRs IPv4 da Cloudflare usados quando cloudflare_fetch_ips = false ou a busca falha. Confira em https://www.cloudflare.com/ips-v4 (conferido em 2026-10; mudam raramente)."
+  type        = list(string)
+  default = [
+    "173.245.48.0/20", "103.21.244.0/22", "103.22.200.0/22", "103.31.4.0/22", "141.101.64.0/18",
+    "108.162.192.0/18", "190.93.240.0/20", "188.114.96.0/20", "197.234.240.0/22", "198.41.128.0/17",
+    "162.158.0.0/15", "104.16.0.0/13", "104.24.0.0/14", "172.64.0.0/13", "131.0.72.0/22",
+  ]
+}
+
+variable "cloudflare_ipv6_fallback" {
+  description = "CIDRs IPv6 da Cloudflare usados quando cloudflare_fetch_ips = false ou a busca falha. Confira em https://www.cloudflare.com/ips-v6."
+  type        = list(string)
+  default = [
+    "2400:cb00::/32", "2606:4700::/32", "2803:f800::/32", "2405:b500::/32", "2405:8100::/32",
+    "2a06:98c0::/29", "2c0f:f248::/32",
+  ]
+}
+
+variable "cloudflare_allow_http" {
+  description = "edge_mode = cloudflare: abre também a porta 80 (só para os CIDRs da Cloudflare) e o Caddy responde com redirecionamento para HTTPS. Desnecessário se a Cloudflare está com Always Use HTTPS; padrão false."
+  type        = bool
+  default     = false
+}
+
+variable "cloudflare_authenticated_origin_pulls" {
+  description = "edge_mode = cloudflare: exige certificado de cliente da Cloudflare (Authenticated Origin Pulls, mTLS) no Caddy. Endurecimento extra: só ligue depois de ativar 'Authenticated Origin Pulls' na Cloudflare, senão o site para de responder (erro 525/526)."
+  type        = bool
+  default     = false
 }
 
 variable "database_mode" {

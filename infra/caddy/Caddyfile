@@ -1,0 +1,106 @@
+# Proxy de borda do modo edge_mode = "cloudflare" (Caddy 2, container "caddy" do compose gerado pelo Terraform).
+# Cloudflare (proxy) -> Caddy :443 (Origin Certificate) -> arquivos estáticos em /srv/app/current ou backend:8080 (/v1/*).
+# Sem segredos aqui. Variáveis de ambiente (definidas no compose): DOMAIN (ex.: app.exemplo.com) e CF_PROXIES (CIDRs da Cloudflare,
+# separados por espaço). Os arquivos aop.caddy e csp.caddy são gerados pelo user_data (vazios = recurso desligado).
+{
+	# Certificado é o Origin Certificate da Cloudflare (manual): nada de ACME/Let's Encrypt.
+	auto_https off
+	# API de administração só dentro do container (usada por `caddy reload` no deploy do front).
+	admin localhost:2019
+
+	servers {
+		# O IP do visitante vem do CF-Connecting-IP, mas só quando a conexão é de um CIDR da Cloudflare.
+		trusted_proxies static {$CF_PROXIES}
+		client_ip_headers CF-Connecting-IP
+		# A Cloudflare fala HTTP/1.1 ou HTTP/2 com a origem; HTTP/3 (UDP) não é usado.
+		protocols h1 h2
+	}
+}
+
+(security_headers) {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+	# CSP opcional: o arquivo é vazio quando content_security_policy não está definida no Terraform.
+	import /etc/caddy/csp.caddy
+}
+
+{$DOMAIN} {
+	tls /certs/origin.pem /certs/origin.key {
+		# Authenticated Origin Pulls (mTLS): arquivo vazio = desligado.
+		import /etc/caddy/aop.caddy
+	}
+
+	encode zstd gzip
+	import security_headers
+
+	# Saúde pelo domínio (só o caminho exato; o resto do /actuator não é exposto).
+	handle /actuator/health {
+		reverse_proxy backend:8080 {
+			header_up X-Forwarded-For {client_ip}
+			header_down Cache-Control "no-store"
+		}
+	}
+
+	# API: sem cache e com o IP real do visitante. Repassa Host/Origin/Cookie como vieram.
+	handle /v1/* {
+		reverse_proxy backend:8080 {
+			# Um único IP limpo (o do visitante). O backend confia na rede do Caddy e lê este valor.
+			header_up X-Forwarded-For {client_ip}
+			header_up X-Real-IP {client_ip}
+			header_down Cache-Control "no-store"
+			# Upload de fotos de metas: sem timeout curto do lado do Caddy (a Cloudflare corta em 100 s).
+			transport http {
+				response_header_timeout 90s
+			}
+		}
+	}
+
+	# Front estático. A pasta atual é um symlink trocado de forma atômica pelo deploy (releases/<id>).
+	handle {
+		root * /srv/app/current
+
+		# Arquivos com hash no nome (main-XXXXXXXX.js, styles-XXXXXXXX.css, chunk-XXXXXXXX.js, fontes): 1 ano, immutable.
+		# ngsw-worker.js e sw-push.js não casam ("worker"/"push" não têm 8 caracteres).
+		@hashed path_regexp hashed ^/[^/]+-[A-Za-z0-9]{8}\.(js|css|woff2?|ttf|otf)$|^/media/.+-[A-Za-z0-9]{8}\.[A-Za-z0-9]+$
+		header @hashed Cache-Control "public, max-age=31536000, immutable"
+
+		# Todo o resto revalida sempre: index.html, ngsw.json, ngsw-worker.js, manifest.webmanifest, sw-push.js e as rotas da SPA.
+		@revalidate not path_regexp hashed ^/[^/]+-[A-Za-z0-9]{8}\.(js|css|woff2?|ttf|otf)$|^/media/.+-[A-Za-z0-9]{8}\.[A-Za-z0-9]+$
+		header @revalidate Cache-Control "no-cache"
+
+		# Fallback da SPA (equivale a `try_files {path} /index.html`) SÓ para caminhos sem extensão que não existem como arquivo.
+		# Arquivo com extensão que não existe dá 404 de verdade (não vira index.html com 200, o que quebraria o service worker).
+		# /v1/* nunca chega aqui (handle acima).
+		@spa {
+			path_regexp spa ^/([^/.]+/)*[^/.]*$
+			not file
+		}
+		rewrite @spa /index.html
+
+		file_server
+	}
+
+	log {
+		output stdout
+		# Sem query string no log (a busca vai em GET /v1/search?q=): apaga a query da URI registrada.
+		format filter {
+			wrap json
+			fields {
+				request>uri regexp \?.* ""
+				request>headers>Authorization delete
+				request>headers>Cookie delete
+				resp_headers>Set-Cookie delete
+			}
+		}
+	}
+}
+
+# Redirecionamento 80 -> 443 (só alcançável se cloudflare_allow_http = true no Terraform).
+http://{$DOMAIN} {
+	redir https://{$DOMAIN}{uri} permanent
+}

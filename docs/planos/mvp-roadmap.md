@@ -338,3 +338,10 @@ Numeração: backend S-119 em diante; frontend FE-S-112 em diante. O texto compl
 - **Desvios:** SPA por CloudFront Function e não por `custom_error_response` (esta valeria também para `/v1/*`); `user_data` ficou no Terraform (sem `scripts/user-data.sh` duplicado); `deploy.yml` não foi alterado (x86 e desenho com RDS).
 - **Pendente:** TOTP/2FA (bloqueio de go-live), HTTPS na origem CloudFront -> EC2 (exige domínio próprio e proxy), CLI para abrir backup cifrado, CSP validada em navegador, preços conferidos no console.
 
+## Registro de execução: borda Cloudflare opcional na AWS (2026-10-10)
+- **Feito:** `edge_mode = "cloudflare" | "cloudfront"` no Terraform (aditivo, `moved` blocks nos recursos do CloudFront). Modo `cloudflare`: EC2 + EIP + EBS/DLM + buckets de backup e de artefatos, SG da 443 só com CIDRs da Cloudflare (data source `http` com fallback em variável; 2 prefix lists próprias; SG da 80 separado e opcional), sem S3 de site/CloudFront/OAC.
+- **Na EC2:** compose gerado com `postgres:17`, backend (loopback) e `caddy:2`; `infra/caddy/Caddyfile` (Origin Certificate do SSM, IP real por `CF-Connecting-IP`, cabeçalhos de segurança, cache por tipo de arquivo, SPA só para rotas sem extensão, `/v1/*` sem cache, log sem query string), `deploy.sh` grava `MONEYLOG_ALLOWED_ORIGINS`/`TRUSTED_PROXIES` e baixa o certificado; `deploy-frontend.sh` remoto (symlink atômico, rollback), `edge-refresh.sh`.
+- **Scripts:** `deploy-frontend.sh` ganhou `EDGE_MODE=cloudflare` (zip -> S3 -> SSM) e `--rollback`; `deploy-backend.sh`/`reset-database.sh` valem nos dois modos.
+- **Docs:** seção 11 do guia (passo a passo AWS + Cloudflare, custos, riscos, testes, caminho manual pelo console EC2), ADR-005, `terraform.tfvars.example`, `outputs.tf`.
+- **Validado:** `terraform fmt -check`/`validate` (Docker), user_data renderizado nos dois modos + `bash -n`/`shellcheck`, `docker compose config`, `caddy validate` e teste funcional do Caddy em Docker, `--dry-run` do front. **Não executado:** nada na AWS nem na Cloudflare. **Pendente:** 2FA/TOTP (bloqueio), CSP em navegador, teste real do `deploy-frontend.sh` remoto e do mTLS (AOP).
+

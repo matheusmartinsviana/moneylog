@@ -49,16 +49,32 @@ data "aws_iam_policy_document" "github_deploy" {
     resources = [aws_ecr_repository.backend.arn]
   }
 
-  statement {
-    sid       = "FrontendSync"
-    actions   = ["s3:PutObject", "s3:DeleteObject", "s3:ListBucket"]
-    resources = [aws_s3_bucket.frontend.arn, "${aws_s3_bucket.frontend.arn}/*"]
+  dynamic "statement" {
+    for_each = local.use_cloudfront ? [1] : []
+    content {
+      sid       = "FrontendSync"
+      actions   = ["s3:PutObject", "s3:DeleteObject", "s3:ListBucket"]
+      resources = [aws_s3_bucket.frontend[0].arn, "${aws_s3_bucket.frontend[0].arn}/*"]
+    }
   }
 
-  statement {
-    sid       = "Invalidate"
-    actions   = ["cloudfront:CreateInvalidation"]
-    resources = [aws_cloudfront_distribution.app.arn]
+  dynamic "statement" {
+    for_each = local.use_cloudfront ? [1] : []
+    content {
+      sid       = "Invalidate"
+      actions   = ["cloudfront:CreateInvalidation"]
+      resources = [aws_cloudfront_distribution.app[0].arn]
+    }
+  }
+
+  # Modo cloudflare: o front vai como zip para o bucket de artefatos e a EC2 o baixa por SSM.
+  dynamic "statement" {
+    for_each = local.use_cloudflare ? [1] : []
+    content {
+      sid       = "FrontendArtifacts"
+      actions   = ["s3:PutObject", "s3:GetObject"]
+      resources = ["${aws_s3_bucket.artifacts[0].arn}/frontend/*"]
+    }
   }
 
   statement {

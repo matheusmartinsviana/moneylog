@@ -12,12 +12,15 @@ data "aws_subnets" "default" {
 
 # Lista gerenciada pela AWS com os IPs de origem do CloudFront.
 data "aws_ec2_managed_prefix_list" "cloudfront" {
-  name = "com.amazonaws.global.cloudfront.origin-facing"
+  count = local.use_cloudfront ? 1 : 0
+  name  = "com.amazonaws.global.cloudfront.origin-facing"
 }
 
+# Só com edge_mode = "cloudfront" (no modo cloudflare os SGs estão em edge_cloudflare.tf).
 # Backend: só o CloudFront alcança a porta 8080. Sem porta 22 (acesso por SSM Session Manager).
 # A lista do CloudFront ocupa ~55 regras do SG (cota padrão: 60 por SG); não adicione outras regras de entrada neste SG.
 resource "aws_security_group" "backend" {
+  count       = local.use_cloudfront ? 1 : 0
   name        = "moneylog-${var.environment}-backend"
   description = "Backend moneylog: entrada apenas do CloudFront na 8080"
   vpc_id      = data.aws_vpc.default.id
@@ -27,7 +30,7 @@ resource "aws_security_group" "backend" {
     from_port       = 8080
     to_port         = 8080
     protocol        = "tcp"
-    prefix_list_ids = [data.aws_ec2_managed_prefix_list.cloudfront.id]
+    prefix_list_ids = [data.aws_ec2_managed_prefix_list.cloudfront[0].id]
   }
 
   egress {
@@ -50,6 +53,16 @@ resource "aws_security_group" "database" {
     from_port       = 5432
     to_port         = 5432
     protocol        = "tcp"
-    security_groups = [aws_security_group.backend.id]
+    security_groups = local.backend_sg_ids
   }
+}
+
+moved {
+  from = aws_security_group.backend
+  to   = aws_security_group.backend[0]
+}
+
+locals {
+  # SGs anexados à EC2 (e usados como origem de entrada no RDS), conforme o modo de borda.
+  backend_sg_ids = local.use_cloudfront ? [aws_security_group.backend[0].id] : compact([aws_security_group.edge_https[0].id, var.cloudflare_allow_http ? aws_security_group.edge_http[0].id : ""])
 }

@@ -1,6 +1,16 @@
 # Copie para terraform.tfvars (ignorado pelo git). Sem segredos: só nomes, e-mail e escolhas.
 # Guia: docs/operacao/deploy-gratis-aws.md
 
+# --- Borda (edge_mode) ---
+# "cloudflare" (RECOMENDADO se o domínio já está na Cloudflare): Cloudflare (proxy) -> EC2 com Caddy na 443, sem S3 de site nem
+# CloudFront; HTTPS na origem com o Origin Certificate (carregado por você no SSM, fora do Terraform). Exige domain_name.
+# "cloudfront": S3 + CloudFront + EC2 (a origem CloudFront -> EC2 é HTTP). Guia: seção "Cloudflare na frente".
+edge_mode   = "cloudflare"
+domain_name = "app.exemplo.com" # o nome que você aponta na Cloudflare (registro A -> elastic_ip, proxy ligado)
+# cloudflare_fetch_ips                  = true  # false = usa só as listas fixas das variáveis (sem chamada de rede no plan)
+# cloudflare_allow_http                 = false # true abre a 80 (só Cloudflare) para redirecionar para HTTPS
+# cloudflare_authenticated_origin_pulls = false # mTLS com a Cloudflare (ative antes na Cloudflare!)
+
 # --- Padrão barato (arquitetura A do guia): Postgres no compose da EC2, sem RDS, URL *.cloudfront.net ---
 database_mode      = "ec2"
 instance_type      = "t3.micro" # ou "t4g.micro" (ARM): exige PLATFORM=linux/arm64 ao construir a imagem
@@ -9,7 +19,7 @@ budget_alert_email = "voce@exemplo.com"
 budget_limit_usd   = 10
 github_repo        = "seu-usuario/moneylog"
 
-# --- Domínio próprio (opcional, depois): preencha os DOIS (certificado ACM em us-east-1) ---
+# --- edge_mode = "cloudfront" + domínio próprio (opcional, depois): preencha os DOIS (certificado ACM em us-east-1) ---
 # domain_name         = "app.exemplo.com"
 # acm_certificate_arn = "arn:aws:acm:us-east-1:111111111111:certificate/00000000-0000-0000-0000-000000000000"
 

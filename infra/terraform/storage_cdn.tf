@@ -1,11 +1,16 @@
+# Só com edge_mode = "cloudfront". No modo "cloudflare" nada disto existe (o front é servido pelo Caddy na EC2).
 # Front estático em S3 privado, servido só pelo CloudFront (OAC). O mesmo domínio atende a API (/v1/*) em outro origin: sem CORS.
 resource "aws_s3_bucket" "frontend" {
+  count = local.use_cloudfront ? 1 : 0
+
   bucket_prefix = "moneylog-${var.environment}-front-"
   force_destroy = false
 }
 
 resource "aws_s3_bucket_public_access_block" "frontend" {
-  bucket                  = aws_s3_bucket.frontend.id
+  count = local.use_cloudfront ? 1 : 0
+
+  bucket                  = aws_s3_bucket.frontend[0].id
   block_public_acls       = true
   block_public_policy     = true
   ignore_public_acls      = true
@@ -13,7 +18,9 @@ resource "aws_s3_bucket_public_access_block" "frontend" {
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "frontend" {
-  bucket = aws_s3_bucket.frontend.id
+  count = local.use_cloudfront ? 1 : 0
+
+  bucket = aws_s3_bucket.frontend[0].id
   rule {
     apply_server_side_encryption_by_default {
       sse_algorithm = "AES256"
@@ -22,6 +29,8 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "frontend" {
 }
 
 resource "aws_cloudfront_origin_access_control" "frontend" {
+  count = local.use_cloudfront ? 1 : 0
+
   name                              = "moneylog-${var.environment}-front"
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
@@ -31,6 +40,8 @@ resource "aws_cloudfront_origin_access_control" "frontend" {
 # SPA: rotas sem extensão voltam para /index.html. É uma Function no comportamento do front (e não custom_error_response), porque
 # erro customizado vale para a distribuição inteira e transformaria o 404 da API em index.html.
 resource "aws_cloudfront_function" "spa" {
+  count = local.use_cloudfront ? 1 : 0
+
   name    = "moneylog-${var.environment}-spa"
   runtime = "cloudfront-js-2.0"
   publish = true
@@ -46,20 +57,28 @@ resource "aws_cloudfront_function" "spa" {
 }
 
 data "aws_cloudfront_cache_policy" "optimized" {
+  count = local.use_cloudfront ? 1 : 0
+
   name = "Managed-CachingOptimized"
 }
 
 data "aws_cloudfront_cache_policy" "disabled" {
+  count = local.use_cloudfront ? 1 : 0
+
   name = "Managed-CachingDisabled"
 }
 
 data "aws_cloudfront_origin_request_policy" "all_viewer_except_host" {
+  count = local.use_cloudfront ? 1 : 0
+
   name = "Managed-AllViewerExceptHostHeader"
 }
 
 # Cabeçalhos de segurança do front: HSTS, nosniff, frame DENY, referrer e (opcional) CSP.
 # Não use a política gerenciada: ela não aceita CSP, e a CSP do Angular depende de hashes (variável content_security_policy).
 resource "aws_cloudfront_response_headers_policy" "security" {
+  count = local.use_cloudfront ? 1 : 0
+
   name = "moneylog-${var.environment}-security"
 
   security_headers_config {
@@ -91,6 +110,8 @@ resource "aws_cloudfront_response_headers_policy" "security" {
 }
 
 resource "aws_cloudfront_distribution" "app" {
+  count = local.use_cloudfront ? 1 : 0
+
   enabled             = true
   comment             = "moneylog ${var.environment}"
   aliases             = var.domain_name == "" ? [] : [var.domain_name]
@@ -100,8 +121,8 @@ resource "aws_cloudfront_distribution" "app" {
 
   origin {
     origin_id                = "frontend"
-    domain_name              = aws_s3_bucket.frontend.bucket_regional_domain_name
-    origin_access_control_id = aws_cloudfront_origin_access_control.frontend.id
+    domain_name              = aws_s3_bucket.frontend[0].bucket_regional_domain_name
+    origin_access_control_id = aws_cloudfront_origin_access_control.frontend[0].id
   }
 
   origin {
@@ -122,12 +143,12 @@ resource "aws_cloudfront_distribution" "app" {
     allowed_methods            = ["GET", "HEAD", "OPTIONS"]
     cached_methods             = ["GET", "HEAD"]
     compress                   = true
-    cache_policy_id            = data.aws_cloudfront_cache_policy.optimized.id
-    response_headers_policy_id = aws_cloudfront_response_headers_policy.security.id
+    cache_policy_id            = data.aws_cloudfront_cache_policy.optimized[0].id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.security[0].id
 
     function_association {
       event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.spa.arn
+      function_arn = aws_cloudfront_function.spa[0].arn
     }
   }
 
@@ -139,8 +160,8 @@ resource "aws_cloudfront_distribution" "app" {
     allowed_methods          = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
     cached_methods           = ["GET", "HEAD"]
     compress                 = true
-    cache_policy_id          = data.aws_cloudfront_cache_policy.disabled.id
-    origin_request_policy_id = data.aws_cloudfront_origin_request_policy.all_viewer_except_host.id
+    cache_policy_id          = data.aws_cloudfront_cache_policy.disabled[0].id
+    origin_request_policy_id = data.aws_cloudfront_origin_request_policy.all_viewer_except_host[0].id
   }
 
   restrictions {
@@ -171,10 +192,12 @@ resource "aws_cloudfront_distribution" "app" {
 }
 
 data "aws_iam_policy_document" "frontend_bucket" {
+  count = local.use_cloudfront ? 1 : 0
+
   statement {
     sid       = "CloudFrontRead"
     actions   = ["s3:GetObject"]
-    resources = ["${aws_s3_bucket.frontend.arn}/*"]
+    resources = ["${aws_s3_bucket.frontend[0].arn}/*"]
 
     principals {
       type        = "Service"
@@ -184,14 +207,56 @@ data "aws_iam_policy_document" "frontend_bucket" {
     condition {
       test     = "StringEquals"
       variable = "AWS:SourceArn"
-      values   = [aws_cloudfront_distribution.app.arn]
+      values   = [aws_cloudfront_distribution.app[0].arn]
     }
   }
 }
 
 resource "aws_s3_bucket_policy" "frontend" {
-  bucket = aws_s3_bucket.frontend.id
-  policy = data.aws_iam_policy_document.frontend_bucket.json
+  count = local.use_cloudfront ? 1 : 0
+
+  bucket = aws_s3_bucket.frontend[0].id
+  policy = data.aws_iam_policy_document.frontend_bucket[0].json
+}
+
+moved {
+  from = aws_s3_bucket.frontend
+  to   = aws_s3_bucket.frontend[0]
+}
+
+moved {
+  from = aws_s3_bucket_public_access_block.frontend
+  to   = aws_s3_bucket_public_access_block.frontend[0]
+}
+
+moved {
+  from = aws_s3_bucket_server_side_encryption_configuration.frontend
+  to   = aws_s3_bucket_server_side_encryption_configuration.frontend[0]
+}
+
+moved {
+  from = aws_cloudfront_origin_access_control.frontend
+  to   = aws_cloudfront_origin_access_control.frontend[0]
+}
+
+moved {
+  from = aws_cloudfront_function.spa
+  to   = aws_cloudfront_function.spa[0]
+}
+
+moved {
+  from = aws_cloudfront_response_headers_policy.security
+  to   = aws_cloudfront_response_headers_policy.security[0]
+}
+
+moved {
+  from = aws_cloudfront_distribution.app
+  to   = aws_cloudfront_distribution.app[0]
+}
+
+moved {
+  from = aws_s3_bucket_policy.frontend
+  to   = aws_s3_bucket_policy.frontend[0]
 }
 
 # Bucket de backups do banco (T176): privado, cifrado, versionado, sem acesso público; retenção extra por lifecycle.
