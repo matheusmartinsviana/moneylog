@@ -41,8 +41,8 @@ moneylog/
 ├── backend/                 Maven, Spring Boot, Java 21
 ├── frontend/                Angular standalone + @angular/pwa
 ├── docs/{adrs,arquitetura,planos,qa,revisoes}/
-├── docker-compose.yml       Postgres local (pinado, com healthcheck)
-├── .env.example             todas as variáveis, sem valores reais
+├── (backend/docker-compose.yml: Postgres local, pinado, com healthcheck)
+├── (backend/.env.example: todas as variáveis, sem valores reais)
 └── .gitignore               inclui .env, target/, node_modules/, dist/
 ```
 
@@ -50,7 +50,7 @@ moneylog/
 
 ### 3.1 Stack
 
-- Java 21 (`JAVA_HOME` do `CLAUDE.md`), Maven com wrapper (`mvnw`), **Spring Boot 4.1.x** (4.1.1 no bootstrap; suporte OSS até 2027-07-31), conferido em 2026-10-03 e registrado na **ADR-004** (**[S-28]**, revisada: a 3.5.x saiu do suporte OSS em 2026-06-30). springdoc 3.1.x (documentação viva gerada do código, só no perfil `dev`; o contrato versionado é `contracts/openapi.yaml`, T21).
+- Java 21 (`JAVA_HOME` do `CLAUDE.md`), Maven com wrapper (`mvnw`), **Spring Boot 4.1.x** (4.1.1 no bootstrap; suporte OSS até 2027-07-31), conferido em 2026-10-03 e registrado na **ADR-004** (**[S-28]**, revisada: a 3.5.x saiu do suporte OSS em 2026-06-30). springdoc 3.1.x (documentação viva gerada do código, só no perfil `dev`; o contrato versionado é `backend/contracts/openapi.yaml`, T21).
 - PostgreSQL **17** (local via compose, Testcontainers com a mesma imagem, RDS suporta 17). Flyway. `spring.jpa.hibernate.ddl-auto=validate`.
 - Testes: JUnit 5, AssertJ, Mockito, ArchUnit, Testcontainers. `*Test` no surefire (`mvn test`), `*IT` no failsafe (`mvn verify`, tag `i`). JaCoCo com `jacoco:check` mínimo de **90% de linhas no pacote `core`** (**[S-29]**).
 - Sem Lombok no `core`: records e construtores explícitos do Java 21 (evita os "construtores duplos" citados em BE 02).
@@ -139,11 +139,11 @@ Regras ArchUnit (Etapa 1):
 
 ## 4. Contrato de API inicial (OpenAPI resumido)
 
-> **Contrato vigente: `contracts/openapi.yaml` (OpenAPI 3.1.0, T21).** É a fonte da verdade da Etapa 2 em diante; as
+> **Contrato vigente: `backend/contracts/openapi.yaml` (OpenAPI 3.1.0, T21).** É a fonte da verdade da Etapa 2 em diante; as
 > tabelas e exemplos desta seção são o resumo de leitura e o delta da Etapa 2 está em §4.8. Se divergirem, vale o arquivo.
 > O backend prova a conformidade nos ITs (toda **requisição e** resposta é validada contra o arquivo com o
 > `openapi-request-validator-mockmvc` 3.0.0, e o `ContractCoverageIT` confere operação do arquivo × handler mapeado) e o
-> front gera os tipos dele com `openapi-typescript`. Lint: `npx @redocly/cli lint contracts/openapi.yaml`.
+> front gera os tipos dele com `openapi-typescript`. Lint: `npx @redocly/cli lint backend/contracts/openapi.yaml`.
 >
 > **Versão do OpenAPI (S-84, spike da T21):** **3.1.0**. O `OpenApiValidatorSpikeTest` provou que o validador (que usa
 > `swagger-parser` 2.1.x e `json-schema-validator` 2.x, dialeto 2020-12) carrega o arquivo e valida `oneOf` +
@@ -255,7 +255,7 @@ Entry = { "transactionId": "uuid", "transactionType": "CARD_PURCHASE",
 - Garantias (testadas em T8a/T8b no domínio e por IT na Etapa 2): `GET /v1/entries?competence=M&lens=CONSUMPTION` → `totals.total` = `DashboardSummary.month.consumption`; com `lens=INCOME` → `month.income`; `GET /v1/transactions?from=<1º dia de M>&to=<último dia>` sem outros filtros → `totals.cashFlow` = `month.cashFlow`.
 - Na visão de lançamentos, o reembolso aparece com valor negativo (`via` = `ACCOUNT` ou `CARD`).
 
-### 4.3 Cartões e faturas (Etapa 3; fonte da verdade: `contracts/openapi.yaml`)
+### 4.3 Cartões e faturas (Etapa 3; fonte da verdade: `backend/contracts/openapi.yaml`)
 
 | Método    | Caminho                                                             | Corpo                                                                                                                                                                                                        | Resposta                                                                                                                                                                                            |
 | --------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -354,7 +354,7 @@ UpcomingItem = { "kind": "INVOICE|INVOICE_FORECAST|DEBT_PAYABLE|DEBT_RECEIVABLE|
 
 As dívidas `WITH_MOVEMENT` nascem por `POST /v1/transactions` (`LOAN_GIVEN` ou `MONEY_RECEIVED` com `newDebt`), e o `void` delas é o da movimentação de origem.
 
-**Fechado na Etapa 4 (`contracts/openapi.yaml` é a fonte da verdade):** as rotas acima mais `GET /v1/debts?...&overdue`, `PUT` sem mudar o principal, `POST /v1/people/{id}/unarchive`, `/v1/recurrences` (CRUD, `end`, `deactivate`, `summary`, `occurrences`, `occurrences/{date}/realize` com `Idempotency-Key`, `occurrences/{date}/skip`), `shares[]` na `EXPENSE` e `newDebt`/`debtId` nos tipos de dívida. `Person` traz `net` (com sinal), `direction`, `openDebts` e `nextDueDate`; `Debt` traz `settled`, `outstanding`, `overdue`, `settlements[]`, `cancelable`, `voidable` e `voidBlockedBy`. Decisões e suposições: D1 §8.4 (S-222 a S-233).
+**Fechado na Etapa 4 (`backend/contracts/openapi.yaml` é a fonte da verdade):** as rotas acima mais `GET /v1/debts?...&overdue`, `PUT` sem mudar o principal, `POST /v1/people/{id}/unarchive`, `/v1/recurrences` (CRUD, `end`, `deactivate`, `summary`, `occurrences`, `occurrences/{date}/realize` com `Idempotency-Key`, `occurrences/{date}/skip`), `shares[]` na `EXPENSE` e `newDebt`/`debtId` nos tipos de dívida. `Person` traz `net` (com sinal), `direction`, `openDebts` e `nextDueDate`; `Debt` traz `settled`, `outstanding`, `overdue`, `settlements[]`, `cancelable`, `voidable` e `voidBlockedBy`. Decisões e suposições: D1 §8.4 (S-222 a S-233).
 
 ```json
 Debt = { "id":"uuid","person":{"id":"uuid","name":"João"},"direction":"RECEIVABLE",
@@ -364,7 +364,7 @@ Debt = { "id":"uuid","person":{"id":"uuid","name":"João"},"direction":"RECEIVAB
   "settlements":[{"transactionId":"uuid","amount":Money,"date":"2026-11-05"}], "version":1 }
 ```
 
-### 4.7 Metas, resumo mensal, projeções e exportação (Etapa 5; fonte da verdade: `contracts/openapi.yaml`)
+### 4.7 Metas, resumo mensal, projeções e exportação (Etapa 5; fonte da verdade: `backend/contracts/openapi.yaml`)
 
 - **Metas**: `GET/POST /v1/goals` (`?status=ACTIVE|ACHIEVED|ARCHIVED`, o status é o **derivado** do domínio), `GET/PUT /v1/goals/{id}` (PUT com `version`), `POST /v1/goals/{id}/reservations { accountId, amount (string decimal com sinal, negativo = liberação), date, note? }` (header `Idempotency-Key` obrigatório) → `200 Goal`, `POST /v1/goals/{id}/archive` e `/unarchive`. `Goal` traz `current`, `target`, `progress` (razão com 4 casas), `remaining`, `status`, `monthlyNeeded` (estimativa, S-156), `uncovered` (S-148) e `reservations[]`, tudo calculado no backend. **Reserva não cria movimentação nem lançamento** (D1 §2.9). `Account` ganha `reservedAmount` e `uncovered` (campos aditivos) e `DashboardSummary.balances.reserved` passa a ser real.
 - **Resumo mensal**: `GET /v1/summaries/{yyyy-MM}` → `MonthlySummary` (receitas, despesas = consumo, investimentos fora do consumo, `net`, `savingsRate`, maior categoria, maior gasto, cartão, parcelas futuras e comparação com o mês anterior), pelas mesmas calculadoras do dashboard e da lista. Mês fora do formato ou da janela: `400 SUMMARY_MONTH_INVALID`.
@@ -375,7 +375,7 @@ Debt = { "id":"uuid","person":{"id":"uuid","name":"João"},"direction":"RECEIVAB
 - **Exportação**: `GET /v1/exports/transactions.csv` (mesmos filtros da lista, UTF-8 com BOM, `;`, proteção contra injeção de fórmula) e `GET /v1/exports/backup` (JSON versionado por `schemaVersion`, sem segredos).
 - Erros novos: `GOAL_NOT_FOUND` (404); `GOAL_ARCHIVED`, `GOAL_ALREADY_ARCHIVED`, `GOAL_NOT_ARCHIVED`, `GOAL_RESERVATION_ACCOUNT_NOT_ELIGIBLE`, `GOAL_RELEASE_EXCEEDS_RESERVED`, `GOAL_RESERVATION_AMOUNT_ZERO`, `GOAL_TARGET_NOT_POSITIVE`, `GOAL_FIELD_REQUIRED`, `GOAL_NAME_REQUIRED`, `GOAL_NAME_TOO_LONG`, `GOAL_TEXT_TOO_LONG` (422); `SUMMARY_MONTH_INVALID` (400).
 
-### 4.8 Delta da Etapa 2 (resumo; o detalhe está em `contracts/openapi.yaml`)
+### 4.8 Delta da Etapa 2 (resumo; o detalhe está em `backend/contracts/openapi.yaml`)
 
 - **Erros**: `application/problem+json` (RFC 9457) com `type` (`urn:moneylog:problem:<code>`), `title`, `status`, `detail`,
   `instance`, `code` e `traceId` (= header `X-Trace-Id`, gerado por requisição) e, no `400 VALIDATION_FAILED`,
@@ -491,7 +491,7 @@ Valores iniciais propostos: a task de tokens precisa confirmar contraste **≥ 4
 ### 5.6 Integração (Etapa 2)
 
 - Componente → facade de negócio (`modules/<ctx>/core`) → facade de requisições (`infra`) → `HttpClient`. Interceptor anexa o `Bearer` só para o prefixo `/v1` da API.
-- Tipos gerados de `contracts/openapi.yaml` (`openapi-typescript`) em `src/util/api/schema.gen.ts`, que só `src/modules/*/infra` importa (S-66). O contrato está publicado desde a T21.
+- Tipos gerados de `backend/contracts/openapi.yaml` (`openapi-typescript`) em `src/util/api/schema.gen.ts`, que só `src/modules/*/infra` importa (S-66). O contrato está publicado desde a T21.
 - `exhaustMap` nos botões de salvar e `Idempotency-Key` gerado por tentativa de envio.
 
 ## 6. Topologia AWS (free tier) — esboço, fora do escopo da Etapa 1
@@ -547,7 +547,7 @@ Ordenadas por impacto. As de produto estão em D1 §8.
 | S-77                   | médio   | Vencimento nunca no mesmo dia do fechamento nem antes (clamp em mês curto vai para o mês seguinte). Texto em D1 §2.5.1 e §8                                                                                        | o CHECK `ck_credit_card_invoices_due_after_closing` continua válido                                                                                                                                                                                                           | Produto              | nova (BUG-QA-01, M2)                                                                                 |
 | S-78                   | médio   | Teto de R$ 999.999.999,99 por valor de entrada (`AmountLimit`). Texto em D1 §2.1 e §8                                                                                                                              | barra erro de digitação e protege o `long`                                                                                                                                                                                                                                    | Produto              | nova (BUG-QA-03)                                                                                     |
 | S-65                   | médio   | Auth de usuário único: hash BCrypt só no ambiente, JWT HS256 de 15 min (Resource Server), refresh opaco rotativo em cookie, rate limit, sem CORS. Fechada na **ADR-003**                                           | menor número de peças para um usuário                                                                                                                                                                                                                                         | Arquitetura          | aceita na ADR-003 (T22a); [plano §3.2](../../docs/planos/2026-10-04-etapa-2-contas-movimentacoes.md) |
-| S-66                   | alto    | Contrato primeiro: `contracts/openapi.yaml` (OpenAPI **3.1.0**) é a fonte da verdade; ITs validam requisição e resposta; o front gera os tipos                                                                     | trabalho paralelo front/back sem divergência                                                                                                                                                                                                                                  | Arquitetura          | feita (T21); §4                                                                                      |
+| S-66                   | alto    | Contrato primeiro: `backend/contracts/openapi.yaml` (OpenAPI **3.1.0**) é a fonte da verdade; ITs validam requisição e resposta; o front gera os tipos                                                                     | trabalho paralelo front/back sem divergência                                                                                                                                                                                                                                  | Arquitetura          | feita (T21); §4                                                                                      |
 | S-67                   | médio   | Mock do front só por `fileReplacements` (`mock`, `production-mock`); projetos Playwright `mock`, `prod`, `integration`                                                                                             | a tela não sabe se é mock                                                                                                                                                                                                                                                     | Arquitetura/Frontend | plano §3.2 (T30)                                                                                     |
 | S-72, S-87             | médio   | Idempotência de `POST /v1/transactions`: chave gravada na mesma transação da criação, `request_hash` do comando canônico, erros não memorizados, replay devolve o estado atual                                     | clique duplo e reenvio não duplicam                                                                                                                                                                                                                                           | Arquitetura          | plano §3.2 (T26b)                                                                                    |
 | S-62, S-74, S-90, S-91 | médio   | Flags calculadas no backend; lista por `Slice` sem `COUNT`; nomes de entrada × saída com mapa no contrato; contas nos selects com `loadAll`                                                                        | o front só exibe                                                                                                                                                                                                                                                              | Arquitetura          | plano §3.2                                                                                           |

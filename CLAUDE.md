@@ -10,13 +10,22 @@ Vault Obsidian: `/Users/matheusmartinsviana/Documents/Obsidian Vault/moneylog/`
 ## Stack (ADR-001)
 PWA mobile-first · backend **Spring Boot (Java 17+)** + **PostgreSQL** + Flyway · frontend **Angular** + `@angular/pwa` · IA via `AIService` no backend (`AI_PROVIDER`/`AI_API_KEY`/`AI_MODEL` no `.env`). Os cálculos financeiros ficam **só no backend**; o front exibe o que a API calcula.
 
-## Ambiente local
-- JDK 21: `export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home` (o `java` padrão do PATH não funciona; o Maven do brew usaria o JDK 26).
-- Node 24 / npm 11. Docker Desktop é necessário para Testcontainers e Postgres local.
-- Hospedagem alvo: AWS free tier (ADR-001).
+## Repositórios (três, `backend/` e `frontend/` são submódulos)
+- `moneylog` (este): docs, infra (Terraform/Caddy), scripts de deploy, `.claude/`, `docker-compose.prod.yml` e o orquestrador `./moneylog`.
+- `backend/` → `moneylog-backend` (privado): Spring Boot, `docker-compose.yml` (Postgres local), `.env.example` e o **contrato** `contracts/openapi.yaml` (fonte da verdade).
+- `frontend/` → `moneylog-frontend` (privado): Angular. Mantém uma **cópia** do contrato em `contracts/openapi.yaml`: mudou no backend, rode `./moneylog contract sync`.
+- Cada repo tem histórico, CI, hooks e `README` próprios e pode ser clonado e codado sozinho. Clone completo: `git clone --recurse-submodules <url>` e depois `./moneylog setup`.
+- **Commit é por repositório.** Mudança que cruza API e tela vira um commit no backend, um no frontend e, depois, um no principal que avança os ponteiros (`git add backend frontend`). Faça push dos submódulos **antes** do principal.
+- `./moneylog up|down|status|logs|test|doctor` gerencia banco, backend e frontend sem sair daqui (logs em `.run/`). `./moneylog git <cmd>` roda um comando git nos três.
 
-## Commits (regra fixa)
-- **Nunca** adicionar `Co-Authored-By` nem qualquer linha de atribuição (nem de IA) em commits ou PRs.
+## Ambiente local
+- JDK 21: `export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home` (o `java` padrão do PATH não funciona; o Maven do brew usaria o JDK 26). O `./moneylog` já usa esse caminho.
+- Node 24 / npm 11. Docker Desktop é necessário para Testcontainers e Postgres local.
+- Variáveis locais em `backend/.env` (copiado de `backend/.env.example`).
+- Hospedagem alvo: AWS free tier (ADR-001). Em produção hoje: `https://moneylog.mviana.tech` (EC2 + Cloudflare); roteiro em `docs/operacao/deploy-gratis-aws.md`.
+
+## Commits (regra fixa, vale nos três repositórios)
+- **Nunca** adicionar `Co-Authored-By` nem qualquer linha de atribuição (nem de IA) em commits ou PRs. Os hooks (`.githooks/` e `frontend/.husky/`) recusam esses commits.
 - Sempre **Conventional Commits**: `<tipo>(<escopo opcional>): <descrição no imperativo, minúscula>`.
   Tipos: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`. Breaking change: `!` ou rodapé `BREAKING CHANGE:`.
 - Um commit por mudança lógica. Commit/push só quando o usuário pedir.
