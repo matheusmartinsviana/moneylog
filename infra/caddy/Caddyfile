@@ -48,6 +48,15 @@
 
 	# API: sem cache e com o IP real do visitante. Repassa Host/Origin/Cookie como vieram.
 	handle /v1/* {
+		# Corpo JSON: no máximo 1 MB. Uploads (fotos, importação, vault) seguem até 25 MB e têm limites próprios no backend.
+		@json header Content-Type application/json*
+		request_body @json {
+			max_size 1MB
+		}
+		request_body {
+			max_size 25MB
+		}
+
 		reverse_proxy backend:8080 {
 			# Um único IP limpo (o do visitante). O backend confia na rede do Caddy e lê este valor.
 			header_up X-Forwarded-For {client_ip}
