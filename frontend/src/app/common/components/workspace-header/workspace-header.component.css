@@ -3,8 +3,8 @@
 }
 
 /*
- * Uma linha só (DS 03): saudação (só no Início), busca em pílula e, à direita, botões de ícone, chip de IA e
- * avatar. Nunca quebra para uma segunda linha a partir de 768 px (a saudação e o chip encolhem antes). No celular
+ * Uma linha só (DS 03): saudação (só no Início), busca em pílula e, à direita, tema, notificações e
+ * avatar. Nunca quebra para uma segunda linha a partir de 768 px (a saudação encolhe antes). No celular
  * a saudação desce para uma linha própria e a busca vira um botão de lupa.
  */
 .wh {
@@ -66,13 +66,6 @@
   }
 }
 
-/* Mobile: só a barra fina (lupa, chip e avatar). */
-@media (width < 480px) {
-  .wh__status app-chip {
-    display: none;
-  }
-}
-
 @media (width >= 768px) {
   .wh {
     flex-wrap: nowrap;
@@ -109,23 +102,6 @@
   box-shadow: var(--focus-ring);
 }
 
-/* Contador de não lidas: selo lilás no canto do sino (o número também está no nome acessível). */
-.wh__bell-count {
-  position: absolute;
-  top: -0.375rem;
-  right: -0.375rem;
-  min-width: 1.125rem;
-  padding: 0 var(--space-1);
-  border: 2px solid var(--color-canvas);
-  border-radius: var(--radius-pill);
-  background-color: var(--color-accent);
-  color: var(--color-on-accent);
-  font-size: var(--text-tab);
-  font-weight: var(--weight-semibold);
-  line-height: 1rem;
-  text-align: center;
-}
-
 /* Reserva o espaço enquanto a busca e o avatar carregam (sem salto de layout). */
 .wh__search--placeholder {
   height: 2.75rem;
@@ -140,4 +116,28 @@
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-icon);
   background-color: var(--color-accent-soft);
+}
+
+/* Paisagem de celular (pouca altura): cabeçalho de uma linha só, sem saudação, para sobrar tela ao conteúdo. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .wh,
+  .wh:not(.wh--home) {
+    flex-wrap: nowrap;
+    padding-top: var(--space-2);
+  }
+
+  .wh__greeting {
+    display: none;
+  }
+
+  .wh__status {
+    flex-wrap: nowrap;
+  }
+}
+
+/* Celular de pouca altura (<= 740 px): sem a linha da saudação, que tira ~24 px do conteúdo. */
+@media (width < 768px) and (max-height: 740px) {
+  .wh__greeting {
+    display: none;
+  }
 }

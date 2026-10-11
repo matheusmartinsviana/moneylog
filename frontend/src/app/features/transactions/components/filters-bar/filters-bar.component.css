@@ -14,7 +14,7 @@
 }
 
 .filters__pill {
-  min-height: 2.25rem;
+  min-height: var(--touch-min);
   gap: var(--space-1);
   background-color: var(--color-surface-inset);
 }

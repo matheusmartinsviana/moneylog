@@ -61,7 +61,7 @@
 
 .sidebar__item {
   position: relative;
-  z-index: 1;
+  z-index: var(--z-content);
   display: flex;
   width: var(--sq);
   height: var(--sq);
@@ -185,5 +185,12 @@
 
   .sidebar__indicator {
     display: none;
+  }
+}
+
+/* Tablet (toque): os itens do trilho têm 44 px de alvo. */
+@media (pointer: coarse) {
+  .sidebar {
+    --sq: var(--touch-min);
   }
 }

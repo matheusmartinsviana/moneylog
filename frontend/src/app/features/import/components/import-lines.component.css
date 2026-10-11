@@ -4,7 +4,7 @@
 
 .list {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-2);
   margin: 0;
   padding: 0;
 }
@@ -15,8 +15,8 @@
 
 .line {
   display: grid;
-  gap: var(--space-2);
-  padding: var(--space-4);
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-3);
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-card);
   background-color: var(--color-surface);
@@ -76,6 +76,80 @@
 .status {
   color: var(--color-text);
   font-weight: var(--weight-medium);
+}
+
+/*
+ * Celular e tablet (< 960 px): cartão compacto de 4 linhas (descrição e valor; data e situação; categoria e forma;
+ * ações), sem os rótulos (seguem no DOM para leitores de tela e no `aria-label` da linha), e a lista rola dentro do
+ * próprio painel, em vez de alongar a página (auditoria mobile: 3277 px no 390).
+ */
+@media (width < 960px) {
+  .list {
+    max-height: min(34rem, 68dvh);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-block: 2px;
+  }
+
+  .line {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'desc amount'
+      'date status'
+      'cat method'
+      'actions actions';
+    align-items: start;
+  }
+
+  .cell--desc {
+    grid-area: desc;
+  }
+
+  .cell--amount {
+    grid-area: amount;
+    justify-items: end;
+    text-align: right;
+  }
+
+  .cell--date {
+    grid-area: date;
+    color: var(--color-text-muted);
+  }
+
+  .cell--status {
+    grid-area: status;
+    justify-items: end;
+  }
+
+  .cell--cat {
+    grid-area: cat;
+  }
+
+  .cell--method {
+    grid-area: method;
+    justify-items: end;
+    color: var(--color-text-muted);
+  }
+
+  .cell--actions {
+    grid-area: actions;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));
+    margin-top: var(--space-1);
+  }
+
+  .label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .line {
+    position: relative;
+  }
 }
 
 /* Desktop: tabela estilo planilha. */

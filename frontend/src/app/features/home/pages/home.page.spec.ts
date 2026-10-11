@@ -263,7 +263,7 @@ describe('HomePage (Início sucinto)', () => {
       expect(screen.getByTestId('home-debts-open')).toHaveAttribute('href', '/planning/debts');
     });
 
-    it('Dado uma meta marcada como destaque, então mostra só ela, com o selo do degrau, o preço e o progresso do servidor', async () => {
+    it('Dado uma meta marcada como destaque, então mostra só ela, com o preço e o progresso do servidor', async () => {
       const s = stubs();
       s.goals.goals = [
         aGoal({
@@ -279,7 +279,7 @@ describe('HomePage (Início sucinto)', () => {
 
       expect(await screen.findByTestId('home-featured-goal-open')).toHaveTextContent('Reserva');
       expect(screen.getByTestId('home-featured-goal-open')).toHaveAttribute('href', '/goals/g-1');
-      expect(screen.getByTestId('home-featured-goal-stage')).toHaveTextContent('Estratégia');
+      expect(screen.queryByTestId('home-featured-goal-stage')).not.toBeInTheDocument();
       expect(screen.getByTestId('home-featured-goal-percent')).toHaveTextContent('42,5%');
       expect(screen.getByTestId('home-featured-goal-price')).toHaveTextContent('20.000,00');
       expect(s.goals.queries[0]).toMatchObject({ status: 'ACTIVE', featured: true });

@@ -197,7 +197,7 @@ describe('MenuComponent', () => {
     expect(screen.getByRole('menu')).toBeInTheDocument();
   });
 
-  it('Dado tela compacta, então abre como folha inferior com título e botão Fechar', async () => {
+  it('Dado tela compacta, então abre como modal centralizado com título e botão Fechar', async () => {
     vi.stubGlobal('matchMedia', (query: string) => ({
       matches: true,
       media: query,
@@ -209,7 +209,7 @@ describe('MenuComponent', () => {
     await userEvent.click(trigger);
 
     const sheet = screen.getByRole('dialog', { name: 'Ações da fatura' });
-    expect(sheet).toHaveAttribute('data-side', 'sheet');
+    expect(sheet).toHaveAttribute('data-side', 'center');
     expect(screen.getByRole('menu')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Fechar' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();

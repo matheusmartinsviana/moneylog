@@ -88,8 +88,14 @@ describe('Traduções', () => {
     'Dado %s, então todos os textos estão em sentence case',
     (_, dict) => {
       const problems = leaves(dict)
-        // Máscaras de data (dd/mm/aaaa) são formato, não frase.
-        .filter(([key]) => key !== 'shell.brand' && key !== 'form.date.placeholder')
+        // Máscaras de data (dd/mm/aaaa) são formato, não frase; `shell.aiOn/aiOff` completam "IA (ligada)".
+        .filter(
+          ([key]) =>
+            key !== 'shell.brand' &&
+            key !== 'form.date.placeholder' &&
+            key !== 'shell.aiOn' &&
+            key !== 'shell.aiOff',
+        )
         .flatMap(([key, value]) => {
           const first = value.trim()[0] ?? '';
           const startsLower = /\p{Ll}/u.test(first);

@@ -48,12 +48,12 @@ describe('SheetComponent', () => {
     vi.unstubAllGlobals();
   });
 
-  it('Dado tela compacta, então é uma folha inferior modal com botão Fechar e foco no autofoco', async () => {
+  it('Dado tela compacta, então é um modal centralizado com botão Fechar e foco no autofoco', async () => {
     compact(true);
     await setup();
 
     const panel = screen.getByRole('dialog', { name: 'Filtros' });
-    expect(panel).toHaveAttribute('data-side', 'sheet');
+    expect(panel).toHaveAttribute('data-side', 'center');
     expect(panel).toHaveAttribute('aria-modal', 'true');
     expect(screen.getByTestId('apply')).toHaveFocus();
   });

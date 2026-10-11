@@ -40,7 +40,7 @@ describe('modo demonstração (backend de exemplo)', () => {
     expect(cents(spending.total)).toBe(cents(dash.month.consumption));
   });
 
-  it('Dado as metas de exemplo, então há uma sem prazo (Fantasia), uma de dívidas com plano e uma atingida, com a medida igual à visão de dívidas', async () => {
+  it('Dado as metas de exemplo, então há uma sem prazo (Longo prazo), uma de dívidas com plano e uma atingida, com a medida igual à visão de dívidas', async () => {
     const goals = await get<{
       items: {
         kind: string;

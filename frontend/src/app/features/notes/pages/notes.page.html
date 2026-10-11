@@ -84,16 +84,22 @@
       </div>
     } @else {
       <div class="toolbar">
-        <app-text-field
-          [formControl]="search"
-          fieldId="notes-search"
-          [role]="'searchbox'"
-          enterkeyhint="search"
-          [label]="t().notes.list.searchLabel"
-          [placeholder]="t().notes.list.searchPlaceholder"
-          [mandatory]="false"
-          [maxlength]="200"
-        />
+        <div class="search">
+          <app-icon class="search__icon" name="search" [size]="18" />
+          <app-text-field
+            [hideLabel]="true"
+            [formControl]="search"
+            fieldId="notes-search"
+            type="search"
+            [role]="'searchbox'"
+            enterkeyhint="search"
+            autocomplete="off"
+            [label]="t().notes.list.searchLabel"
+            [placeholder]="t().notes.list.searchPlaceholder"
+            [mandatory]="false"
+            [maxlength]="200"
+          />
+        </div>
         <app-tag-chips
           [tags]="list.tags()"
           [selected]="filters().tag"

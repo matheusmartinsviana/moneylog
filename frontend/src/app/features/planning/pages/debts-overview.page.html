@@ -90,7 +90,7 @@
               <app-money [value]="data.fixedCosts.monthly" />
             </p>
             <p class="note">{{ t().debtOverview.fixedCosts.note }}</p>
-            <a class="link" routerLink="/planning/recurrences" data-cy="debts-fixed-link">{{
+            <a class="link hit" routerLink="/planning/recurrences" data-cy="debts-fixed-link">{{
               t().debtOverview.fixedCosts.link
             }}</a>
           </section>
@@ -152,7 +152,7 @@
                   @for (item of data.cards.items; track item.card.id) {
                     <li class="block" [attr.data-cy]="'debts-card-' + item.card.id">
                       <div class="block__head">
-                        <a class="link" [routerLink]="['/cards', item.card.id]">{{
+                        <a class="link hit" [routerLink]="['/cards', item.card.id]">{{
                           item.card.name
                         }}</a>
                         <strong [attr.data-cy]="'debts-card-total-' + item.card.id"
@@ -218,7 +218,7 @@
                   @for (line of data.people.items; track line.debtId) {
                     <li class="block" [attr.data-cy]="'debts-line-' + line.debtId">
                       <div class="block__head">
-                        <a class="link" [routerLink]="['/debts', line.debtId]">{{
+                        <a class="link hit" [routerLink]="['/debts', line.debtId]">{{
                           line.creditorName
                         }}</a>
                         <strong><app-money [value]="line.outstanding" /></strong>
@@ -256,7 +256,7 @@
                   @for (line of data.other.items; track line.debtId) {
                     <li class="block" [attr.data-cy]="'debts-line-' + line.debtId">
                       <div class="block__head">
-                        <a class="link" [routerLink]="['/debts', line.debtId]">{{
+                        <a class="link hit" [routerLink]="['/debts', line.debtId]">{{
                           line.creditorName
                         }}</a>
                         <strong><app-money [value]="line.outstanding" /></strong>
@@ -290,7 +290,7 @@
                     @for (item of data.tracked.items; track item.id) {
                       <li class="block" [attr.data-cy]="'debts-tracked-' + item.id">
                         <div class="block__head">
-                          <a class="link" [routerLink]="['/planning/commitments', item.id]">{{
+                          <a class="link hit" [routerLink]="['/planning/commitments', item.id]">{{
                             item.name
                           }}</a>
                           <span class="tag">{{ t().debtOverview.tracked.kinds[item.kind] }}</span>

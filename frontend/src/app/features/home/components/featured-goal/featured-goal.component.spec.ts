@@ -71,7 +71,7 @@ describe('FeaturedGoalComponent', () => {
   });
 
   describe('dados do servidor', () => {
-    it('Dado a meta em destaque, então mostra nome, preço, selo do degrau e o progresso que o servidor devolveu', async () => {
+    it('Dado a meta em destaque, então mostra nome, preço e o progresso que o servidor devolveu', async () => {
       await setup([aDreamGoal(0, { stage: 'STRATEGY', progress: '0.2500' })]);
 
       expect(screen.getByTestId('home-featured-goal-open')).toHaveTextContent('Carro de exemplo');
@@ -80,7 +80,7 @@ describe('FeaturedGoalComponent', () => {
         '/goals/goal-dream',
       );
       expect(screen.getByTestId('home-featured-goal-price')).toHaveTextContent('10.000,00');
-      expect(screen.getByTestId('home-featured-goal-stage')).toHaveTextContent('Estratégia');
+      expect(screen.queryByTestId('home-featured-goal-stage')).not.toBeInTheDocument();
       expect(screen.getByTestId('home-featured-goal-percent')).toHaveTextContent('25%');
       expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '25');
     });
@@ -131,7 +131,7 @@ describe('FeaturedGoalComponent', () => {
       expect(screen.getByRole('progressbar')).toBeInTheDocument();
     });
 
-    it('Dado uma foto só, então mostra a foto sem controles de slider', async () => {
+    it('Dado uma foto só, então mostra a foto sem controles de slider (o Início compacto não tem setas, pausa nem indicadores)', async () => {
       await setup([aDreamGoal(1)]);
 
       expect(alt()).toBe('Foto 1 de 1 da meta Carro de exemplo');
@@ -168,10 +168,6 @@ describe('FeaturedGoalComponent', () => {
       expect(alt()).toBe('Foto 1 de 3 da meta Carro de exemplo');
       await tick(fixture, 1);
       expect(alt()).toBe('Foto 2 de 3 da meta Carro de exemplo');
-      expect(screen.getByTestId('home-featured-goal-dot-1')).toHaveAttribute(
-        'aria-current',
-        'true',
-      );
       await tick(fixture, 5000);
       expect(alt()).toBe('Foto 3 de 3 da meta Carro de exemplo');
       await tick(fixture, 5000);
@@ -182,30 +178,12 @@ describe('FeaturedGoalComponent', () => {
       const { fixture, photos } = await setup([aDreamGoal(3)]);
 
       expect([...photos.contentCalls].sort()).toEqual([
-        'goal-dream/photo-1/thumb',
-        'goal-dream/photo-2/thumb',
+        'goal-dream/photo-1/display',
+        'goal-dream/photo-2/display',
       ]);
       await tick(fixture, 5000);
-      expect(photos.contentCalls).toContain('goal-dream/photo-3/thumb');
+      expect(photos.contentCalls).toContain('goal-dream/photo-3/display');
       expect(photos.contentCalls.filter((call) => call.includes('photo-1'))).toHaveLength(1);
-    });
-
-    it('Dado o botão de pausa, então ele é visível, pausa e reproduz de novo, trocando o rótulo', async () => {
-      const { fixture } = await setup([aDreamGoal(3)]);
-      const toggle = screen.getByTestId('home-featured-goal-toggle');
-      expect(toggle).toHaveAccessibleName(pt.brief.featuredGoal.pause);
-
-      fireEvent.click(toggle);
-      fixture.detectChanges();
-      expect(toggle).toHaveAccessibleName(pt.brief.featuredGoal.play);
-      expect(live()).toBe('polite');
-      await tick(fixture, 20_000);
-      expect(alt()).toBe('Foto 1 de 3 da meta Carro de exemplo');
-
-      fireEvent.click(toggle);
-      fixture.detectChanges();
-      await tick(fixture, 5000);
-      expect(alt()).toBe('Foto 2 de 3 da meta Carro de exemplo');
     });
 
     it('Dado o mouse em cima, então pausa e retoma ao sair', async () => {
@@ -239,12 +217,12 @@ describe('FeaturedGoalComponent', () => {
     it('Dado o foco dentro do slider, então pausa; ao sair do foco para fora dele, retoma', async () => {
       const { fixture } = await setup([aDreamGoal(3)]);
 
-      fireEvent.focusIn(screen.getByTestId('home-featured-goal-next'));
+      fireEvent.focusIn(slider());
       fixture.detectChanges();
       await tick(fixture, 20_000);
       expect(alt()).toBe('Foto 1 de 3 da meta Carro de exemplo');
 
-      fireEvent.focusOut(screen.getByTestId('home-featured-goal-next'), {
+      fireEvent.focusOut(slider(), {
         relatedTarget: document.body,
       });
       fixture.detectChanges();
@@ -269,41 +247,6 @@ describe('FeaturedGoalComponent', () => {
       expect(alt()).toBe('Foto 2 de 3 da meta Carro de exemplo');
       visibility.mockRestore();
     });
-
-    it('Dado teclado, quando uso próxima e anterior, então navega, o autoplay pausa com o foco e o anúncio vira polite', async () => {
-      const { fixture } = await setup([aDreamGoal(3)]);
-      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-
-      await user.tab();
-      expect(screen.getByTestId('home-featured-goal-prev')).toHaveFocus();
-      await user.keyboard('{Enter}');
-      fixture.detectChanges();
-      expect(alt()).toBe('Foto 3 de 3 da meta Carro de exemplo');
-      await user.tab();
-      await user.keyboard('{Enter}');
-      fixture.detectChanges();
-      expect(alt()).toBe('Foto 1 de 3 da meta Carro de exemplo');
-      expect(live()).toBe('polite');
-      await tick(fixture, 20_000);
-      expect(alt()).toBe('Foto 1 de 3 da meta Carro de exemplo');
-    });
-
-    it('Dado um indicador, então leva direto à foto e marca aria-current', async () => {
-      const { fixture } = await setup([aDreamGoal(3)]);
-      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-
-      await user.click(screen.getByTestId('home-featured-goal-dot-2'));
-      fixture.detectChanges();
-
-      expect(alt()).toBe('Foto 3 de 3 da meta Carro de exemplo');
-      expect(screen.getByTestId('home-featured-goal-dot-2')).toHaveAttribute(
-        'aria-current',
-        'true',
-      );
-      expect(screen.getByTestId('home-featured-goal-dot-2')).toHaveAccessibleName(
-        'Ver a foto 3 de 3',
-      );
-    });
   });
 
   describe('movimento reduzido', () => {
@@ -319,15 +262,11 @@ describe('FeaturedGoalComponent', () => {
       );
     });
 
-    it('Dado prefers-reduced-motion, então não há autoplay nem botão de pausa e a navegação é manual', async () => {
+    it('Dado prefers-reduced-motion, então não há autoplay e o anúncio fica polite', async () => {
       const { fixture } = await setup([aDreamGoal(3)]);
 
       await tick(fixture, 30_000);
       expect(alt()).toBe('Foto 1 de 3 da meta Carro de exemplo');
-      expect(screen.queryByTestId('home-featured-goal-toggle')).not.toBeInTheDocument();
-      fireEvent.click(screen.getByTestId('home-featured-goal-next'));
-      fixture.detectChanges();
-      expect(alt()).toBe('Foto 2 de 3 da meta Carro de exemplo');
       expect(live()).toBe('polite');
     });
   });

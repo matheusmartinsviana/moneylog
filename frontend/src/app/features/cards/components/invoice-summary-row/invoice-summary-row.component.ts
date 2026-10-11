@@ -23,7 +23,7 @@ import { formatCompetenceShort, formatIsoDate } from '~/util/date';
     @let i = invoice();
     <div class="row__main">
       <a
-        class="row__name"
+        class="row__name stretched-link"
         [routerLink]="['/cards', i.cardId, 'invoices', i.id]"
         [attr.aria-label]="openLabel()"
         [attr.data-cy]="'invoice-open-' + i.id"
@@ -52,6 +52,7 @@ import { formatCompetenceShort, formatIsoDate } from '~/util/date';
   `,
   styles: `
     :host(.row) {
+      position: relative; /* contém o link esticado (cartão inteiro clicável) */
       display: grid;
       gap: var(--space-2);
       padding: var(--space-4);

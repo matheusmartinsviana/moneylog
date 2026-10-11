@@ -119,6 +119,18 @@
   height: 2rem;
 }
 
+/* Alvo de toque de 44 px no celular (auditoria mobile). */
+@media (width <= 640px), (pointer: coarse) {
+  .tile__btn {
+    width: var(--touch-min);
+    height: var(--touch-min);
+  }
+
+  .tile__text-btn {
+    min-height: var(--touch-min);
+  }
+}
+
 .tile__btn[aria-disabled='true'] {
   opacity: 0.45;
 }

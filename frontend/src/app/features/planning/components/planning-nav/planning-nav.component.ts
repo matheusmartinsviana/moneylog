@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
+import {
+  afterNextRender,
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  inject,
+  input,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { I18nService } from '~/app/common/i18n/i18n.service';
@@ -14,10 +21,11 @@ import { I18nService } from '~/app/common/i18n/i18n.service';
       min-width: 0;
     }
 
-    /* Sete abas podem não caber numa linha de 375 px: quebram em vez de alargar a página. */
+    /*
+     * Oito abas não cabem numa linha de celular: ficam em UMA linha que rola na horizontal dentro da pílula (regra
+     * global de .tabs, com sombra nas pontas) e a aba ativa é trazida para a vista ao abrir a tela.
+     */
     .tabs {
-      display: flex;
-      flex-wrap: wrap;
       max-width: 100%;
     }
   `,
@@ -92,6 +100,15 @@ import { I18nService } from '~/app/common/i18n/i18n.service';
 })
 export class PlanningNavComponent {
   protected readonly t = inject(I18nService).t;
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  constructor() {
+    afterNextRender(() => {
+      const active = this.host.nativeElement.querySelector<HTMLElement>('[aria-current="page"]');
+      active?.scrollIntoView?.({ block: 'nearest', inline: 'center' });
+    });
+  }
+
   readonly current = input.required<
     | 'overview'
     | 'recurrences'

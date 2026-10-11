@@ -80,6 +80,12 @@ import { IconComponent } from '~/app/common/components/icon/icon.component';
         border-color var(--duration-fast) var(--ease-standard);
     }
 
+    @media (width <= 640px), (pointer: coarse) {
+      .chip--button {
+        min-height: var(--touch-min);
+      }
+    }
+
     .chip--button:hover {
       background-color: var(--color-hover-soft);
     }

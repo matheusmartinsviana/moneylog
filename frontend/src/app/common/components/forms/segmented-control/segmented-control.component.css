@@ -11,6 +11,8 @@
   position: relative;
   display: flex;
   gap: 2px;
+  /* A largura é a da soma das opções; só no celular o trilho ocupa a linha toda. */
+  width: fit-content;
   max-width: 100%;
   padding: 3px;
   overflow-x: auto;
@@ -81,6 +83,12 @@
 
 .segmented[aria-invalid='true'] {
   box-shadow: inset 0 0 0 var(--border-width) var(--color-risk);
+}
+
+@media (width <= 640px) {
+  .segmented {
+    width: 100%;
+  }
 }
 
 @media (width <= 640px), (pointer: coarse) {

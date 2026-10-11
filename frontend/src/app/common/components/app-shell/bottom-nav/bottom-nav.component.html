@@ -26,7 +26,16 @@
             [attr.data-cy]="'bottom-nav-' + item.key"
           >
             <span class="bottom-nav__sq"><app-icon [name]="item.icon" [size]="20" /></span>
-            <span class="bottom-nav__label">{{ t().nav[item.key] }}</span>
+            <span class="bottom-nav__label">
+              @if (item.key === 'transactions') {
+                <span class="bottom-nav__label-full">{{ t().nav[item.key] }}</span>
+                <span class="bottom-nav__label-short" aria-hidden="true">{{
+                  t().shell.transactionsShort
+                }}</span>
+              } @else {
+                {{ t().nav[item.key] }}
+              }
+            </span>
           </a>
         }
       </li>

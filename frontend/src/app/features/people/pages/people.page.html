@@ -29,13 +29,18 @@
   </nav>
 
   <div class="search">
+    <app-icon class="search__icon" name="search" [size]="18" />
     <app-text-field
+      [hideLabel]="true"
       [formControl]="search"
       fieldId="people-search"
+      type="search"
+      enterkeyhint="search"
       autocomplete="off"
       [maxlength]="100"
       [mandatory]="false"
       [label]="t().people.searchLabel"
+      [placeholder]="t().people.searchPlaceholder"
     />
   </div>
 

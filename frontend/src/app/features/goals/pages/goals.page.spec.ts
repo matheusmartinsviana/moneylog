@@ -196,7 +196,7 @@ describe('GoalsPage', () => {
     await setup(gateway);
 
     expect(screen.getByTestId('goals-add-smart')).toHaveAttribute('href', '/goals/new-smart');
-    expect(screen.getByTestId('goal-stage-g-1')).toHaveTextContent('Fantasia');
+    expect(screen.getByTestId('goal-stage-g-1')).toHaveTextContent('Longo prazo');
     expect(screen.getByTestId('goal-stage-g-2')).toHaveTextContent('Objetivo');
     expect(screen.getByTestId('goal-open-g-2')).toHaveTextContent(/Total de dívidas até/);
     expect(text(screen.getByTestId('goal-current-g-2'))).toBe('R$ 8.000,00');

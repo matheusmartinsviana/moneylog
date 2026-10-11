@@ -1,4 +1,10 @@
-<section class="fg glass" aria-labelledby="home-featured-goal-title" data-cy="home-featured-goal">
+<section
+  class="fg glass"
+  [class.fg--empty]="!view()"
+  [class.fg--photos]="photos().length > 0 && !!view()"
+  aria-labelledby="home-featured-goal-title"
+  data-cy="home-featured-goal"
+>
   <h2 class="fg__title" id="home-featured-goal-title">{{ t().brief.featuredGoal.title }}</h2>
   @switch (status()) {
     @case ('loading') {
@@ -37,7 +43,7 @@
               <div class="fg__frame" aria-atomic="true" [attr.aria-live]="live()">
                 @for (shown of [photo]; track shown.id) {
                   <app-goal-photo
-                    variant="thumb"
+                    variant="display"
                     [eager]="true"
                     [goalId]="goal.id"
                     [photoId]="shown.id"
@@ -48,56 +54,20 @@
                   />
                 }
               </div>
-              @if (multiple()) {
-                <button
-                  type="button"
-                  class="icon-button fg__ctl fg__ctl--prev"
-                  data-cy="home-featured-goal-prev"
-                  [attr.aria-label]="t().brief.featuredGoal.previous"
-                  (click)="step(-1)"
-                >
-                  <app-icon name="chevronLeft" [size]="14" />
-                </button>
-                <button
-                  type="button"
-                  class="icon-button fg__ctl fg__ctl--next"
-                  data-cy="home-featured-goal-next"
-                  [attr.aria-label]="t().brief.featuredGoal.next"
-                  (click)="step(1)"
-                >
-                  <app-icon name="chevronRight" [size]="14" />
-                </button>
-                @if (!reducedMotion()) {
-                  <button
-                    type="button"
-                    class="icon-button fg__ctl fg__ctl--play"
-                    data-cy="home-featured-goal-toggle"
-                    [attr.aria-label]="
-                      userPaused() ? t().brief.featuredGoal.play : t().brief.featuredGoal.pause
-                    "
-                    (click)="togglePlay()"
-                  >
-                    <app-icon [name]="userPaused() ? 'play' : 'pause'" [size]="14" />
-                  </button>
-                }
-              }
             </div>
           }
           <div class="fg__info">
             <a
-              class="fg__name"
+              class="fg__name hit"
               [routerLink]="['/goals', goal.id]"
               [attr.aria-label]="goal.openLabel"
               data-cy="home-featured-goal-open"
               >{{ goal.name }}</a
             >
-            <div class="fg__meta">
-              <p class="fg__price" data-cy="home-featured-goal-price">
-                <span class="fg__price-label">{{ t().brief.featuredGoal.price }}</span>
-                <app-money [value]="goal.target" />
-              </p>
-              <app-goal-stage-badge [stage]="goal.stage" cy="home-featured-goal-stage" />
-            </div>
+            <p class="fg__price" data-cy="home-featured-goal-price">
+              <span class="fg__price-label">{{ t().brief.featuredGoal.price }}</span>
+              <app-money [value]="goal.target" />
+            </p>
             <div class="fg__progress">
               <app-progress-bar
                 class="fg__bar"
@@ -110,22 +80,6 @@
                 goal.percent
               }}</span>
             </div>
-            @if (multiple()) {
-              <ul class="fg__dots" data-cy="home-featured-goal-dots">
-                @for (dot of photos(); track dot.id; let i = $index) {
-                  <li>
-                    <button
-                      type="button"
-                      class="fg__dot"
-                      [attr.aria-label]="goToLabel(i)"
-                      [attr.aria-current]="i === position() ? 'true' : null"
-                      [attr.data-cy]="'home-featured-goal-dot-' + i"
-                      (click)="go(i)"
-                    ></button>
-                  </li>
-                }
-              </ul>
-            }
           </div>
         </div>
       } @else {

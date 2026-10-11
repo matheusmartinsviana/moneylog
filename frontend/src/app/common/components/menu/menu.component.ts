@@ -192,6 +192,15 @@ const normalize = (text: string): string =>
       color: var(--color-text);
     }
 
+    @media (pointer: coarse) {
+      .menu__trigger--rail {
+        width: var(--touch-min);
+        min-width: var(--touch-min);
+        height: var(--touch-min);
+        min-height: var(--touch-min);
+      }
+    }
+
     .menu__trigger--rail.is-active {
       border-color: transparent;
       background-color: transparent;
@@ -268,6 +277,12 @@ const normalize = (text: string): string =>
       text-align: left;
       white-space: nowrap;
       -webkit-tap-highlight-color: transparent;
+    }
+
+    @media (width <= 640px), (pointer: coarse) {
+      .menu__item {
+        min-height: var(--touch-min);
+      }
     }
 
     .menu__item:hover:not([aria-disabled='true']),

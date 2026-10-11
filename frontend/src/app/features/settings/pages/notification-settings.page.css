@@ -12,8 +12,12 @@
   gap: var(--space-3);
 }
 
-@media (width >= 768px) {
-  .grid--two {
-    grid-template-columns: 1fr 1fr;
-  }
+/* Horários curtos lado a lado e as chaves de tipos em colunas que se ajustam à largura: a tela encurta no celular. */
+.grid--two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.grid--kinds {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  column-gap: var(--space-4);
 }

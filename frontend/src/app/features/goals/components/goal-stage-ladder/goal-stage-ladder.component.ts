@@ -10,7 +10,7 @@ import { GOAL_STAGES, type GoalStage } from '~/modules/goals/core/types/goal';
 type StepState = 'done' | 'current' | 'todo';
 
 /**
- * Escada de maturidade da meta (presentational): Fantasia, Objetivo, Estratégia, Consistente e Sucesso,
+ * Escada de maturidade da meta (presentational): Longo prazo, Objetivo, Estratégia, Consistente e Sucesso,
  * com o `stage` do servidor destacado. Cada degrau tem ícone e texto (concluído, você está aqui, adiante):
  * o estado não depende de cor. Embaixo, a dica do próximo passo.
  */

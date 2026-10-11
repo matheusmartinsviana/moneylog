@@ -60,7 +60,7 @@ describe('GoalSmartFormPage', () => {
       expect(screen.getByTestId(id)).toBeInTheDocument();
     }
     expect(screen.getByTestId('goal-smart-no-deadline')).toHaveTextContent(
-      'Meta sem prazo é só fantasia: defina um prazo.',
+      'Meta sem prazo fica no longo prazo: defina uma data para virar objetivo.',
     );
   });
 

@@ -14,9 +14,9 @@
   --color-surface-muted: #f1effa;
   /* Linhas de lista e campos: um degrau abaixo do cartão (no escuro, mais escuro que ele). */
   --color-surface-inset: #f8f7fd;
-  --color-border: #e3dff3;
+  --color-border: #ebe8f6;
   /* Borda de campos e controles interativos: >= 3:1 (WCAG 1.4.11). `--color-border` fica para cartões. */
-  --color-control-border: #85809f;
+  --color-control-border: #8a86a5;
   --color-text: #1a1830;
   --color-text-muted: #5a5775;
   --color-accent: #6948d2;
@@ -79,22 +79,21 @@
   --glass-solid: var(--color-surface);
   --glass-bg: color-mix(in oklab, var(--color-surface) 66%, transparent);
   --glass-bg-strong: color-mix(in oklab, var(--color-surface) 86%, transparent);
-  --glass-border: rgb(124 92 240 / 18%);
-  --glass-shadow:
-    0 12px 36px -14px rgb(60 40 120 / 26%), inset 0 1px 0 0 rgb(255 255 255 / 90%),
-    inset 0 -1px 0 0 rgb(124 92 240 / 10%), inset 0 0 28px -14px rgb(124 92 240 / 28%);
+  --glass-border: var(--color-border);
+  --glass-shadow: 0 12px 36px -14px rgb(60 40 120 / 22%), inset 0 1px 0 0 rgb(255 255 255 / 50%);
   /* Película de luz no topo e brilho da borda superior (o "vidro" das referências). Decorativo. */
-  --glass-sheen: linear-gradient(180deg, rgb(255 255 255 / 70%) 0%, rgb(255 255 255 / 0%) 42%);
-  --glass-edge-top: rgb(124 92 240 / 34%);
-  /* Brilho que percorre o esqueleto de carregamento (skeleton). */
+  --glass-sheen: linear-gradient(180deg, rgb(255 255 255 / 45%) 0%, rgb(255 255 255 / 0%) 42%);
+  --glass-edge-top: var(--glass-border);
+  /* Esqueleto de carregamento: base quase no tom do cartão + brilho lento e de baixa opacidade. */
+  --skeleton-bg: color-mix(in oklab, var(--color-surface-muted) 55%, var(--color-surface));
   --gradient-shimmer: linear-gradient(
     90deg,
     transparent 0%,
-    rgb(124 92 240 / 14%) 50%,
+    rgb(124 92 240 / 7%) 50%,
     transparent 100%
   );
   --glass-lens-bg: rgb(255 255 255 / 45%);
-  --glass-lens-glow: inset 0 0 5px 0 rgb(124 92 240 / 22%), inset 0 1px 0 0 rgb(255 255 255 / 80%);
+  --glass-lens-glow: inset 0 1px 0 0 rgb(255 255 255 / 50%);
 
   color-scheme: light;
 
@@ -104,7 +103,7 @@
     -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Geist Variable', 'Geist',
     'Inter', system-ui, sans-serif;
   --font-mono: 'Geist Mono Variable', 'Geist Mono', 'SF Mono', ui-monospace, monospace;
-  --text-tab: 0.625rem; /* 10px: só o rótulo da barra inferior, como a tab bar do iOS (S-56) */
+  --text-tab: 0.6875rem; /* 11px: só o rótulo da barra inferior (mínimo legível, auditoria mobile) */
   --text-xs: 0.75rem; /* 12px */
   --text-sm: 0.8125rem; /* 13px */
   --text-md: 0.9375rem; /* 15px */
@@ -161,12 +160,15 @@
 
   /* Layout do shell */
   --bottom-nav-height: 4rem;
+  --touch-min: 2.75rem; /* 44px: alvo de toque mínimo (WCAG 2.5.5, HIG) */
   --sidebar-collapsed-width: 4rem;
   /*
    * Ritmo único de página (todas as telas e o cabeçalho): mesma largura máxima, mesmas margens laterais (gutter) e
    * mesmos espaços entre blocos. Nenhuma tela define margem lateral própria.
    */
-  --page-max-width: 72rem;
+  --page-max-width: 150rem;
+  /* Coluna de leitura (configurações, formulários, texto): `app-page-layout reading`. */
+  --reading-max-width: 56rem;
   --page-gutter: 1rem; /* 16 px celular; 24 px tablet; 32 px desktop (abaixo) */
   --page-pad-top: var(--space-3);
   --page-pad-bottom: var(--space-6);
@@ -175,12 +177,21 @@
   ); /* título da página e o conteúdo (telas sucintas: pouco respiro vertical) */
   --section-gap: var(--space-4); /* entre blocos do conteúdo */
   --card-padding: var(--space-5);
-  --window-max-width: 90rem;
-  /* Camadas: diálogo, toast, popover/folha (por cima de tudo, inclusive do diálogo) */
+  --window-max-width: 160rem;
+  /*
+   * Escala ÚNICA de camadas (nada de z-index solto): conteúdo local < elevado (sticky dentro de um cartão) < casca
+   * (cabeçalho, trilho, barra inferior, painel lateral de detalhe) < modal/diálogo < popover e menu (acima do modal que
+   * os abriu) < tooltip < toast < pular para o conteúdo.
+   */
+  --z-content: 1;
+  --z-raised: 2;
+  --z-chrome: 10;
+  --z-side-panel: 20;
   --z-dialog: 50;
-  --z-toast: 80;
   --z-popover: 60;
   --z-tooltip: 70;
+  --z-toast: 80;
+  --z-skip: 100;
   --shadow-popover: 0 8px 28px var(--color-shadow-strong);
   /* Esmaece as pontas de uma área rolável sem barra (a máscara é só alfa; a cor é irrelevante). */
   --mask-scroll-fade: linear-gradient(
@@ -190,6 +201,12 @@
     #000 calc(100% - 0.75rem),
     transparent 100%
   );
+  /* Sombra nas pontas de uma barra que rola na horizontal (4 camadas: 2 capas `local` + 2 sombras fixas). */
+  --scroll-shadow-x:
+    linear-gradient(to right, var(--color-surface-inset) 30%, transparent),
+    linear-gradient(to left, var(--color-surface-inset) 30%, transparent),
+    radial-gradient(farthest-side at 0 50%, var(--color-shadow-strong), transparent),
+    radial-gradient(farthest-side at 100% 50%, var(--color-shadow-strong), transparent);
   --mask-fade-down: linear-gradient(to bottom, #000 0%, transparent 100%);
   --focus-ring: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-focus);
 }
@@ -208,14 +225,59 @@
   }
 }
 
+/*
+ * Celular (<= 640 px): escala tipográfica FLUIDA e MENOR, espaços e raios mais curtos (o dono: "textos grandes em espaços
+ * pequenos"). Base de 13,5 px, rótulos de 11,5 px, títulos de página de 18 a 20 px e valores de KPI de 17 a 19 px, com
+ * `clamp()` entre 320 e 430 px. A altura dos alvos de toque (`--touch-min`) NÃO diminui; só a fonte. Campos de texto seguem
+ * com 16 px (abaixo disso o Safari do iPhone dá zoom ao focar).
+ */
+@media (width <= 640px) {
+  :root {
+    --text-tab: 0.6875rem; /* 11 px */
+    --text-xs: 0.71875rem; /* 11,5 px */
+    --text-sm: clamp(0.75rem, 0.7rem + 0.2vw, 0.8125rem); /* 12 a 13 px */
+    --text-md: clamp(
+      0.8125rem,
+      0.77rem + 0.2vw,
+      0.875rem
+    ); /* 13 a 14 px: texto de lista e botões */
+    --text-lg: clamp(0.9375rem, 0.88rem + 0.25vw, 1rem); /* 15 a 16 px */
+    --text-xl: clamp(1.0625rem, 0.95rem + 0.5vw, 1.1875rem); /* 17 a 19 px: valor de KPI */
+    --text-2xl: clamp(1.125rem, 1rem + 0.5vw, 1.25rem); /* 18 a 20 px: título de página */
+    --text-3xl: clamp(1.375rem, 1.2rem + 0.8vw, 1.625rem);
+    --text-kpi: clamp(1.1875rem, 1.05rem + 0.6vw, 1.375rem);
+    --text-display: clamp(1.375rem, 1.2rem + 0.8vw, 1.625rem);
+    --space-2: 0.375rem;
+    --space-3: 0.625rem;
+    --space-4: 0.875rem;
+    --space-5: 1rem;
+    --space-6: 1.25rem;
+    --space-8: 1.5rem;
+    --radius-card: 16px;
+    --radius-panel: 18px;
+    --radius-control: 10px;
+    --radius-icon: 12px;
+    --page-gutter: 0.875rem;
+    --card-padding: var(--space-4);
+  }
+}
+
+/* Paisagem de celular (pouca altura): barra inferior e respiros mais baixos, para sobrar tela ao conteúdo. */
+@media (orientation: landscape) and (max-height: 500px) {
+  :root {
+    --bottom-nav-height: 3.25rem;
+    --page-pad-bottom: var(--space-3);
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     --color-canvas: #0b0b12;
     --color-surface: #14141e;
     --color-surface-muted: #1c1c2a;
     --color-surface-inset: #0f0f18;
-    --color-border: rgb(196 181 253 / 13%);
-    --color-control-border: #7a7896;
+    --color-border: rgb(255 255 255 / 8%);
+    --color-control-border: #6c6a86;
     --color-text: #f2f1fb;
     --color-text-muted: #a5a3c0;
     --color-accent: #b7a3fb;
@@ -267,21 +329,19 @@
     --glass-solid: var(--color-surface);
     --glass-bg: color-mix(in oklab, var(--color-surface) 58%, transparent);
     --glass-bg-strong: color-mix(in oklab, var(--color-surface) 84%, transparent);
-    --glass-border: color-mix(in oklab, var(--color-text) 12%, transparent);
-    --glass-shadow:
-      0 12px 38px -12px rgb(0 0 0 / 60%), inset 0 1px 0 0 rgb(255 255 255 / 22%),
-      inset 0 -1px 0 0 rgb(0 0 0 / 30%), inset 0 0 32px -16px rgb(167 139 250 / 34%);
-    --glass-sheen: linear-gradient(180deg, rgb(255 255 255 / 8%) 0%, rgb(255 255 255 / 0%) 42%);
-    --glass-edge-top: rgb(255 255 255 / 26%);
+    --glass-border: var(--color-border);
+    --glass-shadow: 0 12px 38px -12px rgb(0 0 0 / 60%), inset 0 1px 0 0 rgb(255 255 255 / 4%);
+    --glass-sheen: linear-gradient(180deg, rgb(255 255 255 / 4%) 0%, rgb(255 255 255 / 0%) 42%);
+    --glass-edge-top: var(--glass-border);
+    --skeleton-bg: color-mix(in oklab, var(--color-surface-muted) 45%, var(--color-surface));
     --gradient-shimmer: linear-gradient(
       90deg,
       transparent 0%,
-      rgb(196 181 253 / 12%) 50%,
+      rgb(196 181 253 / 6%) 50%,
       transparent 100%
     );
     --glass-lens-bg: rgb(255 255 255 / 5%);
-    --glass-lens-glow:
-      inset 0 0 5px 0 rgb(250 250 250 / 45%), inset 0 1px 0 0 rgb(255 255 255 / 14%);
+    --glass-lens-glow: inset 0 1px 0 0 rgb(255 255 255 / 5%);
     color-scheme: dark;
   }
 }
@@ -292,8 +352,8 @@
   --color-surface: #14141e;
   --color-surface-muted: #1c1c2a;
   --color-surface-inset: #0f0f18;
-  --color-border: rgb(196 181 253 / 13%);
-  --color-control-border: #7a7896;
+  --color-border: rgb(255 255 255 / 8%);
+  --color-control-border: #6c6a86;
   --color-text: #f2f1fb;
   --color-text-muted: #a5a3c0;
   --color-accent: #b7a3fb;
@@ -345,20 +405,19 @@
   --glass-solid: var(--color-surface);
   --glass-bg: color-mix(in oklab, var(--color-surface) 58%, transparent);
   --glass-bg-strong: color-mix(in oklab, var(--color-surface) 84%, transparent);
-  --glass-border: color-mix(in oklab, var(--color-text) 12%, transparent);
-  --glass-shadow:
-    0 12px 38px -12px rgb(0 0 0 / 60%), inset 0 1px 0 0 rgb(255 255 255 / 22%),
-    inset 0 -1px 0 0 rgb(0 0 0 / 30%), inset 0 0 32px -16px rgb(167 139 250 / 34%);
-  --glass-sheen: linear-gradient(180deg, rgb(255 255 255 / 8%) 0%, rgb(255 255 255 / 0%) 42%);
-  --glass-edge-top: rgb(255 255 255 / 26%);
+  --glass-border: var(--color-border);
+  --glass-shadow: 0 12px 38px -12px rgb(0 0 0 / 60%), inset 0 1px 0 0 rgb(255 255 255 / 4%);
+  --glass-sheen: linear-gradient(180deg, rgb(255 255 255 / 4%) 0%, rgb(255 255 255 / 0%) 42%);
+  --glass-edge-top: var(--glass-border);
+  --skeleton-bg: color-mix(in oklab, var(--color-surface-muted) 45%, var(--color-surface));
   --gradient-shimmer: linear-gradient(
     90deg,
     transparent 0%,
-    rgb(196 181 253 / 12%) 50%,
+    rgb(196 181 253 / 6%) 50%,
     transparent 100%
   );
   --glass-lens-bg: rgb(255 255 255 / 5%);
-  --glass-lens-glow: inset 0 0 5px 0 rgb(250 250 250 / 45%), inset 0 1px 0 0 rgb(255 255 255 / 14%);
+  --glass-lens-glow: inset 0 1px 0 0 rgb(255 255 255 / 5%);
   color-scheme: dark;
 }
 

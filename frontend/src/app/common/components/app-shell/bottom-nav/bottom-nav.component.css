@@ -5,7 +5,7 @@
 .bottom-nav {
   position: fixed;
   inset: auto 0 0;
-  z-index: 10;
+  z-index: var(--z-chrome);
   padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   border-top: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-panel) var(--radius-panel) 0 0;
@@ -15,7 +15,7 @@
 
 .bottom-nav__list {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr)) 3.5rem repeat(2, minmax(0, 1fr));
   align-items: center;
   height: var(--bottom-nav-height);
 }
@@ -49,7 +49,29 @@
   font-weight: var(--weight-medium);
   line-height: var(--leading-tight);
   letter-spacing: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Celular estreito: rótulo curto de "Movimentações" (o completo segue no DOM, para o nome acessível). */
+.bottom-nav__label-short {
+  display: none;
+}
+
+@media (width <= 26rem) {
+  .bottom-nav__label-full {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .bottom-nav__label-short {
+    display: inline;
+  }
 }
 
 .bottom-nav__link.is-active {
@@ -106,4 +128,25 @@
 
 .bottom-nav__add:active .bottom-nav__add-circle {
   transform: scale(0.96);
+}
+
+/* Paisagem de celular (pouca altura): barra baixa, só ícones (o rótulo segue no DOM para leitores de tela). */
+@media (orientation: landscape) and (max-height: 500px) {
+  .bottom-nav__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .bottom-nav__sq {
+    width: 2.75rem;
+    height: 2.5rem;
+  }
+
+  .bottom-nav__add-circle {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
 }

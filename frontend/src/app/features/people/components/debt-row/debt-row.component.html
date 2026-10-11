@@ -1,7 +1,7 @@
 @let d = debt();
 <div class="row__main">
   <a
-    class="row__title"
+    class="row__title stretched-link"
     [routerLink]="['/debts', d.id]"
     [attr.aria-label]="openLabel()"
     [attr.data-cy]="'debt-open-' + d.id"

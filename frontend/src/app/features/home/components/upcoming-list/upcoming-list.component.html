@@ -19,7 +19,7 @@
               <div class="item__main">
                 @if (view.debtLink; as link) {
                   <a
-                    class="item__label item__link"
+                    class="item__label item__link hit"
                     [routerLink]="link"
                     [attr.data-cy]="
                       view.item.refType === 'TRANSACTION'
@@ -106,7 +106,7 @@
   </dl>
   <p class="note" data-cy="home-upcoming-in-note">{{ t().home.upcoming.totalInNote }}</p>
   @if (hasRecurrence()) {
-    <a class="link" routerLink="/planning/occurrences" data-cy="home-upcoming-pending">
+    <a class="link hit" routerLink="/planning/occurrences" data-cy="home-upcoming-pending">
       {{ t().home.upcoming.openPending }}
     </a>
   }

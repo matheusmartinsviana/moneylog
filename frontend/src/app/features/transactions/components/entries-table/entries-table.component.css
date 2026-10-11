@@ -73,7 +73,7 @@
   background-color: var(--color-hover-soft);
 }
 
-@media (width >= 768px) {
+@media (width >= 960px) {
   .wide {
     display: block;
   }

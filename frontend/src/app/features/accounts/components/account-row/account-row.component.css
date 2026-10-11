@@ -5,6 +5,7 @@
 }
 
 :host(.row) {
+  position: relative; /* contém o link esticado (cartão inteiro clicável) */
   grid-template-columns: auto minmax(0, 1fr);
   grid-template-areas:
     'glyph main'
@@ -118,4 +119,10 @@
   color: var(--color-warning);
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
+}
+
+/* Botões do cartão ficam acima do link esticado. */
+.row__actions {
+  position: relative;
+  z-index: var(--z-content);
 }

@@ -1,4 +1,5 @@
 <app-page-layout
+  reading
   [heading]="t().notifications.settings.title"
   [description]="t().notifications.settings.description"
 >
@@ -38,7 +39,8 @@
               fieldId="settings-daily-time"
               [label]="t().notifications.settings.dailyTime"
               [hint]="t().notifications.settings.timeHint"
-              inputmode="numeric"
+              mask="time"
+              autocomplete="off"
               [maxlength]="5"
             />
             <app-select
@@ -51,7 +53,7 @@
         </app-section-container>
 
         <app-section-container [heading]="t().notifications.settings.kindsTitle">
-          <div class="grid" formGroupName="kinds">
+          <div class="grid grid--kinds" formGroupName="kinds">
             @for (kind of kinds; track kind) {
               <app-switch
                 [formControlName]="kind"
@@ -69,7 +71,8 @@
               fieldId="settings-quiet-from"
               [label]="t().notifications.settings.quietFrom"
               [hint]="t().notifications.settings.timeHint"
-              inputmode="numeric"
+              mask="time"
+              autocomplete="off"
               [maxlength]="5"
             />
             <app-text-field
@@ -77,7 +80,8 @@
               fieldId="settings-quiet-to"
               [label]="t().notifications.settings.quietTo"
               [hint]="t().notifications.settings.timeHint"
-              inputmode="numeric"
+              mask="time"
+              autocomplete="off"
               [maxlength]="5"
             />
           </div>

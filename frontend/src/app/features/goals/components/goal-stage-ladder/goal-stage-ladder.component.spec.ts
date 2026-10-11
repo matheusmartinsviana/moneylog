@@ -30,7 +30,7 @@ describe('GoalStageLadderComponent', () => {
     );
   });
 
-  it('Dado Fantasia, então a dica é definir um prazo', async () => {
+  it('Dado Longo prazo, então a dica é definir um prazo', async () => {
     await setup('FANTASY');
 
     expect(screen.getByTestId('goal-ladder-hint')).toHaveTextContent('Defina um prazo');

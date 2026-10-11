@@ -30,7 +30,7 @@ import { AiStatusFacade } from '~/modules/ai/core/facades/ai-status.facade';
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <app-page-layout [heading]="t().nav.ai" [description]="t().workspacePages.ai.subtitle">
+    <app-page-layout reading [heading]="t().nav.ai" [description]="t().workspacePages.ai.subtitle">
       <div class="ai" data-cy="ai-page">
         <app-section-container [heading]="t().workspacePages.ai.statusTitle">
           <app-ai-status-card />

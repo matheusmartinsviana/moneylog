@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
+import { takeCapturedInstallPrompt } from '~/app/common/services/install-prompt-capture';
 import { INSTALL_DISMISSED_KEY, PwaService } from '~/app/common/services/pwa.service';
 
 function promptEvent(outcome: 'accepted' | 'dismissed') {
@@ -12,7 +13,12 @@ function promptEvent(outcome: 'accepted' | 'dismissed') {
 describe('PwaService', () => {
   const service = () => TestBed.inject(PwaService);
 
+  // `install-prompt-capture` guarda o `beforeinstallprompt` em estado de módulo (e o listener fica no `window`
+  // se outro spec do mesmo worker abriu o shell): sem esvaziar, o evento de um teste vaza para o serviço do próximo.
+  beforeEach(() => takeCapturedInstallPrompt());
+
   afterEach(() => {
+    takeCapturedInstallPrompt();
     localStorage.clear();
     vi.restoreAllMocks();
   });

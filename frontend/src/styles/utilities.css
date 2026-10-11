@@ -28,7 +28,6 @@
  */
 .glass {
   border: var(--border-width) solid var(--glass-border);
-  border-top-color: var(--glass-edge-top);
   background-color: var(--glass-solid);
   background-image: var(--glass-sheen);
   box-shadow: var(--glass-shadow);
@@ -234,6 +233,7 @@ html[data-glass] .glass-lens {
   position: absolute;
   top: 50%;
   left: var(--space-3);
+  z-index: var(--z-content);
   color: var(--color-text-muted);
   pointer-events: none;
   transform: translateY(-50%);
@@ -241,7 +241,21 @@ html[data-glass] .glass-lens {
 
 .search .input {
   padding-left: 2.5rem;
+  border-color: var(--color-border);
   border-radius: var(--radius-pill);
+}
+
+/*
+ * Busca: borda suave como a dos cartões (decisão do dono). O campo continua identificável sem ela (WCAG 1.4.11):
+ * ícone de lupa, placeholder em 4,5:1 e preenchimento `surface-inset`. Foco visível discreto no acento.
+ */
+.search .input:focus-visible {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-soft);
+}
+
+.search .input[aria-invalid='true'] {
+  border-color: var(--color-risk);
 }
 
 /*
@@ -285,7 +299,7 @@ html[data-glass] .glass-lens {
   gap: var(--space-2);
   min-height: 2.5rem;
   padding: 0 var(--space-4);
-  border: var(--border-width) solid var(--color-control-border);
+  border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-control);
   background-color: var(--color-surface);
   color: var(--color-text);
@@ -452,18 +466,47 @@ html[data-glass] .glass-lens {
 }
 
 /* Abas de filtro (links com `aria-current`), usadas nas listas (contas, categorias, movimentações). */
+/*
+ * O contêiner tem a largura da soma das abas (`fit-content`), nunca a da tela. Se não couberem, a barra rola na
+ * horizontal DENTRO dela (sem barra de rolagem) e uma sombra nas pontas avisa que há mais (`--scroll-shadow-x`).
+ */
 .tabs {
-  display: inline-flex;
+  display: flex;
+  flex: none; /* nunca encolhe na altura numa coluna flex (aba ativa cortada) */
+  width: fit-content;
+  max-width: 100%;
   gap: var(--space-1);
   padding: var(--space-1);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-pill);
   background-color: var(--color-surface-inset);
+  background-image: var(--scroll-shadow-x);
+  background-repeat: no-repeat;
+  background-position:
+    left center,
+    right center,
+    left center,
+    right center;
+  background-size:
+    1.5rem 100%,
+    1.5rem 100%,
+    0.75rem 100%,
+    0.75rem 100%;
+  background-attachment: local, local, scroll, scroll;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .tab {
   display: inline-flex;
+  flex: none;
   align-items: center;
+  white-space: nowrap;
   min-height: 2.25rem;
   padding: 0 var(--space-4);
   border: 0;
@@ -530,29 +573,31 @@ html[data-glass] .glass-lens {
 .list-skeleton__row {
   position: relative;
   overflow: hidden;
-  background-color: var(--color-surface-muted);
+  border-radius: var(--radius-control);
+  background-color: var(--skeleton-bg);
 }
 
+/* Brilho largo (o dobro do bloco) e lento: baixo contraste, nunca pisca. */
 .sk::after,
 .list-skeleton__row::after {
   content: '';
   position: absolute;
-  inset: 0;
+  inset: 0 -50%;
   background-image: var(--gradient-shimmer);
-  transform: translateX(-100%);
-  animation: sk-shimmer 1.6s var(--ease-standard) infinite;
+  transform: translateX(-60%);
+  animation: sk-shimmer 1.9s var(--ease-standard) infinite;
 }
 
 @keyframes sk-shimmer {
   to {
-    transform: translateX(100%);
+    transform: translateX(60%);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .sk::after,
   .list-skeleton__row::after {
-    animation: none;
+    display: none;
   }
 }
 
@@ -602,9 +647,57 @@ html[data-glass] .glass-lens {
 /* Alvos de toque de pelo menos 44 px no celular e em ponteiro grosso (revisão de UX, FE-S-116). */
 @media (width <= 640px), (pointer: coarse) {
   .button,
-  .tab {
-    min-height: 2.75rem;
+  .tab,
+  .pill {
+    min-height: var(--touch-min);
   }
+}
+
+/*
+ * Alvo de toque ampliado SEM mudar o visual (auditoria mobile): `.hit` estende a área clicável de um link ou botão
+ * pequeno até 44 px com um pseudo-elemento invisível; `.hit-link` (link de texto, 44 px de altura útil). Em tela
+ * compacta ou ponteiro grosso. O foco continua no próprio elemento.
+ */
+.hit {
+  position: relative;
+}
+
+@media (width <= 640px), (pointer: coarse) {
+  .hit::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, var(--touch-min));
+    height: var(--touch-min);
+    transform: translate(-50%, -50%);
+  }
+}
+
+/*
+ * Cartão inteiro clicável: o link principal do cartão (`.stretched-link`) estende a área até o cartão (`.row-card` ou
+ * outro com `position: relative`), sem mudar o visual nem duplicar links (um alvo só, nome acessível no link).
+ */
+.stretched-link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+/*
+ * Rodapé de ações fixo (auditoria mobile): em folhas e diálogos com rolagem interna o botão de salvar e o cancelar ficam
+ * sempre visíveis no fim do painel, com a área segura (a do painel) e um fundo que cobre o que rola por baixo. O último
+ * filho do `<form>` que contém o botão de envio vira o rodapé; formulários sem `<form>` seguem como antes.
+ */
+.panel--scroll .panel__body form > :last-child:has(button[type='submit']) {
+  position: sticky;
+  bottom: 0;
+  z-index: var(--z-raised);
+  margin-inline: calc(var(--space-5) * -1);
+  padding: var(--space-3) var(--space-5);
+  border-top: var(--border-width) solid var(--color-border);
+  background-color: var(--color-surface);
 }
 
 /*

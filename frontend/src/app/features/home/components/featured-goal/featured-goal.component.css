@@ -5,11 +5,38 @@
 
 .fg {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: var(--space-1) var(--space-4);
-  padding: var(--space-2) var(--space-4);
+  gap: var(--space-2);
+  padding: var(--space-3);
   border-radius: var(--radius-panel);
+}
+
+.fg--empty {
+  padding: var(--space-2);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--space-3);
+}
+
+.fg--empty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+}
+
+/* O título só aparece quando não há foto (com foto, o nome da meta já diz o que é). */
+.fg--empty .fg__title,
+.fg--photos .fg__title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .fg__title {
@@ -20,21 +47,15 @@
 
 .fg__body {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2);
   min-width: 0;
-}
-
-.fg__body--photos {
-  grid-template-columns: 9rem minmax(0, 1fr);
 }
 
 /* Altura fixa (sem salto de layout): a foto sempre ocupa a mesma caixa, carregando ou não. */
 .fg__slider {
   position: relative;
-  width: 9rem;
-  height: 5.75rem;
+  width: 100%;
+  aspect-ratio: 16 / 9;
   overflow: hidden;
   border-radius: var(--radius-control);
   background-color: var(--color-surface-muted);
@@ -45,10 +66,10 @@
   height: 100%;
 }
 
-/* Controles pequenos e opacos (sem transparência): setas nas laterais, pausa no canto. */
+/* Controles pequenos e opacos: setas nas laterais, pausa no canto, pontos embaixo. */
 .fg__ctl {
   position: absolute;
-  z-index: 1;
+  z-index: var(--z-content);
   width: 1.5rem;
   height: 1.5rem;
   border-radius: var(--radius-pill);
@@ -83,21 +104,11 @@
   min-width: 0;
 }
 
-.fg__meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-1) var(--space-3);
-  min-width: 0;
-}
-
 .fg__name {
-  overflow: hidden;
   color: var(--color-text);
   font-weight: var(--weight-semibold);
+  overflow-wrap: anywhere;
   text-decoration: none;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .fg__name:hover {
@@ -123,11 +134,24 @@
   font-weight: var(--weight-regular);
 }
 
+.fg__price {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  font-weight: var(--weight-medium);
+}
+
+.fg__price-label {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-regular);
+}
+
 .fg__progress {
   display: grid;
-  grid-template-columns: minmax(6rem, 1fr) auto;
+  grid-template-columns: minmax(3rem, 1fr) auto;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2);
 }
 
 .fg__bar {
@@ -139,34 +163,51 @@
   font-size: var(--text-sm);
 }
 
-/* Indicadores: botões de 1rem a cada 1,5rem (alvo de 24px pelo espaçamento, WCAG 2.5.8). */
+/* Pontos pequenos sobre a foto; o botão tem 1,5rem de alvo (WCAG 2.5.8) e o ponto 0,5rem. */
 .fg__dots {
+  position: absolute;
+  z-index: var(--z-content);
+  bottom: var(--space-1);
+  left: 50%;
   display: flex;
-  gap: var(--space-2);
   margin: 0;
-  padding: 0;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-pill);
+  background-color: var(--color-surface);
   list-style: none;
+  transform: translateX(-50%);
 }
 
 .fg__dot {
-  width: 1rem;
-  height: 1rem;
+  display: grid;
+  width: 1.25rem;
+  height: 1.25rem;
   padding: 0;
-  border: var(--border-width) solid var(--color-control-border);
-  border-radius: var(--radius-pill);
+  place-items: center;
+  border: 0;
   background: transparent;
   cursor: pointer;
 }
 
-.fg__dot[aria-current='true'] {
+.fg__dot::before {
+  width: 0.5rem;
+  height: 0.5rem;
+  border: var(--border-width) solid var(--color-control-border);
+  border-radius: var(--radius-pill);
+  content: '';
+}
+
+.fg__dot[aria-current='true']::before {
   border-color: var(--color-accent);
   background-color: var(--color-accent);
 }
 
 .fg__empty {
   display: flex;
+  flex: 1 1 auto;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
   gap: var(--space-2) var(--space-3);
   color: var(--color-text-muted);
   font-size: var(--text-sm);
@@ -177,31 +218,52 @@
   border-radius: var(--radius-control);
 }
 
-/* Celular: foto menor à esquerda; o título só para leitores de tela. */
-@container (width < 40rem) {
-  .fg {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0;
-    padding: var(--space-2) var(--space-3);
+/*
+ * Coluna da direita (a partir de 54 rem): o cartão estica até o fim da área da grade e a foto cresce para
+ * preencher o que sobra (`object-fit: cover`, nunca distorce); nome, preço e % ficam fixos embaixo. Sem vão.
+ */
+@container (width >= 54rem) {
+  :host {
+    height: 100%;
+    min-height: 0;
   }
 
-  .fg__title {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
+  .fg {
+    height: 100%;
+    min-height: 0;
+  }
+
+  .fg--photos {
+    grid-template-rows: minmax(0, 1fr);
   }
 
   .fg__body--photos {
-    grid-template-columns: 6rem minmax(0, 1fr);
-    gap: var(--space-2);
+    grid-template-rows: minmax(0, 1fr) auto;
+    height: 100%;
+    min-height: 0;
   }
 
   .fg__slider {
-    width: 6rem;
-    height: 4.75rem;
+    aspect-ratio: auto;
+    min-height: 8rem;
+    max-height: 24rem; /* tela alta ou larga: a foto não passa disso (object-fit: cover, sem distorcer) */
+  }
+}
+
+/* Celular: foto pequena à esquerda e dados à direita, para o bloco ficar baixo e o gráfico não sumir. */
+@container (width < 54rem) {
+  .fg {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .fg--photos .fg__body {
+    grid-template-columns: 6.5rem minmax(0, 1fr);
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .fg__slider {
+    height: 4rem;
   }
 
   .fg__price-label {
@@ -213,11 +275,31 @@
     white-space: nowrap;
   }
 
-  /* Setas nos cantos de baixo e pausa no de cima: nada se sobrepõe na foto pequena. */
-  .fg__ctl--prev,
-  .fg__ctl--next {
-    top: auto;
-    bottom: var(--space-1);
-    transform: none;
+  .fg__ctl {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+}
+
+/* Tablet (40 a 54 rem): a miniatura é um pouco maior, sempre com altura baixa (nunca a foto inteira em 16:9). */
+@container (width >= 40rem) and (width < 54rem) {
+  .fg--photos .fg__body {
+    grid-template-columns: 10rem minmax(0, 1fr);
+  }
+
+  .fg__slider {
+    height: 5.5rem;
+  }
+}
+
+@media (max-height: 700px) {
+  @container (width < 40rem) {
+    .fg {
+      padding-block: var(--space-1);
+    }
+
+    .fg__slider {
+      height: 3.25rem;
+    }
   }
 }

@@ -150,12 +150,12 @@ describe('DialogComponent', () => {
     expect(screen.getByRole('alertdialog', { name: 'Nova parcela' })).toBeInTheDocument();
   });
 
-  it('Dado tela larga, então é um diálogo central; tela compacta, folha inferior', async () => {
+  it('Dado tela larga, então é um diálogo central (também na compacta)', async () => {
     await setup();
     expect(screen.getByTestId('dialog-panel')).toHaveAttribute('data-side', 'center');
   });
 
-  it('Dado tela compacta, então vira folha inferior', async () => {
+  it('Dado tela compacta, então continua um modal centralizado (nunca folha inferior)', async () => {
     vi.stubGlobal('matchMedia', (query: string) => ({
       matches: true,
       media: query,
@@ -163,7 +163,7 @@ describe('DialogComponent', () => {
       removeEventListener: () => undefined,
     }));
     await setup();
-    expect(screen.getByTestId('dialog-panel')).toHaveAttribute('data-side', 'sheet');
+    expect(screen.getByTestId('dialog-panel')).toHaveAttribute('data-side', 'center');
   });
 
   it('Dado o diálogo aberto, então o axe não aponta violações', async () => {

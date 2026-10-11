@@ -21,6 +21,7 @@ import { ErrorStateComponent } from '~/app/common/components/error-state/error-s
 import type { ChoiceOption } from '~/app/common/components/forms/choice-option';
 import { SelectComponent } from '~/app/common/components/forms/select/select.component';
 import { TextFieldComponent } from '~/app/common/components/forms/text-field/text-field.component';
+import { IconComponent } from '~/app/common/components/icon/icon.component';
 import { LiveAnnouncer } from '~/app/common/components/overlay/live-announcer.service';
 import { ViewportService } from '~/app/common/components/overlay/viewport.service';
 import { PageLayoutComponent } from '~/app/common/components/page-layout/page-layout.component';
@@ -78,6 +79,7 @@ function folderOptions(root: FolderNode): readonly ChoiceOption[] {
     ErrorStateComponent,
     ConfirmDialogComponent,
     TextFieldComponent,
+    IconComponent,
     SelectComponent,
     FolderTreeComponent,
     NoteRowComponent,

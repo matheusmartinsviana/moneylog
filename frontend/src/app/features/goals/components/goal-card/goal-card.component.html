@@ -1,7 +1,7 @@
 @let g = goal();
 <div class="card__head">
   <a
-    class="card__title"
+    class="card__title stretched-link"
     [routerLink]="['/goals', g.id]"
     [attr.aria-label]="openLabel()"
     [attr.data-cy]="'goal-open-' + g.id"

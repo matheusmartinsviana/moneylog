@@ -1,6 +1,10 @@
 @let c = card();
 <div class="row__main">
-  <a class="row__name" [routerLink]="['/cards', c.id]" [attr.data-cy]="'card-open-' + c.id">
+  <a
+    class="row__name stretched-link"
+    [routerLink]="['/cards', c.id]"
+    [attr.data-cy]="'card-open-' + c.id"
+  >
     {{ c.name }}
   </a>
   <span class="row__institution" [attr.data-cy]="'card-institution-' + c.id">{{

@@ -5,22 +5,19 @@ import {
   DestroyRef,
   inject,
   InjectionToken,
-  OnInit,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterLink } from '@angular/router';
+import { NavigationEnd, Router } from '@angular/router';
 import { filter, map } from 'rxjs';
 
-import { ChipComponent } from '~/app/common/components/chip/chip.component';
 import { GlobalSearchComponent } from '~/app/common/components/global-search/global-search.component';
 import { IconComponent } from '~/app/common/components/icon/icon.component';
 import { LiquidGlassDirective } from '~/app/common/components/liquid-glass/liquid-glass.directive';
 import { ProfileMenuComponent } from '~/app/common/components/profile-menu/profile-menu.component';
 import { TooltipDirective } from '~/app/common/components/tooltip/tooltip.directive';
 import { I18nService } from '~/app/common/i18n/i18n.service';
-import { interpolate } from '~/app/common/i18n/interpolate';
-import { ThemePreference, ThemeService } from '~/app/common/services/theme.service';
-import { AiStatusFacade } from '~/modules/ai/core/facades/ai-status.facade';
+import { ThemeService } from '~/app/common/services/theme.service';
+import { NotificationsPopoverComponent } from '~/app/features/notifications/components/notifications-popover.component';
 import { UnreadCountFacade } from '~/modules/notifications/core/facades/unread-count.facade';
 
 /**
@@ -45,20 +42,19 @@ export function greetingPeriod(hour: number): GreetingPeriod {
  * Cabeçalho do workspace (DS 02, T194), no shell de todas as rotas, **compacto e em uma linha só**:
  * - **saudação** (sem nome, D4) e subtítulo **só no Início** (as demais telas têm o `h1` próprio);
  * - **busca global** (T209) em pílula; em tela compacta, um botão de lupa que abre uma folha;
- * - à direita: botões de ícone (tema e **sino** de notificações, com o contador de não lidas do backend, polling
- *   leve só com a aba visível), o chip **"IA desligada"** (verdadeiro hoje; não chama endpoint que não existe) e o
- *   avatar genérico (menu do perfil).
+ * - à direita: tema (sol/lua, alterna claro e escuro), **sino** de notificações (abre um pop-up com as últimas, com o
+ *   contador de não lidas do backend, polling leve só com a aba visível) e o avatar genérico (menu do perfil). O
+ *   estado da IA fica na sidebar (item "IA").
  * As ações rápidas (adicionar despesa/receita, transferir, emprestei) moraram aqui e foram para o cartão do
  * Quick Capture no Início; nas demais telas o "+" da sidebar e da barra inferior leva ao registro. Presentational + roteador.
  */
 @Component({
   selector: 'app-workspace-header',
   imports: [
-    RouterLink,
-    ChipComponent,
     GlobalSearchComponent,
     IconComponent,
     LiquidGlassDirective,
+    NotificationsPopoverComponent,
     ProfileMenuComponent,
     TooltipDirective,
   ],
@@ -66,43 +62,26 @@ export function greetingPeriod(hour: number): GreetingPeriod {
   templateUrl: './workspace-header.component.html',
   styleUrl: './workspace-header.component.css',
 })
-export class WorkspaceHeaderComponent implements OnInit {
+export class WorkspaceHeaderComponent {
   private readonly router = inject(Router);
   private readonly hour = inject(GREETING_HOUR);
   protected readonly t = inject(I18nService).t;
   private readonly unread = inject(UnreadCountFacade);
-  protected readonly aiStatus = inject(AiStatusFacade);
 
   private readonly theme = inject(ThemeService);
-  protected readonly themeIcon = computed(() => {
-    const p = this.theme.preference();
-    return p === 'light' ? 'sun' : p === 'dark' ? 'moon' : 'monitor';
-  });
+  /** Sol quando o tema na tela é claro, lua quando é escuro (o botão alterna claro e escuro). */
+  protected readonly themeIcon = computed(() =>
+    this.theme.effective() === 'dark' ? 'moon' : 'sun',
+  );
   protected readonly themeLabel = computed(() => {
     const copy = this.t().header.theme;
-    const next = this.nextTheme(this.theme.preference());
-    return interpolate(copy.toggle, {
-      current: copy[this.theme.preference()],
-      next: copy[next],
-    });
+    return this.theme.effective() === 'dark' ? copy.toLight : copy.toDark;
   });
 
-  /** Ciclo: Sistema, Claro, Escuro. */
+  /** Alterna claro e escuro; "Sistema" continua nas Configurações. */
   protected cycleTheme(): void {
-    this.theme.set(this.nextTheme(this.theme.preference()));
+    this.theme.set(this.theme.effective() === 'dark' ? 'light' : 'dark');
   }
-
-  private nextTheme(current: ThemePreference): ThemePreference {
-    return current === 'system' ? 'light' : current === 'light' ? 'dark' : 'system';
-  }
-
-  protected readonly unreadCount = this.unread.count;
-  protected readonly bellLabel = computed(() => {
-    const copy = this.t().notifications.bell;
-    const count = this.unread.count() ?? 0;
-    if (count <= 0) return copy.label;
-    return count === 1 ? copy.one : interpolate(copy.many, { count: String(count) });
-  });
 
   private readonly url = toSignal(
     this.router.events.pipe(
@@ -113,10 +92,6 @@ export class WorkspaceHeaderComponent implements OnInit {
   );
 
   protected readonly onHome = computed(() => (this.url().split(/[?#]/)[0] ?? '') === '/');
-  ngOnInit(): void {
-    this.aiStatus.ensureLoaded();
-  }
-
   constructor() {
     this.unread.connect(inject(DestroyRef));
   }

@@ -165,7 +165,7 @@ function usesCommandKey(document: Document): boolean {
     }
 
     .editor__tool {
-      min-height: 2.25rem;
+      min-height: var(--touch-min);
       padding: 0 var(--space-3);
       font-size: var(--text-sm);
     }
@@ -180,7 +180,7 @@ function usesCommandKey(document: Document): boolean {
       right: 0;
       bottom: var(--space-2);
       left: 0;
-      z-index: 2;
+      z-index: var(--z-raised);
       max-height: 12rem;
       margin: 0;
       padding: var(--space-1);

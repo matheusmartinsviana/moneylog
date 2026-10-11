@@ -129,7 +129,7 @@ let nextId = 0;
       position: absolute;
       top: 0;
       bottom: 0;
-      z-index: 1;
+      z-index: var(--z-content);
       width: 0;
       box-shadow: 0 0 10px 6px var(--color-shadow-strong);
       pointer-events: none;

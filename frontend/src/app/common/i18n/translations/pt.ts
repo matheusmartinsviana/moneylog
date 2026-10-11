@@ -6,8 +6,11 @@ export const pt: AppI18n = {
   shell: {
     brand: BRAND_NAME,
     skipToContent: 'Pular para o conteúdo',
+    aiOn: 'ligada',
+    aiOff: 'desligada',
     primaryNavigation: 'Navegação principal',
     bottomNavigation: 'Navegação inferior',
+    transactionsShort: 'Extrato',
     sidebarExpand: 'Expandir menu',
     sidebarCollapse: 'Recolher menu',
   },
@@ -121,6 +124,8 @@ export const pt: AppI18n = {
     },
     theme: {
       toggle: 'Tema: {current}. Alternar para {next}.',
+      toLight: 'Mudar para o tema claro',
+      toDark: 'Mudar para o tema escuro',
       system: 'Automático',
       light: 'Claro',
       dark: 'Escuro',
@@ -1170,6 +1175,7 @@ export const pt: AppI18n = {
       category: 'Categoria',
       method: 'Método',
       search: 'Buscar na descrição',
+      searchPlaceholder: 'Descrição, estabelecimento…',
       voidedOnly: 'Mostrar só as estornadas',
       allTypes: 'Todos os tipos',
       allAccounts: 'Todas as contas',
@@ -1381,6 +1387,7 @@ export const pt: AppI18n = {
     refund: {
       original: 'Despesa original',
       originalHint: 'Opcional. Busque pela descrição.',
+      originalPlaceholder: 'Buscar pela descrição da despesa…',
       searching: 'Buscando…',
       noResults: 'Nenhuma despesa encontrada.',
       resultsLabel: 'Despesas encontradas',
@@ -1634,6 +1641,7 @@ export const pt: AppI18n = {
     archivedTab: 'Arquivadas',
     add: 'Adicionar pessoa',
     searchLabel: 'Buscar pessoa pelo nome',
+    searchPlaceholder: 'Buscar pessoa por nome…',
     emptySearch: 'Ninguém com esse nome.',
     emptyArchived: 'Nenhuma pessoa arquivada.',
     columns: { name: 'Pessoa', balance: 'Saldo', nextDue: 'Próxima cobrança', actions: 'Ações' },
@@ -2092,21 +2100,21 @@ export const pt: AppI18n = {
       INCREASE: 'Aumentar',
     },
     stage: {
-      FANTASY: 'Fantasia',
+      FANTASY: 'Longo prazo',
       OBJECTIVE: 'Objetivo',
       STRATEGY: 'Estratégia',
       CONSISTENT: 'Consistente',
       ACHIEVED: 'Sucesso',
     },
     stageDescription: {
-      FANTASY: 'Sem prazo',
+      FANTASY: 'Sem prazo definido',
       OBJECTIVE: 'Tem prazo',
       STRATEGY: 'Prazo e plano',
       CONSISTENT: 'Cumprindo o plano',
       ACHIEVED: 'Meta atingida',
     },
     stageHint: {
-      FANTASY: 'Defina um prazo',
+      FANTASY: 'Defina um prazo para virar objetivo',
       OBJECTIVE: 'Escreva um plano ou adicione uma ação',
       STRATEGY: 'Cumpra o ritmo por 2 meses',
       CONSISTENT: 'Mantenha o ritmo até chegar ao alvo',
@@ -2116,7 +2124,7 @@ export const pt: AppI18n = {
     ladder: {
       title: 'Escada da meta',
       intro:
-        'Meta sem prazo é fantasia. Com prazo, vira objetivo; com plano, estratégia; cumprindo o plano, sucesso.',
+        'Meta sem prazo fica no longo prazo. Com prazo, vira objetivo; com plano, estratégia; cumprindo o plano, sucesso.',
       here: 'Você está aqui',
       done: 'Concluído',
       todo: 'Adiante',
@@ -2135,7 +2143,7 @@ export const pt: AppI18n = {
       target: 'Alvo',
       targetHint: 'Pode ser zero.',
       deadline: 'Prazo',
-      noDeadlineWarning: 'Meta sem prazo é só fantasia: defina um prazo.',
+      noDeadlineWarning: 'Meta sem prazo fica no longo prazo: defina uma data para virar objetivo.',
       name: 'Nome (opcional)',
       save: 'Criar meta',
       saving: 'Criando…',
@@ -3104,6 +3112,13 @@ export const pt: AppI18n = {
   },
 
   notifications: {
+    popover: {
+      title: 'Notificações',
+      empty: 'Nenhuma notificação por enquanto.',
+      error: 'Não foi possível carregar as notificações.',
+      retry: 'Tentar de novo',
+      viewAll: 'Ver todas',
+    },
     bell: {
       label: 'Notificações',
       one: '1 notificação não lida',

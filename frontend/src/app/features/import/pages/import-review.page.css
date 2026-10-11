@@ -61,3 +61,10 @@
     grid-template-columns: repeat(2, minmax(10rem, 16rem));
   }
 }
+
+/* Os atalhos de teclado não servem em tela de toque: saem para sobrar altura. */
+@media (pointer: coarse) {
+  .shortcuts {
+    display: none;
+  }
+}

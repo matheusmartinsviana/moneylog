@@ -6,8 +6,11 @@ export const en: AppI18n = {
   shell: {
     brand: BRAND_NAME,
     skipToContent: 'Skip to content',
+    aiOn: 'on',
+    aiOff: 'off',
     primaryNavigation: 'Main navigation',
     bottomNavigation: 'Bottom navigation',
+    transactionsShort: 'Activity',
     sidebarExpand: 'Expand menu',
     sidebarCollapse: 'Collapse menu',
   },
@@ -120,6 +123,8 @@ export const en: AppI18n = {
     },
     theme: {
       toggle: 'Theme: {current}. Switch to {next}.',
+      toLight: 'Switch to light theme',
+      toDark: 'Switch to dark theme',
       system: 'System',
       light: 'Light',
       dark: 'Dark',
@@ -1161,6 +1166,7 @@ export const en: AppI18n = {
       category: 'Category',
       method: 'Method',
       search: 'Search the description',
+      searchPlaceholder: 'Description, merchant…',
       voidedOnly: 'Show only voided',
       allTypes: 'All types',
       allAccounts: 'All accounts',
@@ -1372,6 +1378,7 @@ export const en: AppI18n = {
     refund: {
       original: 'Original expense',
       originalHint: 'Optional. Search by description.',
+      originalPlaceholder: 'Search by the expense description…',
       searching: 'Searching…',
       noResults: 'No expenses found.',
       resultsLabel: 'Expenses found',
@@ -1627,6 +1634,7 @@ export const en: AppI18n = {
     archivedTab: 'Archived',
     add: 'Add person',
     searchLabel: 'Search people by name',
+    searchPlaceholder: 'Search people by name…',
     emptySearch: 'Nobody with that name.',
     emptyArchived: 'No archived people.',
     columns: { name: 'Person', balance: 'Balance', nextDue: 'Next collection', actions: 'Actions' },
@@ -2083,21 +2091,21 @@ export const en: AppI18n = {
       INCREASE: 'Increase',
     },
     stage: {
-      FANTASY: 'Fantasy',
+      FANTASY: 'Long term',
       OBJECTIVE: 'Objective',
       STRATEGY: 'Strategy',
       CONSISTENT: 'Consistent',
       ACHIEVED: 'Success',
     },
     stageDescription: {
-      FANTASY: 'No deadline',
+      FANTASY: 'No deadline set',
       OBJECTIVE: 'Has a deadline',
       STRATEGY: 'Deadline and plan',
       CONSISTENT: 'Following the plan',
       ACHIEVED: 'Goal reached',
     },
     stageHint: {
-      FANTASY: 'Set a deadline',
+      FANTASY: 'Set a deadline to make it an objective',
       OBJECTIVE: 'Write a plan or add an action',
       STRATEGY: 'Keep the pace for 2 months',
       CONSISTENT: 'Keep the pace until you reach the target',
@@ -2107,7 +2115,7 @@ export const en: AppI18n = {
     ladder: {
       title: 'Goal ladder',
       intro:
-        'A goal without a deadline is a fantasy. With a deadline it becomes an objective; with a plan, a strategy; following the plan, success.',
+        'A goal without a deadline stays long term. With a deadline it becomes an objective; with a plan, a strategy; following the plan, success.',
       here: 'You are here',
       done: 'Done',
       todo: 'Ahead',
@@ -2126,7 +2134,8 @@ export const en: AppI18n = {
       target: 'Target',
       targetHint: 'It can be zero.',
       deadline: 'Deadline',
-      noDeadlineWarning: 'A goal without a deadline is just a fantasy: set a deadline.',
+      noDeadlineWarning:
+        'A goal without a deadline stays long term: set a date to make it an objective.',
       name: 'Name (optional)',
       save: 'Create goal',
       saving: 'Creating…',
@@ -3093,6 +3102,13 @@ export const en: AppI18n = {
   },
 
   notifications: {
+    popover: {
+      title: 'Notifications',
+      empty: 'No notifications yet.',
+      error: 'Could not load notifications.',
+      retry: 'Try again',
+      viewAll: 'View all',
+    },
     bell: {
       label: 'Notifications',
       one: '1 unread notification',

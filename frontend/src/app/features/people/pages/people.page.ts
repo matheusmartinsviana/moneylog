@@ -20,6 +20,7 @@ import {
 } from '~/app/common/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '~/app/common/components/error-state/error-state.component';
 import { TextFieldComponent } from '~/app/common/components/forms/text-field/text-field.component';
+import { IconComponent } from '~/app/common/components/icon/icon.component';
 import { PageLayoutComponent } from '~/app/common/components/page-layout/page-layout.component';
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { interpolate } from '~/app/common/i18n/interpolate';
@@ -54,6 +55,7 @@ interface RowAction {
     ErrorStateComponent,
     ConfirmDialogComponent,
     TextFieldComponent,
+    IconComponent,
     PersonRowComponent,
   ],
   providers: [PeopleListFacade],

@@ -15,7 +15,11 @@ import { I18nService } from '~/app/common/i18n/i18n.service';
   imports: [DisclosureComponent, PageLayoutComponent, SectionContainerComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <app-page-layout [heading]="t().nav.mcp" [description]="t().workspacePages.mcp.subtitle">
+    <app-page-layout
+      reading
+      [heading]="t().nav.mcp"
+      [description]="t().workspacePages.mcp.subtitle"
+    >
       <div class="mcp" data-cy="mcp-page">
         <div class="mcp__soon" aria-disabled="true" data-cy="mcp-soon">
           <span class="mcp__badge">{{ t().workspacePages.mcp.soon }}</span>

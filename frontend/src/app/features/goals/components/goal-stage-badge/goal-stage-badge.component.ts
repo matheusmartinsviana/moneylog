@@ -7,7 +7,7 @@ import type { GoalStage } from '~/modules/goals/core/types/goal';
 
 /** Ícone de cada degrau: o degrau nunca é dito só por cor. */
 export const STAGE_ICON: Readonly<Record<GoalStage, IconName>> = {
-  FANTASY: 'sparkle',
+  FANTASY: 'goals',
   OBJECTIVE: 'calendar',
   STRATEGY: 'notes',
   CONSISTENT: 'insights',
@@ -16,7 +16,7 @@ export const STAGE_ICON: Readonly<Record<GoalStage, IconName>> = {
 
 /**
  * Selo do degrau da meta (presentational): ícone + texto. O `stage` é derivado no servidor; aqui só se
- * mostra. Fantasia usa o tom de atenção suave; Consistente e Sucesso, o positivo.
+ * mostra. Longo prazo (sem prazo) usa o tom neutro; Consistente e Sucesso, o positivo.
  */
 @Component({
   selector: 'app-goal-stage-badge',
@@ -49,6 +49,6 @@ export class GoalStageBadgeComponent {
   protected readonly tone = computed(() => {
     const stage = this.stage();
     if (stage === 'ACHIEVED' || stage === 'CONSISTENT') return 'positive';
-    return stage === 'FANTASY' ? 'warning' : null;
+    return null;
   });
 }

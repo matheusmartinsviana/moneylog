@@ -9,6 +9,7 @@
 
 .wide {
   display: none;
+  overflow-x: auto; /* se a tabela não couber (tablet), rola por dentro do painel, nunca a página */
   padding: var(--space-2) var(--space-4);
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-panel);
@@ -72,7 +73,7 @@
   display: inline-flex;
 }
 
-@media (width >= 768px) {
+@media (width >= 960px) {
   .wide {
     display: block;
   }

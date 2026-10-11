@@ -5,6 +5,7 @@
 
 /* Celular: card empilhado. */
 :host(.row) {
+  position: relative; /* contém o link esticado (cartão inteiro clicável) */
   display: grid;
   gap: var(--space-3);
   padding: var(--space-4);
@@ -81,4 +82,10 @@
   .row__actions {
     justify-content: flex-end;
   }
+}
+
+/* Botões do cartão ficam acima do link esticado. */
+.row__actions {
+  position: relative;
+  z-index: var(--z-content);
 }

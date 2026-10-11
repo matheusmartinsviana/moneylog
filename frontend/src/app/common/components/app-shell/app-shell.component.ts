@@ -19,8 +19,8 @@ import { captureInstallPrompt } from '~/app/common/services/install-prompt-captu
 
 /**
  * App shell responsivo (arquitetura §5.3, ADR-011, DS 03):
- * - < 768px: barra inferior fixa, sem sidebar;
- * - ≥ 768px: sidebar em trilho (painel arredondado, `sticky`), sempre recolhida, e o
+ * - < 768px de largura ou < 600px de altura (paisagem de celular): barra inferior fixa, sem sidebar;
+ * - ≥ 768px de largura e ≥ 600px de altura: sidebar em trilho (painel arredondado, `sticky`), sempre recolhida, e o
  *   conteúdo direto sobre o canvas (sem moldura de janela); a página rola normalmente.
  * O cabeçalho do workspace (ações rápidas, chip de IA; saudação só no Início) fica acima do conteúdo.
  * Cada página renderiza o próprio `<main>` via `app-page-layout`. Os avisos (`ToastService`) ficam

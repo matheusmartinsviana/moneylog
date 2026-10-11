@@ -137,7 +137,7 @@
     position: fixed;
     inset-block: 0;
     inset-inline-end: 0;
-    z-index: 20;
+    z-index: var(--z-side-panel);
     width: 26rem;
     overflow-y: auto;
     border-inline-start: var(--border-width) solid var(--color-border);

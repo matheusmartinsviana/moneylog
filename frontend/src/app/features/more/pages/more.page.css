@@ -16,23 +16,33 @@
   letter-spacing: 0.02em;
 }
 
+/* Grade de 2 colunas (3 em tela larga): cada destino é um bloco próprio, a página encurta e quase não rola. */
 .more-list {
-  overflow: hidden;
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-card);
-  background-color: var(--color-surface);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
 }
 
-.more-list li + li {
-  border-top: var(--border-width) solid var(--color-border);
+@media (width >= 40rem) {
+  .more-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.more-list li {
+  min-width: 0;
 }
 
 .more-list__link {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  min-height: 3rem;
-  padding: 0 var(--space-4);
+  gap: var(--space-2);
+  min-height: var(--touch-min);
+  height: 100%;
+  padding: var(--space-1) var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface);
   color: var(--color-text);
   text-decoration: none;
   transition: background-color var(--duration-fast) var(--ease-standard);
@@ -53,6 +63,7 @@
 .more-list__icon {
   display: grid;
   place-items: center;
+  flex: none;
   width: 2rem;
   height: 2rem;
   border-radius: var(--radius-control);
@@ -63,8 +74,16 @@
 .more-list__label {
   flex: 1;
   min-width: 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-tight);
+  overflow-wrap: anywhere;
+}
+
+.more-list__state {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
 }
 
 .more-list__chevron {
-  color: var(--color-text-muted);
+  display: none; /* na grade, o bloco inteiro já é o alvo */
 }

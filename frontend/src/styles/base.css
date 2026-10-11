@@ -42,6 +42,16 @@ body:has([data-fit-page]) {
   height: 100dvh;
 }
 
+/*
+ * Paisagem de celular (altura < 500 px): a tela não comporta "caber sem rolar"; a página volta a rolar normalmente
+ * (o conteúdo não fica preso numa janela de ~130 px). Mesmo corte do trilho lateral (altura mínima de 600 px).
+ */
+@media (orientation: landscape) and (max-height: 500px) {
+  body:has([data-fit-page]) {
+    height: auto;
+  }
+}
+
 /* O host da rota que contém uma página "sucinta" reparte a altura que sobra na janela (sem altura fixa em px). */
 .shell__content > :has(> [data-fit-page]) {
   display: flex;

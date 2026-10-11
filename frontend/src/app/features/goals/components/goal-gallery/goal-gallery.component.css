@@ -29,10 +29,17 @@
 .gal__nav {
   position: absolute;
   top: 50%;
-  z-index: 1;
+  z-index: var(--z-content);
   width: 2.25rem;
   height: 2.25rem;
   transform: translateY(-50%);
+}
+
+@media (width <= 640px), (pointer: coarse) {
+  .gal__nav {
+    width: var(--touch-min);
+    height: var(--touch-min);
+  }
 }
 
 .gal__nav--prev {

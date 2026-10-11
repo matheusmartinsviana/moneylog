@@ -14,6 +14,7 @@ import { MotionStaggerDirective } from '~/app/common/motion/motion-stagger.direc
   host: {
     '[class.fit]': 'fit()',
     '[attr.data-fit-page]': "fit() ? '' : null",
+    '[class.reading]': 'reading()',
   },
   template: `
     <main id="main-content" class="page m-page" tabindex="-1" data-cy="page">
@@ -71,8 +72,10 @@ import { MotionStaggerDirective } from '~/app/common/motion/motion-stagger.direc
       display: none;
     }
 
+    /* Uma coluna que nunca passa da largura da página: tabelas e abas largas rolam por dentro (sem rolar a página). */
     .page__content {
       display: grid;
+      grid-template-columns: minmax(0, 1fr);
       gap: var(--section-gap);
       min-width: 0;
     }
@@ -81,6 +84,15 @@ import { MotionStaggerDirective } from '~/app/common/motion/motion-stagger.direc
      * Página "sucinta" (fit): ocupa só a altura que sobra na janela (sem altura fixa em px) e o conteúdo se
      * reparte nela; o título e a descrição ficam numa linha e a página nunca rola (src/styles/README.md).
      */
+    /*
+     * Tela de texto, formulário ou configuração: a coluna de leitura tem teto (--reading-max-width) e fica
+     * alinhada à esquerda, sob o título e o cabeçalho (a página em si continua com a largura de todas as telas).
+     */
+    :host(.reading) .page__content {
+      width: 100%;
+      max-width: var(--reading-max-width);
+    }
+
     :host(.fit) {
       display: flex;
       flex: 1 1 auto;
@@ -135,4 +147,6 @@ export class PageLayoutComponent {
   readonly description = input<string>();
   /** Página "sucinta": cabe na tela sem rolar a página (a lista principal rola dentro do próprio painel). */
   readonly fit = input(false, { transform: booleanAttribute });
+  /** Coluna de leitura (texto, formulário, configurações): teto de largura, alinhada à esquerda. */
+  readonly reading = input(false, { transform: booleanAttribute });
 }

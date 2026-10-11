@@ -1,7 +1,7 @@
 @let p = person();
 <div class="row__main">
   <a
-    class="row__name"
+    class="row__name stretched-link"
     [routerLink]="['/people', p.id]"
     [attr.aria-label]="openLabel()"
     [attr.data-cy]="'person-open-' + p.id"

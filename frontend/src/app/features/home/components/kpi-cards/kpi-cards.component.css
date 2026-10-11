@@ -184,20 +184,52 @@
 }
 
 .is-compact .kpi__value {
-  font-size: var(--text-md);
+  /* Escala com a largura do cartão (container query) e nunca quebra a linha: valor inteiro, sem corte. */
+  font-size: clamp(0.75rem, 4.2cqi, var(--text-md));
+  overflow-wrap: normal;
+  white-space: nowrap;
 }
 
 .is-compact .kpi__value--hero {
-  font-size: var(--text-xl);
+  font-size: clamp(1rem, 6.4cqi, var(--text-xl));
 }
 
 .is-compact .kpi__value--gauge {
-  font-size: var(--text-sm);
+  font-size: min(var(--text-sm), 15cqi);
   line-height: 1;
+  white-space: nowrap;
+}
+
+/* Celular estreito (320 a 375 px): três linhas, para o valor caber inteiro em colunas de metade da largura. */
+@container (width < 20rem) {
+  .is-compact .kpi--compact-balance {
+    grid-column: span 6;
+  }
+
+  .is-compact .kpi--compact {
+    grid-column: span 3;
+  }
+
+  .is-compact .kpi--compact-gauge {
+    grid-column: span 3;
+    order: 4;
+  }
+
+  .is-compact .kpi--compact .kpi__value {
+    font-size: clamp(0.8125rem, 5.2cqi, var(--text-md));
+  }
 }
 
 .is-compact .kpi__label {
+  overflow: hidden;
   font-size: var(--text-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Os três indicadores pequenos usam menos respiro lateral: o rótulo e o valor cabem inteiros no celular. */
+.is-compact .kpi--compact {
+  padding-inline: var(--space-2);
 }
 
 .is-compact .kpi--compact .kpi__caption {
@@ -231,11 +263,15 @@
   }
 
   .is-compact .kpi__value {
-    font-size: var(--text-xl);
+    font-size: clamp(0.9375rem, 2.2cqi, var(--text-xl));
   }
 
   .is-compact .kpi__value--hero {
-    font-size: var(--text-2xl);
+    font-size: clamp(1.125rem, 2.8cqi, var(--text-2xl));
+  }
+
+  .is-compact .kpi__value--gauge {
+    font-size: min(var(--text-md), 15cqi);
   }
 
   .is-compact .kpi--compact .kpi__caption {

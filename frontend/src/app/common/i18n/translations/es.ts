@@ -6,8 +6,11 @@ export const es: AppI18n = {
   shell: {
     brand: BRAND_NAME,
     skipToContent: 'Saltar al contenido',
+    aiOn: 'activada',
+    aiOff: 'desactivada',
     primaryNavigation: 'Navegación principal',
     bottomNavigation: 'Navegación inferior',
+    transactionsShort: 'Extracto',
     sidebarExpand: 'Expandir menú',
     sidebarCollapse: 'Contraer menú',
   },
@@ -121,6 +124,8 @@ export const es: AppI18n = {
     },
     theme: {
       toggle: 'Tema: {current}. Cambiar a {next}.',
+      toLight: 'Cambiar al tema claro',
+      toDark: 'Cambiar al tema oscuro',
       system: 'Automático',
       light: 'Claro',
       dark: 'Oscuro',
@@ -1178,6 +1183,7 @@ export const es: AppI18n = {
       category: 'Categoría',
       method: 'Método',
       search: 'Buscar en la descripción',
+      searchPlaceholder: 'Descripción, comercio…',
       voidedOnly: 'Mostrar solo las anuladas',
       allTypes: 'Todos los tipos',
       allAccounts: 'Todas las cuentas',
@@ -1390,6 +1396,7 @@ export const es: AppI18n = {
     refund: {
       original: 'Gasto original',
       originalHint: 'Opcional. Busca por la descripción.',
+      originalPlaceholder: 'Buscar por la descripción del gasto…',
       searching: 'Buscando…',
       noResults: 'No se encontraron gastos.',
       resultsLabel: 'Gastos encontrados',
@@ -1643,6 +1650,7 @@ export const es: AppI18n = {
     archivedTab: 'Archivadas',
     add: 'Agregar persona',
     searchLabel: 'Buscar persona por nombre',
+    searchPlaceholder: 'Buscar persona por nombre…',
     emptySearch: 'Nadie con ese nombre.',
     emptyArchived: 'Ninguna persona archivada.',
     columns: { name: 'Persona', balance: 'Saldo', nextDue: 'Próximo cobro', actions: 'Acciones' },
@@ -2101,21 +2109,21 @@ export const es: AppI18n = {
       INCREASE: 'Aumentar',
     },
     stage: {
-      FANTASY: 'Fantasía',
+      FANTASY: 'Largo plazo',
       OBJECTIVE: 'Objetivo',
       STRATEGY: 'Estrategia',
       CONSISTENT: 'Consistente',
       ACHIEVED: 'Éxito',
     },
     stageDescription: {
-      FANTASY: 'Sin plazo',
+      FANTASY: 'Sin plazo definido',
       OBJECTIVE: 'Tiene plazo',
       STRATEGY: 'Plazo y plan',
       CONSISTENT: 'Cumpliendo el plan',
       ACHIEVED: 'Meta alcanzada',
     },
     stageHint: {
-      FANTASY: 'Define un plazo',
+      FANTASY: 'Define un plazo para convertirla en objetivo',
       OBJECTIVE: 'Escribe un plan o agrega una acción',
       STRATEGY: 'Cumple el ritmo por 2 meses',
       CONSISTENT: 'Mantén el ritmo hasta llegar al objetivo',
@@ -2125,7 +2133,7 @@ export const es: AppI18n = {
     ladder: {
       title: 'Escalera de la meta',
       intro:
-        'Una meta sin plazo es fantasía. Con plazo es un objetivo; con plan, una estrategia; cumpliendo el plan, éxito.',
+        'Una meta sin plazo se queda a largo plazo. Con plazo es un objetivo; con plan, una estrategia; cumpliendo el plan, éxito.',
       here: 'Estás aquí',
       done: 'Completado',
       todo: 'Más adelante',
@@ -2144,7 +2152,8 @@ export const es: AppI18n = {
       target: 'Objetivo',
       targetHint: 'Puede ser cero.',
       deadline: 'Plazo',
-      noDeadlineWarning: 'Una meta sin plazo es solo fantasía: define un plazo.',
+      noDeadlineWarning:
+        'Una meta sin plazo se queda a largo plazo: define una fecha para convertirla en objetivo.',
       name: 'Nombre (opcional)',
       save: 'Crear meta',
       saving: 'Creando…',
@@ -3114,6 +3123,13 @@ export const es: AppI18n = {
   },
 
   notifications: {
+    popover: {
+      title: 'Notificaciones',
+      empty: 'Aún no hay notificaciones.',
+      error: 'No se pudieron cargar las notificaciones.',
+      retry: 'Intentar de nuevo',
+      viewAll: 'Ver todas',
+    },
     bell: {
       label: 'Notificaciones',
       one: '1 notificación sin leer',

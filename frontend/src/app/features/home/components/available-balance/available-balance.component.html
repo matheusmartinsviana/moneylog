@@ -35,7 +35,7 @@
         <span class="formula__op" aria-hidden="true">−</span>
         <button
           type="button"
-          class="formula__term"
+          class="formula__term hit"
           data-cy="home-reserved-hint"
           [appTooltip]="t().home.reservedNote.formula"
         >
@@ -49,7 +49,7 @@
   </dl>
 
   @if (hasReserved()) {
-    <a class="available__link" routerLink="/goals" data-cy="home-reserved-goals">
+    <a class="available__link hit" routerLink="/goals" data-cy="home-reserved-goals">
       {{ t().home.reservedNote.goalsLink }}
     </a>
   }

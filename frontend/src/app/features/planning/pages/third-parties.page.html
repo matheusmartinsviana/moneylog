@@ -68,7 +68,7 @@
                   @for (person of data.people; track person.personId) {
                     <li class="person row-card" [attr.data-cy]="'tp-person-' + person.personId">
                       <div class="person__head">
-                        <a class="link" [routerLink]="['/people', person.personId]">{{
+                        <a class="link hit" [routerLink]="['/people', person.personId]">{{
                           person.name
                         }}</a>
                         <strong [attr.data-cy]="'tp-person-pending-' + person.personId"
@@ -90,7 +90,7 @@
                           <li class="item" [attr.data-cy]="'tp-item-' + item.refId">
                             <div class="person__head">
                               @if (link(item); as target) {
-                                <a class="link" [routerLink]="target">{{
+                                <a class="link hit" [routerLink]="target">{{
                                   item.description ?? t().thirdParties.people.noDescription
                                 }}</a>
                               } @else {

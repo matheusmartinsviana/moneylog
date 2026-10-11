@@ -12,14 +12,12 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import { IconComponent } from '~/app/common/components/icon/icon.component';
 import { MoneyComponent } from '~/app/common/components/money/money.component';
 import { ProgressBarComponent } from '~/app/common/components/progress-bar/progress-bar.component';
 import { HTML_LANG } from '~/app/common/i18n/i18n';
 import { I18nService } from '~/app/common/i18n/i18n.service';
 import { interpolate } from '~/app/common/i18n/interpolate';
 import { GoalPhotoComponent } from '~/app/features/goals/components/goal-photo/goal-photo.component';
-import { GoalStageBadgeComponent } from '~/app/features/goals/components/goal-stage-badge/goal-stage-badge.component';
 import { goalName } from '~/app/features/goals/services/goal-name';
 import { GoalPhotoImageFacade } from '~/modules/goals/core/facades/goal-photo-image.facade';
 import type { Goal } from '~/modules/goals/core/types/goal';
@@ -41,14 +39,7 @@ export const SLIDER_INTERVAL_MS = 5000;
  */
 @Component({
   selector: 'app-featured-goal',
-  imports: [
-    RouterLink,
-    ProgressBarComponent,
-    GoalStageBadgeComponent,
-    GoalPhotoComponent,
-    IconComponent,
-    MoneyComponent,
-  ],
+  imports: [RouterLink, ProgressBarComponent, GoalPhotoComponent, MoneyComponent],
   providers: [GoalPhotoImageFacade],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '(document:visibilitychange)': 'onVisibility()' },
@@ -136,7 +127,7 @@ export class FeaturedGoalComponent {
       const photos = this.photos();
       if (!goal || photos.length < 2) return;
       const next = photos[(this.position() + 1) % photos.length];
-      if (next) untracked(() => this.images.preload(goal.id, next.id, 'thumb'));
+      if (next) untracked(() => this.images.preload(goal.id, next.id, 'display'));
     });
 
     // A meta em destaque mudou ou perdeu fotos: volta ao início.

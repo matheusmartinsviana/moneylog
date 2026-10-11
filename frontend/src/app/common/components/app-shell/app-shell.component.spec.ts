@@ -112,11 +112,13 @@ describe('App shell e rotas', () => {
     const links = within(nav).getAllByRole('link');
     expect(links.map((link) => link.textContent?.trim())).toEqual([
       'Início',
-      'Movimentações',
+      // O rótulo curto "Extrato" é só visual (aria-hidden): o nome acessível continua "Movimentações".
+      'MovimentaçõesExtrato',
       'Novo registro',
       'Metas',
       'Mais',
     ]);
+    expect(within(nav).getByRole('link', { name: 'Movimentações' })).toBe(links[1]);
     expect(links[2]).toHaveAttribute('href', '/quick-add');
     expect(links.every((link) => link.hasAttribute('data-cy'))).toBe(true);
     expect(BOTTOM_NAV_ITEMS.map((item) => item.key)).toEqual([
@@ -165,7 +167,7 @@ describe('App shell e rotas', () => {
     await navigate('/');
 
     const link = screen.getByTestId('bottom-nav-transactions');
-    const visible = link.querySelector('.bottom-nav__label')?.textContent?.trim();
+    const visible = link.querySelector('.bottom-nav__label-full')?.textContent?.trim();
     expect(visible).toBe(pt.nav.transactions);
     expect(link).toHaveAccessibleName(expect.stringContaining(visible!));
   });
@@ -225,14 +227,23 @@ describe('App shell e rotas', () => {
     expect(more).toHaveAttribute('aria-expanded', 'false');
     await userEvent.click(more);
 
-    const menu = await screen.findByRole('menu', { name: 'Mais' });
+    const menu = await screen.findByRole('menu', { name: 'Mais' }, { timeout: 5000 });
     expect(
       within(menu)
         .getAllByRole('menuitem')
         .map((item) => item.textContent?.trim()),
-    ).toEqual(['Orçamentos', 'Vault', 'Insights', 'IA', 'MCP', 'Importar extrato', 'Notificações']);
+    ).toEqual([
+      'Orçamentos',
+      'Vault',
+      'Insights',
+      'IA (desligada)',
+      'MCP',
+      'Importar extrato',
+      'Notificações',
+    ]);
     await userEvent.click(within(menu).getByRole('menuitem', { name: 'Vault' }));
-    await vi.waitFor(() => expect(TestBed.inject(Router).url).toBe('/vault'));
+    // A rota é carregada sob demanda (import dinâmico): com a suíte inteira em paralelo, 1 s do padrão não basta.
+    await vi.waitFor(() => expect(TestBed.inject(Router).url).toBe('/vault'), { timeout: 5000 });
   });
 
   it('Dado o shell, então o cabeçalho do workspace e a janela existem e a página mantém um h1 e um main (T192, T194)', async () => {
@@ -295,7 +306,7 @@ describe('App shell e rotas', () => {
       'Notas',
       'Pessoas',
       'Insights',
-      'IA',
+      'IAdesligada',
       'MCP',
       'Importar extrato',
       'Notificações',

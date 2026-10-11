@@ -62,6 +62,8 @@ const stack: object[] = [];
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (open()) {
+      <!-- Folga do teclado virtual medida em tempo de execução: não cabe em classe CSS. -->
+      <!-- eslint-disable-next-line @angular-eslint/template/no-inline-styles -->
       <div
         class="backdrop"
         role="presentation"
@@ -70,6 +72,9 @@ const stack: object[] = [];
         [class.backdrop--center]="kind() === 'center'"
         [class.backdrop--side]="kind() === 'side'"
         [attr.data-cy]="cy() + '-backdrop'"
+        [style.padding-bottom.px]="
+          kind() === 'center' && keyboardOffset() > 0 ? keyboardOffset() + 12 : null
+        "
         (click)="onBackdropClick($event)"
       >
         <!-- Posição calculada em tempo de execução (flip/shift): não cabe em classe CSS. -->
@@ -140,10 +145,14 @@ const stack: object[] = [];
       z-index: var(--z-dialog);
     }
 
+    /* Modal centralizado: margem lateral de 12 a 16 px (e a área segura), sobre o fundo escurecido. */
     .backdrop--center {
       display: grid;
       place-items: center;
-      padding: var(--space-4);
+      padding: max(var(--space-3), env(safe-area-inset-top))
+        max(var(--space-3), env(safe-area-inset-right))
+        max(var(--space-3), env(safe-area-inset-bottom))
+        max(var(--space-3), env(safe-area-inset-left));
     }
 
     .panel {
@@ -175,7 +184,7 @@ const stack: object[] = [];
     .panel--sheet {
       right: 0;
       left: 0;
-      max-height: min(85dvh, 36rem);
+      max-height: min(92dvh, 48rem);
       overscroll-behavior: contain;
       border-right: 0;
       border-bottom: 0;
@@ -190,7 +199,7 @@ const stack: object[] = [];
       width: min(100%, 28rem);
       max-height: min(90dvh, 40rem);
       overscroll-behavior: contain;
-      border-radius: var(--radius-panel);
+      border-radius: var(--radius-card);
       box-shadow: var(--shadow-2);
       animation: overlay-dialog var(--duration-base) var(--ease-emphasized);
     }
@@ -213,6 +222,8 @@ const stack: object[] = [];
     .panel--scroll .panel__body {
       overflow-y: auto;
       overscroll-behavior: contain;
+      /* O campo focado não fica atrás do rodapé de ações fixo nem do teclado. */
+      scroll-padding-block: var(--space-4) 6rem;
     }
 
     .panel__header {
@@ -268,7 +279,7 @@ const stack: object[] = [];
     @keyframes overlay-dialog {
       from {
         opacity: 0;
-        transform: scale(0.98);
+        transform: translateY(8px) scale(0.97);
       }
     }
 
@@ -357,8 +368,10 @@ export class OverlayPanelComponent implements OnDestroy {
   protected readonly kind = computed<'popover' | OverlayLayout>(() => {
     if (!this.modal()) return 'popover';
     const layout = this.layout();
-    if (layout === 'responsive-center') return this.viewport.compact() ? 'bottom' : 'center';
-    if (layout === 'responsive-side') return this.viewport.compact() ? 'bottom' : 'side';
+    // Celular: modal de verdade (diálogo centralizado, com margem), nunca a "página que sobe de baixo".
+    if (layout === 'responsive-center') return 'center';
+    if (layout === 'responsive-side') return this.viewport.compact() ? 'center' : 'side';
+    if (layout === 'bottom' && this.viewport.compact()) return 'center';
     return layout;
   });
   protected readonly role = computed(() => (this.modal() ? this.modalRole() : this.popoverRole()));
@@ -375,11 +388,15 @@ export class OverlayPanelComponent implements OnDestroy {
   protected readonly positioned = signal(false);
   /** Posição calculada em tempo de execução (única parte que não cabe em classe CSS). */
   protected readonly panelStyle = computed(() => {
+    if (this.kind() === 'center') {
+      const visible = this.visibleHeight();
+      return visible === null ? {} : { 'max-height': `min(90dvh, 40rem, ${visible - 24}px)` };
+    }
     if (this.kind() === 'bottom') {
       const visible = this.visibleHeight();
       return {
         bottom: `${this.keyboardOffset()}px`,
-        ...(visible === null ? {} : { 'max-height': `min(85dvh, 36rem, ${visible - 16}px)` }),
+        ...(visible === null ? {} : { 'max-height': `min(92dvh, 48rem, ${visible - 16}px)` }),
       };
     }
     if (this.modal()) return {};
@@ -587,7 +604,7 @@ export class OverlayPanelComponent implements OnDestroy {
     if (!view || !panel) return;
     const visual = view.visualViewport;
     if (this.modal()) {
-      if (this.kind() !== 'bottom') return;
+      if (this.kind() !== 'bottom' && this.kind() !== 'center') return;
       // O teclado virtual do iOS não encolhe a janela: a folha sobe com o `visualViewport`.
       const hidden = visual ? view.innerHeight - (visual.offsetTop + visual.height) : 0;
       this.keyboardOffset.set(Math.max(0, Math.round(hidden)));

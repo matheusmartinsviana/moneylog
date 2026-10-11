@@ -40,17 +40,17 @@
   border-radius: var(--radius-panel);
 }
 
-/* Celular: uma coluna (indicadores, compromissos e dívida, gráfico, meta); o gráfico fica com a sobra. */
+/* Celular: uma coluna (indicadores, compromissos, dívida e meta, gráfico); o gráfico fica com a sobra. */
 .home {
   position: relative; /* contém os elementos só para leitores de tela: sem altura fantasma na página */
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto auto minmax(8.5rem, 1fr);
   grid-template-areas:
     'kpis'
     'side'
-    'chart'
-    'goal';
+    'goal'
+    'chart';
   gap: var(--space-2);
   height: 100%;
   min-height: 0;
@@ -73,7 +73,11 @@
 
 .home__chart {
   grid-area: chart;
-  min-height: 0;
+  min-height: 8.5rem; /* nunca vira uma tira: se faltar altura, o painel rola até ele */
+}
+
+.home__goal {
+  grid-area: goal;
 }
 
 .home__side {
@@ -83,24 +87,65 @@
   gap: var(--space-2);
 }
 
-.home__goal {
-  grid-area: goal;
-}
-
 /* Tablet e janela: indicadores em cima, gráfico à esquerda, compromissos e dívida à direita, meta embaixo. */
 @container (width >= 54rem) {
   .home {
     grid-template-columns: minmax(0, 1fr) minmax(17rem, 22rem);
-    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(8.5rem, 1fr) auto;
     grid-template-areas:
       'kpis kpis'
-      'chart side'
-      'goal goal';
+      'chart goal'
+      'side goal';
     gap: var(--space-3);
   }
 
+  /* Compromissos e dívida lado a lado embaixo do gráfico; a meta em destaque ocupa a coluna da direita. */
   .home__side {
-    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     min-height: 0;
+  }
+}
+
+/*
+ * Tela larga (a partir de 76 rem de conteúdo): o gráfico cresce à esquerda, na altura toda abaixo dos indicadores;
+ * a coluna da direita (28 a 34 rem) empilha a meta em destaque (que estica e preenche) e, embaixo, compromissos e
+ * dívida com a altura do próprio conteúdo. Nenhum cartão fica com área vazia.
+ */
+@container (width >= 76rem) {
+  .home {
+    grid-template-columns: minmax(0, 1fr) clamp(24rem, 28%, 34rem);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'kpis kpis'
+      'chart goal'
+      'chart side';
+  }
+
+  .home__side {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/*
+ * Paisagem de celular (altura < 500 px): não há como caber tudo sem rolar; a página inteira rola (o painel não
+ * prende o conteúdo numa janela de ~130 px) e o gráfico ganha uma altura legível.
+ */
+@media (orientation: landscape) and (max-height: 500px) {
+  .home {
+    grid-template-rows: none;
+    height: auto;
+    overflow-y: visible;
+  }
+
+  .home__chart {
+    min-height: 12rem;
+  }
+}
+
+/* Celular de pouca altura (<= 700 px): respiros menores entre os blocos para o gráfico ter a sobra. */
+@media (width < 48rem) and (max-height: 700px) {
+  .home,
+  .home__side {
+    gap: var(--space-1);
   }
 }

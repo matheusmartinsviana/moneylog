@@ -1,4 +1,8 @@
-<app-page-layout [heading]="t().categories.title" [description]="t().categories.description">
+<app-page-layout
+  reading
+  [heading]="t().categories.title"
+  [description]="t().categories.description"
+>
   <a pageActions class="button" routerLink="/settings" data-cy="categories-back">
     {{ t().categories.backToSettings }}
   </a>

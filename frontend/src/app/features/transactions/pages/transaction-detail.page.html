@@ -70,6 +70,7 @@
                 <dd>
                   @if (field.link) {
                     <a
+                      class="hit"
                       [routerLink]="field.link"
                       queryParamsHandling="preserve"
                       [attr.data-cy]="field.linkCy"

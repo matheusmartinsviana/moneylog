@@ -28,6 +28,7 @@ import { IconComponent } from '~/app/common/components/icon/icon.component';
 import { MenuComponent, MenuItem } from '~/app/common/components/menu/menu.component';
 import { TooltipDirective } from '~/app/common/components/tooltip/tooltip.directive';
 import { I18nService } from '~/app/common/i18n/i18n.service';
+import { AiStatusFacade } from '~/modules/ai/core/facades/ai-status.facade';
 import { SessionFacade } from '~/modules/auth/core/facades/session.facade';
 
 /**
@@ -47,6 +48,7 @@ import { SessionFacade } from '~/modules/auth/core/facades/session.facade';
 export class SidebarComponent {
   private readonly router = inject(Router);
   private readonly session = inject(SessionFacade);
+  private readonly aiStatus = inject(AiStatusFacade);
   private readonly injector = inject(Injector);
   private readonly signOuts = new Subject<void>();
   protected readonly t = inject(I18nService).t;
@@ -77,7 +79,11 @@ export class SidebarComponent {
   protected readonly moreItems = computed<readonly MenuItem[]>(() =>
     SIDEBAR_POPOVER_ITEMS.map((item) => ({
       id: item.key,
-      label: this.t().nav[item.key],
+      // A IA é opcional: o estado dela mora aqui, no item (não no cabeçalho).
+      label:
+        item.key === 'ai'
+          ? `${this.t().nav.ai} (${this.aiStatus.enabled() ? this.t().shell.aiOn : this.t().shell.aiOff})`
+          : this.t().nav[item.key],
       icon: item.icon,
     })),
   );
@@ -89,6 +95,7 @@ export class SidebarComponent {
   protected readonly indicatorReady = signal(false);
 
   constructor() {
+    this.aiStatus.ensureLoaded();
     this.signOuts
       .pipe(
         exhaustMap(() => this.session.logout()),

@@ -55,8 +55,9 @@ import type { AppNotification } from '~/modules/notifications/core/types/notific
       list-style: none;
     }
 
+    /* Não lida: só um fundo suave (a palavra "Não lida" também está no selo); sem contorno forte. */
     :host(.row--unread) {
-      border-color: var(--color-control-border);
+      background-color: var(--color-surface-inset);
     }
 
     .row__main {
@@ -76,9 +77,9 @@ import type { AppNotification } from '~/modules/notifications/core/types/notific
 
     .row__badge {
       padding: 0 var(--space-2);
-      border: var(--border-width) solid var(--color-text-muted);
       border-radius: var(--radius-pill);
-      color: var(--color-text);
+      background-color: var(--color-accent-soft);
+      color: var(--color-accent);
       font-weight: var(--weight-medium);
     }
 

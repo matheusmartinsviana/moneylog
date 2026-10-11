@@ -4,7 +4,10 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { FieldControl } from '~/app/common/components/forms/field-control';
 import { FieldErrorComponent } from '~/app/common/components/forms/field-error/field-error.component';
 
-export type TextFieldType = 'text' | 'email' | 'password';
+export type TextFieldType = 'text' | 'email' | 'password' | 'search';
+
+/** Máscara de digitação: `time` mostra `HH:MM` (só dígitos; o `:` entra sozinho, sem teclado numérico). */
+export type TextFieldMask = 'time';
 
 /**
  * Campo de texto de uma linha (nome, descrição, e-mail, senha, busca). O valor do controle é a
@@ -86,6 +89,16 @@ export type TextFieldType = 'text' | 'email' | 'password';
       display: grid;
     }
 
+    /* Busca nativa (type search): sem o "x" do navegador (a busca tem o próprio limpar) e sem aparência nativa. */
+    .input[type='search'] {
+      appearance: none;
+    }
+
+    .input[type='search']::-webkit-search-cancel-button,
+    .input[type='search']::-webkit-search-decoration {
+      appearance: none;
+    }
+
     .input--mono {
       font-family: var(--font-mono, ui-monospace, monospace);
       letter-spacing: 0.02em;
@@ -100,7 +113,7 @@ export type TextFieldType = 'text' | 'email' | 'password';
       top: 50%;
       right: var(--space-2);
       transform: translateY(-50%);
-      min-height: 2rem;
+      min-height: var(--touch-min);
       padding: 0 var(--space-2);
       border-radius: var(--radius-control);
       color: var(--color-text-muted);
@@ -118,8 +131,9 @@ export class TextFieldComponent extends FieldControl<string | null> {
   readonly autocomplete = input<string>();
   readonly maxlength = input<number>();
   readonly inputmode = input<string>();
+  readonly mask = input<TextFieldMask>();
   readonly enterkeyhint = input<string>();
-  /** Papel próprio (ex.: `searchbox` na busca); a busca nunca usa `type="search"` (controle nativo). */
+  /** Papel próprio (ex.: `searchbox` na busca). */
   readonly role = input<string>();
   /** Combobox (`role="combobox"`): a lista de opções que o campo controla, se ela está aberta e a opção ativa. */
   readonly ariaControls = input<string>();
@@ -148,7 +162,13 @@ export class TextFieldComponent extends FieldControl<string | null> {
   }
 
   protected onInput(event: Event): void {
-    const value = (event.target as HTMLInputElement).value;
+    const field = event.target as HTMLInputElement;
+    let value = field.value;
+    if (this.mask() === 'time') {
+      const digits = value.replace(/\D/g, '').slice(0, 4);
+      value = digits.length > 2 ? `${digits.slice(0, 2)}:${digits.slice(2)}` : digits;
+      field.value = value;
+    }
     this.value.set(value);
     this.onChange(value);
   }

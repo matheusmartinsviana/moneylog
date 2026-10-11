@@ -23,7 +23,7 @@ import { formatRatio } from '~/util/ratio';
     @let c = commitment();
     <div class="row__main">
       <a
-        class="row__title"
+        class="row__title stretched-link"
         [routerLink]="['/planning/commitments', c.id]"
         [attr.aria-label]="openLabel()"
         [attr.data-cy]="'commitment-open-' + c.id"
@@ -73,6 +73,7 @@ import { formatRatio } from '~/util/ratio';
   `,
   styles: `
     :host {
+      position: relative; /* contém o link esticado (cartão inteiro clicável) */
       display: grid;
       gap: var(--space-3);
       padding: var(--space-4);

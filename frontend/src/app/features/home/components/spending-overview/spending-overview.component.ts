@@ -51,7 +51,7 @@ const HOME_PERIODS = ['D7', 'D30', 'M12'] as const satisfies readonly ReportPeri
           [hideLabel]="true"
           [options]="options()"
         />
-        <a class="so__link" routerLink="/transactions" data-cy="home-overview-transactions">
+        <a class="so__link hit" routerLink="/transactions" data-cy="home-overview-transactions">
           {{ t().brief.viewTransactions }}
         </a>
       </div>

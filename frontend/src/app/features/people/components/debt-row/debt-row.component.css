@@ -4,6 +4,7 @@
 }
 
 :host(.row) {
+  position: relative; /* contém o link esticado (cartão inteiro clicável) */
   display: grid;
   gap: var(--space-3);
   padding: var(--space-4);

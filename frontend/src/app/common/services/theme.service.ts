@@ -1,5 +1,5 @@
 import { DOCUMENT } from '@angular/common';
-import { inject, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 
 import { motionEnabled } from '~/app/common/motion/motion';
 import { readStorage, removeStorage, writeStorage } from '~/util/safe-storage';
@@ -27,8 +27,24 @@ export class ThemeService {
 
   readonly preference = this.preferenceState.asReadonly();
 
+  /** O sistema está em escuro agora (`prefers-color-scheme`); só conta quando a preferência é `system`. */
+  private readonly systemDark = signal(false);
+  private mediaWatched = false;
+
+  /** Tema que está de fato na tela (`light` ou `dark`), mesmo com a preferência `system`. */
+  readonly effective = computed<'light' | 'dark'>(() => {
+    const preference = this.preferenceState();
+    if (preference !== 'system') return preference;
+    return this.systemDark() ? 'dark' : 'light';
+  });
+
+  constructor() {
+    this.watchSystem();
+  }
+
   /** Aplica a preferência salva (ou `system`). */
   init(): void {
+    this.watchSystem();
     const stored = readStorage(THEME_STORAGE_KEY);
     this.apply(isThemePreference(stored) ? stored : 'system');
   }
@@ -41,6 +57,15 @@ export class ThemeService {
     } else {
       writeStorage(THEME_STORAGE_KEY, preference);
     }
+  }
+
+  private watchSystem(): void {
+    if (this.mediaWatched) return;
+    this.mediaWatched = true;
+    const query = this.document.defaultView?.matchMedia?.('(prefers-color-scheme: dark)');
+    if (!query) return;
+    this.systemDark.set(query.matches);
+    query.addEventListener('change', (event) => this.systemDark.set(event.matches));
   }
 
   private apply(preference: ThemePreference): void {

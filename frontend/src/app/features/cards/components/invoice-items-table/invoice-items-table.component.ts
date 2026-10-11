@@ -27,7 +27,7 @@ import { formatIsoDate } from '~/util/date';
         >
           <div class="item__main">
             <a
-              class="item__link"
+              class="item__link stretched-link"
               [routerLink]="['/transactions', item.transactionId]"
               [attr.aria-label]="openLabel(item)"
               [attr.data-cy]="'invoice-item-open-' + item.transactionId"
@@ -76,6 +76,7 @@ import { formatIsoDate } from '~/util/date';
     }
 
     .item {
+      position: relative; /* contém o link esticado (cartão inteiro clicável) */
       display: flex;
       align-items: flex-start;
       justify-content: space-between;

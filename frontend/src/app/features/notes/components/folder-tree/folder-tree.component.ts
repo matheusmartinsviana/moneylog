@@ -92,7 +92,7 @@ interface Row {
         </div>
         @if (!node || (hasChildren && isOpen)) {
           @if ((node ? node.children : root().children).length > 0) {
-            <ul role="group">
+            <ul role="group" class="tree__group" [attr.data-guide]="level">
               @for (child of node ? node.children : root().children; track child.path) {
                 <ng-container
                   [ngTemplateOutlet]="item"
@@ -117,12 +117,14 @@ interface Row {
     }
 
     .tree__item {
+      position: relative;
       display: flex;
       align-items: center;
       gap: var(--space-2);
-      min-height: 2.25rem;
+      min-height: 1.875rem;
       padding-right: var(--space-2);
-      border-radius: var(--radius-control);
+      /* Linha simples, como o explorador de arquivos: sem caixa nem contorno, só o fundo da linha inteira. */
+      border-radius: calc(var(--radius-control) / 2);
       color: var(--color-text);
       font-size: var(--text-sm);
       cursor: pointer;
@@ -173,7 +175,55 @@ interface Row {
     }
 
     .tree__item:hover {
-      background-color: var(--color-hover-soft);
+      background-color: var(--color-surface-muted);
+    }
+
+    /* Guias de indentação: linha vertical fina e suave sob o chevron da pasta-mãe. */
+    .tree__group {
+      position: relative;
+    }
+
+    .tree__group::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: var(--guide-x, 1rem);
+      width: var(--border-width);
+      background-color: var(--color-border);
+      pointer-events: none;
+    }
+
+    .tree__group[data-guide='2']::before {
+      --guide-x: 2.25rem;
+    }
+
+    .tree__group[data-guide='3']::before {
+      --guide-x: 3.5rem;
+    }
+
+    .tree__group[data-guide='4']::before {
+      --guide-x: 4.75rem;
+    }
+
+    .tree__group[data-guide='5']::before {
+      --guide-x: 6rem;
+    }
+
+    .tree__group[data-guide='6']::before {
+      --guide-x: 7.25rem;
+    }
+
+    .tree__group[data-guide='7']::before {
+      --guide-x: 8.5rem;
+    }
+
+    .tree__group[data-guide='8']::before {
+      --guide-x: 9.75rem;
+    }
+
+    .tree__group[data-guide='9']::before {
+      --guide-x: 11rem;
     }
 
     .tree__item:focus-visible {
@@ -182,8 +232,7 @@ interface Row {
     }
 
     .tree__item.is-selected {
-      background-color: var(--color-surface-muted);
-      box-shadow: inset 2px 0 0 var(--color-accent);
+      background-color: var(--color-accent-soft);
       font-weight: var(--weight-medium);
     }
 
@@ -191,6 +240,10 @@ interface Row {
       display: inline-flex;
       flex: none;
       width: 1rem;
+      color: var(--color-text-muted);
+    }
+
+    .tree__item > app-icon {
       color: var(--color-text-muted);
     }
 

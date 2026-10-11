@@ -6,7 +6,7 @@ Estilos globais, carregados pelo `angular.json` nesta ordem:
 | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `tokens.css`     | **única** fonte de cores, tipografia, raios, sombras, espaçamento e movimento (DS 00, arquitetura §5.4)                                                                          |
 | (Fontsource)     | Geist e Geist Mono variáveis, self-hosted a partir de `node_modules` (sem CDN)                                                                                                   |
-| `typography.css` | escala 12/13/15/17/20/24/32 e a classe `.num` (`tabular-nums` + `"tnum"`); 10px (`--text-tab`) só na barra inferior                                                              |
+| `typography.css` | escala 12/13/15/17/20/24/32 e a classe `.num` (`tabular-nums` + `"tnum"`); 11px (`--text-tab`) só na barra inferior                                                              |
 | `base.css`       | reset, foco visível e `prefers-reduced-motion`                                                                                                                                   |
 | `utilities.css`  | `.visually-hidden`, `.surface`, `.button` (`--primary`, `--soft`), `.lift`, `.row-hover`, `.field` (`__label`, `__hint`), `.input`, `.select`, `.ledger` (lista de valores, T19) |
 
@@ -33,7 +33,7 @@ manual; `[data-theme="light|dark"]` (gravado pelo `ThemeService`) vale contra o 
 - **Movimento:** `--duration-fast` 180ms, `--duration-base` 240ms, `--duration-slow` 300ms, `--ease-emphasized`.
   `prefers-reduced-motion` zera as três durações e os efeitos de `transform` (hover do `.lift`, pressão do `.button`) só
   existem em `@media (prefers-reduced-motion: no-preference)`.
-- **Casca:** `--window-max-width` 90rem. A janela flutuante só existe a partir de 1024 px e a página rola (ADR-011).
+- **Casca:** `--window-max-width` 160rem (a tela larga usa a largura; margens laterais iguais em todas as telas via `--page-max-width` 150rem). Telas de texto, formulário e configuração usam `app-page-layout reading` (`--reading-max-width` 56rem, alinhada à esquerda sob o cabeçalho). A janela flutuante só existe a partir de 1024 px e a página rola (ADR-011).
 
 ## Tela sucinta (ADR-011, 2026-10-15)
 
@@ -67,6 +67,38 @@ Regras verificadas no `npm run lint`:
 - `scripts/check-contrast.mjs` (`npm run contrast`): texto ≥ 4,5:1 (inclusive `accent`/`positive`/`warning`/`risk` sobre a
   própria tinta) e séries dos gráficos ≥ 3:1, nos dois temas.
 - `scripts/check-brand.mjs`: a marca (`BRAND_NAME`) vive em um lugar só e os espaços de logo continuam vazios.
+
+## Celular: alvos de toque, rodapé fixo, abas e paisagem (auditoria mobile, 2026-10-10)
+
+Regras globais (corrigidas por causa comum, não tela por tela):
+
+- **Alvo de toque `--touch-min` (2,75rem = 44 px).** Todo controle tocável tem pelo menos 44 px no celular
+  (`width <= 640px`) e em ponteiro grosso (`pointer: coarse`): `.button`, `.tab`, `.pill`, `.icon-button`, campo de data e
+  botão do calendário, filtros, ferramentas do editor, fotos da meta, setas da galeria, itens de menu e do trilho. Link
+  de texto pequeno **não muda de visual**: use `class="hit"` (pseudo-elemento invisível de 44 px centrado no link). Cartão
+  de lista com um link principal (conta, cartão, meta, pessoa, dívida, fatura, compromisso, recorrência): `class="stretched-link"`
+  no link e `position: relative` no cartão, assim o cartão inteiro é o alvo; botões do cartão (`.row__actions`) ficam em
+  `z-index: 1`. Não duplique link só para ampliar a área.
+- **Rodapé de ações fixo.** Em folha ou diálogo com rolagem interna (`.panel--scroll`), o último filho do `<form>` que contém
+  `button[type=submit]` fica `position: sticky; bottom: 0` com fundo e borda (regra em `utilities.css`); o painel já soma a
+  safe-area embaixo. O teto da folha é `min(92dvh, 48rem)` e `interactive-widget=resizes-content` está no `viewport`.
+  Não crie rodapé fixo por tela: coloque o botão de salvar como último filho do `<form>`.
+- **Abas (`.tabs`).** Uma linha só, `flex: none`, rolagem horizontal interna com sombra nas pontas (`--scroll-shadow-x`);
+  nunca `flex-wrap` sobre `.tabs` (vira elipse de várias linhas). Com mais abas do que cabe (Planejamento), a ativa é trazida
+  para a vista (`scrollIntoView`). O contêiner de conteúdo da página (`.page__content`) é `minmax(0, 1fr)`, então tabelas
+  e abas largas rolam por dentro e nunca alargam a página.
+- **Texto e números.** Rótulo da barra inferior: 11 px (`--text-tab`); contador do sino: 12 px. Valores dos indicadores do
+  Início usam `clamp()` com `cqi` (container query) e `white-space: nowrap`; abaixo de 20 rem de largura do bloco o painel de
+  indicadores passa a 3 linhas em vez de cortar o valor. "Movimentações" ganha rótulo curto (`shell.transactionsShort`) em
+  telas até 26 rem; o nome acessível continua o completo.
+- **Paisagem de celular (`orientation: landscape` e `max-height: 500px`).** O trilho lateral só existe com **altura >= 600 px**
+  (largura >= 768 px); abaixo disso fica a barra inferior, mais baixa (`--bottom-nav-height: 3,25rem`, só ícones). Cabeçalho
+  de uma linha, sem saudação; páginas "sucintas" voltam a rolar a página (`body:has([data-fit-page]) { height: auto }`) em vez
+  de prender o conteúdo numa janela de ~130 px; pop-ups usam a rolagem do painel (sem `max-height` fixo na lista).
+- **Altura baixa em retrato (<= 740 px).** A saudação do cabeçalho e a frase do gráfico saem; o gráfico do Início tem
+  `min-height: 8,5rem` e, se ainda faltar altura (<= 375x667), o painel do Início rola por dentro até ele (a página não).
+- **Campos.** Busca usa `type="search"` + `enterkeyhint="search"` (sem o "x" nativo); horário usa `mask="time"` (só dígitos,
+  o `:` entra sozinho) e **não** `inputmode="numeric"` (que esconde o `:` no iOS).
 
 ## Contraste (WCAG AA)
 

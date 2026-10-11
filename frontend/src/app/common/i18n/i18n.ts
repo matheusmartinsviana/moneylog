@@ -27,8 +27,13 @@ export abstract class AppI18n {
   abstract readonly shell: {
     readonly brand: string;
     readonly skipToContent: string;
+    /** Estado da IA ao lado do item "IA" (sidebar e Mais). */
+    readonly aiOn: string;
+    readonly aiOff: string;
     readonly primaryNavigation: string;
     readonly bottomNavigation: string;
+    /** Rótulo curto de "Movimentações" na barra inferior de telas estreitas (só visual; o nome acessível é o completo). */
+    readonly transactionsShort: string;
     readonly sidebarExpand: string;
     readonly sidebarCollapse: string;
   };
@@ -152,6 +157,8 @@ export abstract class AppI18n {
     /** Alternador de tema; `toggle` usa `{current}` e `{next}`. */
     readonly theme: {
       readonly toggle: string;
+      readonly toLight: string;
+      readonly toDark: string;
       readonly system: string;
       readonly light: string;
       readonly dark: string;
@@ -893,6 +900,7 @@ export abstract class AppI18n {
       readonly category: string;
       readonly method: string;
       readonly search: string;
+      readonly searchPlaceholder: string;
       readonly voidedOnly: string;
       readonly allTypes: string;
       readonly allAccounts: string;
@@ -1102,6 +1110,7 @@ export abstract class AppI18n {
     readonly refund: {
       readonly original: string;
       readonly originalHint: string;
+      readonly originalPlaceholder: string;
       readonly searching: string;
       readonly noResults: string;
       readonly resultsLabel: string;
@@ -1378,6 +1387,7 @@ export abstract class AppI18n {
     readonly archivedTab: string;
     readonly add: string;
     readonly searchLabel: string;
+    readonly searchPlaceholder: string;
     readonly emptySearch: string;
     readonly emptyArchived: string;
     readonly columns: {
@@ -2845,6 +2855,13 @@ export abstract class AppI18n {
 
   /** Notificações, lembretes, configurações de aviso e push (Etapa 7). */
   abstract readonly notifications: {
+    readonly popover: {
+      readonly title: string;
+      readonly empty: string;
+      readonly error: string;
+      readonly retry: string;
+      readonly viewAll: string;
+    };
     readonly bell: {
       readonly label: string;
       readonly one: string;

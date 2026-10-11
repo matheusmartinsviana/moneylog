@@ -247,7 +247,7 @@ function labelOf(link: NoteLink, fallback: string): string {
     }
 
     .item__remove {
-      min-height: 2rem;
+      min-height: var(--touch-min);
       margin-left: auto;
     }
 

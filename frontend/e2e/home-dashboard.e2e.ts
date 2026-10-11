@@ -309,7 +309,7 @@ test.describe('busca global (T209)', () => {
 test.describe('Início em 375 px (mobile)', () => {
   test.use({ viewport: VIEWPORTS.mobile });
 
-  test('sem rolagem horizontal e uma coluna na ordem indicadores, compromissos, dívida, gráfico e meta', async ({
+  test('sem rolagem horizontal e uma coluna na ordem indicadores, compromissos, dívida, meta e gráfico', async ({
     page,
   }) => {
     await openHome(page);
@@ -320,8 +320,8 @@ test.describe('Início em 375 px (mobile)', () => {
         'home-kpis',
         'home-upcoming-brief',
         'home-debts-brief',
-        'home-overview-chart',
         'home-featured-goal',
+        'home-overview-chart',
       ].map((id) => document.querySelector(`[data-cy="${id}"]`)?.getBoundingClientRect().top ?? -1),
     );
     for (let i = 1; i < tops.length; i++)

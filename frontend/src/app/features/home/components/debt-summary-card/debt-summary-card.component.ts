@@ -35,7 +35,7 @@ import { DebtOverviewFacade } from '~/modules/debt-overview/core/facades/debt-ov
         }
         @case ('empty') {
           <p class="note" data-cy="home-debts-empty">{{ t().debtOverview.home.empty }}</p>
-          <a class="brief__link" routerLink="/planning/debts" data-cy="home-debts-add">
+          <a class="brief__link hit" routerLink="/planning/debts" data-cy="home-debts-add">
             {{ t().debtOverview.home.emptyAction }}
           </a>
         }
@@ -44,7 +44,7 @@ import { DebtOverviewFacade } from '~/modules/debt-overview/core/facades/debt-ov
             <p class="brief__total num" data-cy="home-debts-total">
               <app-money [value]="data.total" />
             </p>
-            <a class="brief__link" routerLink="/planning/debts" data-cy="home-debts-open">
+            <a class="brief__link hit" routerLink="/planning/debts" data-cy="home-debts-open">
               {{ t().debtOverview.home.open }}
             </a>
           }

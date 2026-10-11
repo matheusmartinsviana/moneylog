@@ -108,11 +108,15 @@ describe('WorkspaceHeaderComponent', () => {
     expect(screen.getByTestId('global-search')).toBeInTheDocument();
   });
 
-  it('Dado o chip de IA, então diz "IA desligada" (verdadeiro hoje) e não há sino de notificações', async () => {
+  it('Dado o cabeçalho, então não há chip de IA (o estado fica na sidebar) e o sino abre um pop-up em vez de navegar', async () => {
     await setup();
 
-    expect(screen.getByTestId('header-ai-status')).toHaveTextContent(pt.header.aiOff);
-    expect(screen.queryByRole('button', { name: /notifica/i })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('header-ai-status')).not.toBeInTheDocument();
+    const bell = screen.getByRole('button', { name: pt.notifications.bell.label });
+    expect(bell).toHaveAttribute('data-cy', 'header-bell');
+    expect(bell).toHaveAttribute('aria-expanded', 'false');
+    await userEvent.click(bell);
+    expect(await screen.findByTestId('notifications-popover')).toBeInTheDocument();
   });
 
   it('Dado o menu do avatar, então abre com Configurações e Sair e devolve o foco no Esc', async () => {
@@ -140,16 +144,20 @@ describe('WorkspaceHeaderComponent', () => {
 });
 
 describe('WorkspaceHeaderComponent: alternador de tema', () => {
-  it('Dado o tema Sistema, quando clica no alternador, então vai para Claro e anuncia o estado', async () => {
+  afterEach(() => document.documentElement.removeAttribute('data-theme'));
+
+  it('Dado o tema claro (sol), quando clica, então vai para escuro (lua) e depois volta, com o rótulo da ação', async () => {
     const user = userEvent.setup();
     await setup();
-    const toggle = screen.getByRole('button', { name: /Tema: Automático/ });
+    const toggle = screen.getByTestId('header-theme-toggle');
+    expect(toggle).toHaveAccessibleName(pt.header.theme.toDark);
+
+    await user.click(toggle);
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+    expect(toggle).toHaveAccessibleName(pt.header.theme.toLight);
+
     await user.click(toggle);
     expect(document.documentElement.getAttribute('data-theme')).toBe('light');
-    expect(screen.getByRole('button', { name: /Tema: Claro/ })).toBeTruthy();
-    await user.click(screen.getByRole('button', { name: /Tema: Claro/ }));
-    expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
-    await user.click(screen.getByRole('button', { name: /Tema: Escuro/ }));
-    expect(document.documentElement.getAttribute('data-theme')).toBeNull();
+    expect(toggle).toHaveAccessibleName(pt.header.theme.toDark);
   });
 });

@@ -25,24 +25,7 @@
     >
       <app-icon [name]="themeIcon()" [size]="20" />
     </button>
-    <a
-      class="icon-button wh__bell"
-      appLiquidGlass
-      routerLink="/notifications"
-      data-cy="header-bell"
-      [attr.aria-label]="bellLabel()"
-    >
-      <app-icon name="bell" [size]="20" />
-      @if ((unreadCount() ?? 0) > 0) {
-        <span class="wh__bell-count num" aria-hidden="true" data-cy="header-bell-count">{{
-          unreadCount()
-        }}</span>
-      }
-    </a>
-    <app-chip
-      [label]="aiStatus.enabled() ? t().header.aiOn : t().header.aiOff"
-      cy="header-ai-status"
-    />
+    <app-notifications-popover />
     @defer (on immediate) {
       <app-profile-menu class="wh__profile" cy="header-profile" />
     } @placeholder {

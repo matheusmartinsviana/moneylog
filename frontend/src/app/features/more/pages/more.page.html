@@ -1,4 +1,4 @@
-<app-page-layout [heading]="t().nav.more" [description]="t().more.description">
+<app-page-layout reading [heading]="t().nav.more" [description]="t().more.description">
   <div class="more-groups" data-cy="more-list">
     @for (group of groups; track group.key) {
       <section class="more-group" [attr.aria-labelledby]="'more-group-' + group.key">
@@ -15,6 +15,11 @@
               >
                 <span class="more-list__icon"><app-icon [name]="item.icon" /></span>
                 <span class="more-list__label">{{ t().nav[item.key] }}</span>
+                @if (item.key === 'ai') {
+                  <span class="more-list__state" data-cy="more-ai-state">{{
+                    aiStatus.enabled() ? t().shell.aiOn : t().shell.aiOff
+                  }}</span>
+                }
                 <app-icon class="more-list__chevron" name="chevronRight" [size]="16" />
               </a>
             </li>
