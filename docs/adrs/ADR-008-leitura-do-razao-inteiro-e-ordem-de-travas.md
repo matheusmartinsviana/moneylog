@@ -27,7 +27,7 @@ Toda leitura de dashboard, resumo, projeção, lista de metas e contas e toda es
 
 ## Ordem de travas (S-252, S-263)
 
-Movimentações → recorrência → cartão → dívidas → pessoas → **metas → contas por id**. A reserva e a liberação travam a meta e depois a conta; o arquivamento da conta trava só a conta e lê as metas sem travá-las (não há ciclo, e reserva × arquivar nunca deixam os dois valerem). Protegida por teste, não só por comentário: `GoalUseCasesTest` registra as travas na ordem; `GoalLockConcurrencyIT` exige só `200`/`422` (nunca `500` nem `409` de deadlock) em reserva × arquivar conta, reserva × liberação, liberações cruzadas e metas diferentes na mesma conta.
+A restauração de backup trava antes de tudo a linha do usuário (`users`, `FOR NO KEY UPDATE`), antes de conferir se o destino está vazio, e depois só grava; nenhum outro caso de uso trava `users`, então não há ciclo. Para as demais escritas: movimentações → recorrência → cartão → dívidas → pessoas → **metas → contas por id**. A reserva e a liberação travam a meta e depois a conta; o arquivamento da conta trava só a conta e lê as metas sem travá-las (não há ciclo, e reserva × arquivar nunca deixam os dois valerem). Protegida por teste, não só por comentário: `GoalUseCasesTest` registra as travas na ordem; `GoalLockConcurrencyIT` exige só `200`/`422` (nunca `500` nem `409` de deadlock) em reserva × arquivar conta, reserva × liberação, liberações cruzadas e metas diferentes na mesma conta.
 
 ## Consequências
 
