@@ -1,6 +1,6 @@
 # ADR-021: orçamentos mensais em BRL com vigências imutáveis
 
-Status: **Aceito** (2026-10-13), aprovado pelo dono. Plano: `docs/planos/2026-10-13-dashboard-glass-premium.md` (entrega 4, DG-28 a DG-32). Revisão: `docs/revisoes/2026-10-13-plano-dashboard-glass-premium-r2.md` (F-3, F-5).
+Status: **Aceito** (2026-10-13), aprovado pelo dono.
 
 ## Contexto
 O orçamento mensal não existe no backend (a rota `/budgets` é uma página "em breve", D3 do ADR-011 só respondida em parte). O dono pediu orçamentos em BRL, sem multimoeda, com backend e frontend. Regras do produto que valem: o sistema não soma tudo e chama de gasto (PR 01); dupla contagem é proibida (regra 1); dashboard e lista vêm da mesma fonte (regra 10); histórico preservado, correção por ajuste, nada apagado em silêncio (regra 7); dinheiro exato (regra 8); estourar um limite nunca bloqueia lançamento.

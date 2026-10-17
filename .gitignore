@@ -10,3 +10,8 @@
 .idea/
 *.iml
 .DS_Store
+
+# trabalho interno (planos, revisões e QA ficam fora do repositório)
+/docs/planos/
+/docs/revisoes/
+/docs/qa/

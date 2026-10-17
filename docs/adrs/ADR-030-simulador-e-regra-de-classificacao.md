@@ -1,6 +1,6 @@
 # ADR-030: Simulador de compra e regra de classificação
 
-Status: **PROPOSTA** (2026-10-15). P-7 e P-8 são decisões provisórias delegadas pelo dono; o achado A-2 da revisão (`docs/revisoes/2026-10-15-plano-adequacao-ao-resumao-r3.md`) está incorporado. Plano: `docs/planos/2026-10-15-adequacao-ao-resumao.md` (bloco E, tasks E1 e E2). Contrato: 2.28.0 (`info.version` segue 2.32.0 depois de I1). Usa o motor da ADR-023 (`owner-statement`).
+Status: **PROPOSTA** (2026-10-15). P-7 e P-8 são decisões provisórias delegadas pelo dono, com o achado A-2 da revisão incorporado. Contrato: 2.28.0 (`info.version` segue 2.32.0 depois de I1). Usa o motor da ADR-023 (`owner-statement`).
 
 ## Contexto
 O dono quer saber, antes de comprar, o que uma compra parcelada faz com a sobra de cada mês. O simulador não pode gravar nada, não pode divergir da compra real (mesma parcela do `purchase-preview`) e não pode dar sinal verde quando só calculou parte do período: uma compra em 6x com o aperto no quinto mês, avaliada só em novembro, viraria um falso "sustentável" (regra 1 do produto: não chutar estado).

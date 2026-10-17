@@ -1,6 +1,6 @@
 # ADR-024: compra parcelada agrupada (`PurchaseGroup`)
 
-Status: **PROPOSTA** (2026-10-15). P-26 é decisão provisória delegada pelo dono. Plano: `docs/planos/2026-10-15-adequacao-ao-resumao.md` (bloco C, task C1). Contrato: 2.26.0. Complementa a ADR-006 (persistência de faturas e parcelas).
+Status: **PROPOSTA** (2026-10-15). P-26 é decisão provisória delegada pelo dono. Contrato: 2.26.0. Complementa a ADR-006 (persistência de faturas e parcelas).
 
 ## Contexto
 Um mesmo item pode ser pago em parcelas em mais de um cartão (exemplo sintético: um "Notebook" em 10x de 100,00 no Cartão A, na 5ª parcela, mais 3x de 50,00 no Cartão B). Hoje cada compra é independente: o dono não vê o total do item, quanto falta, o mês em que acaba nem a parcela do mês somada entre cartões. O pedido do dono é ver "compra parcelada agrupada entre cartões".

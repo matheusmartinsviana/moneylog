@@ -1,6 +1,6 @@
 # ADR-018: fotos das metas de sonho e meta em destaque
 
-Status: aceita (2026-10-09). Decisões do dono P1 a P9 em `docs/planos/2026-10-15-metas-de-sonho-com-fotos.md` ("Decisões do dono"). Contrato 2.19.0. Migração V8.16. (O plano cita "ADR-017"; esse número já pertence à competência de renda, então esta é a ADR-018.)
+Status: aceita (2026-10-09). Decisões do dono P1 a P9. Contrato 2.19.0. Migração V8.16. (O plano cita "ADR-017"; esse número já pertence à competência de renda, então esta é a ADR-018.)
 
 ## Contexto
 O dono quer cadastrar um sonho (um bem, com preço e várias fotos), marcá-lo como destaque e ver as fotos na Home. A meta continua sendo `Goal.kind = SAVINGS` (ADR-016: prazo, plano, ações consistentes); só ganha mídia. Fotos são dado pessoal e entram por upload do cliente, que não é confiável.

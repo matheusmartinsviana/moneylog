@@ -1,6 +1,6 @@
 # ADR-025: moeda estrangeira como metadado (USD, câmbio por cobrança, IOF) e assinaturas
 
-Status: **PROPOSTA** (2026-10-15). P-9, P-10, P-11 e P-12 são decisões provisórias delegadas pelo dono. Plano: `docs/planos/2026-10-15-adequacao-ao-resumao.md` (bloco D, task D1). Contrato: 2.27.0. Delimita o S-2 da ADR-002 (dinheiro só em BRL, centavos `long`).
+Status: **PROPOSTA** (2026-10-15). P-9, P-10, P-11 e P-12 são decisões provisórias delegadas pelo dono. Contrato: 2.27.0. Delimita o S-2 da ADR-002 (dinheiro só em BRL, centavos `long`).
 
 ## Contexto
 Várias assinaturas são cobradas em dólar no cartão. O dono quer o custo mensal equivalente, o câmbio de cada cobrança, o IOF, separar pessoal de empresa, marcar "ativo até" e ver sobreposição. A ADR-002 fixa o razão em BRL; multimoeda no razão está fora do escopo. A fatura traz o valor já em BRL, então o que falta é guardar de onde veio.

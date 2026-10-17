@@ -1,6 +1,6 @@
 # ADR-027: ativos não disponíveis (FGTS) e reserva de emergência
 
-Status: **PROPOSTA** (2026-10-15). P-18 é decisão provisória delegada pelo dono; a origem do valor da reserva (seção 3) é uma escolha do dev a confirmar. Plano: `docs/planos/2026-10-15-adequacao-ao-resumao.md` (bloco G, task G1). Contrato: 2.30.0. Complementa o patrimônio (`NetWorth`, `DashboardNetWorth`).
+Status: **PROPOSTA** (2026-10-15). P-18 é decisão provisória delegada pelo dono; a origem do valor da reserva (seção 3) é uma escolha do dev a confirmar. Contrato: 2.30.0. Complementa o patrimônio (`NetWorth`, `DashboardNetWorth`).
 
 ## Contexto
 O dono tem FGTS, que é patrimônio mas **não está disponível**, e quer saber a cobertura da reserva de emergência. Hoje o patrimônio só conhece contas, recebíveis, cartões e dívidas. Misturar o FGTS no disponível ou na reserva infla o que ele pode usar (PR 01, regra 10: o dashboard e a lista da mesma fonte).

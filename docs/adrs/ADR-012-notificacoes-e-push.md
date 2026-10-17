@@ -3,7 +3,7 @@ tags: [moneylog, adr, backend, notificacoes, push]
 status: aceito
 data: 2026-10-07
 task: T127 a T130 (Etapa 7)
-relacionado: docs/planos/2026-10-05-etapa-7-importacao-notificacoes.md (S-173 a S-179), ADR-001
+relacionado: ADR-001
 ---
 
 # ADR-012: central de notificações garantida, geração idempotente e push atrás de `PushSender`

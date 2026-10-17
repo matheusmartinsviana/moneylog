@@ -1,6 +1,6 @@
 # ADR-028: Proveniência (origem e confiança), alertas novos e dados do cartão
 
-Status: **PROPOSTA** (2026-10-15). P-12, P-21, P-22, P-23, P-24, P-31a e P-33 são decisões provisórias delegadas pelo dono. Plano: `docs/planos/2026-10-15-adequacao-ao-resumao.md` (bloco I, tasks I1 a I3). Contrato: 2.32.0. Complementa a ADR-012 (notificações idempotentes, sem IA).
+Status: **PROPOSTA** (2026-10-15). P-12, P-21, P-22, P-23, P-24, P-31a e P-33 são decisões provisórias delegadas pelo dono. Contrato: 2.32.0. Complementa a ADR-012 (notificações idempotentes, sem IA).
 
 ## Contexto
 O resumão traz dados de fontes diferentes (print, holerite, contrato, informado) e alertas que o sistema ainda não gera. É preciso dizer de onde cada dado veio e quão firme ele é, sem criar um fluxo de aprovação, e gerar os alertas no backend, sem IA e sem duplicar.

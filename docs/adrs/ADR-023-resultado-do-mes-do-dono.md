@@ -1,6 +1,6 @@
 # ADR-023: resultado do mês do dono (defasagem da renda, saldo acumulado, mês da fatura e composição sem dupla contagem)
 
-Status: **PROPOSTA** (2026-10-15). P-1, P-2, P-3 e P-27 foram decididas pelo dono em 2026-10-15 (seção "Decididas"); o detalhe de P-2 (só contas `CASH`, sem cheque especial) e P-29, P-32 são provisórios (delegação do dono) e esperam a aprovação. Plano: `docs/planos/2026-10-15-adequacao-ao-resumao.md` (bloco B, task B1). Contrato: 2.25.0. Complementa a ADR-017 (competência de renda); usa a visão `MINE` da ADR-022.
+Status: **PROPOSTA** (2026-10-15). P-1, P-2, P-3 e P-27 foram decididas pelo dono em 2026-10-15 (seção "Decididas"); o detalhe de P-2 (só contas `CASH`, sem cheque especial) e P-29, P-32 são provisórios (delegação do dono) e esperam a aprovação. Contrato: 2.25.0. Complementa a ADR-017 (competência de renda); usa a visão `MINE` da ADR-022.
 
 ## Contexto
 O dono quer ver, por mês, quanto do salário sobra depois de tudo que é dele: entradas, saídas (fatura no mês do vencimento, parcelas, assinaturas, fixas e variáveis fora do cartão, minha cota do imóvel), sobra e saldo acumulado. O sistema já tem peças (`MonthlySummary`, `Projection`, `CommitmentSchedule`, faturas por parcela da ADR-006), mas nenhuma compõe "o mês do dono" e nenhuma impede que o mesmo item entre por duas fontes: uma assinatura no cartão aparece como ocorrência prevista da recorrência **e** como parcela da fatura (PR 01, regra 1: dupla contagem).
