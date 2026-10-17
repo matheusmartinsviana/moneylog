@@ -199,3 +199,31 @@ resource "aws_s3_bucket_lifecycle_configuration" "artifacts" {
     }
   }
 }
+
+data "aws_iam_policy_document" "artifacts_bucket" {
+  count = local.use_cloudflare ? 1 : 0
+
+  statement {
+    sid       = "DenyInsecureTransport"
+    effect    = "Deny"
+    actions   = ["s3:*"]
+    resources = [aws_s3_bucket.artifacts[0].arn, "${aws_s3_bucket.artifacts[0].arn}/*"]
+
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values   = ["false"]
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "artifacts" {
+  count  = local.use_cloudflare ? 1 : 0
+  bucket = aws_s3_bucket.artifacts[0].id
+  policy = data.aws_iam_policy_document.artifacts_bucket[0].json
+}
