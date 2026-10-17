@@ -1,6 +1,6 @@
 # ADR-022: rateio de compra por pessoa e "minha parte" como visão padrão
 
-Status: **ACEITA** (2026-10-15, aprovada pelo dono; P-28: recusar edição abaixo do recebido; recebimento permite o modo "já no saldo"; recorrência rateada vale em "minha parte" e só para ocorrências futuras). Plano: `docs/planos/2026-10-15-adequacao-ao-resumao.md` (bloco A, task A1). Parecer: `docs/revisoes/2026-10-15-plano-adequacao-ao-resumao.md` (F-1, F-2, F-3, F-8, F-10). Contrato: 2.24.0 (emenda A1b, 2026-10-15: recebimento "já no saldo", P-28 e P-31b decididas).
+Status: **ACEITA** (2026-10-15, aprovada pelo dono; P-28: recusar edição abaixo do recebido; recebimento permite o modo "já no saldo"; recorrência rateada vale em "minha parte" e só para ocorrências futuras). Contrato: 2.24.0 (emenda A1b, 2026-10-15: recebimento "já no saldo", P-28 e P-31b decididas).
 
 **Revoga a ADR-014 §2** (consumo bruto até o reembolso), **revisa a ADR-021** (definição de "gasto" do orçamento) e **revisa a parte de consumo da ADR-002** (a compra no cartão deixa de gerar `EXPENSE` pelo valor cheio da parcela). A ADR-016 e a ADR-019 passam a ler a visão `MINE` onde usam consumo.
 

@@ -3,7 +3,7 @@ tags: [moneylog, adr, backend, frontend, notas, seguranca]
 status: aceito
 data: 2026-10-05
 task: T106 (Etapa 6)
-relacionado: docs/planos/2026-10-05-etapa-6-vault-notas.md, docs/arquitetura/dominio-financeiro.md (§5, S-157 a S-166), ADR-001, ADR-008
+relacionado: docs/arquitetura/dominio-financeiro.md (§5, S-157 a S-166), ADR-001, ADR-008
 ---
 
 # ADR-009: vault de notas Markdown no Postgres, wikilinks, sanitização e zip seguro

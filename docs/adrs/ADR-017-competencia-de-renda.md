@@ -1,6 +1,6 @@
 # ADR-017: competência de renda x caixa
 
-Status: aceita (2026-10-08). Decisão do dono do produto. Planos: `docs/planos/2026-10-05-etapa-5-metas-resumo-projecoes.md` (seção "Competência de renda") e `docs/planos/2026-10-04-etapa-2-contas-movimentacoes.md` (§11). Contrato 2.18.0.
+Status: aceita (2026-10-08). Decisão do dono do produto. Contrato 2.18.0.
 
 ## Contexto
 O dono recebe o salário dividido: o adiantamento cai em 16/09 e a folha em 02/10, mas as duas parcelas são a renda de **outubro**. Até aqui a competência de um lançamento era sempre o mês da data efetiva, então setembro aparecia com 1.500 de renda e outubro com 2.500, e o resumo, o dashboard e a poupança do mês mentiam.
@@ -27,7 +27,7 @@ O dono recebe o salário dividido: o adiantamento cai em 16/09 e a folha em 02/1
 - Contrato 2.18.0, só acréscimos; migração V8.15 aditiva (linhas existentes valem como estão). Os testes de propriedade (`RendaDeOutroMesTest`, 40 sementes) e `IncomeCompetenceIT` provam as invariantes.
 
 ## Emenda (2026-10-15): convenção vigente do resumo é competência M paga M+1
-Status da emenda: decisão do dono do produto; plano `docs/planos/2026-10-15-adequacao-ao-resumao.md` (bloco F), ADR-026 e contrato 2.32.1.
+Status da emenda: decisão do dono do produto;, ADR-026 e contrato 2.32.1.
 
 ### Convenção vigente
 A renda de **competência M** é a que **paga as faturas e contas de M+1**. O pagamento do saldo cai no início de M+1 e o adiantamento, no meio de M; os dois pertencem à competência M. Em termos do campo `incomeCompetenceOffsetMonths`, o saldo pago em M+1 tem deslocamento **-1** (competência = mês da data - 1) e o adiantamento pago em M tem deslocamento **0**. O 13º (1ª parcela) pertence ao mês em que é pago (deslocamento 0).

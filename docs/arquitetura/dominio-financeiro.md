@@ -3,7 +3,6 @@ status: proposta (Etapa 1), ajustada após a revisão do plano (🟡); aguardand
 data: 2026-10-03
 autor: orquestrador
 fontes: PR 00, PR 01, PR 02, PR 03, ADR-001, BE 02
-revisao: docs/revisoes/2026-10-03-revisao-plano-etapa-1.md
 atualizacao: 2026-10-04 (T48): alinhado ao backend da Etapa 1 corrigido (credit_card_billing_rules, original_dedup_key, S-49 a S-55, S-75, S-77, S-78) e às suposições da Etapa 2 (S-56 a S-93, §8.2)
 ---
 
@@ -513,7 +512,7 @@ Os textos, motivos e donos de S-49 a S-55, S-75, S-77 e S-78 estão na tabela ac
 
 ### 8.2 Suposições de produto da Etapa 2 (a validar com o usuário)
 
-O texto completo, o motivo, o dono e as tasks de cada uma estão em [`docs/planos/2026-10-04-etapa-2-contas-movimentacoes.md`](../../docs/planos/2026-10-04-etapa-2-contas-movimentacoes.md) §3.1 (as de arquitetura estão em §3.2 e em `arquitetura.md` §8). Em ordem de impacto:
+O texto completo, o motivo, o dono e as tasks de cada uma estão em §3.1 (as de arquitetura estão em §3.2 e em `arquitetura.md` §8). Em ordem de impacto:
 
 | #          | Impacto | Resumo                                                                                                                                                                                                                      |
 | ---------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -648,9 +647,7 @@ Numeração a partir de S-245 (as S-147 a S-156 do plano são de produto e estã
 | S-280 | baixo   | **Exceções declaradas ao core puro (M7)**: ArchUnit só permite `org.yaml..` em `core.note.domain.Frontmatter` e só permite `core.note` depender de `core.transaction` pela idempotência (`IdempotentClaim`, `IdempotencyGateway`); mover para `core.sk` arrastaria `TransactionExceptions`, então a exceção fica justificada na ADR-009 §7 |
 | S-281 | baixo   | **Exportação falha antes do 200 (M9)**: o zip é montado em arquivo temporário antes de o cabeçalho sair; falha de montagem é erro normal (nunca zip cortado com 200) e o `Content-Length` revela download interrompido |
 
-### 8.6 Suposições do backend do redesign (T181 a T190), a validar com o usuário
-
-Plano `docs/planos/2026-10-10-redesign-workspace.md` §5 e §12 (S-282 a S-291), revisado em `docs/revisoes/2026-10-10-revisao-plano-redesign.md` (R1 a R4, R11, R13). Contrato **2.6.0**, só acréscimos compatíveis. S-292 a S-296 ficam reservadas à fatia G (orçamentos, opcional); as suposições que esta rodada acrescentou começam em **S-297**. Cada uma adota a opção conservadora.
+### 8.6 Suposições do backend do redesign (T181 a T190), a validar com o usuário §5 e §12 (S-282 a S-291), Contrato **2.6.0**, só acréscimos compatíveis. S-292 a S-296 ficam reservadas à fatia G (orçamentos, opcional); as suposições que esta rodada acrescentou começam em **S-297**. Cada uma adota a opção conservadora.
 
 | #     | Impacto | Suposição |
 | ----- | ------- | --------- |

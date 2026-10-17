@@ -1,6 +1,6 @@
 # ADR-019: insights calculados por matemática, desacoplados da IA
 
-Status: aceita (2026-10-16). Contrato 2.20.0 (só acréscimos). Plano: `docs/planos/2026-10-16-insights-por-matematica.md`.
+Status: aceita (2026-10-16). Contrato 2.20.0 (só acréscimos).
 
 ## Contexto
 Os insights do mês já eram determinísticos (S-188, `InsightEngine`), mas pobres (`CATEGORY_DELTA` contra o mês anterior e `CARD_COMMITTED`), só mensais e moravam no pacote `ai`, ao lado do `AIService`. Isso passava a ideia de que o motor dos insights é a IA e acoplava o cálculo ao provedor, ao consentimento e à prévia. O dono quer insights reais, mensais e do dia, que valham sem IA, sem provedor e offline.

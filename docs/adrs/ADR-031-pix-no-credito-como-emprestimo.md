@@ -1,6 +1,6 @@
 # ADR-031: Pix no crédito como empréstimo (`kind`, `channel` e alerta de custo)
 
-Status: **PROPOSTA** (2026-10-15). P-30 e P-33 são decisões provisórias delegadas pelo dono. Plano: `docs/planos/2026-10-15-adequacao-ao-resumao.md` (bloco F, task F1). Contrato: 2.29.0 (o alerta `CARD_CASH_OUT_COST` entra no `NotificationKind` em 2.32.0, ADR-028). Complementa a ADR-013 (total de dívidas e parcelado em andamento).
+Status: **PROPOSTA** (2026-10-15). P-30 e P-33 são decisões provisórias delegadas pelo dono. Contrato: 2.29.0 (o alerta `CARD_CASH_OUT_COST` entra no `NotificationKind` em 2.32.0, ADR-028). Complementa a ADR-013 (total de dívidas e parcelado em andamento).
 
 ## Contexto
 O Pix no crédito (saque de crédito) coloca dinheiro na conta e cobra juros, parcelado na fatura do cartão. Se for lançado como compra comum, o principal vira **consumo** e a renda, o consumo e o patrimônio ficam errados; se for lançado só como entrada em conta, vira **renda**. Nenhum dos dois é correto: é dinheiro emprestado (PR 01: "dinheiro emprestado não é renda; empréstimo não é despesa"; regras 2 e 4).

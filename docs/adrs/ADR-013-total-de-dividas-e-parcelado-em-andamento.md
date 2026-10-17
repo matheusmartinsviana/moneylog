@@ -1,6 +1,6 @@
 # ADR-013: total de dívidas, parcelado em andamento e meta de quitação
 
-Status: aceita (2026-10-14). Plano: `docs/planos/2026-10-14-visao-total-de-dividas.md`.
+Status: aceita (2026-10-14).
 
 ## Decisão
 1. **Fonte do total = estado, não movimento.** `GET /v1/debts/overview` lê `outstanding` das faturas não pagas (aberta, fechada, vencida e futura, líquido do crédito transportado; decisão P2) e das dívidas `PAYABLE` abertas. Nunca soma movimentos, então compra → parcela → fatura → pagamento não conta em dobro (PR 01). `committedFuture` (bruto) não é fonte. Custo fixo e recebíveis ficam fora do total.

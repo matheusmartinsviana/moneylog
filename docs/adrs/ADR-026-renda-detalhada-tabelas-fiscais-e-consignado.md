@@ -1,6 +1,6 @@
 # ADR-026: renda detalhada, tabelas fiscais versionadas e consignado em folha
 
-Status: **PROPOSTA** (2026-10-15). P-14, P-15, P-16 e P-17 são decisões provisórias delegadas pelo dono; P-13 exige fonte oficial citada, que está abaixo (seção 1). Plano: `docs/planos/2026-10-15-adequacao-ao-resumao.md` (bloco F, task F1). Contrato: 2.29.0. Complementa a ADR-017 (competência de renda) e a ADR-013 (total de dívidas).
+Status: **PROPOSTA** (2026-10-15). P-14, P-15, P-16 e P-17 são decisões provisórias delegadas pelo dono; P-13 exige fonte oficial citada, que está abaixo (seção 1). Contrato: 2.29.0. Complementa a ADR-017 (competência de renda) e a ADR-013 (total de dívidas).
 
 ## Contexto
 O dono recebe salário com adiantamento (percentual no meio do mês) e saldo no mês seguinte, com INSS, IRRF, benefícios e um empréstimo consignado descontado em folha, mais o 13º. Hoje a renda é lançada à mão. Para responder "quanto do meu salário sobra" (ADR-023) o sistema precisa do **líquido** calculado, sem número inventado, e do consignado sem virar saída duplicada.

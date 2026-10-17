@@ -1,6 +1,6 @@
 # ADR-016: metas de medida, estágio e plano das metas
 
-Status: aceita (2026-10-08). Plano: `docs/planos/2026-10-05-etapa-5-metas-resumo-projecoes.md` (seção "Metas de medida e plano").
+Status: aceita (2026-10-08).
 
 ## Decisão
 1. **`Goal.kind = METRIC`.** A meta acompanha uma `GoalMetric` do sistema (`TOTAL_DEBT`, `CARD_DEBT`, `PEOPLE_DEBT`, `OTHER_DEBT`, `ACCOUNTS_BALANCE`, `AVAILABLE_BALANCE`, `FIXED_COSTS_MONTHLY`) até um `target`. `baseline` e `baselineAt` são capturados na criação (sem passo "montando"); `direction` é derivada (`target < baseline` = `DECREASE`, `>` = `INCREASE`, igual = `422 GOAL_METRIC_TARGET_EQUALS_BASELINE`). `SAVINGS` e `DEBT_PAYOFF` não mudam. Sem reservas. Uma meta ativa por medida + alvo (`409 GOAL_METRIC_DUPLICATE`, também no índice único parcial V8.14).

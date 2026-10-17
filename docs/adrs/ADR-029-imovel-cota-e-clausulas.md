@@ -1,6 +1,6 @@
 # ADR-029: imóvel com cota por co-comprador e cláusulas
 
-Status: **PROPOSTA** (2026-10-15). P-19 é decisão provisória delegada pelo dono. Plano: `docs/planos/2026-10-15-adequacao-ao-resumao.md` (bloco H, task H1). Contrato: 2.31.0. Complementa a ADR-014 (compromissos acompanhados: o financiamento fica fora do pendente direto).
+Status: **PROPOSTA** (2026-10-15). P-19 é decisão provisória delegada pelo dono. Contrato: 2.31.0. Complementa a ADR-014 (compromissos acompanhados: o financiamento fica fora do pendente direto).
 
 ## Contexto
 O imóvel é um `LONG_TERM_PROJECT` com cronograma (`DOWN_PAYMENT`, `INSTALLMENT`, `EXTRAORDINARY`, `FINANCING`). Ele é comprado com outra pessoa: parte das parcelas é do dono e parte do co-comprador, e a cota varia por parcela. Hoje o item tem um valor só, sem cota. Para "o que é MEU" (ADR-023) e para formalizar com o co-comprador, o sistema precisa da cota por item, dos totais por pessoa e das cláusulas do contrato.

@@ -3,7 +3,7 @@ tags: [moneylog, adr, seguranca, backend, frontend]
 status: aceito (decisões de segurança do plano da Etapa 2; S-65, S-82 a S-86 ainda dependem de validação do usuário)
 data: 2026-10-04
 task: T22a (plano da Etapa 2)
-relacionado: docs/planos/2026-10-04-etapa-2-contas-movimentacoes.md (S-30, S-65, S-82 a S-86, §4.2), docs/arquitetura/arquitetura.md (§3.5, §4.5), vault FE 06 e BE 06
+relacionado: S-65, S-82 a S-86, §4.2), docs/arquitetura/arquitetura.md (§3.5, §4.5), vault FE 06 e BE 06
 ---
 
 # ADR-003: autenticação de usuário único (JWT curto em memória + refresh rotativo em cookie)

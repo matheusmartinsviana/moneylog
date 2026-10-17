@@ -2,8 +2,7 @@
 tags: [moneylog, adr, frontend, ui, acessibilidade]
 status: aceito
 data: 2026-10-05
-task: etapa de UI própria (FE-S-112 a FE-S-122), plano docs/planos/2026-10-05-etapa-ui-propria.md
-relacionado: ADR-001, DS 00 e DS 01 (vault), docs/revisoes/2026-10-06-revisao-codigo-ui-propria.md
+relacionado: ADR-001, DS 00 e DS 01 (vault)
 ---
 
 # ADR-007: UI própria sem controles nativos e overlay próprio (sem `@angular/cdk`)

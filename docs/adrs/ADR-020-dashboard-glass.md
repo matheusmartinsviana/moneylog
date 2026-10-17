@@ -1,6 +1,6 @@
 # ADR-020: Início em vidro (glass) sobre fundo verde escuro, tema escuro como principal
 
-Status: **Aceito** (2026-10-13), aprovado pelo dono. Plano: `docs/planos/2026-10-13-dashboard-glass-premium.md`. Revisões: `docs/revisoes/2026-10-13-plano-dashboard-glass-premium.md` e `-r2.md`.
+Status: **Aceito** (2026-10-13), aprovado pelo dono.
 
 ## Contexto
 O dono pediu um Início "premium finance dashboard" com vidro fosco, mais escuro, fundo verde escuro profundo, poucos detalhes brancos, minimalista, com um detalhe de luz WebGL (SideRays) discreto. Entrada em verde, saída em vermelho, nunca só por cor. Tokens da demanda: ink `#10172B`, cyan `#A9EAF5`/`#65CFE3`, emerald `#69D4A1`, success `#21885E`, danger `#D85B68`; raios 12/20/28/36; Inter/Geist com numerais tabulares.
