@@ -22,14 +22,14 @@ ROLLBACK=false
 TAG="${TAG:-}"
 PLATFORM="${PLATFORM:-linux/amd64}"
 
-while [ $# -gt 0 ]; do
+while [[ $# -gt 0 ]]; do
   case "$1" in
     --dry-run) DRY_RUN=true ;;
     --skip-build) SKIP_BUILD=true ;;
     --rollback) ROLLBACK=true ;;
     --tag) TAG="${2:?--tag exige um valor}"; shift ;;
     --print-trusted-proxies)
-      if [ "${EDGE_MODE:-cloudfront}" = cloudflare ]; then
+      if [[ "${EDGE_MODE:-cloudfront}" == cloudflare ]]; then
         # Modo cloudflare: o deploy.sh da instância já grava MONEYLOG_TRUSTED_PROXIES sozinho (Cloudflare + rede do Caddy).
         # Isto só mostra o valor equivalente para conferência.
         printf '172.29.0.0/24,%s\n' "$( (curl -fsS https://www.cloudflare.com/ips-v4; echo; curl -fsS https://www.cloudflare.com/ips-v6) | tr -d '\r' | grep -E '^[0-9a-fA-F:.]+/[0-9]+$' | paste -sd, -)"
@@ -54,18 +54,18 @@ export AWS_DEFAULT_REGION="$AWS_REGION"
 
 avisa_resultado() {
   local status=$?
-  [ "$DRY_RUN" = true ] && return 0
+  [[ "$DRY_RUN" == true ]] && return 0
   local alvo=backend
-  [ "$ROLLBACK" = true ] && alvo="backend (rollback)"
-  if [ "$status" -eq 0 ]; then "$ROOT/scripts/notify-deploy.sh" ok "$alvo" "${TAG:-anterior}"; else "$ROOT/scripts/notify-deploy.sh" falha "$alvo" "${TAG:-anterior}"; fi
+  [[ "$ROLLBACK" == true ]] && alvo="backend (rollback)"
+  if [[ "$status" -eq 0 ]]; then "$ROOT/scripts/notify-deploy.sh" ok "$alvo" "${TAG:-anterior}"; else "$ROOT/scripts/notify-deploy.sh" falha "$alvo" "${TAG:-anterior}"; fi
 }
 trap avisa_resultado EXIT
 
 run() {
-  if [ "$DRY_RUN" = true ]; then echo "(dryrun) $*"; else "$@"; fi
+  if [[ "$DRY_RUN" == true ]]; then echo "(dryrun) $*"; else "$@"; fi
 }
 
-if [ "$ROLLBACK" = true ]; then
+if [[ "$ROLLBACK" == true ]]; then
   REMOTE="/opt/moneylog/deploy.sh --rollback"
 else
   : "${ECR_REPOSITORY:?defina ECR_REPOSITORY (terraform output ecr_repository)}"
@@ -74,13 +74,13 @@ else
   IMAGE="$ECR_REPOSITORY:$TAG"
   REMOTE="/opt/moneylog/deploy.sh $TAG"
 
-  if [ "$SKIP_BUILD" = false ]; then
-    if [ "$DRY_RUN" = false ] && aws ecr describe-images --repository-name "${ECR_REPOSITORY#*/}" \
+  if [[ "$SKIP_BUILD" == false ]]; then
+    if [[ "$DRY_RUN" == false ]] && aws ecr describe-images --repository-name "${ECR_REPOSITORY#*/}" \
         --image-ids imageTag="$TAG" >/dev/null 2>&1; then
       echo "==> a tag $TAG já existe no ECR (imutável): não reenvia"
     else
       echo "==> construindo $IMAGE ($PLATFORM)"
-      if [ "$DRY_RUN" = false ]; then
+      if [[ "$DRY_RUN" == false ]]; then
         aws ecr get-login-password | docker login --username AWS --password-stdin "$REGISTRY" >/dev/null
       fi
       run docker buildx build --platform "$PLATFORM" -t "$IMAGE" --push "$ROOT/backend"
@@ -89,7 +89,7 @@ else
 fi
 
 echo "==> enviando para $INSTANCE_ID: $REMOTE"
-if [ "$DRY_RUN" = true ]; then
+if [[ "$DRY_RUN" == true ]]; then
   echo "(dryrun) aws ssm send-command --instance-ids $INSTANCE_ID --document-name AWS-RunShellScript"
   exit 0
 fi
@@ -104,7 +104,7 @@ aws ssm wait command-executed --command-id "$CMD_ID" --instance-id "$INSTANCE_ID
 aws ssm get-command-invocation --command-id "$CMD_ID" --instance-id "$INSTANCE_ID" \
   --query '[Status,StandardOutputContent,StandardErrorContent]' --output text || true
 
-if [ "$STATUS" -ne 0 ]; then
+if [[ "$STATUS" -ne 0 ]]; then
   echo "deploy falhou (a instância tenta voltar à tag anterior sozinha; confira o resultado acima)" >&2
   exit 1
 fi

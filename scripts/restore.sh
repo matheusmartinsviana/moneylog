@@ -8,12 +8,12 @@ FILE="${1:?informe o arquivo .dump}"
 : "${DB_NAME:?defina DB_NAME}" "${DB_USER:?defina DB_USER}" "${DB_PASSWORD:?defina DB_PASSWORD}"
 HOST="${DB_HOST:-localhost}"
 PORT="${DB_PORT:-5432}"
-[ -f "$FILE" ] || { echo "arquivo não encontrado: $FILE" >&2; exit 1; }
+[[ -f "$FILE" ]] || { echo "arquivo não encontrado: $FILE" >&2; exit 1; }
 export PGPASSWORD="$DB_PASSWORD"
 
 TABLES=$(psql --host "$HOST" --port "$PORT" --username "$DB_USER" --dbname "$DB_NAME" -At \
   -c "SELECT count(*) FROM pg_tables WHERE schemaname = 'public'")
-if [ "$TABLES" != "0" ]; then
+if [[ "$TABLES" != "0" ]]; then
   echo "a base $DB_NAME não está vazia ($TABLES tabelas). Crie uma base nova para restaurar." >&2
   exit 2
 fi

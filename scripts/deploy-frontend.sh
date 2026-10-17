@@ -42,20 +42,20 @@ done
 VERSAO_FRONT="$(git -C "$ROOT/frontend" rev-parse --short=12 HEAD 2>/dev/null || echo nogit)"
 avisa_resultado() {
   local status=$?
-  [ "$DRY_RUN" = true ] && return 0
+  [[ "$DRY_RUN" == true ]] && return 0
   local alvo=frontend
-  [ "$ROLLBACK" = true ] && alvo="frontend (rollback)"
-  if [ "$status" -eq 0 ]; then "$ROOT/scripts/notify-deploy.sh" ok "$alvo" "$VERSAO_FRONT"; else "$ROOT/scripts/notify-deploy.sh" falha "$alvo" "$VERSAO_FRONT"; fi
+  [[ "$ROLLBACK" == true ]] && alvo="frontend (rollback)"
+  if [[ "$status" -eq 0 ]]; then "$ROOT/scripts/notify-deploy.sh" ok "$alvo" "$VERSAO_FRONT"; else "$ROOT/scripts/notify-deploy.sh" falha "$alvo" "$VERSAO_FRONT"; fi
 }
 
 build() {
-  if [ "$SKIP_BUILD" = true ]; then
+  if [[ "$SKIP_BUILD" == true ]]; then
     echo "==> build pulado (--skip-build); usando $DIST"
   else
     echo "==> build de produção"
-    (cd "$ROOT/frontend" && npm ci && npm run build)
+    (cd "$ROOT/frontend" && npm ci --ignore-scripts && npm run build)
   fi
-  [ -f "$DIST/index.html" ] || { echo "build não encontrado em $DIST" >&2; exit 1; }
+  [[ -f "$DIST/index.html" ]] || { echo "build não encontrado em $DIST" >&2; exit 1; }
 }
 
 print_csp() {
@@ -73,7 +73,7 @@ print("default-src 'self'; script-src %s; style-src 'self' 'unsafe-inline'; img-
 PY
 }
 
-if [ "$PRINT_CSP" = true ]; then
+if [[ "$PRINT_CSP" == true ]]; then
   build
   print_csp
   exit 0
@@ -82,7 +82,7 @@ fi
 # ---- Modo cloudflare: zip -> S3 de artefatos -> SSM -> EC2 ----
 run_remote() { # <comando> : envia por SSM e espera; mostra a saída
   local cmd_id status=0
-  if [ "$DRY_RUN" = true ]; then echo "(dryrun) aws ssm send-command --instance-ids $INSTANCE_ID: $1"; return 0; fi
+  if [[ "$DRY_RUN" == true ]]; then echo "(dryrun) aws ssm send-command --instance-ids $INSTANCE_ID: $1"; return 0; fi
   cmd_id="$(aws ssm send-command --instance-ids "$INSTANCE_ID" --document-name AWS-RunShellScript \
     --comment "moneylog front" --parameters "commands=[\"$1\"]" --query Command.CommandId --output text)"
   aws ssm wait command-executed --command-id "$cmd_id" --instance-id "$INSTANCE_ID" || status=$?
@@ -98,7 +98,7 @@ deploy_cloudflare() {
   command -v aws >/dev/null || { echo "aws CLI não encontrada" >&2; exit 1; }
   trap avisa_resultado EXIT
 
-  if [ "$ROLLBACK" = true ]; then
+  if [[ "$ROLLBACK" == true ]]; then
     echo "==> rollback do front na instância"
     run_remote "/opt/moneylog/deploy-frontend.sh --rollback" || { echo "rollback falhou" >&2; exit 1; }
     exit 0
@@ -114,7 +114,7 @@ deploy_cloudflare() {
   sha="$(shasum -a 256 "$zipfile" | cut -d' ' -f1)"
   echo "==> $id.zip ($(du -h "$zipfile" | cut -f1), sha256 ${sha:0:12}...)"
 
-  if [ "$DRY_RUN" = true ]; then
+  if [[ "$DRY_RUN" == true ]]; then
     echo "(dryrun) aws s3 cp $zipfile s3://$ARTIFACTS_BUCKET/frontend/$id.zip"
   else
     aws s3 cp "$zipfile" "s3://$ARTIFACTS_BUCKET/frontend/$id.zip" --sse AES256 --only-show-errors
@@ -124,15 +124,15 @@ deploy_cloudflare() {
     echo "deploy do front falhou (a instância volta para a versão anterior sozinha; confira a saída acima)" >&2
     exit 1
   fi
-  [ "$DRY_RUN" = true ] && exit 0
+  [[ "$DRY_RUN" == true ]] && exit 0
   echo "pronto. Se a Cloudflare tiver cache de HTML/ngsw (não deve), faça Purge Everything. Rollback: scripts/deploy-frontend.sh --rollback"
   exit 0
 }
 
-if [ "$EDGE_MODE" = cloudflare ]; then
+if [[ "$EDGE_MODE" == cloudflare ]]; then
   deploy_cloudflare
 fi
-if [ "$ROLLBACK" = true ]; then
+if [[ "$ROLLBACK" == true ]]; then
   echo "--rollback só existe no modo cloudflare (no modo cloudfront, publique o commit anterior)" >&2
   exit 64
 fi
@@ -145,7 +145,7 @@ trap avisa_resultado EXIT
 build
 
 SYNC_FLAGS=()
-[ "$DRY_RUN" = true ] && SYNC_FLAGS+=(--dryrun)
+[[ "$DRY_RUN" == true ]] && SYNC_FLAGS+=(--dryrun)
 DEST="s3://$S3_BUCKET"
 NO_CACHE_FILES=(index.html ngsw.json ngsw-worker.js sw-push.js manifest.webmanifest)
 
@@ -164,21 +164,21 @@ aws s3 sync "$DIST" "$DEST" "${SYNC_FLAGS[@]}" --delete "${EXCLUDES[@]}" \
 # Por último: o index.html e o service worker só passam a apontar para arquivos que já estão no bucket.
 echo "==> 3/3 index.html, service worker e manifest (no-cache)"
 for f in "${NO_CACHE_FILES[@]}"; do
-  [ -f "$DIST/$f" ] || continue
+  [[ -f "$DIST/$f" ]] || continue
   case "$f" in
     *.html) TYPE="text/html; charset=utf-8" ;;
     *.json) TYPE="application/json" ;;
     *.js) TYPE="text/javascript; charset=utf-8" ;;
     *.webmanifest) TYPE="application/manifest+json" ;;
   esac
-  if [ "$DRY_RUN" = true ]; then
+  if [[ "$DRY_RUN" == true ]]; then
     echo "(dryrun) upload: $f -> $DEST/$f  [no-cache, $TYPE]"
   else
     aws s3 cp "$DIST/$f" "$DEST/$f" --cache-control "no-cache" --content-type "$TYPE" --only-show-errors
   fi
 done
 
-if [ "$DRY_RUN" = true ]; then
+if [[ "$DRY_RUN" == true ]]; then
   echo "(dryrun) invalidação de /* na distribuição $CLOUDFRONT_DISTRIBUTION_ID não enviada"
   exit 0
 fi

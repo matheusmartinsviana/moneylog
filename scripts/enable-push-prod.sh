@@ -17,7 +17,7 @@ BUCKET="${ARTIFACTS_BUCKET:?defina ARTIFACTS_BUCKET (bucket de artefatos)}"
 SUBJECT="https://${DOMAIN:?defina DOMAIN (domínio do app)}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 COMPOSE="$ROOT/infra/caddy/docker-compose.manual.yml"
-[ -s "$COMPOSE" ] || { echo "não achei $COMPOSE" >&2; exit 1; }
+[[ -s "$COMPOSE" ]] || { echo "não achei $COMPOSE" >&2; exit 1; }
 
 if aws ssm get-parameter --name "$P/MONEYLOG_PUSH_VAPID_PUBLIC" >/dev/null 2>&1; then
   echo "chaves VAPID já existem no SSM: mantidas"
