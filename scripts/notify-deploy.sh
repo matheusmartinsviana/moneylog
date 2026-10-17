@@ -9,6 +9,7 @@ ALVO="${2:-}"
 VERSAO="${3:-}"
 ORIGEM="${4:-$(whoami)@$(hostname -s)}"
 [ -n "$RESULTADO" ] && [ -n "$ALVO" ] || { sed -n '2,4p' "$0" >&2; exit 0; }
+[ "${MONEYLOG_NOTIFY:-1}" = 0 ] && exit 0
 
 export AWS_REGION="${AWS_REGION:-${AWS_DEFAULT_REGION:-us-east-1}}"
 P=/moneylog/prod

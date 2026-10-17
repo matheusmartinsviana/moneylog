@@ -59,13 +59,21 @@ Console > IAM > Funções > Criar função > Identidade da web > provedor acima,
       "Condition": {
         "StringEquals": {
           "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-          "token.actions.githubusercontent.com:sub": "repo:matheusmartinsviana/moneylog:environment:production"
+          "token.actions.githubusercontent.com:sub": [
+            "repo:matheusmartinsviana/moneylog:environment:production",
+            "repo:matheusmartinsviana@<ID-DO-USUARIO>/moneylog@<ID-DO-REPOSITORIO>:environment:production"
+          ]
         }
       }
     }
   ]
 }
 ```
+
+O segundo valor é o **subject imutável** que o GitHub passou a emitir (`use_immutable_subject` em
+`gh api /repos/<owner>/<repo>/actions/oidc/customization/sub`): o `sub` carrega os IDs numéricos do dono e do repositório,
+e sem ele a role responde "Not authorized to perform sts:AssumeRoleWithWebIdentity". O script descobre esse prefixo
+sozinho pelo `gh`.
 
 **Política de permissões** (em linha, nome `deploy`; só o necessário para publicar):
 
