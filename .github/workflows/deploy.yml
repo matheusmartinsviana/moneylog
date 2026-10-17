@@ -38,8 +38,34 @@ jobs:
     env:
       AWS_REGION: ${{ vars.AWS_REGION }}
       INSTANCE_ID: ${{ vars.INSTANCE_ID }}
-      ALVO: ${{ inputs.alvo || 'ambos' }}
     steps:
+      - name: Decide o alvo
+        id: alvo
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ENTRADA: ${{ inputs.alvo }}
+          ANTES: ${{ github.event.before }}
+        run: |
+          if [[ -n "$ENTRADA" ]]; then
+            ALVO="$ENTRADA"
+          else
+            ARQUIVOS="$(gh api "repos/$GITHUB_REPOSITORY/compare/$ANTES...$GITHUB_SHA" --paginate -q '.files[].filename' 2>/dev/null || true)"
+            BACK=false; FRONT=false; TUDO=false
+            while IFS= read -r f; do
+              case "$f" in
+                backend) BACK=true ;;
+                frontend|scripts/deploy-frontend.sh|infra/caddy/*) FRONT=true ;;
+                .github/workflows/deploy.yml|scripts/notify-deploy.sh) TUDO=true ;;
+              esac
+            done <<< "$ARQUIVOS"
+            if [[ "$TUDO" == true || -z "$ARQUIVOS" || ( "$BACK" == true && "$FRONT" == true ) ]]; then ALVO=ambos
+            elif [[ "$BACK" == true ]]; then ALVO=back
+            else ALVO=front
+            fi
+          fi
+          echo "alvo=$ALVO" >> "$GITHUB_OUTPUT"
+          echo "alvo: $ALVO"
+
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
@@ -53,7 +79,7 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
           role-duration-seconds: 3600
 
-      - if: env.ALVO != 'back'
+      - if: steps.alvo.outputs.alvo != 'back'
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "24"
@@ -61,21 +87,25 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Front
-        if: env.ALVO != 'back'
+        if: steps.alvo.outputs.alvo != 'back'
         env:
           EDGE_MODE: cloudflare
           ARTIFACTS_BUCKET: ${{ vars.ARTIFACTS_BUCKET }}
           DOMAIN: ${{ vars.DOMAIN }}
+          MONEYLOG_NOTIFY: "0"
         run: scripts/deploy-frontend.sh
 
       - name: Login no ECR
         id: ecr
-        if: env.ALVO != 'front'
+        if: steps.alvo.outputs.alvo != 'front'
         uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
+
+      - if: steps.alvo.outputs.alvo != 'front'
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Imagem do backend
         id: image
-        if: env.ALVO != 'front'
+        if: steps.alvo.outputs.alvo != 'front'
         env:
           REGISTRY: ${{ steps.ecr.outputs.registry }}
         run: |
@@ -84,12 +114,13 @@ jobs:
           if aws ecr describe-images --repository-name moneylog-backend --image-ids imageTag="$TAG" >/dev/null 2>&1; then
             echo "a tag $TAG já existe no ECR (imutável): não reenvia"
           else
-            docker buildx build --platform linux/amd64 -t "$IMAGE" --push backend
+            docker buildx build --platform linux/amd64 --provenance=false \
+              --cache-from type=gha --cache-to type=gha,mode=max -t "$IMAGE" --push backend
           fi
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Atualiza o backend na instância
-        if: env.ALVO != 'front'
+        if: steps.alvo.outputs.alvo != 'front'
         env:
           TAG: ${{ steps.image.outputs.tag }}
         run: |
@@ -115,6 +146,7 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           RESULTADO: ${{ job.status == 'success' && 'ok' || 'falha' }}
+          ALVO: ${{ steps.alvo.outputs.alvo }}
           VERSAO: ${{ steps.image.outputs.tag || github.sha }}
           ORIGEM: GitHub Actions ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: scripts/notify-deploy.sh "$RESULTADO" "$ALVO" "$VERSAO" "$ORIGEM"

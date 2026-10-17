@@ -24,6 +24,17 @@ else
     --thumbprint-list 6938fd4d98bab03faadb97b34396831e3780aea1 1c58a3a8518e8759bf075b76b750d4f2df264fcd >/dev/null
 fi
 
+SUBJECTS="\"repo:$GITHUB_REPO:environment:$GITHUB_ENVIRONMENT\""
+if command -v gh >/dev/null; then
+  IMMUTABLE_PREFIX="$(gh api "/repos/$GITHUB_REPO/actions/oidc/customization/sub" -q 'select(.use_immutable_subject == true) | .sub_claim_prefix' 2>/dev/null || true)"
+  if [ -n "$IMMUTABLE_PREFIX" ]; then
+    SUBJECTS="$SUBJECTS, \"$IMMUTABLE_PREFIX:environment:$GITHUB_ENVIRONMENT\""
+    echo "==> subject imutável do GitHub incluído: $IMMUTABLE_PREFIX"
+  fi
+else
+  echo "aviso: sem gh na máquina, a role só aceita o subject clássico; se o GitHub emitir o imutável, instale o gh e rode de novo" >&2
+fi
+
 TRUST="$(cat <<JSON
 {
   "Version": "2012-10-17",
@@ -33,7 +44,7 @@ TRUST="$(cat <<JSON
     "Action": "sts:AssumeRoleWithWebIdentity",
     "Condition": {"StringEquals": {
       "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-      "token.actions.githubusercontent.com:sub": "repo:$GITHUB_REPO:environment:$GITHUB_ENVIRONMENT"
+      "token.actions.githubusercontent.com:sub": [$SUBJECTS]
     }}
   }]
 }
