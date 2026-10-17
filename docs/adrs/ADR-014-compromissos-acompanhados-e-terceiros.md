@@ -1,6 +1,6 @@
 # ADR-014: compromissos acompanhados, despesa de terceiro e carga de fatura emitida
 
-Status: aceita (2026-10-07). Contrato 2.14.0 (só acréscimos).
+Status: aceita (2026-10-07). Contrato 2.14.0 (só acréscimos). Revogada em §2 pela ADR-022.
 
 ## Contexto
 A carga das finanças reais de um usuário mostrou quatro lacunas: (1) empréstimo no nome de terceiro que o usuário acompanha, sem saldo conhecido; (2) projeto de longo prazo (imóvel na planta) com cronograma próprio, parte financiada; (3) compra paga pelo usuário que é de outra pessoa (irmã, mãe), com o gasto bruto, o gasto de terceiros e o gasto pessoal líquido distintos; (4) fatura de cartão já emitida pelo banco e ainda sem itens no app.
