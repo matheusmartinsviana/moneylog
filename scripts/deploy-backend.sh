@@ -52,6 +52,15 @@ done
 : "${AWS_REGION:?defina AWS_REGION}"
 export AWS_DEFAULT_REGION="$AWS_REGION"
 
+avisa_resultado() {
+  local status=$?
+  [ "$DRY_RUN" = true ] && return 0
+  local alvo=backend
+  [ "$ROLLBACK" = true ] && alvo="backend (rollback)"
+  if [ "$status" -eq 0 ]; then "$ROOT/scripts/notify-deploy.sh" ok "$alvo" "${TAG:-anterior}"; else "$ROOT/scripts/notify-deploy.sh" falha "$alvo" "${TAG:-anterior}"; fi
+}
+trap avisa_resultado EXIT
+
 run() {
   if [ "$DRY_RUN" = true ]; then echo "(dryrun) $*"; else "$@"; fi
 }

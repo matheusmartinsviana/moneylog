@@ -1,6 +1,15 @@
 name: deploy
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - backend
+      - frontend
+      - scripts/deploy-frontend.sh
+      - scripts/notify-deploy.sh
+      - infra/caddy/**
+      - .github/workflows/deploy.yml
   workflow_dispatch:
     inputs:
       alvo:
@@ -29,11 +38,12 @@ jobs:
     env:
       AWS_REGION: ${{ vars.AWS_REGION }}
       INSTANCE_ID: ${{ vars.INSTANCE_ID }}
+      ALVO: ${{ inputs.alvo || 'ambos' }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           persist-credentials: false
-          ref: ${{ inputs.ref }}
+          ref: ${{ inputs.ref || github.sha }}
           submodules: recursive
           token: ${{ secrets.SUBMODULES_TOKEN || github.token }}
 
@@ -43,7 +53,7 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
           role-duration-seconds: 3600
 
-      - if: inputs.alvo != 'back'
+      - if: env.ALVO != 'back'
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "24"
@@ -51,7 +61,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Front
-        if: inputs.alvo != 'back'
+        if: env.ALVO != 'back'
         env:
           EDGE_MODE: cloudflare
           ARTIFACTS_BUCKET: ${{ vars.ARTIFACTS_BUCKET }}
@@ -60,12 +70,12 @@ jobs:
 
       - name: Login no ECR
         id: ecr
-        if: inputs.alvo != 'front'
+        if: env.ALVO != 'front'
         uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
 
       - name: Imagem do backend
         id: image
-        if: inputs.alvo != 'front'
+        if: env.ALVO != 'front'
         env:
           REGISTRY: ${{ steps.ecr.outputs.registry }}
         run: |
@@ -79,7 +89,7 @@ jobs:
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Atualiza o backend na instância
-        if: inputs.alvo != 'front'
+        if: env.ALVO != 'front'
         env:
           TAG: ${{ steps.image.outputs.tag }}
         run: |
@@ -98,3 +108,13 @@ jobs:
           aws ssm get-command-invocation --command-id "$CMD_ID" --instance-id "$INSTANCE_ID" \
             --query '[Status,StandardOutputContent,StandardErrorContent]' --output text || true
           [ "$STATUS" = "Success" ]
+
+      - name: Avisa no Telegram
+        if: always()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          RESULTADO: ${{ job.status == 'success' && 'ok' || 'falha' }}
+          VERSAO: ${{ steps.image.outputs.tag || github.sha }}
+          ORIGEM: GitHub Actions ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: scripts/notify-deploy.sh "$RESULTADO" "$ALVO" "$VERSAO" "$ORIGEM"

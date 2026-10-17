@@ -4,27 +4,34 @@ Os valores reais (conta, instância, bucket, domínio) não ficam no repositóri
 preencha no console e nas variáveis do Environment.
 
 Objetivo: publicar front e backend sem nenhuma chave da AWS guardada em disco ou no GitHub. O GitHub Actions troca um
-token de curta duração (OIDC) por credenciais temporárias de uma role que só ele pode assumir, e só depois que você
-aprova o Environment `production`. Os três repositórios continuam **privados**.
+token de curta duração (OIDC) por credenciais temporárias de uma role que só ele pode assumir, a partir do Environment
+`production`. Os três repositórios são **públicos** desde 2026-10-17; a condição `sub` da role garante que só a `main`
+do repositório principal consegue assumi-la.
 
 Situação de partida: o deploy é manual, do Mac, com a chave do usuário `matheus-admin` (AdministratorAccess). Ao fim
 deste plano essa chave é desativada e depois apagada.
 
 ## 0. Pré-requisitos (nesta ordem)
 
-1. **GitHub Actions funcionando.** Hoje todos os runs terminam em `startup_failure` (provável bloqueio de cobrança do
-   Actions em repositório privado). Ver github.com/settings/billing. Sem isso nada abaixo roda.
-2. **Segredo `SUBMODULES_TOKEN`.** `backend/` e `frontend/` são submódulos privados e o `GITHUB_TOKEN` do workflow não os
-   lê. Crie um PAT *fine-grained* (github.com/settings/personal-access-tokens): repositórios `moneylog-backend` e
-   `moneylog-frontend`, permissão **Contents: Read-only**, validade de 90 dias. Anote a data para renovar.
-3. **Environment `production`** no repositório `moneylog` (Settings > Environments):
-   - Required reviewers: você.
+1. **GitHub Actions funcionando.** Em 2026-10-17 os jobs morriam com "account is locked due to a billing issue": é a conta
+   do GitHub, não o repositório. Ver github.com/settings/billing. Sem isso nada abaixo roda.
+2. **Segredo `SUBMODULES_TOKEN`** só se `backend/` e `frontend/` voltarem a ser privados: PAT *fine-grained*
+   (github.com/settings/personal-access-tokens) com **Contents: Read-only** nos dois repositórios, validade de 90 dias.
+   Com os repositórios públicos o `GITHUB_TOKEN` do workflow basta.
+3. **Environment `production`** no repositório `moneylog`: `scripts/setup-github-environment.sh` cria tudo pelo `gh`
+   (idempotente). O que ele configura (Settings > Environments, se preferir à mão):
    - Deployment branches and tags: apenas `main`.
-   - Variables: `AWS_REGION=us-east-1`, `AWS_DEPLOY_ROLE_ARN` (preencher no passo 2), `ARTIFACTS_BUCKET=<BUCKET-DE-ARTEFATOS>`,
+   - Required reviewers: nenhum por padrão (push na `main` publica sozinho). Rode com `EXIGIR_APROVACAO=1` para cada
+     deploy esperar o seu ok na aba Actions.
+   - Variables: `AWS_REGION=us-east-1`, `AWS_DEPLOY_ROLE_ARN` (saída do item 2), `ARTIFACTS_BUCKET=<BUCKET-DE-ARTEFATOS>`,
      `INSTANCE_ID=<ID-DA-INSTANCIA>`, `DOMAIN=<seu-dominio>`.
-   - Secrets: `SUBMODULES_TOKEN`.
+   - Secrets (do repositório): `TELEGRAM_BOT_TOKEN` e `TELEGRAM_CHAT_ID` (aviso de deploy no Telegram; os mesmos valores
+     ficam no SSM como `MONEYLOG_TELEGRAM_*` para os scripts locais) e, se voltar a precisar, `SUBMODULES_TOKEN`.
 
 ## 1. Provedor OIDC na AWS (uma vez)
+
+`INSTANCE_ID=<ID-DA-INSTANCIA> ARTIFACTS_BUCKET=<BUCKET-DE-ARTEFATOS> scripts/setup-github-oidc.sh` faz os itens 1 e 2
+de uma vez (idempotente) e imprime o ARN da role. À mão, pelo console:
 
 Console > IAM > Provedores de identidade > Adicionar provedor:
 
@@ -122,8 +129,16 @@ ou no banco. Quem rouba um token OIDC só consegue repetir um deploy, e só dura
 ## 3. Workflow
 
 `.github/workflows/deploy.yml` (já adaptado ao seu desenho manual: Cloudflare + EC2, front por zip no bucket de
-artefatos, backend por `instance-setup.sh`). Dispara só por `workflow_dispatch`, pede aprovação do Environment e escolhe
-o alvo (`front`, `back` ou `ambos`).
+artefatos, backend por `instance-setup.sh`). Dispara de dois jeitos:
+
+- **Automático:** push na `main` do repositório principal que mexa nos ponteiros `backend`/`frontend`, em
+  `scripts/deploy-frontend.sh`, `infra/caddy/**` ou no próprio workflow. Publica os dois (`ambos`). É o fluxo normal:
+  merge no backend ou no frontend, depois PR no principal avançando o ponteiro (`git add backend frontend`); o merge
+  desse PR publica.
+- **Manual:** Actions > deploy > Run workflow, escolhendo o alvo (`front`, `back` ou `ambos`) e a ref.
+
+Um deploy por vez (`concurrency: deploy-production`). Ao final, sucesso ou falha, `scripts/notify-deploy.sh` avisa no
+Telegram com a versão e o link do run.
 
 Particularidades do seu ambiente que o workflow respeita:
 
@@ -137,20 +152,20 @@ Não foi possível testar o workflow antes de o Actions voltar a rodar: o primei
 ## 4. Ordem de execução
 
 1. Resolver o Actions (item 0.1) e confirmar que um run qualquer (o CI) inicia.
-2. Criar o PAT e o Environment (item 0.2 e 0.3), sem a variável da role.
-3. Provedor OIDC e role (itens 1 e 2); preencher `AWS_DEPLOY_ROLE_ARN`.
-4. Merge do PR com o workflow novo.
-5. **Primeiro teste só do front:** Actions > deploy > Run workflow > alvo `front`, aprovar. Conferir `https://moneylog.mviana.tech`.
-6. Teste do backend (alvo `back`): a instância faz o health check; se falhar, `scripts/deploy-backend.sh --rollback`
+2. `scripts/setup-github-oidc.sh` (provedor e role) e, com o ARN impresso, `scripts/setup-github-environment.sh`.
+3. Merge do PR com o workflow novo (esse merge já dispara o primeiro deploy automático, se mexer nos caminhos vigiados).
+4. **Primeiro teste só do front:** Actions > deploy > Run workflow > alvo `front`. Conferir `https://moneylog.mviana.tech`.
+5. Teste do backend (alvo `back`): a instância faz o health check; se falhar, `scripts/deploy-backend.sh --rollback`
    não serve aqui (depende do `deploy.sh`), então o retorno é rodar `instance-setup.sh app <TAG-ANTERIOR>` na instância.
-7. Com os dois funcionando: **desativar** a chave de `matheus-admin` (IAM > Credenciais de segurança > Desativar). Uma semana
+6. Com os dois funcionando: **desativar** a chave de `matheus-admin` (IAM > Credenciais de segurança > Desativar). Uma semana
    depois, sem ninguém sentir falta, **apagar**, e remover `~/.aws/credentials` do Mac.
-8. Reduzir o usuário `matheus-admin` a acesso ao console com MFA (sem chave). Para o terminal, usar IAM Identity Center
+7. Reduzir o usuário `matheus-admin` a acesso ao console com MFA (sem chave). Para o terminal, usar IAM Identity Center
    (SSO) quando precisar, com credenciais de poucas horas.
 
 ## 5. O que este plano não resolve
 
 - O console: quem entra como `matheus-admin` ou como root ainda faz tudo. Mantenha o MFA e a senha só no gerenciador.
-- O PAT `SUBMODULES_TOKEN` é uma credencial de longa duração, mas só de leitura nos dois repositórios privados.
-- Se o repositório principal virar público no futuro, a condição `sub` com `environment:production` continua valendo:
-  PRs de terceiros não conseguem aprovar o Environment. Mesmo assim, revise o histórico antes (`gitleaks`).
+- Repositórios públicos: a condição `sub` com `environment:production` e a política de branch (`main`) impedem que um PR
+  de terceiro dispare o deploy; só quem faz merge na `main` publica. Revise o histórico de vez em quando (`gitleaks`).
+- Um deploy que atualiza o backend direto na instância (`instance-setup.sh app` pelo Session Manager) não passa pelo
+  workflow nem pelos scripts e, por isso, não avisa no Telegram.

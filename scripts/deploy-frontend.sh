@@ -39,6 +39,15 @@ for arg in "$@"; do
   esac
 done
 
+VERSAO_FRONT="$(git -C "$ROOT/frontend" rev-parse --short=12 HEAD 2>/dev/null || echo nogit)"
+avisa_resultado() {
+  local status=$?
+  [ "$DRY_RUN" = true ] && return 0
+  local alvo=frontend
+  [ "$ROLLBACK" = true ] && alvo="frontend (rollback)"
+  if [ "$status" -eq 0 ]; then "$ROOT/scripts/notify-deploy.sh" ok "$alvo" "$VERSAO_FRONT"; else "$ROOT/scripts/notify-deploy.sh" falha "$alvo" "$VERSAO_FRONT"; fi
+}
+
 build() {
   if [ "$SKIP_BUILD" = true ]; then
     echo "==> build pulado (--skip-build); usando $DIST"
@@ -87,6 +96,7 @@ deploy_cloudflare() {
   : "${AWS_REGION:?defina AWS_REGION}"
   export AWS_DEFAULT_REGION="$AWS_REGION"
   command -v aws >/dev/null || { echo "aws CLI não encontrada" >&2; exit 1; }
+  trap avisa_resultado EXIT
 
   if [ "$ROLLBACK" = true ]; then
     echo "==> rollback do front na instância"
@@ -131,6 +141,7 @@ fi
 : "${CLOUDFRONT_DISTRIBUTION_ID:?defina CLOUDFRONT_DISTRIBUTION_ID (terraform output cloudfront_distribution_id)}"
 
 command -v aws >/dev/null || { echo "aws CLI não encontrada" >&2; exit 1; }
+trap avisa_resultado EXIT
 build
 
 SYNC_FLAGS=()
