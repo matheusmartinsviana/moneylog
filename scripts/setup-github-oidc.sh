@@ -27,7 +27,7 @@ fi
 SUBJECTS="\"repo:$GITHUB_REPO:environment:$GITHUB_ENVIRONMENT\""
 if command -v gh >/dev/null; then
   IMMUTABLE_PREFIX="$(gh api "/repos/$GITHUB_REPO/actions/oidc/customization/sub" -q 'select(.use_immutable_subject == true) | .sub_claim_prefix' 2>/dev/null || true)"
-  if [ -n "$IMMUTABLE_PREFIX" ]; then
+  if [[ -n "$IMMUTABLE_PREFIX" ]]; then
     SUBJECTS="$SUBJECTS, \"$IMMUTABLE_PREFIX:environment:$GITHUB_ENVIRONMENT\""
     echo "==> subject imutável do GitHub incluído: $IMMUTABLE_PREFIX"
   fi

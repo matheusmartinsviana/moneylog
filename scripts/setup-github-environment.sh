@@ -15,7 +15,7 @@ REPO="${GITHUB_REPO:-matheusmartinsviana/moneylog}"
 ENV_NAME="${GITHUB_ENVIRONMENT:-production}"
 
 REVIEWERS="[]"
-if [ "${EXIGIR_APROVACAO:-0}" = 1 ]; then
+if [[ "${EXIGIR_APROVACAO:-0}" == 1 ]]; then
   REVIEWERS="[{\"type\":\"User\",\"id\":$(gh api user -q .id)}]"
   echo "==> environment $ENV_NAME (aprovação obrigatória sua, só a branch main)"
 else

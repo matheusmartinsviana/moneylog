@@ -8,8 +8,8 @@ RESULTADO="${1:-}"
 ALVO="${2:-}"
 VERSAO="${3:-}"
 ORIGEM="${4:-$(whoami)@$(hostname -s)}"
-[ -n "$RESULTADO" ] && [ -n "$ALVO" ] || { sed -n '2,4p' "$0" >&2; exit 0; }
-[ "${MONEYLOG_NOTIFY:-1}" = 0 ] && exit 0
+[[ -n "$RESULTADO" && -n "$ALVO" ]] || { sed -n '2,4p' "$0" >&2; exit 0; }
+[[ "${MONEYLOG_NOTIFY:-1}" == 0 ]] && exit 0
 
 export AWS_REGION="${AWS_REGION:-${AWS_DEFAULT_REGION:-us-east-1}}"
 P=/moneylog/prod
@@ -21,7 +21,7 @@ from_ssm() {
 
 TOKEN="${TELEGRAM_BOT_TOKEN:-$(from_ssm MONEYLOG_TELEGRAM_BOT_TOKEN)}"
 CHAT="${TELEGRAM_CHAT_ID:-$(from_ssm MONEYLOG_TELEGRAM_CHAT_ID)}"
-if [ -z "$TOKEN" ] || [ -z "$CHAT" ]; then
+if [[ -z "$TOKEN" || -z "$CHAT" ]]; then
   echo "aviso no Telegram pulado: defina TELEGRAM_BOT_TOKEN e TELEGRAM_CHAT_ID ou grave no SSM com scripts/telegram-setup.sh" >&2
   exit 0
 fi
