@@ -82,6 +82,10 @@
 		@revalidate not path_regexp hashed ^/[^/]+-[A-Za-z0-9]{8}\.(js|css|woff2?|ttf|otf)$|^/media/.+-[A-Za-z0-9]{8}\.[A-Za-z0-9]+$
 		header @revalidate Cache-Control "no-cache"
 
+		@convite path /convite /convite/*
+		header @convite >Referrer-Policy "no-referrer"
+		header @convite >Cache-Control "no-store"
+
 		# Fallback da SPA (equivale a `try_files {path} /index.html`) SÓ para caminhos sem extensão que não existem como arquivo.
 		# Arquivo com extensão que não existe dá 404 de verdade (não vira index.html com 200, o que quebraria o service worker).
 		# /v1/* nunca chega aqui (handle acima).

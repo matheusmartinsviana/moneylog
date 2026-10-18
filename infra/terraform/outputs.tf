@@ -91,3 +91,38 @@ output "ssm_prefix" {
 output "log_group" {
   value = aws_cloudwatch_log_group.backend.name
 }
+
+output "mail_configuration_set" {
+  description = "Valor de MAIL_SES_CONFIGURATION_SET. Vazio com mail_domain vazio."
+  value       = local.mail_enabled ? aws_sesv2_configuration_set.main[0].configuration_set_name : ""
+}
+
+output "mail_dns_records" {
+  description = "Registros DNS a criar na Cloudflare (todos com proxy DESLIGADO, nuvem cinza). Nada é criado automaticamente."
+  value = local.mail_enabled ? concat(
+    [
+      for token in aws_sesv2_email_identity.domain[0].dkim_signing_attributes[0].tokens : {
+        type    = "CNAME"
+        name    = "${token}._domainkey.${var.mail_domain}"
+        content = "${token}.dkim.amazonses.com"
+      }
+    ],
+    [
+      {
+        type    = "MX"
+        name    = local.mail_from_domain
+        content = "10 feedback-smtp.${var.mail_region}.amazonses.com"
+      },
+      {
+        type    = "TXT"
+        name    = local.mail_from_domain
+        content = "v=spf1 include:amazonses.com ~all"
+      },
+      {
+        type    = "TXT"
+        name    = "_dmarc.${var.mail_domain}"
+        content = "v=DMARC1; p=${var.mail_dmarc_policy}; rua=mailto:${var.mail_dmarc_report_address}"
+      },
+    ]
+  ) : []
+}
