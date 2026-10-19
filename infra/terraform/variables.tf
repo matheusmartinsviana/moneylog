@@ -153,3 +153,55 @@ variable "ssm_prefix" {
   type        = string
   default     = "/moneylog/prod"
 }
+
+variable "mail_region" {
+  description = "Região do Amazon SES. Fixa em us-east-1 (ADR-032, Q13)."
+  type        = string
+  default     = "us-east-1"
+}
+
+variable "mail_domain" {
+  description = "Domínio verificado no SES, do qual saem os convites (ex.: moneylog.mviana.tech). Vazio desliga todos os recursos de e-mail."
+  type        = string
+  default     = ""
+}
+
+variable "mail_from_address" {
+  description = "Único remetente permitido pela política IAM. Precisa pertencer a mail_domain."
+  type        = string
+  default     = "convite@moneylog.mviana.tech"
+
+  validation {
+    condition     = var.mail_domain == "" || endswith(var.mail_from_address, "@${var.mail_domain}")
+    error_message = "mail_from_address precisa terminar em @<mail_domain>."
+  }
+}
+
+variable "mail_from_subdomain" {
+  description = "Rótulo do MAIL FROM customizado (vira <rótulo>.<mail_domain>), necessário para o SPF alinhar ao DMARC."
+  type        = string
+  default     = "bounce"
+}
+
+variable "mail_dmarc_policy" {
+  description = "Política do DMARC publicada (none, quarantine ou reject). Comece com none, observe os relatórios e endureça."
+  type        = string
+  default     = "none"
+
+  validation {
+    condition     = contains(["none", "quarantine", "reject"], var.mail_dmarc_policy)
+    error_message = "mail_dmarc_policy deve ser none, quarantine ou reject."
+  }
+}
+
+variable "mail_dmarc_report_address" {
+  description = "Endereço que recebe os relatórios agregados do DMARC (rua)."
+  type        = string
+  default     = "c@mviana.tech"
+}
+
+variable "mail_alert_email" {
+  description = "E-mail que assina o tópico de bounces e reclamações (precisa confirmar a inscrição). Vazio = sem assinatura."
+  type        = string
+  default     = ""
+}

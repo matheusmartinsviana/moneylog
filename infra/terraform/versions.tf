@@ -27,3 +27,15 @@ provider "aws" {
     }
   }
 }
+
+provider "aws" {
+  alias  = "ses"
+  region = var.mail_region
+
+  default_tags {
+    tags = {
+      app = "moneylog"
+      env = var.environment
+    }
+  }
+}
