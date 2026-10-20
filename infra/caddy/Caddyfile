@@ -22,7 +22,6 @@
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
 		X-Content-Type-Options "nosniff"
 		X-Frame-Options "DENY"
-		Referrer-Policy "strict-origin-when-cross-origin"
 		-Server
 	}
 	# CSP opcional: o arquivo é vazio quando content_security_policy não está definida no Terraform.
@@ -37,6 +36,11 @@
 
 	encode zstd gzip
 	import security_headers
+
+	@convite path /convite /convite/*
+	@fora_do_convite not path /convite /convite/*
+	header @fora_do_convite Referrer-Policy "strict-origin-when-cross-origin"
+	header @convite Referrer-Policy "no-referrer"
 
 	# Saúde pelo domínio (só o caminho exato; o resto do /actuator não é exposto).
 	handle /actuator/health {
@@ -82,8 +86,6 @@
 		@revalidate not path_regexp hashed ^/[^/]+-[A-Za-z0-9]{8}\.(js|css|woff2?|ttf|otf)$|^/media/.+-[A-Za-z0-9]{8}\.[A-Za-z0-9]+$
 		header @revalidate Cache-Control "no-cache"
 
-		@convite path /convite /convite/*
-		header @convite >Referrer-Policy "no-referrer"
 		header @convite >Cache-Control "no-store"
 
 		# Fallback da SPA (equivale a `try_files {path} /index.html`) SÓ para caminhos sem extensão que não existem como arquivo.
