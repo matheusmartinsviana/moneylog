@@ -242,7 +242,11 @@ Marque cada item. **Bloqueio** = não publique dado real sem resolver.
 
 ### 8.1 Começar vazio em produção
 
-Banco novo = o primeiro `deploy-backend.sh`: o Flyway cria o schema e o `OwnerBootstrap` cria **só o dono** (`MONEYLOG_OWNER_EMAIL`) sem senha; ele escolhe a senha com o código de primeiro acesso. Não há dado de exemplo em `prod`.
+Banco novo = o primeiro `deploy-backend.sh`: o Flyway cria o schema e o `OwnerBootstrap` cria **só o dono** (`MONEYLOG_OWNER_EMAIL`) sem senha; ele escolhe a senha com o código de primeiro acesso. Não há dado de exemplo em `prod`. Depois da primeira subida, `MONEYLOG_OWNER_EMAIL` tem de continuar igual ao e-mail do dono gravado no banco; divergência derruba a subida com erro claro.
+
+**Trocar o e-mail do dono (operação manual deliberada, não acontece pelo reinício):** o dono atual é `c@mviana.tech`; só troque se for decisão consciente. Com o backend parado (`docker compose stop backend`), rode no Postgres `UPDATE users SET email = lower('<novo>') WHERE role = 'OWNER';` (o `id` e os dados são mantidos), atualize `/moneylog/prod/MONEYLOG_OWNER_EMAIL` no SSM com o mesmo valor e suba (`docker compose start backend`). Se o novo e-mail já pertence a outro usuário, resolva isso antes; o app não promove nem renomeia ninguém em silêncio.
+
+A migração V9.27 lê o placeholder Flyway `owner-email`, alimentado por `MONEYLOG_OWNER_EMAIL` (`spring.flyway.placeholders.owner-email`), para eleger o dono entre usuários já existentes; aspas simples no valor são escapadas pela aplicação. Nenhum script em `scripts/` roda Flyway fora do app (`reset-database.sh` e `restore.sh` só usam `psql`/`pg_restore`). Se um dia rodar a migração fora do app (CLI do Flyway), passe `-placeholders.owner-email=<e-mail>` (vazio é aceito: o dono vira o usuário mais antigo) e escape `'` como `''`.
 
 ### 8.2 ZERAR um ambiente existente (apaga tudo)
 
@@ -290,7 +294,7 @@ Os dados locais são pessoais: nunca os coloque no repositório, em ticket ou em
    docker compose start backend
    shred -u /root/local.dump
    ```
-4. O dono do dump já tem senha. O `MONEYLOG_OWNER_EMAIL` do SSM precisa ser o mesmo e-mail (o app atualiza o e-mail, mantendo o id, se diferir). Não é preciso código de primeiro acesso.
+4. O dono do dump já tem senha. O `MONEYLOG_OWNER_EMAIL` do SSM precisa ser exatamente o e-mail do dono do dump: se diferir, o app **não sobe** (falha clara, ADR-032 §3.2) e nunca renomeia o dono sozinho. Não é preciso código de primeiro acesso.
 5. Apague o dump do S3 (`aws s3 rm`; o versionamento guarda a versão: apague também a versão, ou deixe o lifecycle expirá-la em 30 dias).
 
 ## 9. O que foi verificado e o que você precisa conferir
