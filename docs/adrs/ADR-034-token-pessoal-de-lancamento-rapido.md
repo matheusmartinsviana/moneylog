@@ -16,7 +16,7 @@ A integridade financeira (PR 01) não é tocada: o canal chama o **mesmo** caso 
 |---|---|
 | Q1 | Dois tipos, `INCOME` (Entrada) e `EXPENSE` (Gasto). "Saída" é gasto. O teto diário próprio e menor para a entrada, aprovado antes, passou a ser **opcional e desligado** (ver Q7). |
 | Q3 | Variante X: a **conta é vinculada ao token** (um token por aparelho e conta). Não há tabela de conta padrão por usuário nem endpoints de configuração. |
-| Q5 | `method` nulo quando o Atalho não manda. Nada de `PIX` por chute. |
+| Q5 | Quando o Atalho não manda `method`, vale `OTHER` ("Outro"), o mesmo padrão de `POST /v1/transactions` (contrato 2.11.0). A decisão original era "nulo", mas o domínio exige método em toda movimentação de conta (`PaymentMethodRequiredException`); `OTHER` não afirma nada e respeita "nada de `PIX` por chute". Ajustada na revisão da T5 (2026-10-21) sem objeção do dono. |
 | Q6 | Regra do valor digitado da seção 6. |
 | Q7 (revisada pelo dono em 2026-10-21) | Validade de 30 dias de padrão e 90 de máximo; 3 tokens ativos por usuário. **Sem limite de valor por lançamento nem de quantidade ou total por dia**: o dono não quer esses tetos. Eles existem como configuração, **desligados por padrão** (propriedade ausente ou 0 = sem limite), e podem ser ligados depois sem migração (seção 7). Continuam valendo o limite técnico de sanidade do valor (o mesmo de `POST /v1/transactions`, R$ 999.999.999,99) e o rate limit por token e por IP. |
 | Q8 | Desativar o usuário **revoga o token de vez**; reativar não o ressuscita (token novo); trocar a senha **não** revoga. |
@@ -53,7 +53,7 @@ O código usa `TOO_MANY_ATTEMPTS`, o mesmo do restante da API, e não um código
 ### 5. Idempotência (um único claim)
 - O caso de uso rápido reivindica `idempotency_keys` no escopo `POST /v1/quick-entries`. Para não haver dois claims aninhados, a T5 **extrai do `CreateTransactionUseCase` o miolo** que cria a movimentação (hoje o claim do escopo `POST /v1/transactions` é interno) e o chama já dentro da transação do claim. `POST /v1/transactions` continua igual, com um claim no escopo antigo e testes inalterados.
 - **Chave opaca**: o header aceita UUID ou `[A-Za-z0-9_-]{8,64}` (o UUID também cabe no padrão). Para não-UUID, a chave vira o UUID `nameUUIDFromBytes(userId + ":" + chave)`. Usa `userId`, não `tokenId`: trocar de token não quebra o dedupe. Colisões são tratadas pela unicidade `(user_id, scope, key)`.
-- **Hash do pedido sobre o input bruto** (`kind`, `amount` como texto, `category`, `description`, `method`, `date` como veio, inclusive ausente). Assim, `date` ausente não vira data resolvida no hash e o reenvio depois da meia-noite do fuso continua sendo replay, não `409`.
+- **Hash do pedido sobre o input bruto** (`kind`, `amount` como texto, `category`, `description`, `method`, `date` como veio, inclusive ausente, e o `accountId` do token). O `accountId` entra no hash porque a chave é por usuário e não por token: sem ele, dois aparelhos com tokens de contas diferentes, mesma chave e mesmos valores deduplicariam em silêncio e o lançamento sumiria da outra conta; com ele vira `409` visível. Rotacionar o token na mesma conta continua deduplicando. Assim, `date` ausente não vira data resolvida no hash e o reenvio depois da meia-noite do fuso continua sendo replay, não `409`.
 - Mesma chave e mesmo input: `201` com o **mesmo `id` e o mesmo `message`** (o `message` é remontado do lançamento gravado). Mesma chave e input diferente: `409 IDEMPOTENCY_KEY_REUSED`. Erro não memoriza a chave. Validade de 24 h.
 - **Replay de lançamento estornado**: o replay **não recria** o lançamento e devolve o recurso com o `status` atual (`VOIDED`) e o mesmo `id`. O `message` remontado diz o estado real: "Gasto de R$ 35,50 em Alimentação (Carteira) registrado e depois estornado." (entrada: "Entrada de ... registrada e depois estornada."). Quem quer lançar de novo roda o Atalho outra vez (chave nova).
 - A chave protege o **reenvio do mesmo disparo**. Duas execuções manuais com valores digitados são dois lançamentos legítimos; não há trava de duplicata (Q17).
@@ -65,7 +65,7 @@ Moeda BRL. `amount` aceita **texto** em formato brasileiro ou **número JSON** (
 **Número JSON.** O servidor lê o número **pelo texto do JSON**, como decimal exato (`BigDecimal` a partir do token do JSON, por exemplo `JsonNode` com `USE_BIG_DECIMAL_FOR_FLOATS`/`DecimalNode`, nunca `double`, `float` nem `Number.doubleValue()`). Vale: positivo, no máximo 2 casas, mesmos tetos do texto. Mais de 2 casas (`27.605`), zero, negativo ou notação científica (`1e3`, `2.5E1`) é `422 QUICK_AMOUNT_INVALID`. Um valor como `27.600000000000001` (artefato de reler como `double`, que só aparece em ferramentas como o httpbin) também é recusado por ter mais de 2 casas. O hash de idempotência usa o **texto cru** do valor como veio (`27.6` e `"27,60"` são pedidos diferentes). Regras do texto:
 - Remover `R$` e espaços.
 - Se há vírgula, ela é o decimal (1 ou 2 casas) e os pontos antes dela são milhar, em grupos de 3.
-- Sem vírgula, o ponto só é decimal com **1 ou 2 casas depois**. Ponto seguido de 3 ou mais dígitos sem vírgula é **ambíguo** e vira `422 QUICK_AMOUNT_AMBIGUOUS` ("Use vírgula nos centavos, por exemplo 1.234,00").
+- Sem vírgula, o ponto só é decimal com **1 ou 2 casas depois**. É **ambíguo** (`422 QUICK_AMOUNT_AMBIGUOUS`, "Use vírgula nos centavos, por exemplo 1.234,00") o ponto seguido de 3 dígitos que formam uma leitura válida de milhar (`1.234`, `35.500`, `1.234.567`). Ponto com 3 ou mais dígitos que não forma milhar (`1234.567`, `1.2345`) não tem leitura válida e é `422 QUICK_AMOUNT_INVALID` (pedir vírgula não resolveria).
 - Mais de 2 casas decimais, zero, negativo, vazio ou letras: `422 QUICK_AMOUNT_INVALID`.
 
 Tabela de casos (fixada aqui e testada na T5, inclusive com teste de propriedade: todo centavo formatado e parseado volta igual):
@@ -76,7 +76,7 @@ Tabela de casos (fixada aqui e testada na T5, inclusive com teste de propriedade
 | `1.234,56` · `1.234.567,89` · `R$ 35,00` | 1234.56 · 1234567.89 · 35.00 |
 | `35.50` · `35.5` | 35.50 · 35.50 |
 | `1.234` · `35.500` · `1.234.567` | `QUICK_AMOUNT_AMBIGUOUS` (422, "use vírgula nos centavos") |
-| `10,005` · `1,234,56` · `12.34,56` | `QUICK_AMOUNT_INVALID` |
+| `10,005` · `1,234,56` · `12.34,56` · `1234.567` · `1.2345` | `QUICK_AMOUNT_INVALID` |
 | `0` · `0,00` · `-5` · vazio · `abc` | `QUICK_AMOUNT_INVALID` |
 | acima de R$ 999.999.999,99 (limite técnico) | `QUICK_AMOUNT_INVALID` |
 | acima de um teto por lançamento, **só se configurado** | `QUICK_LIMIT_REACHED` |
@@ -88,6 +88,7 @@ Casos do número JSON (testados na T5/T6):
 | Corpo | Resultado |
 |---|---|
 | `27.6` · `27.60` · `35` · `1234.56` | 27.60 · 27.60 · 35.00 · 1234.56 |
+| `35.500` (zeros à direita não contam; o texto `"35.500"` é ambíguo, o número `35.500` vale 35,50 porque número JSON não usa ponto de milhar) | 35.50 |
 | `27.605` · `0.001` | `QUICK_AMOUNT_INVALID` |
 | `0` · `0.0` · `-5` | `QUICK_AMOUNT_INVALID` |
 | `1e3` · `2.5E1` | `QUICK_AMOUNT_INVALID` |
@@ -115,7 +116,7 @@ Quando algum teto estiver ligado, vale o que segue; com todos desligados, nada d
 ### 8. Categoria, data e método
 - **`category` é opcional** (fluxo do Atalho: tipo, nome e valor). Omitida, a movimentação **recebe a categoria de sistema padrão**, `OTHER_EXPENSE` (gasto) ou `OTHER_INCOME` (entrada), a mesma regra de `categoryId` ausente em `POST /v1/transactions` (contrato 2.11.0). Nunca fica sem categoria, o que respeita o domínio atual (consumo por categoria no dashboard e nos relatórios exige categoria), e a resposta traz a categoria aplicada (`QuickEntryResult.category` não é nulo). Se a categoria padrão não existir ou estiver arquivada, vale o erro existente `422 DEFAULT_CATEGORY_UNAVAILABLE`, sem gravar. Enviada: chave de sistema (`FOOD`) ou nome sem acento e sem caixa, entre as categorias **ativas do próprio usuário**; nunca por id. Inexistente, arquivada ou de outro usuário: `422 QUICK_CATEGORY_NOT_FOUND`, sem classificar em silêncio.
 - `date` omitida = hoje no fuso do usuário; aceita de hoje menos 366 dias até hoje; futura ou mais antiga é `422 QUICK_DATE_OUT_OF_RANGE`. A hora não é gravada (a movimentação guarda só a data; `createdAt` guarda o instante).
-- `method` é opcional, só do gasto, e fica nulo se omitido (Q5). Enviado numa entrada, é `400 VALIDATION_FAILED` (decisão técnica do contrato: ignorar em silêncio esconderia erro do Atalho).
+- `method` é opcional, só do gasto, e vale `OTHER` se omitido (Q5 ajustada); numa entrada, o método gravado é sempre `OTHER`, e a resposta traz o método gravado (nunca nulo). Enviado numa entrada, é `400 VALIDATION_FAILED` (decisão técnica do contrato: ignorar em silêncio esconderia erro do Atalho).
 - Fora do MVP: compra no cartão, transferência, investimento, empréstimo, parcelado, estorno, edição e exclusão pelo token. O `kind` é enum fechado.
 
 ### 9. Resposta pensada para o Atalho (exceção ao ADR-012)
