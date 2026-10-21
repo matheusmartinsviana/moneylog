@@ -66,7 +66,7 @@ Moeda BRL. `amount` aceita **texto** em formato brasileiro ou **número JSON** (
 - Remover `R$` e espaços.
 - Se há vírgula, ela é o decimal (1 ou 2 casas) e os pontos antes dela são milhar, em grupos de 3.
 - Sem vírgula, o ponto só é decimal com **1 ou 2 casas depois**. É **ambíguo** (`422 QUICK_AMOUNT_AMBIGUOUS`, "Use vírgula nos centavos, por exemplo 1.234,00") o ponto seguido de 3 dígitos que formam uma leitura válida de milhar (`1.234`, `35.500`, `1.234.567`). Ponto com 3 ou mais dígitos que não forma milhar (`1234.567`, `1.2345`) não tem leitura válida e é `422 QUICK_AMOUNT_INVALID` (pedir vírgula não resolveria).
-- Mais de 2 casas decimais, zero, negativo, vazio ou letras: `422 QUICK_AMOUNT_INVALID`.
+- Mais de 2 casas decimais, zero, negativo, só espaços ou letras: `422 QUICK_AMOUNT_INVALID`. `amount` vazio ou com mais de 40 caracteres é `400 VALIDATION_FAILED` na borda (contrato 2.40.2).
 
 Tabela de casos (fixada aqui e testada na T5, inclusive com teste de propriedade: todo centavo formatado e parseado volta igual):
 
@@ -77,7 +77,8 @@ Tabela de casos (fixada aqui e testada na T5, inclusive com teste de propriedade
 | `35.50` · `35.5` | 35.50 · 35.50 |
 | `1.234` · `35.500` · `1.234.567` | `QUICK_AMOUNT_AMBIGUOUS` (422, "use vírgula nos centavos") |
 | `10,005` · `1,234,56` · `12.34,56` · `1234.567` · `1.2345` | `QUICK_AMOUNT_INVALID` |
-| `0` · `0,00` · `-5` · vazio · `abc` | `QUICK_AMOUNT_INVALID` |
+| `0` · `0,00` · `-5` · só espaços · `abc` | `QUICK_AMOUNT_INVALID` |
+| vazio (`""`) · mais de 40 caracteres | `400 VALIDATION_FAILED` (borda, antes do parser) |
 | acima de R$ 999.999.999,99 (limite técnico) | `QUICK_AMOUNT_INVALID` |
 | acima de um teto por lançamento, **só se configurado** | `QUICK_LIMIT_REACHED` |
 
