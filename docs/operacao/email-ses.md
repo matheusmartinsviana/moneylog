@@ -2,6 +2,9 @@
 
 Escopo da T8 do plano `docs/planos/2026-10-18-multiusuario-convite.md` e da ADR-032. Nada deste roteiro foi executado: o Terraform só foi validado (`fmt` e `validate`), sem `plan` nem `apply`.
 
+
+> **Produção sem Terraform:** a produção foi criada à mão (sem estado do Terraform), então **não rode `terraform apply`** para o e-mail: ele tentaria criar uma infraestrutura nova. Use `scripts/setup-ses.sh` (AWS CLI, idempotente, espelha o `mail.tf`) e siga a partir da seção 2. O `mail.tf` fica como referência e para quem adotar o Terraform no futuro.
+
 - Remetente: `convite@moneylog.mviana.tech`. Reply-To: `c@mviana.tech`. Região do SES: `us-east-1`.
 - DNS na Cloudflare. O Terraform **não** cria registros DNS: ele imprime o que deve ser criado (`terraform output mail_dns_records`).
 - Enquanto o sandbox do SES não for liberado, só endereços verificados recebem. Isso não bloqueia o desenvolvimento (o adaptador `fake` cobre os testes).
