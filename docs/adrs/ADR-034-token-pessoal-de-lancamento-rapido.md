@@ -14,15 +14,15 @@ A integridade financeira (PR 01) não é tocada: o canal chama o **mesmo** caso 
 ### 1. Decisões do dono (2026-10-21)
 | # | Decisão |
 |---|---|
-| Q1 | Dois tipos, `INCOME` (Entrada) e `EXPENSE` (Gasto). "Saída" é gasto. A entrada tem **teto diário próprio e menor** que o do gasto. |
+| Q1 | Dois tipos, `INCOME` (Entrada) e `EXPENSE` (Gasto). "Saída" é gasto. O teto diário próprio e menor para a entrada, aprovado antes, passou a ser **opcional e desligado** (ver Q7). |
 | Q3 | Variante X: a **conta é vinculada ao token** (um token por aparelho e conta). Não há tabela de conta padrão por usuário nem endpoints de configuração. |
 | Q5 | `method` nulo quando o Atalho não manda. Nada de `PIX` por chute. |
 | Q6 | Regra do valor digitado da seção 6. |
-| Q7 | Validade de 30 dias de padrão e 90 de máximo; 3 tokens ativos por usuário; R$ 1.000,00 por lançamento; 30 lançamentos por dia; R$ 3.000,00 por dia em gastos; R$ 1.000,00 por dia em entradas. Todos configuráveis (seção 7). |
+| Q7 (revisada pelo dono em 2026-10-21) | Validade de 30 dias de padrão e 90 de máximo; 3 tokens ativos por usuário. **Sem limite de valor por lançamento nem de quantidade ou total por dia**: o dono não quer esses tetos. Eles existem como configuração, **desligados por padrão** (propriedade ausente ou 0 = sem limite), e podem ser ligados depois sem migração (seção 7). Continuam valendo o limite técnico de sanidade do valor (o mesmo de `POST /v1/transactions`, R$ 999.999.999,99) e o rate limit por token e por IP. |
 | Q8 | Desativar o usuário **revoga o token de vez**; reativar não o ressuscita (token novo); trocar a senha **não** revoga. |
 | Q17 | Sem trava de duplicata provável no MVP. |
 
-O teto de entrada (R$ 1.000,00 por dia) é uma **proposta** do agente aprovada em bloco pelo dono como "opção segura"; fica em propriedade e muda sem migração.
+A decisão anterior (R$ 1.000,00 por lançamento, 30 por dia, R$ 3.000,00 por dia em gastos e R$ 1.000,00 por dia em entradas) foi **substituída** por esta. Os valores antigos servem apenas de exemplo nas mensagens de erro do contrato, para quando o dono ligar um teto.
 
 ### 2. Credencial (PAT)
 - **Escopo mínimo** `QUICK_ENTRY`: só `POST /v1/quick-entries`, só `EXPENSE` e `INCOME`. O token não lê, não edita, não apaga, não estorna e não cria nem revoga token.
@@ -78,7 +78,8 @@ Tabela de casos (fixada aqui e testada na T5, inclusive com teste de propriedade
 | `1.234` · `35.500` · `1.234.567` | `QUICK_AMOUNT_AMBIGUOUS` (422, "use vírgula nos centavos") |
 | `10,005` · `1,234,56` · `12.34,56` | `QUICK_AMOUNT_INVALID` |
 | `0` · `0,00` · `-5` · vazio · `abc` | `QUICK_AMOUNT_INVALID` |
-| acima de R$ 999.999.999,99 ou do teto do token | `QUICK_AMOUNT_INVALID` / `QUICK_LIMIT_REACHED` |
+| acima de R$ 999.999.999,99 (limite técnico) | `QUICK_AMOUNT_INVALID` |
+| acima de um teto por lançamento, **só se configurado** | `QUICK_LIMIT_REACHED` |
 
 `amount` que não seja texto nem número (booleano, objeto, lista) é `400`.
 
@@ -90,21 +91,26 @@ Casos do número JSON (testados na T5/T6):
 | `27.605` · `0.001` | `QUICK_AMOUNT_INVALID` |
 | `0` · `0.0` · `-5` | `QUICK_AMOUNT_INVALID` |
 | `1e3` · `2.5E1` | `QUICK_AMOUNT_INVALID` |
-| número acima do teto | `QUICK_LIMIT_REACHED` ou `QUICK_AMOUNT_INVALID`, como no texto |
+| número acima do limite técnico / de um teto configurado | `QUICK_AMOUNT_INVALID` / `QUICK_LIMIT_REACHED`, como no texto |
 
-### 7. Tetos (Q7) e propriedades
-| Teto | Valor | Propriedade proposta (`moneylog.quick-entry.*`) |
+### 7. Limites (Q7 revisada) e propriedades
+Só a validade e o número de tokens são limites ativos. Os tetos de uso são **configuráveis e desligados por padrão**: propriedade ausente ou `0` significa sem limite.
+
+| Limite | Padrão | Propriedade proposta (`moneylog.quick-entry.*`) |
 |---|---|---|
 | Validade padrão / máxima do token | 30 / 90 dias | `default-validity-days` / `max-validity-days` |
 | Tokens ativos por usuário | 3 | `max-active-tokens` |
-| Valor por lançamento | R$ 1.000,00 | `max-amount` |
-| Lançamentos por dia | 30 | `max-entries-per-day` |
-| Valor total de gastos por dia | R$ 3.000,00 | `max-expense-per-day` |
-| Valor total de entradas por dia | R$ 1.000,00 | `max-income-per-day` |
+| Limite técnico de sanidade do valor | R$ 999.999.999,99 (o de `POST /v1/transactions`) | fixo |
+| Valor por lançamento | desligado | `max-amount` |
+| Lançamentos por dia | desligado | `max-entries-per-day` |
+| Valor total de gastos por dia | desligado | `max-expense-per-day` |
+| Valor total de entradas por dia | desligado | `max-income-per-day` |
+| Rate limit por IP (falhas de token) | 10 por 5 minutos | seção 4 |
+| Rate limit por token válido | 20 por minuto | seção 4 |
 
-O "dia" do teto diário é definido pelo **instante de criação** (`createdAt` do lançamento, ou `quick_entry_audit.created_at`), convertido no fuso do usuário (`users.time_zone`), **nunca pela `date` do lançamento**. Contar pela `date` daria um balde por dia dos 366 dias retroativos e anularia o teto (um token vazado lançaria R$ 3.000 para cada dia do último ano e reescreveria meses fechados). O teto conta só lançamentos **ativos** (estornados saem da conta). A `date` retroativa continua permitida até 366 dias, mas consome o teto do dia em que foi criada. A quantidade vale para os dois tipos juntos; os totais são separados por tipo. Qualquer teto estourado: `422 QUICK_LIMIT_REACHED`, nada gravado, e o `detail` diz qual. Os totais e a quantidade do dia valem **por usuário** (somando todos os tokens dele), para que gerar mais tokens não multiplique o teto.
+Quando algum teto estiver ligado, vale o que segue; com todos desligados, nada disto se aplica. O "dia" do teto diário é definido pelo **instante de criação** (`createdAt` do lançamento, ou `quick_entry_audit.created_at`), convertido no fuso do usuário (`users.time_zone`), **nunca pela `date` do lançamento**. Contar pela `date` daria um balde por dia dos 366 dias retroativos e anularia o teto. O teto conta só lançamentos **ativos** (estornados saem da conta). A quantidade vale para os dois tipos juntos; os totais são separados por tipo, por **usuário** (somando todos os tokens dele). Teto estourado: `422 QUICK_LIMIT_REACHED`, nada gravado, e o `detail` diz qual. O código existe no contrato mas só ocorre se o dono configurar um teto.
 
-**Serialização obrigatória.** A conferência "soma do dia mais o novo valor contra o teto" e a gravação do lançamento acontecem na mesma transação do claim de idempotência, sob **lock por usuário** (`SELECT ... FOR UPDATE` na linha do usuário ou advisory lock por `user_id`), para que requisições paralelas, que o rate limit por minuto permite, não ultrapassem quantidade nem valor. A T5 ganha teste paralelo de teto. Os nomes das propriedades e os limites de rate limit (seção 4) são proposta técnica e podem mudar na T3/T4.
+**Serialização condicional.** Se **algum teto diário estiver ligado**, a conferência e a gravação do lançamento acontecem na mesma transação do claim de idempotência, sob **lock por usuário** (`SELECT ... FOR UPDATE` na linha do usuário ou advisory lock por `user_id`), para que requisições paralelas não ultrapassem quantidade nem valor; a T5 testa isso com um teto ligado. Com todos os tetos desligados o lock não é exigido. Os nomes das propriedades e os limites de rate limit (seção 4) são proposta técnica e podem mudar na T3/T4.
 
 ### 8. Categoria, data e método
 - **`category` é opcional** (fluxo do Atalho: tipo, nome e valor). Omitida, a movimentação **recebe a categoria de sistema padrão**, `OTHER_EXPENSE` (gasto) ou `OTHER_INCOME` (entrada), a mesma regra de `categoryId` ausente em `POST /v1/transactions` (contrato 2.11.0). Nunca fica sem categoria, o que respeita o domínio atual (consumo por categoria no dashboard e nos relatórios exige categoria), e a resposta traz a categoria aplicada (`QuickEntryResult.category` não é nulo). Se a categoria padrão não existir ou estiver arquivada, vale o erro existente `422 DEFAULT_CATEGORY_UNAVAILABLE`, sem gravar. Enviada: chave de sistema (`FOOD`) ou nome sem acento e sem caixa, entre as categorias **ativas do próprio usuário**; nunca por id. Inexistente, arquivada ou de outro usuário: `422 QUICK_CATEGORY_NOT_FOUND`, sem classificar em silêncio.
@@ -140,16 +146,16 @@ Itens 2 e 6 do G0 (abrir o PWA instalado; aparência da falha de rede) ficam par
 ### 12. Modelo de ameaça
 | Ameaça | Mitigação | Risco residual |
 |---|---|---|
-| Token legível no Atalho, no iCloud e no backup do iPhone | Escopo mínimo (só cria gasto e entrada), conta única, expira em 30 dias (máximo 90), revogação por qualquer sessão, tetos por lançamento e por dia (entrada menor), auditoria por token e filtro `source`, alerta de abuso | Quem desbloqueia o iPhone lê o token. O pior caso é lançamento falso até a revogação, estornável pelo app (ledger imutável) |
+| Token legível no Atalho, no iCloud e no backup do iPhone | Escopo mínimo (só cria gasto e entrada), conta única, expira em 30 dias (máximo 90), revogação por qualquer sessão, rate limit por token e por IP, auditoria por token e filtro `source`, alerta de abuso | Quem desbloqueia o iPhone lê o token. **Sem teto de valor por padrão** (decisão do dono): o pior caso é lançamento falso, de qualquer valor até o limite técnico, até a revogação, estornável pelo app (ledger imutável). **Risco aceito pelo dono** |
 | Link iCloud do Atalho compartilhado carregando o token | O Atalho distribuído **nunca** carrega token: token e URL base são perguntas de importação; o dono monta o Atalho dele | Depende da premissa 7 (seção 11) |
 | Brute force do token | 256 bits de entropia, lookup por hash, `401` idêntico, rate limit por IP para falhas, alerta de rajada de `401` | Rate limit em memória, zera no restart e é contornável com vários IPs (ADR-003): aceito, coberto pela entropia |
-| iPhone perdido ou roubado | Revogar em outro aparelho em Ajustes, Atalhos; expiração curta; tetos. **Não se conta com o bloqueio do aparelho**: a premissa 1 (se o Atalho roda ou pede Face ID com o aparelho bloqueado) não foi verificada | Janela entre perda e revogação, limitada aos tetos |
+| iPhone perdido ou roubado | Revogar em outro aparelho em Ajustes, Atalhos; expiração curta; rate limit; auditoria por token; estorno pelo app. **Não se conta com o bloqueio do aparelho**: a premissa 1 (se o Atalho roda ou pede Face ID com o aparelho bloqueado) não foi verificada | Janela entre perda e revogação sem teto de valor: **risco aceito pelo dono**, mitigado por revogação, rate limit, auditoria e estorno |
 | Segredo em log (aplicação, proxy, borda) | `Authorization` fora de log, `RequestRejectedHandler` e handler de exceções, `Caddyfile` e Cloudflare verificados (T4) | Depende da configuração externa |
 | Enumeração de token | `401 QUICK_TOKEN_INVALID` idêntico nos quatro casos | Nenhum conhecido |
 | Rota aberta por engano com dois mecanismos de autenticação | `@Order`, matcher exato, variantes de rota e matriz de rotas testadas | Nenhum conhecido |
 | Vazamento entre usuários (PR 01 / ADR-032) | `user_id` com FK, FKs compostas `(account_id, user_id)`, gateway de busca por hash sempre com `user_id`, guarda estática do ADR-032, teste com dois usuários de nomes iguais | Nenhum conhecido |
-| Teto diário contornado com `date` retroativa | O teto conta pelo instante de criação, não pela `date`; serialização por usuário na transação | Nenhum conhecido |
-| Entrada falsa distorce caixa e projeções | Teto diário de entrada menor (Q1/Q7), conta única, estorno pelo app | Entrada falsa dentro do teto até a revogação |
+| Teto diário (se ligado) contornado com `date` retroativa | O teto conta pelo instante de criação, não pela `date`; serialização por usuário na transação | Nenhum conhecido |
+| Entrada falsa distorce caixa e projeções | Conta única, rate limit, auditoria, estorno pelo app; teto diário de entrada opcional, desligado | Entrada falsa de qualquer valor até a revogação: **risco aceito pelo dono** |
 | Valor numérico lido como ponto flutuante | Leitura por texto do JSON em `BigDecimal`, nunca `double`/`float`; mais de 2 casas e notação científica recusadas; teste com `27.6`, `27.605` e `1e3` | Nenhum conhecido |
 | Duplicação por batida dupla | Idempotência cobre reenvio, não duas execuções; Q17 | **Risco aceito** pelo dono no MVP (premissa 5) |
 | `message` na tela de bloqueio | Só valor formatado e nomes já gravados, nunca `description` | Nome de categoria e de conta aparecem na tela de bloqueio |
