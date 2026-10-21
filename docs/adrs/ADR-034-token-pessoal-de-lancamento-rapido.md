@@ -60,7 +60,9 @@ O código usa `TOO_MANY_ATTEMPTS`, o mesmo do restante da API, e não um código
 - Chave por data e hora (`yyyyMMddHHmmss`) colide em duas execuções no mesmo segundo: com comandos diferentes é `409`; com comandos iguais é dedupe silencioso. O documento operacional (T9) explica.
 
 ### 6. Valor digitado (Q6) e moeda
-Moeda BRL. O Atalho manda o valor como **texto**; o parser vive no backend, sem `double` nem `float`, e produz o `AmountInput` canônico antes de chamar o caso de uso. `POST /v1/transactions` continua estrito. Regra:
+Moeda BRL. `amount` aceita **texto** em formato brasileiro ou **número JSON** (`oneOf`). O que o campo Número do Atalho envia é número com ponto decimal (observado no aparelho do dono: corpo cru `27.6`, exato). O parser vive no backend, sem `double` nem `float`, e produz o `AmountInput` canônico antes de chamar o caso de uso. `POST /v1/transactions` continua estrito.
+
+**Número JSON.** O servidor lê o número **pelo texto do JSON**, como decimal exato (`BigDecimal` a partir do token do JSON, por exemplo `JsonNode` com `USE_BIG_DECIMAL_FOR_FLOATS`/`DecimalNode`, nunca `double`, `float` nem `Number.doubleValue()`). Vale: positivo, no máximo 2 casas, mesmos tetos do texto. Mais de 2 casas (`27.605`), zero, negativo ou notação científica (`1e3`, `2.5E1`) é `422 QUICK_AMOUNT_INVALID`. Um valor como `27.600000000000001` (artefato de reler como `double`, que só aparece em ferramentas como o httpbin) também é recusado por ter mais de 2 casas. O hash de idempotência usa o **texto cru** do valor como veio (`27.6` e `"27,60"` são pedidos diferentes). Regras do texto:
 - Remover `R$` e espaços.
 - Se há vírgula, ela é o decimal (1 ou 2 casas) e os pontos antes dela são milhar, em grupos de 3.
 - Sem vírgula, o ponto só é decimal com **1 ou 2 casas depois**. Ponto seguido de 3 ou mais dígitos sem vírgula é **ambíguo** e vira `422 QUICK_AMOUNT_AMBIGUOUS` ("Use vírgula nos centavos, por exemplo 1.234,00").
@@ -78,7 +80,17 @@ Tabela de casos (fixada aqui e testada na T5, inclusive com teste de propriedade
 | `0` · `0,00` · `-5` · vazio · `abc` | `QUICK_AMOUNT_INVALID` |
 | acima de R$ 999.999.999,99 ou do teto do token | `QUICK_AMOUNT_INVALID` / `QUICK_LIMIT_REACHED` |
 
-`amount` numérico (JSON) é `400`.
+`amount` que não seja texto nem número (booleano, objeto, lista) é `400`.
+
+Casos do número JSON (testados na T5/T6):
+
+| Corpo | Resultado |
+|---|---|
+| `27.6` · `27.60` · `35` · `1234.56` | 27.60 · 27.60 · 35.00 · 1234.56 |
+| `27.605` · `0.001` | `QUICK_AMOUNT_INVALID` |
+| `0` · `0.0` · `-5` | `QUICK_AMOUNT_INVALID` |
+| `1e3` · `2.5E1` | `QUICK_AMOUNT_INVALID` |
+| número acima do teto | `QUICK_LIMIT_REACHED` ou `QUICK_AMOUNT_INVALID`, como no texto |
 
 ### 7. Tetos (Q7) e propriedades
 | Teto | Valor | Propriedade proposta (`moneylog.quick-entry.*`) |
@@ -118,7 +130,7 @@ O dono dispensou o portão G0 (teste no iPhone, antes da T1). Os itens abaixo **
 | G0 | Premissa | Se for falsa |
 |---|---|---|
 | 1 | O Toque Duplo dispara o Atalho com o iPhone desbloqueado, e o Atalho consegue pedir entrada. Não se sabe se, com o aparelho bloqueado, pede Face ID, nem se funciona com o app moneylog aberto ou fechado. | O uso fica restrito a aparelho desbloqueado e o guia (T8/T9) diz isso. Se o Atalho nem rodar pelo Toque Duplo, o gatilho muda para ícone na tela de início, sem mudança de API. |
-| 3 | O valor pode chegar ao corpo como texto **com vírgula, com ponto ou com separador de milhar**, dependendo de como o "Pedir Entrada" numérico formata `35,5`, `1234,56` e `1.234,56`. A regra da seção 6 foi desenhada para aceitar as três formas e recusar o ambíguo. | Se sair sempre com ponto decimal e sem milhar, a regra continua correta e o `QUICK_AMOUNT_AMBIGUOUS` quase não ocorre. Se sair em formato que a regra recusa (por exemplo milhar com ponto e centavos com ponto), o Atalho passa a usar "Pedir Entrada" de texto e o documento operacional ensina o formato; a regra do backend não afrouxa (risco de erro de 1000x). |
+| 3 | **Parcialmente respondido no aparelho do dono:** o campo Número do Atalho envia **número JSON com ponto decimal** e resolve vírgula e milhar sozinho (corpo cru `27.6`, exato; só o httpbin mostra `27.600000000000001` ao reler como `double`). Isso foi observado, não testado em escala. Continua premissa que um Atalho com campo de texto mande vírgula, ponto ou milhar; a regra da seção 6 aceita as três formas e recusa o ambíguo. | Se sair sempre com ponto decimal e sem milhar, a regra continua correta e o `QUICK_AMOUNT_AMBIGUOUS` quase não ocorre. Se sair em formato que a regra recusa (por exemplo milhar com ponto e centavos com ponto), o Atalho passa a usar "Pedir Entrada" de texto e o documento operacional ensina o formato; a regra do backend não afrouxa (risco de erro de 1000x). Se o Atalho passar a enviar o número como `double` arredondado (mais de 2 casas), o backend recusa com `QUICK_AMOUNT_INVALID` em vez de arredondar em silêncio. |
 | 4 | **Premissa, não confirmada:** supõe-se que o Atalho não tenha ação nativa de UUID, e que a ação de número aleatório, se existir, não esteja garantida. Por isso a `Idempotency-Key` é planejada a partir de data e hora (`yyyyMMddHHmmss`) e o contrato aceita `[A-Za-z0-9_-]{8,64}`, não só UUID. | Se existir ação aleatória, o Atalho acrescenta sufixo aleatório e reduz a colisão no mesmo segundo; o contrato já aceita (nenhuma mudança). Se o Atalho só conseguir chave fraca, a proteção contra reenvio continua valendo, mas colisões geram `409` confuso (explicado no documento operacional). |
 | 5 | **O Toque Duplo pode disparar o Atalho duas vezes** (ou duas execuções simultâneas). A idempotência por chave **não** cobre isso, porque cada execução pede o valor de novo. | Sem trava de duplicata (Q17), uma batida dupla pode gerar dois lançamentos. Se o teste real mostrar que ocorre, a decisão volta ao dono (trava de mesmo valor, tipo e categoria em N segundos, ou aviso). O estorno pelo app e o filtro `source` são a mitigação. |
 | 7 | "Perguntas de importação" aceitam o token e a URL base, e **o token fica em texto claro dentro do Atalho já importado**, legível por quem desbloqueia o iPhone, e vai para iCloud e backup. O link iCloud compartilhado leva só o que não for pedido nas perguntas de importação. | Se o token não puder ser pergunta de importação, o Atalho distribuído por link não é viável sem expor segredo: o dono monta o Atalho à mão (documento T9) e **nunca** compartilha um Atalho com token. O modelo de ameaça (seção 12) já assume o pior caso: token legível no aparelho. |
@@ -138,6 +150,7 @@ Itens 2 e 6 do G0 (abrir o PWA instalado; aparência da falha de rede) ficam par
 | Vazamento entre usuários (PR 01 / ADR-032) | `user_id` com FK, FKs compostas `(account_id, user_id)`, gateway de busca por hash sempre com `user_id`, guarda estática do ADR-032, teste com dois usuários de nomes iguais | Nenhum conhecido |
 | Teto diário contornado com `date` retroativa | O teto conta pelo instante de criação, não pela `date`; serialização por usuário na transação | Nenhum conhecido |
 | Entrada falsa distorce caixa e projeções | Teto diário de entrada menor (Q1/Q7), conta única, estorno pelo app | Entrada falsa dentro do teto até a revogação |
+| Valor numérico lido como ponto flutuante | Leitura por texto do JSON em `BigDecimal`, nunca `double`/`float`; mais de 2 casas e notação científica recusadas; teste com `27.6`, `27.605` e `1e3` | Nenhum conhecido |
 | Duplicação por batida dupla | Idempotência cobre reenvio, não duas execuções; Q17 | **Risco aceito** pelo dono no MVP (premissa 5) |
 | `message` na tela de bloqueio | Só valor formatado e nomes já gravados, nunca `description` | Nome de categoria e de conta aparecem na tela de bloqueio |
 | Rate limit em memória | Ver ADR-003 | **Risco aceito** |
@@ -148,6 +161,7 @@ Itens 2 e 6 do G0 (abrir o PWA instalado; aparência da falha de rede) ficam par
 - **Conta padrão por usuário** (variante Y): tabela, dois endpoints e tela de configuração a mais, e o vazamento alcançaria a conta escolhida pelo usuário. A conta vinculada ao token limita o raio.
 - **Reaproveitar o JWT de sessão ou o cookie de refresh**: o Atalho não tem cookie, e aumentaria a vida útil de uma credencial com acesso total.
 - **BCrypt para o hash do token**: 256 bits de entropia aleatória não precisam de custo adaptativo; seria latência sem ganho.
+- **Ler o número JSON como `double` e arredondar para 2 casas**: esconderia erro de representação (`27.600000000000001`) e abriria caminho para centavo errado. O número é lido pelo texto do JSON, como decimal exato, e mais de 2 casas é recusado.
 - **Aceitar `1.234` como mil duzentos e trinta e quatro**: erro de 1000x em dinheiro; a regra segura recusa e pede vírgula.
 - **`method` padrão `PIX`**: classificaria em silêncio sem decisão do dono.
 
