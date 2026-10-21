@@ -101,3 +101,9 @@ Recomenda-se registrar a porta `EmailSender` (core), os adaptadores (SES em prod
 - A V9.27 (papéis, status, convites e unicidade de e-mail por `lower(email)`) é aditiva e não toca dados existentes.
 - Texto de termos e privacidade (Q12) é do dono e é portão de liberação do flag em produção, não de desenvolvimento.
 - Aprovação do SES (saída do sandbox, Q16) é manual e bloqueia só a liberação a convidados reais.
+
+## Adendo (2026-10-21): token de lançamento rápido (ADR-034)
+- **Desativar revoga o token de vez.** Ao desativar um usuário, todos os tokens de lançamento rápido dele recebem `revoked_at` com `revoked_reason = USER_DISABLED` na mesma transação. **Reativar não os ressuscita**: o usuário gera token novo. Trocar a senha não revoga token (decisão do dono, Q8). Isto estende a linha "Desativar" da tabela da seção 2, que só falava de login, refresh e sessões.
+- **`MEMBER` gera token na própria conta.** A gestão de token (`/v1/quick-entry-tokens`) fica fora da regra "só `OWNER`" de `/v1/users/**` e `/v1/invitations/**`: `OWNER` e `MEMBER` `ACTIVE` gerenciam apenas os próprios tokens, vinculados a conta própria, com sessão JWT. Token de outro usuário responde `404 QUICK_TOKEN_NOT_FOUND`.
+- O token só autentica `POST /v1/quick-entries` e o usuário `ACTIVE` é lido do banco a cada requisição, como no restante deste ADR. Os testes de isolamento entre usuários passam a cobrir também o token (o token de A nunca grava na conta de B).
+
