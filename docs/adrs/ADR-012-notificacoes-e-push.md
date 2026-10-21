@@ -29,3 +29,8 @@ relacionado: ADR-001
 ## Não exercitado (precisa de terceiros)
 
 Envio real a um iPhone/Android, domínio HTTPS, chaves VAPID e PWA instalada (iOS 16.4+). Roteiro: gerar o par VAPID, definir as três variáveis, ligar `moneylog.push.enabled`, instalar a PWA, conceder a permissão por gesto e assinar em `POST /v1/push/subscriptions`.
+
+## Adendo (2026-10-21): mensagem pronta em `POST /v1/quick-entries` (ADR-034)
+
+A decisão 2 ("o backend não grava frase pronta; o front traduz e formata") tem **uma exceção**, restrita a `POST /v1/quick-entries`: o Atalho do iPhone não traduz código de erro e não tem i18n, então o `201` traz `message` e os erros trazem `detail` em português pronto para a notificação do iOS. O `message` usa apenas valor formatado pelo backend e nomes já gravados (categoria e conta) e **nunca ecoa `description` nem texto livre digitado**, porque a notificação aparece na tela de bloqueio. A regra de i18n por chave continua valendo para a central de notificações, o push e todas as demais rotas.
+
