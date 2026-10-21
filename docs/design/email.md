@@ -8,7 +8,7 @@ Ponto único: constantes `BRAND_NAME` e `INVITATION_SUBJECT` em `EmailTemplateRe
 ## Estrutura
 - Tabelas com `role="presentation"`, estilo inline, largura fluida com `max-width:600px`; abaixo de 620 px o padding lateral encolhe.
 - Ghost table para Outlook desktop (Word): `<!--[if mso]>` abre uma tabela fixa de 600 px e fecha depois do conteúdo. Os comentários condicionais MSO são diretivas e ficam.
-- Botão "bulletproof": célula com `bgcolor`, `border-radius` (ignorado no Outlook, que mostra retângulo) e `mso-padding-alt:16px 40px`, link `display:block` com padding 16x40 e fonte 18/20 (altura de toque 52 px). Em telas estreitas (<620 px) ocupa a largura toda. Sem VML.
+- Botão "bulletproof": célula com `bgcolor`, `border-radius` (ignorado no Outlook, que mostra retângulo) borda de 2 px (#a9cdb5 no claro, #f2f3ea no escuro, para o botão não sumir quando o Outlook iOS inverte as cores), `bgcolor` e `background-color` no `<td>` e no `<a>`, e `mso-padding-alt:16px 40px`, link `display:block` com padding 16x40 e fonte 18/20 (altura de toque 52 px). Em telas estreitas (<620 px) ocupa a largura toda. Sem VML.
 - Link também em texto visível (`https://<app>/convite#<token>`). O token só vai no fragmento; nada de rastreamento, pixel ou imagem remota.
 - Cabeçalho: logo (`<img>` 48x48, `alt` = `{{brand}}`, `display:block;border:0`, `border-radius:12px`) ao lado do nome em texto (24 px, 700). A URL vem do placeholder `{{logoUrl}}` = `{appBaseUrl}/assets/icons/icon-192.png` (PNG quadrado verde-escuro, vale nos dois modos), escapada como os demais valores. É a única imagem: estática, sem pixel nem rastreio. O nome fica sempre em texto porque o Outlook bloqueia imagens até o usuário permitir; sem a imagem o cabeçalho continua legível e o layout não quebra.
 - Hierarquia do cartão (padding 40/36, ritmo de 8/12/20/28 px): "Oi," suave, título 28/36 "Você foi convidado para o Monelog", texto 16/26 com quem convidou em negrito, botão, caixa de validade discreta (fundo `accent-soft` #e1eae2 claro, #1a2a20 escuro), link alternativo 14 px em monoespaçada, e fora do cartão o rodapé 13/20: "Se você não esperava este convite, ignore esta mensagem. Nada será criado." e "Enviado pelo Monelog a pedido de <quem> para <destinatário>."
@@ -32,6 +32,9 @@ O cinza de borda escuro é a única cor que não existe como token opaco. Contra
 
 ## Modo escuro
 `color-scheme` e `supported-color-schemes` em `light dark`; `@media (prefers-color-scheme: dark)` (Apple Mail, Gmail mobile e web em parte) e seletores `[data-ogsc]`/`[data-ogsb]` (Outlook.com e apps Outlook). O visual claro está inline e é o padrão. Gmail com inversão automática pode alterar cores; conferir na revisão visual.
+
+## Endereços de e-mail
+O e-mail de quem convidou (no texto e no rodapé) e o do destinatário são `<a href="mailto:...">` intencionais, com `color:inherit;font-weight:700;text-decoration:none` e classe `.mail`, para o autolink azul sublinhado do Outlook iOS não aparecer. Valor escapado também no `href`. Inversão de fundo do Outlook (cinza) não é controlável.
 
 ## Texto plano
 `invitation.txt` traz o mesmo link, validade, aviso de "ignore" e destinatário, sem HTML, sem imagem e sem ponto de exclamação. Teste automatizado compara os dois.
