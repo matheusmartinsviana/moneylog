@@ -34,3 +34,12 @@ Envio real a um iPhone/Android, domínio HTTPS, chaves VAPID e PWA instalada (iO
 
 A decisão 2 ("o backend não grava frase pronta; o front traduz e formata") tem **uma exceção**, restrita a `POST /v1/quick-entries`: o Atalho do iPhone não traduz código de erro e não tem i18n, então o `201` traz `message` e os erros trazem `detail` em português pronto para a notificação do iOS. O `message` usa apenas valor formatado pelo backend e nomes já gravados (categoria e conta) e **nunca ecoa `description` nem texto livre digitado**, porque a notificação aparece na tela de bloqueio. A regra de i18n por chave continua valendo para a central de notificações, o push e todas as demais rotas.
 
+
+## Adendo (2026-10-22): WhatsApp como canal a mais (ADR-035)
+
+O WhatsApp pela Kapso passa a ser um **canal a mais, depois da central**: a central e o push continuam sendo o canal garantido. Vencimentos, segurança e o resumo semanal (`NotificationKind.WEEKLY_SUMMARY`, que exige migração do `ck_notifications_kind`) saem também por WhatsApp, só para o dono com vínculo verificado, com janela de 24 h, template aprovado fora dela, reserva `PENDING` antes do envio e teto diário de mensagens iniciadas. Respostas e avisos podem trazer valores, saldos e descrições (decisão do dono, risco registrado no ADR-035); `includeAmounts` nasce ligado e pode ser desligado. Duas exceções: o alerta de revogação do vínculo e o aviso de lançamento por WhatsApp saem **só por central e push**, nunca pelo próprio WhatsApp.
+
+## Adendo (2026-10-22): alertas de segurança do WhatsApp são só push (ADR-035, seção 18)
+
+Os alertas de segurança `WHATSAPP_LINK_STARTED`, `WHATSAPP_REVOKED` e `WHATSAPP_ENTRY_CREATED` passam pelo `SecurityAlertService`, que é só push (um por usuário e evento a cada 10 minutos) e **não grava notificação na central**. Quem não tem push ativo não é avisado; esse risco está registrado no ADR-035 e aguarda aceite do dono, ou uma tarefa própria para um aviso persistente na central (`NotificationKind`, migração do `ck_notifications_kind`, i18n e tela). O disparo do alerta de revogação acontece depois do commit da transação. O canal garantido da central continua valendo para vencimentos e resumos.
+

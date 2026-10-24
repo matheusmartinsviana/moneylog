@@ -186,3 +186,6 @@ Itens 2 e 6 do G0 (abrir o PWA instalado; aparência da falha de rede) ficam par
 - O ADR-032 e o ADR-012 ganham adendos (revogação por desativação e papel `MEMBER`; mensagem pronta só neste endpoint).
 - O dono precisa saber que o Toque nas Costas só existe no iPhone 8 ou mais novo e que o Atalho guarda o token em texto.
 - Pendências fora deste ADR: texto do Atalho e roteiro (T9), telas (T7, T8), Fase 2 (`/quick` com fila offline, cartão, lista de categorias do usuário para o Atalho, aviso de expiração, estorno em lote).
+
+## Adendo (2026-10-22): o canal do WhatsApp reaproveita o miolo do atalho (ADR-035)
+O lançamento por WhatsApp **não** passa por `POST /v1/quick-entries` nem usa token. O miolo de criação do `CreateQuickEntryUseCaseImpl` (parser `AmountText`, `QuickIdempotencyKey`, um claim de idempotência, `QuickEntryLimits`, mesmo caso de uso de `POST /v1/transactions`) é extraído para um serviço de domínio comum, e o canal tem caso de uso, auditoria (`whatsapp_entry_audit`) e origem (`TransactionSource.WHATSAPP`) próprios. `quick_entry_audit`, `CreateQuickEntryCommand` e os testes do atalho **não mudam**. Os tetos do atalho continuam **desligados por padrão** (Q7); os do canal são próprios e também opcionais e desligados por padrão (ADR-035, seção 9).
