@@ -142,6 +142,8 @@ Como o que é servido atende a cada requisito:
 
 Um parâmetro por variável, nome = nome da variável, sob `/moneylog/prod/`. O `deploy.sh` da instância baixa todos para `/opt/moneylog/secrets` (um arquivo por variável, dono uid 10001, modo 400) e o Spring os lê pelo `SECRETS_DIR`/`configtree`. **Parâmetro vazio não existe no SSM:** simplesmente não crie o que quer deixar no padrão.
 
+**WhatsApp (Kapso) e IA (OpenAI):** desligados por padrão (`WHATSAPP_ENABLED`, `WHATSAPP_DISPATCH_ENABLED` e `AI_PROVIDER=none`); sem os parâmetros nada muda no deploy. Os segredos (`KAPSO_*`, `WHATSAPP_PHONE_PEPPER`, `WHATSAPP_PHONE_ENC_KEY`, `AI_API_KEY`) entram como `SecureString` neste mesmo prefixo. Ordem de ativação, G0, rotação, rollback e Cloudflare do webhook: [whatsapp-kapso.md](whatsapp-kapso.md).
+
 ```
 P=/moneylog/prod
 put()  { aws ssm put-parameter --region $AWS_REGION --overwrite --type String       --name "$P/$1" --value "$2" >/dev/null; }

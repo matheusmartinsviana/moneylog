@@ -107,3 +107,8 @@ Recomenda-se registrar a porta `EmailSender` (core), os adaptadores (SES em prod
 - **`MEMBER` gera token na própria conta.** A gestão de token (`/v1/quick-entry-tokens`) fica fora da regra "só `OWNER`" de `/v1/users/**` e `/v1/invitations/**`: `OWNER` e `MEMBER` `ACTIVE` gerenciam apenas os próprios tokens, vinculados a conta própria, com sessão JWT. Token de outro usuário responde `404 QUICK_TOKEN_NOT_FOUND`.
 - O token só autentica `POST /v1/quick-entries` e o usuário `ACTIVE` é lido do banco a cada requisição, como no restante deste ADR. Os testes de isolamento entre usuários passam a cobrir também o token (o token de A nunca grava na conta de B).
 
+
+## Adendo (2026-10-22): WhatsApp pela Kapso (ADR-035)
+- **Só `OWNER` vincula e gerencia o WhatsApp** (`/v1/whatsapp/**`); `MEMBER` recebe `403 FORBIDDEN`, no mesmo padrão de `/v1/users/**` e `/v1/invitations/**`. O papel e o status valem do banco a cada requisição.
+- **Desativar o usuário revoga o vínculo de vez**, na mesma transação do `disable` e com o mesmo fluxo da revogação manual (alerta por central e push, depois apaga telefone cifrado, código e identidade). **Reativar não o ressuscita**: o dono vincula de novo.
+- O remetente do webhook só é tratado se casar com um vínculo `VERIFIED` de usuário `ACTIVE`; qualquer outro recebe silêncio.
